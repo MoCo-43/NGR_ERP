@@ -30,4 +30,9 @@ private final TestService testService;
     return testService.selectAll();
   }
 
+  @GetMapping("/list")
+  public String getList() {
+	  return "index";
+  }
+  
 }
