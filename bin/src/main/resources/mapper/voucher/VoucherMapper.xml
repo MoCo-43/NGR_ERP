@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 인터페이스 FQN과 100% 일치 -->
+<mapper namespace="com.yedam.erp.mapper.VoucherMapper">
+
+  <resultMap id="VoucherMap" type="com.yedam.erp.vo.VoucherVO">
+    <id     property="id"          column="ID"/>
+    <result property="voucherNo"   column="VOUCHER_NO"/>
+    <result property="type"        column="TYPE"/>
+    <result property="voucherDate" column="VOUCHER_DATE" jdbcType="DATE"/>
+    <result property="partnerName" column="PARTNER_NAME"/>
+    <result property="amount"      column="AMOUNT"/>
+    <result property="status"      column="STATUS"/>
+  </resultMap>
+
+  <sql id="BaseColumns">
+    ID, VOUCHER_NO, TYPE, VOUCHER_DATE, PARTNER_NAME, AMOUNT, STATUS
+  </sql>
+
+  <!-- 이름(=id)이 인터페이스 메서드명과 동일해야 함 -->
+  <select id="selectList" resultMap="VoucherMap">
+    SELECT <include refid="BaseColumns"/>
+    FROM TB_VOUCHER
+    <where>
+      <if test="type != null and type != ''">
+        AND TYPE = #{type}
+      </if>
+      <if test="status != null and status != ''">
+        AND STATUS = #{status}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND (VOUCHER_NO   LIKE '%' || #{keyword} || '%'
+         OR  PARTNER_NAME LIKE '%' || #{keyword} || '%')
+      </if>
+    </where>
+    ORDER BY VOUCHER_DATE DESC, ID DESC
+  </select>
+
+  <select id="selectOne" resultMap="VoucherMap">
+    SELECT <include refid="BaseColumns"/>
+    FROM TB_VOUCHER
+    WHERE ID = #{id}
+  </select>
+
+  <insert id="insert" parameterType="com.yedam.erp.vo.VoucherVO">
+    INSERT INTO TB_VOUCHER
+      (VOUCHER_NO, TYPE, VOUCHER_DATE, PARTNER_NAME, AMOUNT, STATUS)
+    VALUES
+      (#{voucherNo}, #{type}, #{voucherDate},
+       #{partnerName}, #{amount}, #{status})
+  </insert>
+
+  <update id="update" parameterType="com.yedam.erp.vo.VoucherVO">
+    UPDATE TB_VOUCHER
+       SET VOUCHER_NO   = #{voucherNo},
+           TYPE         = #{type},
+           VOUCHER_DATE = #{voucherDate},
+           PARTNER_NAME = #{partnerName},
+           AMOUNT       = #{amount},
+           STATUS       = #{status},
+     WHERE ID = #{id}
+  </update>
+
+  <delete id="delete">
+    DELETE FROM TB_VOUCHER WHERE ID = #{id}	
+  </delete>
+
+</mapper>
