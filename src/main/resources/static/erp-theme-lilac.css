@@ -175,3 +175,7 @@ body{
   .sidebar{ order:2 }
   .content{ order:1 }
 }
+
+.form-label, label {
+  color: #212529 !important;   /* Bootstrap 기본 텍스트 색 */
+}
