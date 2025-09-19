@@ -13,6 +13,7 @@ public class WebSecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
 		http
+		.csrf(csrf -> csrf.disable())
 			.authorizeHttpRequests((requests) -> requests
 					//모든거 다 여는거 /**
 					.requestMatchers("/**","/*.css", "/*.js","/img/**", "/prodimg/**", "/sign/**").permitAll()
