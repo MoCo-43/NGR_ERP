@@ -3,472 +3,300 @@
   lang="ko"
   xmlns:th="http://www.thymeleaf.org"
   xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-  layout:decorate="~{layout/base}"
->
-  <head>
-    <title layout:fragment="title">전표 목록</title>
+  layout:decorate="~{layout/base}">
+<head>
+  <title layout:fragment="title">전표 목록</title>
 
-    <th:block layout:fragment="head_extra">
-      <!-- AG Grid CSS (Quartz) -->
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
-      />
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
-      />
+  <th:block layout:fragment="head_extra">
+    <!-- AG Grid CSS (Quartz) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
 
-      <style>
-        /* ag-grid 영역 높이 */
-        #grid.ag-theme-quartz {
-          height: 600px;
-          width: 100%;
-        }
-        .ag-theme-quartz .ag-row-pinned {
-          font-weight: 700;
-          background: #fafafa;
-        }
-        .muted {
-          color: #6b7280;
-          font-size: 12px;
-        }
+    <style>
+      /* ag-grid 영역 높이 */
+      #grid.ag-theme-quartz { height:600px; width:100%; }
+      .ag-theme-quartz .ag-row-pinned { font-weight:700; background:#fafafa; }
+      .muted { color:#6b7280; font-size:12px; }
 
-        /* ===== 폼: 라벨 왼쪽, 컨트롤 오른쪽 정렬 ===== */
-        .form-label {
-          font-weight: 600;
-        }
-        /* 작게 줄일 때도 레이아웃 유지 */
-        @media (min-width: 576px) {
-          .form-label {
-            text-align: right;
-          }
-        }
+      /* ===== 라벨 색상: 테마가 흰색으로 덮는 문제 방지 ===== */
+      .form-label, label { color:#212529 !important; }  /* Bootstrap 기본 텍스트 색 */
 
-        /* ===== 푸터 아래 공백 방지 =====
-         마지막 카드의 바닥 마진 제거 + 컨텐츠 하단 약간의 패딩만 유지 */
-        #content .container-fluid > *:last-child {
-          margin-bottom: 0 !important;
-        }
-        #content .container-fluid {
-          padding-bottom: 1rem;
-        }
-      </style>
-    </th:block>
-  </head>
+      /* 폼: 라벨 왼쪽, 컨트롤 오른쪽 정렬 */
+      .form-label { font-weight:600; }
+      @media (min-width:576px){ .form-label { text-align:right; } }
 
-  <body>
-    <section layout:fragment="content">
-      <!-- **************** 검색 필터 **************** -->
-      <div class="card shadow mb-4">
-        <div
-          class="card-header py-3 d-flex align-items-center justify-content-between"
-        >
-          <h6 class="m-0 font-weight-bold text-primary">검색 필터</h6>
+      /* 마지막 카드 여백 정리 */
+      #content .container-fluid > *:last-child { margin-bottom:0 !important; }
+      #content .container-fluid { padding-bottom:1rem; }
+    </style>
+  </th:block>
+</head>
+
+<body>
+<section layout:fragment="content">
+  <!-- **************** 검색 필터 **************** -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">검색 필터</h6>
+    </div>
+    <div class="card-body">
+      <!-- 라벨 왼/입력 오른 구조 -->
+      <div class="form-group row">
+        <label for="typeFilter" class="col-sm-1 col-form-label form-label">구분</label>
+        <div class="col-sm-2">
+          <select id="typeFilter" class="form-control">
+            <option value="">전체</option>
+            <option value="S">매출</option>
+            <option value="P">매입</option>
+          </select>
         </div>
-        <div class="card-body">
-          <!-- 라벨 왼/입력 오른 구조 -->
-          <div class="form-group row">
-            <label for="typeFilter" class="col-sm-1 col-form-label form-label"
-              >구분</label
-            >
-            <div class="col-sm-2">
-              <select id="typeFilter" class="form-control">
-                <option value="">전체</option>
-                <option value="S">매출</option>
-                <option value="P">매입</option>
-              </select>
-            </div>
 
-            <label for="statusFilter" class="col-sm-1 col-form-label form-label"
-              >상태</label
-            >
-            <div class="col-sm-2">
-              <select id="statusFilter" class="form-control">
-                <option value="">전체</option>
-                <option value="OPEN">OPEN</option>
-                <option value="CLOSED">CLOSED</option>
-              </select>
-            </div>
+        <label for="statusFilter" class="col-sm-1 col-form-label form-label">상태</label>
+        <div class="col-sm-2">
+          <select id="statusFilter" class="form-control">
+            <option value="">전체</option>
+            <option value="OPEN">OPEN</option>
+            <option value="CLOSED">CLOSED</option>
+          </select>
+        </div>
 
-            <label for="keyword" class="col-sm-1 col-form-label form-label"
-              >검색어</label
-            >
-            <div class="col-sm-3">
-              <input
-                id="keyword"
-                class="form-control"
-                placeholder="전표번호/거래처"
-              />
-            </div>
+        <label for="keyword" class="col-sm-1 col-form-label form-label">검색어</label>
+        <div class="col-sm-3">
+          <input id="keyword" class="form-control" placeholder="전표번호/거래처"/>
+        </div>
 
-            <div class="col-sm-2 d-flex mt-2 mt-sm-0">
-              <button id="btnSearch" class="btn btn-primary mr-2 flex-fill">
-                <i class="fas fa-search mr-1"></i>조회
-              </button>
-              <button
-                id="btnRefresh"
-                class="btn btn-outline-secondary flex-fill"
-              >
-                <i class="fas fa-undo mr-1"></i>초기화
-              </button>
+        <!-- 조회/초기화는 그대로 오른쪽 정렬 -->
+        <div class="col-sm-2 d-flex mt-2 mt-sm-0">
+          <button id="btnSearch" class="btn btn-primary mr-2 flex-fill">
+            <i class="fas fa-search mr-1"></i>조회
+          </button>
+          <button id="btnRefresh" class="btn btn-outline-secondary flex-fill">
+            <i class="fas fa-undo mr-1"></i>초기화
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- **************** 전표 등록/수정 **************** -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">전표 등록/수정</h6>
+    </div>
+    <div class="card-body">
+      <form id="voucherForm" onsubmit="return false;">
+        <div class="form-group row">
+          <label for="voucherNo" class="col-sm-1 col-form-label form-label">전표번호</label>
+          <div class="col-sm-3">
+            <div class="input-group">
+              <input id="voucherNo" name="voucherNo" class="form-control" placeholder="전표번호" readonly required/>
+              <div class="input-group-append">
+                <button type="button" id="btnGenNo" class="btn btn-outline-secondary">번호생성</button>
+              </div>
             </div>
           </div>
+
+          <label for="type" class="col-sm-1 col-form-label form-label">구분</label>
+          <div class="col-sm-2">
+            <select id="type" name="type" class="form-control" required>
+              <option value="S">매출</option>
+              <option value="P">매입</option>
+            </select>
+          </div>
+
+          <label for="voucherDate" class="col-sm-1 col-form-label form-label">일자</label>
+          <div class="col-sm-2">
+            <input id="voucherDate" name="voucherDate" type="date" class="form-control" required/>
+          </div>
         </div>
-      </div>
 
-      <!-- **************** 전표 등록/수정 **************** -->
-      <div class="card shadow mb-4">
-        <div class="card-header py-3">
-          <h6 class="m-0 font-weight-bold text-primary">전표 등록/수정</h6>
+        <div class="form-group row">
+          <label for="partnerName" class="col-sm-1 col-form-label form-label">거래처</label>
+          <div class="col-sm-3">
+            <input id="partnerName" name="partnerName" class="form-control" placeholder="거래처" required/>
+          </div>
+
+          <label for="amount" class="col-sm-1 col-form-label form-label">금액</label>
+          <div class="col-sm-2">
+            <input id="amount" name="amount" type="number" min="0" step="1" class="form-control" placeholder="금액" required/>
+          </div>
+
+          <label for="status" class="col-sm-1 col-form-label form-label">상태</label>
+          <div class="col-sm-2">
+            <select id="status" name="status" class="form-control" required>
+              <option value="OPEN">OPEN</option>
+              <option value="CLOSED">CLOSED</option>
+            </select>
+          </div>
         </div>
-        <div class="card-body">
-          <form id="voucherForm" onsubmit="return false;">
-            <div class="form-group row">
-              <label for="voucherNo" class="col-sm-1 col-form-label form-label"
-                >전표번호</label
-              >
-              <div class="col-sm-3">
-                <div class="input-group">
-                  <input
-                    id="voucherNo"
-                    name="voucherNo"
-                    class="form-control"
-                    placeholder="전표번호"
-                    readonly
-                    required
-                  />
-                  <div class="input-group-append">
-                    <button
-                      type="button"
-                      id="btnGenNo"
-                      class="btn btn-outline-secondary"
-                    >
-                      번호생성
-                    </button>
-                  </div>
-                </div>
-              </div>
 
-              <label for="type" class="col-sm-1 col-form-label form-label"
-                >구분</label
-              >
-              <div class="col-sm-2">
-                <select id="type" name="type" class="form-control" required>
-                  <option value="S">매출</option>
-                  <option value="P">매입</option>
-                </select>
-              </div>
-
-              <label
-                for="voucherDate"
-                class="col-sm-1 col-form-label form-label"
-                >일자</label
-              >
-              <div class="col-sm-2">
-                <input
-                  id="voucherDate"
-                  name="voucherDate"
-                  type="date"
-                  class="form-control"
-                  required
-                />
-              </div>
-            </div>
-
-            <div class="form-group row">
-              <label
-                for="partnerName"
-                class="col-sm-1 col-form-label form-label"
-                >거래처</label
-              >
-              <div class="col-sm-3">
-                <input
-                  id="partnerName"
-                  name="partnerName"
-                  class="form-control"
-                  placeholder="거래처"
-                  required
-                />
-              </div>
-
-              <label for="amount" class="col-sm-1 col-form-label form-label"
-                >금액</label
-              >
-              <div class="col-sm-2">
-                <input
-                  id="amount"
-                  name="amount"
-                  type="number"
-                  min="0"
-                  step="1"
-                  class="form-control"
-                  placeholder="금액"
-                  required
-                />
-              </div>
-
-              <label for="status" class="col-sm-1 col-form-label form-label"
-                >상태</label
-              >
-              <div class="col-sm-2">
-                <select id="status" name="status" class="form-control" required>
-                  <option value="OPEN">OPEN</option>
-                  <option value="CLOSED">CLOSED</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group row mb-0">
-              <div class="col-sm-12">
-                <button
-                  type="button"
-                  id="btnCreate"
-                  class="btn btn-success mr-2"
-                >
-                  <i class="fas fa-plus mr-1"></i>등록
-                </button>
-                <button
-                  type="button"
-                  id="btnUpdate"
-                  class="btn btn-warning mr-2"
-                >
-                  <i class="fas fa-edit mr-1"></i>수정
-                </button>
-                <button type="button" id="btnDelete" class="btn btn-danger">
-                  <i class="fas fa-trash mr-1"></i>삭제
-                </button>
-                <span class="muted ml-2">* 행 클릭 후 수정/삭제</span>
-              </div>
-            </div>
-          </form>
+        <!-- 버튼을 오른쪽 정렬로 변경 -->
+        <div class="form-group row mb-0">
+          <div class="col-sm-12 text-right">
+            <button type="button" id="btnCreate" class="btn btn-success mr-2">
+              <i class="fas fa-plus mr-1"></i>등록
+            </button>
+            <button type="button" id="btnUpdate" class="btn btn-warning mr-2">
+              <i class="fas fa-edit mr-1"></i>수정
+            </button>
+            <button type="button" id="btnDelete" class="btn btn-danger">
+              <i class="fas fa-trash mr-1"></i>삭제
+            </button>
+            <span class="muted ml-2 d-inline-block">* 행 클릭 후 수정/삭제</span>
+          </div>
         </div>
-      </div>
+      </form>
+    </div>
+  </div>
 
-      <!-- **************** 전표 목록(그리드) **************** -->
-      <div class="card shadow mb-0">
-        <!-- 마지막 카드는 mb-0 -->
-        <div class="card-header py-3">
-          <h6 class="m-0 font-weight-bold text-primary">전표 목록</h6>
-        </div>
-        <div class="card-body">
-          <div id="grid" class="ag-theme-quartz"></div>
-        </div>
-      </div>
-    </section>
+  <!-- **************** 전표 목록(그리드) **************** -->
+  <div class="card shadow mb-0">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">전표 목록</h6>
+    </div>
+    <div class="card-body">
+      <div id="grid" class="ag-theme-quartz"></div>
+    </div>
+  </div>
+</section>
 
-    <th:block layout:fragment="body_extra">
-      <!-- libs (CSS 버전과 맞춤) -->
-      <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"
-      ></script>
-      <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
-      ></script>
+<th:block layout:fragment="body_extra">
+  <!-- libs -->
+  <script defer src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 
-      <!-- 템플릿 파싱 비활성화: JS의 `${...}` 보호 -->
-      <script th:inline="none">
-        document.addEventListener("DOMContentLoaded", () => {
-          const today = new Date().toISOString().slice(0, 10);
-          byId("voucherDate").value = today;
+  <!-- 템플릿 파싱 비활성화 -->
+  <script th:inline="none">
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().slice(0, 10);
+      byId("voucherDate").value = today;
 
-          function generateVoucherNo() {
-            const d = new Date();
-            const p = (n) => String(n).padStart(2, "0");
-            const ymd = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(
-              d.getDate()
-            )}`;
-            return `V-${ymd}`;
-          }
-          byId("voucherNo").value = generateVoucherNo();
+      function generateVoucherNo(){
+        const d=new Date(); const p=n=>String(n).padStart(2,"0");
+        const ymd=`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`;
+        return `V-${ymd}`;
+      }
+      byId("voucherNo").value = generateVoucherNo();
 
-          const gridDiv = byId("grid");
-          let gridApi;
+      const gridDiv = byId("grid");
+      let gridApi;
 
-          const columnDefs = [
-            { field: "id", headerName: "ID", maxWidth: 90 },
-            { field: "voucherNo", headerName: "전표번호", minWidth: 140 },
-            {
-              field: "type",
-              headerName: "구분",
-              maxWidth: 100,
-              valueFormatter: (p) => (p.value === "S" ? "매출" : "매입"),
-            },
-            { field: "voucherDate", headerName: "일자", minWidth: 120 },
-            { field: "partnerName", headerName: "거래처", flex: 1 },
-            {
-              field: "amount",
-              headerName: "금액",
-              type: "rightAligned",
-              valueFormatter: (p) => Number(p.value || 0).toLocaleString(),
-            },
-            { field: "status", headerName: "상태", maxWidth: 120 },
-          ];
+      const columnDefs = [
+        { field:"id", headerName:"ID", maxWidth:90 },
+        { field:"voucherNo", headerName:"전표번호", minWidth:140 },
+        { field:"type", headerName:"구분", maxWidth:100, valueFormatter:p=>p.value==="S"?"매출":"매입" },
+        { field:"voucherDate", headerName:"일자", minWidth:120 },
+        { field:"partnerName", headerName:"거래처", flex:1 },
+        { field:"amount", headerName:"금액", type:"rightAligned", valueFormatter:p=>Number(p.value||0).toLocaleString() },
+        { field:"status", headerName:"상태", maxWidth:120 },
+      ];
 
-          const gridOptions = {
-            columnDefs,
-            rowData: [],
-            rowSelection: "single",
-            pagination: true,
-            paginationPageSize: 10,
-            animateRows: true,
-            defaultColDef: { sortable: true, resizable: true, filter: true },
-            onGridReady: (params) => {
-              gridApi = params.api;
-              search();
-            },
-            onFilterChanged: updatePinnedTotals,
-            onSortChanged: updatePinnedTotals,
-            onModelUpdated: updatePinnedTotals,
-            onRowClicked: (e) => fillForm(e.data),
-          };
+      const gridOptions = {
+        columnDefs, rowData: [],
+        rowSelection:"single",
+        pagination:true, paginationPageSize:10,
+        animateRows:true,
+        defaultColDef:{ sortable:true, resizable:true, filter:true },
+        onGridReady:(params)=>{ gridApi=params.api; search(); },
+        onFilterChanged:updatePinnedTotals,
+        onSortChanged:updatePinnedTotals,
+        onModelUpdated:updatePinnedTotals,
+        onRowClicked:(e)=>fillForm(e.data),
+      };
 
-          if (window.agGrid?.createGrid) {
-            gridApi = agGrid.createGrid(gridDiv, gridOptions);
-          } else {
-            new agGrid.Grid(gridDiv, gridOptions);
-            gridApi = gridOptions.api;
-          }
+      if (window.agGrid?.createGrid) gridApi = agGrid.createGrid(gridDiv, gridOptions);
+      else { new agGrid.Grid(gridDiv, gridOptions); gridApi = gridOptions.api; }
 
-          function setRows(rows) {
-            if (gridApi?.setGridOption) gridApi.setGridOption("rowData", rows);
-            else if (gridApi?.setRowData) gridApi.setRowData(rows);
-          }
-          function setPinnedBottom(rows) {
-            if (gridApi?.setGridOption)
-              gridApi.setGridOption("pinnedBottomRowData", rows);
-            else if (gridApi?.setPinnedBottomRowData)
-              gridApi.setPinnedBottomRowData(rows);
-          }
+      const setRows = rows => gridApi?.setGridOption ? gridApi.setGridOption("rowData", rows) : gridApi.setRowData(rows);
+      const setPinnedBottom = rows => gridApi?.setGridOption ? gridApi.setGridOption("pinnedBottomRowData", rows) : gridApi.setPinnedBottomRowData(rows);
 
-          function updatePinnedTotals() {
-            if (!gridApi) return;
-            let sum = 0,
-              count = 0;
-            gridApi.forEachNodeAfterFilterAndSort((n) => {
-              count++;
-              const v = Number(n.data?.amount || 0);
-              if (!Number.isNaN(v)) sum += v;
-            });
-            setPinnedBottom([
-              {
-                voucherNo: "합계",
-                partnerName: `건수 ${count}건`,
-                amount: sum,
-              },
-            ]);
-          }
-
-          async function search() {
-            const type = byId("typeFilter").value;
-            const status = byId("statusFilter").value;
-            const keyword = byId("keyword").value;
-            const { data } = await axios.get("/api/v1/vouchers", {
-              params: { type, status, keyword },
-            });
-            setRows(data);
-            updatePinnedTotals();
-          }
-
-          async function createRow() {
-            const payload = readForm();
-            if (!validate(payload)) return;
-            await axios.post("/api/v1/vouchers", payload);
-            await search();
-            clearForm();
-          }
-          async function updateRow() {
-            if (!selectedId) {
-              alert("수정할 행을 선택하세요");
-              return;
-            }
-            const payload = readForm();
-            if (!validate(payload)) return;
-            await axios.put(`/api/v1/vouchers/${selectedId}`, payload);
-            await search();
-          }
-          async function deleteRow() {
-            if (!selectedId) {
-              alert("삭제할 행을 선택하세요");
-              return;
-            }
-            if (!confirm("정말 삭제할까요?")) return;
-            await axios.delete(`/api/v1/vouchers/${selectedId}`);
-            await search();
-            clearForm();
-          }
-
-          let selectedId = null;
-          function fillForm(r) {
-            selectedId = r.id;
-            setVal("voucherNo", r.voucherNo);
-            setVal("type", r.type);
-            setVal("voucherDate", r.voucherDate);
-            setVal("partnerName", r.partnerName);
-            setVal("amount", r.amount);
-            setVal("status", r.status);
-          }
-          function readForm() {
-            return {
-              voucherNo: getVal("voucherNo")?.trim(),
-              type: getVal("type"),
-              voucherDate: getVal("voucherDate"),
-              partnerName: getVal("partnerName")?.trim(),
-              amount: Number(getVal("amount") || 0),
-              status: getVal("status"),
-            };
-          }
-          function clearForm() {
-            selectedId = null;
-            setVal("voucherNo", "");
-            setVal("type", "S");
-            setVal("voucherDate", new Date().toISOString().slice(0, 10));
-            setVal("partnerName", "");
-            setVal("amount", "");
-            setVal("status", "OPEN");
-            gridApi?.deselectAll?.();
-          }
-          function validate(p) {
-            if (!p.voucherNo) {
-              const auto = generateVoucherNo();
-              alert("전표번호가 비어 있어 자동생성합니다: " + auto);
-              setVal("voucherNo", auto);
-              p.voucherNo = auto;
-            }
-            if (!p.voucherDate) {
-              alert("전표일자를 선택하세요.");
-              return false;
-            }
-            return true;
-          }
-
-          byId("btnSearch").addEventListener("click", search);
-          byId("btnRefresh").addEventListener("click", () => {
-            setVal("typeFilter", "");
-            setVal("statusFilter", "");
-            setVal("keyword", "");
-            search();
-          });
-          byId("btnGenNo").addEventListener("click", () =>
-            setVal("voucherNo", generateVoucherNo())
-          );
-          byId("btnCreate").addEventListener("click", createRow);
-          byId("btnUpdate").addEventListener("click", updateRow);
-          byId("btnDelete").addEventListener("click", deleteRow);
-
-          function byId(id) {
-            return document.getElementById(id);
-          }
-          function getVal(id) {
-            return byId(id).value;
-          }
-          function setVal(id, v) {
-            byId(id).value = v ?? "";
-          }
+      function updatePinnedTotals(){
+        if(!gridApi) return;
+        let sum=0, count=0;
+        gridApi.forEachNodeAfterFilterAndSort(n=>{
+          count++; const v=Number(n.data?.amount||0); if(!Number.isNaN(v)) sum+=v;
         });
-      </script>
-    </th:block>
-  </body>
+        setPinnedBottom([{ voucherNo:"합계", partnerName:`건수 ${count}건`, amount:sum }]);
+      }
+
+      async function search(){
+        const type=byId("typeFilter").value;
+        const status=byId("statusFilter").value;
+        const keyword=byId("keyword").value;
+        const { data } = await axios.get("/api/v1/vouchers", { params:{ type, status, keyword }});
+        setRows(data); updatePinnedTotals();
+      }
+
+      async function createRow(){
+        const payload = readForm(); if(!validate(payload)) return;
+        await axios.post("/api/v1/vouchers", payload);
+        await search(); clearForm();
+      }
+      async function updateRow(){
+        if(!selectedId){ alert("수정할 행을 선택하세요"); return; }
+        const payload = readForm(); if(!validate(payload)) return;
+        await axios.put(`/api/v1/vouchers/${selectedId}`, payload);
+        await search();
+      }
+      async function deleteRow(){
+        if(!selectedId){ alert("삭제할 행을 선택하세요"); return; }
+        if(!confirm("정말 삭제할까요?")) return;
+        await axios.delete(`/api/v1/vouchers/${selectedId}`);
+        await search(); clearForm();
+      }
+
+      let selectedId=null;
+      function fillForm(r){
+        selectedId=r.id;
+        setVal("voucherNo", r.voucherNo);
+        setVal("type", r.type);
+        setVal("voucherDate", r.voucherDate);
+        setVal("partnerName", r.partnerName);
+        setVal("amount", r.amount);
+        setVal("status", r.status);
+      }
+      function readForm(){
+        return {
+          voucherNo: getVal("voucherNo")?.trim(),
+          type: getVal("type"),
+          voucherDate: getVal("voucherDate"),
+          partnerName: getVal("partnerName")?.trim(),
+          amount: Number(getVal("amount")||0),
+          status: getVal("status"),
+        };
+      }
+      function clearForm(){
+        selectedId=null;
+        setVal("voucherNo","");
+        setVal("type","S");
+        setVal("voucherDate", new Date().toISOString().slice(0,10));
+        setVal("partnerName","");
+        setVal("amount","");
+        setVal("status","OPEN");
+        gridApi?.deselectAll?.();
+      }
+      function validate(p){
+        if(!p.voucherNo){
+          const auto = generateVoucherNo();
+          alert("전표번호가 비어 있어 자동생성합니다: "+auto);
+          setVal("voucherNo", auto); p.voucherNo=auto;
+        }
+        if(!p.voucherDate){ alert("전표일자를 선택하세요."); return false; }
+        return true;
+      }
+
+      byId("btnSearch").addEventListener("click", search);
+      byId("btnRefresh").addEventListener("click", ()=>{ setVal("typeFilter",""); setVal("statusFilter",""); setVal("keyword",""); search(); });
+      byId("btnGenNo").addEventListener("click", ()=> setVal("voucherNo", generateVoucherNo()));
+      byId("btnCreate").addEventListener("click", createRow);
+      byId("btnUpdate").addEventListener("click", updateRow);
+      byId("btnDelete").addEventListener("click", deleteRow);
+
+      function byId(id){ return document.getElementById(id); }
+      function getVal(id){ return byId(id).value; }
+      function setVal(id,v){ byId(id).value = v ?? ""; }
+    });
+  </script>
+</th:block>
+</body>
 </html>
