@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="header" class="navbar navbar-expand navbar-light bg-raccoon topbar mb-4 static-top shadow navbar-raccoon">
+  <!-- Sidebar Toggle (Topbar) -->
+  <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+    <i class="fa fa-bars text-raccoon"></i>
+  </button>
+
+  <a th:href="@{/}" class="navbar-brand text-raccoon font-weight-bold">🦝 ERP Demo</a>
+
+  <!-- Topbar Navbar -->
+  <ul class="navbar-nav ml-auto">
+    <li class="nav-item">
+      <a th:href="@{/}" class="nav-link" th:classappend="${activeMenu}=='home' ? ' active'">
+        <i class="fas fa-home mr-1"></i> Home
+      </a>
+    </li>
+    <li class="nav-item">
+      <a th:href="@{/vouchers}" class="nav-link" th:classappend="${activeMenu}=='vouchers' ? ' active'">
+        <i class="fas fa-file-invoice mr-1"></i> 전표
+      </a>
+    </li>
+  </ul>
+</nav>
+</body>
+</html>	

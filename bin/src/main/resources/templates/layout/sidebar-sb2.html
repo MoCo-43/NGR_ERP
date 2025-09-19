@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<body>
+<ul th:fragment="sidebar" class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+  <!-- Brand -->
+  <a th:href="@{/}" class="sidebar-brand d-flex align-items-center justify-content-center">
+    <div class="sidebar-brand-text mx-3">ERP Demo</div>
+  </a>
+
+  <hr class="sidebar-divider my-0">
+
+  <li class="nav-item" th:classappend="${activeMenu}=='home' ? ' active'">
+    <a class="nav-link" th:href="@{/}">
+      <i class="fas fa-tachometer-alt"></i>
+      <span>대시보드</span>
+    </a>
+  </li>
+
+  <li class="nav-item" th:classappend="${activeMenu}=='vouchers' ? ' active'">
+    <a class="nav-link" th:href="@{/vouchers}">
+      <i class="fas fa-file-invoice"></i>
+      <span>전표</span>
+    </a>
+  </li>
+
+  <hr class="sidebar-divider d-none d-md-block">
+
+  <!-- Sidebar Toggler -->
+  <div class="text-center d-none d-md-inline">
+    <button class="rounded-circle border-0" id="sidebarToggle"></button>
+  </div>
+</ul>
+</body>
+</html>

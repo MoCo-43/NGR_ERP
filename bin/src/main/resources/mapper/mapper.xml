@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.erp.mapper.TestMapper">
+<select id="selectAll" resultType="BookVO">
+SELECT 
+       BOOK_NO
+       ,BOOK_NAME
+       ,BOOK_DESC
+       ,ISBN
+       ,AUTHOR
+       ,PUB
+FROM BOOK
+
+</select>
+
+</mapper>
