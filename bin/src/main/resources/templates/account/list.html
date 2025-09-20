@@ -25,31 +25,39 @@
           height: 600px;
           width: 100%;
         }
+
         .ag-theme-quartz .ag-row-pinned {
           font-weight: 700;
           background: #fafafa;
         }
+
         .muted {
           color: #6b7280;
           font-size: 12px;
         }
 
-        /* ===== 폼: 라벨 왼쪽, 컨트롤 오른쪽 정렬 ===== */
+        /* ===== 라벨 색상: 테마가 흰색으로 덮는 문제 방지 ===== */
+        .form-label,
+        label {
+          color: #212529 !important;
+        } /* Bootstrap 기본 텍스트 색 */
+
+        /* 폼: 라벨 왼쪽, 컨트롤 오른쪽 정렬 */
         .form-label {
           font-weight: 600;
         }
-        /* 작게 줄일 때도 레이아웃 유지 */
+
         @media (min-width: 576px) {
           .form-label {
             text-align: right;
           }
         }
 
-        /* ===== 푸터 아래 공백 방지 =====
-         마지막 카드의 바닥 마진 제거 + 컨텐츠 하단 약간의 패딩만 유지 */
+        /* 마지막 카드 여백 정리 */
         #content .container-fluid > *:last-child {
           margin-bottom: 0 !important;
         }
+
         #content .container-fluid {
           padding-bottom: 1rem;
         }
@@ -102,6 +110,7 @@
               />
             </div>
 
+            <!-- 조회/초기화는 그대로 오른쪽 정렬 -->
             <div class="col-sm-2 d-flex mt-2 mt-sm-0">
               <button id="btnSearch" class="btn btn-primary mr-2 flex-fill">
                 <i class="fas fa-search mr-1"></i>조회
@@ -219,8 +228,10 @@
               </div>
             </div>
 
+            <!-- 버튼을 오른쪽 정렬로 변경 -->
+
             <div class="form-group row mb-0">
-              <div class="col-sm-12">
+              <div class="col-sm-12 text-right">
                 <button
                   type="button"
                   id="btnCreate"
@@ -238,7 +249,9 @@
                 <button type="button" id="btnDelete" class="btn btn-danger">
                   <i class="fas fa-trash mr-1"></i>삭제
                 </button>
-                <span class="muted ml-2">* 행 클릭 후 수정/삭제</span>
+                <span class="muted ml-2 d-inline-block"
+                  >* 행 클릭 후 수정/삭제</span
+                >
               </div>
             </div>
           </form>
@@ -247,7 +260,6 @@
 
       <!-- **************** 전표 목록(그리드) **************** -->
       <div class="card shadow mb-0">
-        <!-- 마지막 카드는 mb-0 -->
         <div class="card-header py-3">
           <h6 class="m-0 font-weight-bold text-primary">전표 목록</h6>
         </div>
@@ -258,7 +270,7 @@
     </section>
 
     <th:block layout:fragment="body_extra">
-      <!-- libs (CSS 버전과 맞춤) -->
+      <!-- libs -->
       <script
         defer
         src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"
@@ -268,7 +280,7 @@
         src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
       ></script>
 
-      <!-- 템플릿 파싱 비활성화: JS의 `${...}` 보호 -->
+      <!-- 템플릿 파싱 비활성화 -->
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
           const today = new Date().toISOString().slice(0, 10);
@@ -325,23 +337,21 @@
             onRowClicked: (e) => fillForm(e.data),
           };
 
-          if (window.agGrid?.createGrid) {
+          if (window.agGrid?.createGrid)
             gridApi = agGrid.createGrid(gridDiv, gridOptions);
-          } else {
+          else {
             new agGrid.Grid(gridDiv, gridOptions);
             gridApi = gridOptions.api;
           }
 
-          function setRows(rows) {
-            if (gridApi?.setGridOption) gridApi.setGridOption("rowData", rows);
-            else if (gridApi?.setRowData) gridApi.setRowData(rows);
-          }
-          function setPinnedBottom(rows) {
-            if (gridApi?.setGridOption)
-              gridApi.setGridOption("pinnedBottomRowData", rows);
-            else if (gridApi?.setPinnedBottomRowData)
-              gridApi.setPinnedBottomRowData(rows);
-          }
+          const setRows = (rows) =>
+            gridApi?.setGridOption
+              ? gridApi.setGridOption("rowData", rows)
+              : gridApi.setRowData(rows);
+          const setPinnedBottom = (rows) =>
+            gridApi?.setGridOption
+              ? gridApi.setGridOption("pinnedBottomRowData", rows)
+              : gridApi.setPinnedBottomRowData(rows);
 
           function updatePinnedTotals() {
             if (!gridApi) return;
@@ -469,6 +479,7 @@
           }
         });
       </script>
+      <script></script>
     </th:block>
   </body>
 </html>
