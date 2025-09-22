@@ -76,10 +76,10 @@ const MENUS = {
     content: "회계 대시보드",
     groups: [
       { title: "계정 과목", items: [
-        ["계정과목","/acc/account"]
+        ["계정 과목 관리","/accountList"]
       ]},
       { title: "전표", items: [
-        ["매출매입전표","/acc/voucher/sales-purchase"],
+        ["매출매입전표","/invoice"],
         ["일반전표","/acc/voucher/general"],
         ["자금전표","/acc/voucher/fund"],
         ["급여전표","/acc/voucher/payroll"],

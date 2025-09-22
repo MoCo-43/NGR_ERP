@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 인터페이스 FQN과 100% 일치 -->
+<mapper namespace="com.yedam.erp.mapper.Biz.BizMapper">
+
+<!-- 테스트용 전체 주문서 목록 조회 -->
+<select id="getAllPO" resultType="com.yedam.erp.vo.Biz.PurchaseOrderVO">
+  SELECT * 
+  FROM PURCHASE_ORDER
+</select>
+
+<!-- 주문서 조회 -->
+<select id="selectPO" resultType="com.yedam.erp.vo.Biz.PurchaseOrderVO">
+SELECT p.PO_START, c.CUS_NAME, p.CREATER, pd.ORDER_QTY, c.BIZ_TYPE, c.CEO_NAME, p.TOTAL_PRICE, p.PO_STATUS, p.notes
+FROM CUSTOMER c
+LEFT JOIN PURCHASE_ORDER p ON c.CUS_NO = p.CUS_NO
+LEFT JOIN PO_DETAIL pd ON pd.PO_ID = p.PO_ID
+ORDER BY PO_START DESC
+</select>
+
+<!-- 주문서 입력 -->
+<insert id="insertPO" parameterType="com.yedam.erp.vo.Biz.PurchaseOrderVO">
+  INSERT ALL 
+  INTO PURCHASE_ORDER (PO_ID, CUS_NO, CREATER, TOTAL_PRICE, PO_STATUS, NOTES)
+  VALUES (PO_ID_SEQ.NEXTVAL(), #{cusNo}, #{creater}, #{totalPrice}, #{poStatus}, #{notes})
+  INTO PO_DETAIL (POD_ID , PO_ID, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE, DC_PRICE, SUP_AMT, VAT_AMT, D_PRD_NAME)
+  VALUES (POD_ID_SEQ.NEXTVAL(), PO_ID_SEQ.CURRVAL(), #{productCode}, #{orderQty}, #{unitPrice}, #{dcPrice}, #{supAmt}, #{vatAmt}, #{dPrdName})
+</insert>
+
+
+</mapper>

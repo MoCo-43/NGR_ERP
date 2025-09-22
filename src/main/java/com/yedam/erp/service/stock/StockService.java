@@ -2,7 +2,7 @@ package com.yedam.erp.service.stock;
 
 import java.util.List;
 
-import com.yedam.erp.vo.stock.CustomerVO;
+import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
 public interface StockService {
@@ -11,7 +11,7 @@ public interface StockService {
 	public int insertProduct(ProductVO product); 
 	
 	// 거래처 조회
-	public List<CustomerVO> customerAll();
+	public List<PartnerVO> customerAll();
 	
 	
 }

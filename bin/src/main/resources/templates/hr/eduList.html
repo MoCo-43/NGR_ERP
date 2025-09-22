@@ -1,0 +1,71 @@
+<!-- templates/hr/eduList.html -->
+<div id="eduList" th:fragment="eduList">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="fw-bold small text-secondary">사원 교육 리스트</div>
+        <div class="d-flex gap-2">
+          <!-- Bootstrap 4: data-toggle/data-target 사용 -->
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            id="btnEduAdd"
+            data-toggle="modal"
+            data-target="#eduFormModal"
+          >등록</button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:100px;">교육번호</th>
+              <th>교육명</th>
+              <th style="width:120px;">종류</th>
+              <th style="width:100px;">결과</th>
+              <th style="width:90px; text-align:right;">점수</th>
+              <th style="width:120px;">수료일</th>
+              <th style="width:120px;">유효기간</th>
+              <th style="width:80px;">삭제</th>
+            </tr>
+          </thead>
+          <tbody id="eduTbody"><!-- JS 렌더 --></tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end small text-secondary mt-2">
+        <span id="eduRowCount">0건</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ 모달 강제 오픈 & empId 세팅 (Bootstrap 4용) -->
+<script>
+(function(){
+  // 등록 버튼 클릭 시: empId 세팅 + 모달 보이기
+  document.addEventListener('click', function(e){
+    if (!e.target || e.target.id !== 'btnEduAdd') return;
+
+    var empId = document.getElementById('f_emp_id')?.value || '';
+    var hidden = document.getElementById('eduEmpId');
+    if (hidden) hidden.value = empId;
+
+    var $modal = $('#eduFormModal');
+    if ($modal.length === 0) {
+      console.error('[교육모달] #eduFormModal 요소 없음 (fragment 포함/ID 오타 확인)');
+      alert('교육 등록 모달이 화면에 준비되지 않았습니다.');
+      return;
+    }
+    // Bootstrap 4 jQuery API
+    $modal.modal('show');
+  });
+
+  // 모달 열릴 때 첫 입력 포커스
+  $(document).on('shown.bs.modal', '#eduFormModal', function(){
+    var $first = $(this).find('input[name="eduName"]');
+    if ($first.length) $first.focus();
+  });
+})();
+</script>

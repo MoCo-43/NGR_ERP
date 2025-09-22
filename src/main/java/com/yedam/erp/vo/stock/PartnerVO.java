@@ -3,7 +3,7 @@ package com.yedam.erp.vo.stock;
 import lombok.Data;
 
 @Data
-public class CustomerVO {
+public class PartnerVO {
 
 	private String empName;
 	private String cusName;

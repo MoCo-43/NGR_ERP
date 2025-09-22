@@ -2,7 +2,8 @@
 <html lang="ko"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/main_auth_base}"> <head>
+      layout:decorate="~{layout/main_auth_base}"> 
+<head>
   <title layout:fragment="title">ERP 인증</title>
   
   <th:block layout:fragment="head_extra">
@@ -84,21 +85,23 @@
       <form th:action="@{/login}" method="post">
         <input type="hidden" name="role" id="role-input" value="USER">
         <div class="input-field">
-          <input type="text" name="companyCode" placeholder="회사코드" required>
+          <input type="text" name="empId" placeholder="아이디" required>
         </div>
         <div class="input-field">
-          <input type="text" name="username" placeholder="아이디" required>
+          <input type="password" name="empPw" placeholder="비밀번호" required>
         </div>
-        <div class="input-field">
-          <input type="password" name="password" placeholder="비밀번호" required>
-        </div>
+        
         <div id="recaptcha-section" class="input-field">
-          <div class="g-recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY"></div>
+          <div class="g-recaptcha" 
+               th:attr="data-sitekey=${@environment.getProperty('recaptcha.key.site')}">
+          </div>
         </div>
+
         <div id="captcha-section" class="input-field" style="display:none;">
           <img th:src="@{/captcha}" alt="Captcha Image" class="captcha-img">
           <input type="text" name="captcha" placeholder="보안문자 입력">
         </div>
+        
         <button type="submit" class="btn-primary">로그인</button>
       </form>
       <div class="link-small">
@@ -106,6 +109,7 @@
         <a href="#" onclick="showSection('register'); return false;">회원가입</a>
       </div>
     </div>
+
     <div id="register" class="auth-section">
       <h2>회원가입</h2>
       <form th:action="@{/register}" method="post">
@@ -127,6 +131,7 @@
         <a href="#" onclick="showSection('login'); return false;">로그인으로 돌아가기</a>
       </div>
     </div>
+
     <div id="forgot" class="auth-section">
       <h2>비밀번호 찾기</h2>
       <form th:action="@{/forgot-password}" method="post">
@@ -134,7 +139,7 @@
           <input type="text" name="companyCode" placeholder="회사코드" required>
         </div>
         <div class="input-field">
-          <input type="text" name="companyCode" placeholder="아이디" required>
+          <input type="text" name="username" placeholder="아이디" required>
         </div>
         <div class="input-field">
           <input type="email" name="email" placeholder="이메일" required>
@@ -147,26 +152,39 @@
     </div>
   </div>
 </th:block>
+
 <th:block layout:fragment="body_extra">
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <script>
     function showSection(targetId) {
-      $('.auth-section').removeClass('active');
-      $('#' + targetId).addClass('active');
+      document.querySelectorAll('.auth-section').forEach(function(section) {
+        section.classList.remove('active');
+      });
+      document.getElementById(targetId).classList.add('active');
     }
-    $(document).ready(function(){
-      $('.role-btn').click(function(){
-        var role = $(this).data('role');
-        $('#role-input').val(role);
-        if(role === 'ADMIN'){
-          $('#recaptcha-section').hide();
-          $('#captcha-section').show();
-        } else {
-          $('#recaptcha-section').show();
-          $('#captcha-section').hide();
-        }
-        $('.role-btn').removeClass('active');
-        $(this).addClass('active');
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const roleButtons = document.querySelectorAll('.role-btn');
+      const roleInput = document.getElementById('role-input');
+      const recaptchaSection = document.getElementById('recaptcha-section');
+      const captchaSection = document.getElementById('captcha-section');
+
+      roleButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+          const role = this.getAttribute('data-role');
+          roleInput.value = role;
+          
+          if (role === 'ADMIN') {
+            recaptchaSection.style.display = 'none';
+            captchaSection.style.display = 'block';
+          } else {
+            recaptchaSection.style.display = 'block';
+            captchaSection.style.display = 'none';
+          }
+          
+          roleButtons.forEach(btn => btn.classList.remove('active'));
+          this.classList.add('active');
+        });
       });
     });
   </script>

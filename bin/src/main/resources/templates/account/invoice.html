@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+  <title layout:fragment="title">매입 매출 전표</title>
+  <th:block layout:fragment="head_extra">
+   
+    <!-- AG Grid -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
+    <style>
+      #voucherGrid.ag-theme-quartz { height: 32rem; width: 100%; }
+      #detailGrid.ag-theme-quartz { height: 20rem; width: 100%; margin-top: 1rem; display:none; }
+      #invoiceGrid.ag-theme-quartz { height: 20rem; width: 100%; margin-top: 1rem;  }
+      .btn-bar { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+    </style>
+  </th:block>
+</head>
+<body>
+<section layout:fragment="content">
+  <div class="card shadow mb-3">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="m-0 fw-bold text-primary">매입 매출 전표</h6>
+    </div>
+    <div class="card-body">
+      <!-- 버튼 영역 -->
+      <div class="btn-bar">
+        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#invoiceModal">매출</button>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#invoiceModal">매입</button>
+        <button class="btn btn-success btn-sm">전자세금</button>
+        <button id="previewBtn" class="btn btn-outline-secondary btn-sm ms-auto">미리보기</button>
+      </div>
+
+      <!-- 전표 목록 Grid -->
+      <div id="voucherGrid" class="ag-theme-quartz"></div>
+
+      <!-- 분개 상세 Grid -->
+      <div id="detailGrid" class="ag-theme-quartz"></div>
+    </div>
+  </div>
+  <!-- ✅ 모달 fragment include -->
+<div th:replace="~{account/invoiceModal :: invoiceModal}"></div>
+</section>
+
+
+
+<th:block layout:fragment="body_extra">
+ 
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+  <script th:inline="none">
+    let voucherApi, detailApi;
+
+    // === 전표 데이터 불러오기 ===
+    async function loadAndRenderVoucher() {
+      try {
+        const { data } = await axios.get("/api/v1/vouchers");
+        voucherApi.setGridOption("rowData", Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error(err);
+        alert("전표 데이터를 불러오지 못했습니다.");
+      }
+    }
+
+    // === 분개 상세 불러오기 ===
+    async function loadAndRenderDetail(voucherId) {
+      try {
+        const { data } = await axios.get(`/api/v1/vouchers/${voucherId}/details`);
+        detailApi.setGridOption("rowData", Array.isArray(data) ? data : []);
+        document.getElementById("detailGrid").style.display = "block";
+      } catch (err) {
+        console.error(err);
+        alert("분개 데이터를 불러오지 못했습니다.");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const voucherColumnDefs = [
+        { headerName: "월", field: "month", minWidth: 70 },
+        { headerName: "일", field: "day", minWidth: 70 },
+        { headerName: "유형", field: "type", minWidth: 100 },
+        { headerName: "전표번호", field: "voucherNo", minWidth: 120 },
+        { headerName: "사업자번호", field: "bizNo", minWidth: 140 },
+        { headerName: "거래처명", field: "partnerName", flex: 1 },
+        { headerName: "품명", field: "item", flex: 1 },
+        { headerName: "수량", field: "qty", minWidth: 80 },
+        { headerName: "공급가액", field: "amount", minWidth: 120 },
+        { headerName: "부가세", field: "vat", minWidth: 100 },
+        { headerName: "합계", field: "total", minWidth: 120 },
+      ];
+
+      voucherApi = agGrid.createGrid(document.querySelector("#voucherGrid"), {
+        columnDefs: voucherColumnDefs,
+        rowData: [],
+        rowSelection: "single",
+        pagination: true,
+        paginationPageSize: 12,
+        defaultColDef: { filter: true, resizable: true }
+      });
+
+      const detailColumnDefs = [
+        { headerName: "구분", field: "gbn", minWidth: 80 },
+        { headerName: "코드", field: "code", minWidth: 80 },
+        { headerName: "계정과목", field: "acctName", flex: 1 },
+        { headerName: "거래처코드", field: "partnerCode", minWidth: 120 },
+        { headerName: "거래처", field: "partner", flex: 1 },
+        { headerName: "차변(출금)", field: "debit", minWidth: 120 },
+        { headerName: "대변(입금)", field: "credit", minWidth: 120 },
+        { headerName: "적요", field: "note", flex: 1 },
+      ];
+
+      detailApi = agGrid.createGrid(document.querySelector("#detailGrid"), {
+        columnDefs: detailColumnDefs,
+        rowData: [],
+        defaultColDef: { resizable: true }
+      });
+
+      document.getElementById("previewBtn").addEventListener("click", async () => {
+        const selected = voucherApi.getSelectedRows();
+        if (selected.length === 0) {
+          alert("전표를 선택하세요.");
+          return;
+        }
+        await loadAndRenderDetail(selected[0].id);
+      });
+
+      loadAndRenderVoucher();
+    });
+    
+    // invoiceModal grid 데이터!
+    
+    let invoiceGridApi;
+    let invoiceGridCreated = false;
+
+    // 그리드 옵션 미리 정의
+    const invoiceGridOptions = {
+      columnDefs: [
+        { headerName: "품목코드", field: "itemCode", minWidth: 120 },
+        { headerName: "품목명",   field: "itemName", flex: 1 },
+        { headerName: "단가",     field: "price",    minWidth: 120 },
+        { headerName: "수량",     field: "qty",      minWidth: 100 },
+        { headerName: "공급가액", field: "supply",   minWidth: 120 },
+        { headerName: "부가가치세", field: "vat",    minWidth: 120 },
+        { headerName: "비고",     field: "note",     flex: 1 }
+      ],
+      rowData: [
+        { itemCode: "A01", itemName: "맛있는쿠키", price: 1000, qty: 100, supply: 100000, vat: 10000, note: "" }
+      ],
+      defaultColDef: { resizable: true },
+      pinnedBottomRowData: [{ note: "합계", supply: 100000, vat: 10000 }]
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const modalEl = document.getElementById('invoiceModal');
+
+        // 모달이 실제로 화면에 표시된 직후에 생성
+        modalEl.addEventListener('shown.bs.modal', () => {
+          const gridDiv = document.getElementById('invoiceGrid');
+
+          if (!invoiceGridCreated) {
+            invoiceGridApi = agGrid.createGrid(gridDiv, invoiceGridOptions);
+            invoiceGridCreated = true;
+            
+          } else {
+            // 재오픈 시 레이아웃 보정
+            invoiceGridApi.api.sizeColumnsToFit();
+            invoiceGridApi.api.resetRowHeights();
+          }
+        });
+      });
+  </script>
+</th:block>
+</body>
+</html>
