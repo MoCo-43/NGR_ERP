@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}"
+>
+  <head>
+    <title layout:fragment="title">주문서 조회</title>
+
+    <th:block layout:fragment="head_extra">
+      <!-- AG Grid CSS -->
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
+      />
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
+      />
+
+      <style>
+        /* 그리드 영역 */
+        #orderGrid.ag-theme-quartz {
+          height: 560px;
+          width: 100%;
+        }
+
+        /* 디자인 보정 */
+        .btn-filter-group .btn {
+          min-width: 108px;
+        }
+        .form-inline .form-control {
+          min-width: 180px;
+        }
+        .muted {
+          color: #6b7280;
+          font-size: 12px;
+        }
+        .text-right {
+          text-align: right;
+        }
+      </style>
+    </th:block>
+  </head>
+
+  <body>
+    <section layout:fragment="content">
+      <!--검색/필터 카드 -->
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex align-items-center justify-content-between"
+        >
+          <h6 class="m-0 font-weight-bold text-primary">주문서 조회</h6>
+        </div>
+
+        <div class="card-body">
+          <!-- 1. 처리상태 버튼 -->
+          <div
+            class="btn-filter-group btn-group mb-3"
+            role="group"
+            aria-label="status-filters"
+          >
+            <button class="btn btn-outline-primary" data-status="">전체</button>
+            <button class="btn btn-outline-primary" data-status="주문승인">
+              주문승인
+            </button>
+            <button class="btn btn-outline-primary" data-status="출하준비중">
+              출하준비중
+            </button>
+            <button class="btn btn-outline-primary" data-status="출하완료">
+              출하완료
+            </button>
+          </div>
+
+          <!-- 2~6. 검색 조건 -->
+          <div class="form-inline flex-wrap gap-2">
+            <label class="mr-2 mb-2">작성일자</label>
+            <input id="date" type="date" class="form-control mr-3 mb-2" />
+
+            <label class="mr-2 mb-2">거래처</label>
+            <input
+              id="customer"
+              type="text"
+              class="form-control mr-3 mb-2"
+              placeholder="거래처 검색"
+            />
+
+            <label class="mr-2 mb-2">처리상태</label>
+            <select id="status" class="form-control mr-3 mb-2">
+              <option value="">전체</option>
+              <option value="주문승인">주문승인</option>
+              <option value="출하준비중">출하준비중</option>
+              <option value="출하완료">출하완료</option>
+            </select>
+
+            <label class="mr-2 mb-2">제품코드</label>
+            <input
+              id="productCode"
+              type="text"
+              class="form-control mr-3 mb-2"
+              placeholder="제품코드 입력"
+            />
+
+            <button id="btnSearch" class="btn btn-dark mb-2">조회</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- *************** 주문서 리스트(ag-Grid) *************** -->
+      <div class="card shadow mb-0">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">주문서 리스트</h6>
+        </div>
+        <div class="card-body">
+          <div id="orderGrid" class="ag-theme-quartz"></div>
+        </div>
+      </div>
+    </section>
+
+    <th:block layout:fragment="body_extra">
+      <!-- libs -->
+      <script
+        defer
+        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"
+      ></script>
+      <script
+        defer
+        src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
+      ></script>
+
+      <script th:inline="none">
+        document.addEventListener("DOMContentLoaded", () => {
+          // ===== ag-Grid 컬럼 (설계안 그대로) =====
+          const columnDefs = [
+            {
+              headerName: "작성일자",
+              field: "poStart",
+              width: 140,
+              valueFormatter: (p) =>
+                p.value ? new Date(p.value).toLocaleDateString("ko-KR") : "",
+            },
+            { headerName: "거래처명", field: "cusName", width: 140 },
+            { headerName: "담당자", field: "creater", width: 110 },
+            { headerName: "품목명", field: "prdName", flex: 1, minWidth: 220 },
+            {
+              headerName: "납기일자",
+              field: "exDate",
+              width: 140,
+              valueFormatter: (p) =>
+                p.value ? new Date(p.value).toLocaleDateString("ko-KR") : "",
+            },
+            {
+              headerName: "주문금액",
+              field: "totalPrice",
+              width: 140,
+              type: "rightAligned",
+              valueFormatter: (p) =>
+                p.value || p.value === 0
+                  ? Number(p.value).toLocaleString("ko-KR")
+                  : "",
+            },
+            { headerName: "진행상태", field: "poStatus", width: 120 },
+          ];
+
+          // ===== Grid 옵션 =====
+          const gridDiv = document.getElementById("orderGrid");
+          let gridApi;
+
+          const gridOptions = {
+            columnDefs,
+            rowData: [],
+            rowSelection: "single",
+            pagination: true,
+            paginationPageSize: 12,
+            animateRows: true,
+            defaultColDef: { sortable: true, resizable: true, filter: true },
+            onGridReady: (p) => {
+              gridApi = p.api;
+              search(); // 최초 로드
+            },
+            onModelUpdated: updatePinnedTotals,
+            onFilterChanged: updatePinnedTotals,
+            onSortChanged: updatePinnedTotals,
+          };
+
+          if (window.agGrid?.createGrid)
+            gridApi = agGrid.createGrid(gridDiv, gridOptions);
+          else {
+            new agGrid.Grid(gridDiv, gridOptions);
+            gridApi = gridOptions.api;
+          }
+
+          const setRows = (rows) =>
+            gridApi?.setGridOption
+              ? gridApi.setGridOption("rowData", rows)
+              : gridApi.setRowData(rows);
+          const setPinnedBottom = (rows) =>
+            gridApi?.setGridOption
+              ? gridApi.setGridOption("pinnedBottomRowData", rows)
+              : gridApi.setPinnedBottomRowData(rows);
+
+          // ===== 합계(핀드 바텀) =====
+          function updatePinnedTotals() {
+            if (!gridApi) return;
+            let sum = 0,
+              count = 0;
+            gridApi.forEachNodeAfterFilterAndSort((n) => {
+              count++;
+              const v = Number(n.data?.totalPrice || 0);
+              if (!Number.isNaN(v)) sum += v;
+            });
+            setPinnedBottom([
+              { cusName: `건수 ${count}건`, prdName: "합계", totalPrice: sum },
+            ]);
+          }
+
+          // ===== API 호출 =====
+          async function search(override = {}) {
+            try {
+              const { data } = await axios.get("/api/biz/polist");
+              // 방어적 매핑: 응답 키가 달라도 그리드 필드에 맞춰 변환
+              const mapped = (Array.isArray(data) ? data : []).map((r) => ({
+                poStart: r.poStart ?? r.createdDate ?? r.orderDate ?? null,
+                cusName: r.cusName ?? r.customerName ?? "",
+                creater: r.creater ?? r.manager ?? "",
+                prdName: r.prdName ?? r.productName ?? "",
+                exDate: r.exDate ?? r.dueDate ?? null,
+                totalPrice: r.totalPrice ?? r.orderAmount ?? 0,
+                poStatus: r.poStatus ?? r.status ?? "",
+              }));
+              setRows(mapped);
+              updatePinnedTotals();
+            } catch (e) {
+              console.error("주문서 조회 실패:", e);
+              setRows([]);
+              setPinnedBottom([{ prdName: "에러", totalPrice: 0 }]);
+            }
+          }
+
+          // ===== 이벤트 연결 =====
+          document
+            .querySelectorAll(".btn-filter-group [data-status]")
+            .forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const status = btn.getAttribute("data-status") || "";
+                // 상태 셀렉트도 동기화
+                const sel = document.getElementById("status");
+                if (sel) sel.value = status;
+                search({ status });
+              });
+            });
+          document
+            .getElementById("btnSearch")
+            ?.addEventListener("click", () => search());
+          // Enter로 검색
+          ["customer", "productCode"].forEach((id) => {
+            const el = document.getElementById(id);
+            el?.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") search();
+            });
+          });
+        });
+      </script>
+    </th:block>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.erp.mapper.main.EmpLoginMapper">
+
+	<select id="findByEmpId" parameterType="String" resultType="com.yedam.erp.vo.main.EmpLoginVO">
+        SELECT
+            emp_id_no,
+            emp_pw,
+            emp_id,
+            emp_no,
+            create_at,
+            is_used,
+            mat_no,
+            is_locked,
+            lock_until,
+            failed_login_att,
+            dept_code,
+            code_id,
+            two_step_method,
+            token
+        FROM
+            emp_login
+        WHERE
+            emp_id = #{empId}
+	</select>
+
+</mapper>

@@ -1,0 +1,77 @@
+<div id="payFix" th:fragment="payFix">
+  <form id="payFixForm" onsubmit="return false;">
+    <input type="hidden" id="pf_emp_id" name="emp_id" />
+    <div class="container-fluid">
+      <div class="row g-3">
+        <div class="col-12"><div class="fw-bold small text-secondary">고정 수당</div></div>
+        <div class="col-md-6">
+          <label for="pf_basePay" class="form-label">기본급</label>
+          <input type="number" id="pf_basePay" name="base_pay" class="form-control" min="0" step="1000" placeholder="예: 3000000">
+        </div>
+        <div class="col-md-6">
+          <label for="pf_birthCare" class="form-label">출산 보육수당</label>
+          <input type="number" id="pf_birthCare" name="birth_care" class="form-control" min="0" step="1000">
+        </div>
+        <div class="col-md-6">
+          <label for="pf_familyAllow" class="form-label">부양 가족수당</label>
+          <input type="number" id="pf_familyAllow" name="family_allow" class="form-control" min="0" step="1000">
+        </div>
+        <div class="col-md-6">
+          <label for="pf_mealAllow" class="form-label">식대</label>
+          <input type="number" id="pf_mealAllow" name="meal_allow" class="form-control" min="0" step="1000">
+        </div>
+        <div class="col-md-6">
+          <label for="pf_annualAllow" class="form-label">연차 수당</label>
+          <input type="number" id="pf_annualAllow" name="annual_allow" class="form-control" min="0" step="1000">
+        </div>
+        <div class="col-md-6">
+          <label for="pf_total" class="form-label fw-bold">월정 금액 (자동)</label>
+          <input type="number" id="pf_total" class="form-control" readonly>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <script th:inline="none">
+    (function(){
+      const calcTotal = function(){
+        const n = id => Number(document.getElementById(id)?.value || 0);
+        const total = n('pf_basePay') + n('pf_birthCare') + n('pf_familyAllow') + n('pf_mealAllow') + n('pf_annualAllow');
+        const out = document.getElementById('pf_total');
+        if(out) out.value = total;
+      };
+      ['pf_basePay','pf_birthCare','pf_familyAllow','pf_mealAllow','pf_annualAllow'].forEach(id=>{
+        document.addEventListener('input', e => { if(e.target?.id===id) calcTotal(); });
+      });
+      window.__payFix = {
+        setValues(v){
+          const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value = (val ?? ''); };
+          set('pf_emp_id', v?.emp_id);
+          set('pf_basePay', v?.base_pay);
+          set('pf_birthCare', v?.birth_care);
+          set('pf_familyAllow', v?.family_allow);
+          set('pf_mealAllow', v?.meal_allow);
+          set('pf_annualAllow', v?.annual_allow);
+          calcTotal();
+        },
+        getValues(){
+          const g = id=>document.getElementById(id)?.value ?? '';
+          return {
+            emp_id:       g('pf_emp_id'),
+            base_pay:     Number(g('pf_basePay')||0),
+            birth_care:   Number(g('pf_birthCare')||0),
+            family_allow: Number(g('pf_familyAllow')||0),
+            meal_allow:   Number(g('pf_mealAllow')||0),
+            annual_allow: Number(g('pf_annualAllow')||0),
+            total:        Number(g('pf_total')||0),
+          };
+        },
+        clear(){
+          ['pf_emp_id','pf_basePay','pf_birthCare','pf_familyAllow','pf_mealAllow','pf_annualAllow','pf_total']
+            .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+        },
+        calcTotal: calcTotal
+      };
+    })();
+  </script>
+</div>

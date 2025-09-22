@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.yedam.erp.service.TestService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 @RequiredArgsConstructor
 @Controller
@@ -18,7 +21,7 @@ public class MainController {
 
 private final TestService testService;
 
-  @GetMapping("/account")
+  @GetMapping("/account/123")
   public String main(Model model){
     model.addAttribute("boardList", testService.selectAll());
     return "index";
