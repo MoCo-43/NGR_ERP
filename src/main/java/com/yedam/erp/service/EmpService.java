@@ -17,4 +17,5 @@ public interface EmpService {
 
     // 수정 (WHERE emp_id)
     int updateEmp(EmpVO empVO);
+    
 }
