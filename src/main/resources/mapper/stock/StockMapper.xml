@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.erp.mapper.stock.StockMapper">
+<insert id="insertProduct" parameterType="ProductVO">
+INSERT INTO product(
+		PRODUCT_CODE
+		,PRODUCT_NAME
+		,SPECIFICATION
+		,EMP_NAME
+		,PRODUCT_IMAGE
+		,PURCHASE_PRICE
+		,SALES_PRICE
+		,NOTE
+		,INSERT_DATE
+)
+VALUES(LPAD(seq_product.nextval,5,'0'),
+       #{productName},
+       #{specification},
+       #{empName},
+       #{productImageName},
+       #{purchasePrice},
+       #{salesPrice},
+       #{note},
+       #{insertDate}
+)
+
+</insert>
+
+<select id="customerAll" resultType="CustomerVO">
+SELECT 
+       emp_name, 
+       cus_name,
+       cus_code,
+       biz_no,
+       ceo_name, 
+       biz_type ,
+       biz_category,
+       addr 
+FROM customer
+</select>
+
+
+
+
+
+
+
+</mapper>
