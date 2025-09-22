@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="ko"
-      xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
-<head>
-  <meta charset="UTF-8"/>
-  <title layout:fragment="title">ERP</title>
-
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title layout:fragment="title">ERP</title>
+    
   <!-- SB Admin 2 CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
 
@@ -86,6 +88,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
   <script th:src="@{/sidebar.js}"></script>
 
-  <th:block layout:fragment="body_extra"></th:block>
-</body>
+    <th:block layout:fragment="body_extra"></th:block>
+  </body>
 </html>

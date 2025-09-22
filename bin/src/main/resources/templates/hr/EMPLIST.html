@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<head>
+  <title layout:fragment="title">사원관리</title>
+
+  <th:block layout:fragment="head_extra">
+    <style>
+      .muted { color:#6b7280; font-size:12px; }
+      .table th, .table td { vertical-align: middle; }
+      .table-hover tbody tr:hover { background:#f9fafb; }
+    </style>
+  </th:block>
+</head>
+
+<body>
+<section layout:fragment="content">
+
+  <!-- *************** 검색 영역 *************** -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">사원 검색</h6>
+    </div>
+    <div class="card-body">
+      <div class="form-inline">
+        <input type="text" id="keyword" class="form-control mr-2" placeholder="사번/성명을 입력하세요" style="min-width:250px;">
+        <button class="btn btn-dark mr-2">검색</button>
+        <button class="btn btn-primary mr-2">등록</button>
+        <button class="btn btn-success">수정</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- *************** 사원 리스트 *************** -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">사원 리스트</h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th style="width:60px;">선택</th>
+              <th style="width:120px;">사원번호</th>
+              <th style="width:100px;">성명</th>
+              <th style="width:120px;">부서</th>
+              <th style="width:100px;">직급</th>
+              <th style="width:150px;">전화번호</th>
+              <th style="width:200px;">이메일</th>
+              <th style="width:120px;">입사일자</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td>2025001</td>
+              <td>김민수</td>
+              <td>인사팀</td>
+              <td>사원</td>
+              <td>010-1234-5678</td>
+              <td>minsu@example.com</td>
+              <td>2024-03-15</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td>2025002</td>
+              <td>김단비</td>
+              <td>총무팀</td>
+              <td>대리</td>
+              <td>010-2345-6789</td>
+              <td>danbe@example.com</td>
+              <td>2022-08-10</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td>2025003</td>
+              <td>김뽀민</td>
+              <td>영업팀</td>
+              <td>주임</td>
+              <td>010-3456-7890</td>
+              <td>ddomin@example.com</td>
+              <td>2020-06-10</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td>2025004</td>
+              <td>김창수</td>
+              <td>기획팀</td>
+              <td>사원</td>
+              <td>010-4567-8901</td>
+              <td>chansu@example.com</td>
+              <td>2024-02-15</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</section>
+</body>
+</html>
