@@ -26,7 +26,7 @@ VALUES(LPAD(seq_product.nextval,5,'0'),
 
 </insert>
 
-<select id="customerAll" resultType="CustomerVO">
+<select id="customerAll" resultType="PartnerVO">
 SELECT 
        emp_name, 
        cus_name,

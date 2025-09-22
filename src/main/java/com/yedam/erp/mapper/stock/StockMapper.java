@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
-import com.yedam.erp.vo.stock.CustomerVO;
+import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
 @Mapper
@@ -14,7 +14,7 @@ public interface StockMapper {
 	public int insertProduct(ProductVO product);
 	
 	// 거래처 조회
-	public List<CustomerVO> customerAll();
+	public List<PartnerVO> customerAll();
 	
 	
 }
