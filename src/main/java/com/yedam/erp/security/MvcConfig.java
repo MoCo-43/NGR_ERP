@@ -12,7 +12,8 @@ public class MvcConfig implements WebMvcConfigurer {
 		// 메인
 		
 		// 영업
-		
+		registry.addViewController("/biz/polist").setViewName("biz/ViewAllPO");
+		registry.addViewController("/biz/poinsert").setViewName("biz/InsertPO");
 		// 회계
 		
 		// 재고
