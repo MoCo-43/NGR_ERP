@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 인터페이스 FQN과 100% 일치 -->
+<mapper namespace="com.yedam.erp.mapper.account.accountMapper">
+	<select id="selectAll" resultType="accountVO">
+		SELECT acct_code,
+		acct_name,
+		std_acct_name,
+		category,
+		use_yn,
+		acct_kwan,
+		acct_hang,
+		acct_mok
+		FROM ACCOUNT
+		<where>
+			<if test="category != null and category != ''">
+				AND category LIKE '%' || #{category} || '%'
+			</if>
+		</where>
+	</select>
+
+	<update id="updateYN" parameterType="String">
+		UPDATE account
+		SET use_yn =
+		CASE use_yn
+		WHEN 'Y' THEN 'N'
+		ELSE 'Y'
+		END
+		WHERE acct_code = #{acctCode}
+
+	</update>
+
+	<!-- 엑셀 파일 인서트 -->
+	<insert id="bulkInsert" parameterType="java.util.List">
+		INSERT ALL
+		<foreach collection="list" item="item">
+			INTO account (acct_code, acct_name, std_acct_name, category, use_yn)
+			VALUES (#{item.acctCode}, #{item.acctName}, #{item.stdAcctName},
+			#{item.category}, #{item.useYn})
+		</foreach>
+		SELECT 1 FROM dual
+	</insert>
+
+</mapper>
