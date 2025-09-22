@@ -33,5 +33,5 @@ public class LoginController {
         return "captcha_ok";
     }
     
-    // 이전에 있던 @PostMapping("/login") 메서드는 삭제되었습니다.
+    // 이전에 있던 @PostMapping("/login") 메서드는 시큐리티와 중복되어 로그인 흐름 꼬이는 문제로 인해 제거
 }

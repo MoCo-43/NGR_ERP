@@ -90,13 +90,16 @@
         <div class="input-field">
           <input type="password" name="empPw" placeholder="비밀번호" required>
         </div>
-        
+        <div class="input-field">
+		  <label>
+		    <input type="checkbox" name="remember-me"> 로그인 상태 유지
+		  </label>
+		</div>
         <div id="recaptcha-section" class="input-field">
           <div class="g-recaptcha" 
                th:attr="data-sitekey=${@environment.getProperty('recaptcha.key.site')}">
           </div>
         </div>
-
         <div id="captcha-section" class="input-field" style="display:none;">
           <img th:src="@{/captcha}" alt="Captcha Image" class="captcha-img">
           <input type="text" name="captcha" placeholder="보안문자 입력">

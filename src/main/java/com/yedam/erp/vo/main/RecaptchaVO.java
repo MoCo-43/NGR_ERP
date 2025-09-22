@@ -11,7 +11,7 @@ public class RecaptchaVO {
 
 	//reCAPTCHA 검증 성공 여부 (t/f)
 	private boolean success;
-	//사용자 통과한 시간(ISO 8061형식)
+	//사용자 통과한 시간(ISO 8061형식) -> 2025-09-22T23:05:00Z
 	private String challenge_ts;
 	//reCAPTCHA가 사용된 웹사이트 호스트 이름
 	private String hostname;
