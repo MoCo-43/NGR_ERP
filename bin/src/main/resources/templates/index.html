@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
   <head>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
@@ -7,12 +7,25 @@
       integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
       crossorigin="anonymous"
     />
+    <!-- AG Grid CSS (Quartz) -->
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
+      />
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
+      />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>index.html</title>
   </head>
   <body>
     <h1>index.html</h1>
+     <!-- 모달 호출 버튼 -->
+    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#myModal">
+      검색 모달 열기
+    </button>
     <table class="table">
       <tr>
         <th>글번호</th>
@@ -31,5 +44,73 @@
         <td th:text="${board.pub}"></td>
       </tr>
     </table>
+    <!-- 모달 include -->
+    <div th:replace="~{modal/modal :: basicModal}"></div>
+   
+   
+     <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ag-Grid JS (v31) -->
+    <script defer        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"
+      ></script>
+    <!-- Axios -->
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
+    ></script>
+    <script th:inline="none">
+    document.addEventListener("DOMContentLoaded", () => {
+    	  let gridCreated = false;
+    	  let gridApi = null;
+    	  let gridOptions = null;
+
+    	  const columnDefs = [
+    	    { headerName: "No.", field: "bookNo", width: 70 },
+    	    { headerName: "책이름", field: "bookName", width: 150 },
+    	    { headerName: "설명", field: "bookDesc", width: 150 },
+    	    { headerName: "ISBN", field: "isbn", width: 120 },
+    	    { headerName: "저자", field: "author", width: 150 },
+    	    { headerName: "출판사", field: "pub", width: 150 },
+    	  ];
+
+    	  // Bootstrap Modal 이벤트로 감싸기
+    	  const modalEl = document.getElementById("myModal");
+    	  if (!modalEl) return;
+
+    	  modalEl.addEventListener("shown.bs.modal", async () => {
+    	    // 여기서 DOM에 myGrid가 존재하는 것을 보장
+    	    const eGridDiv = modalEl.querySelector("#myGrid");
+
+    	    if (!gridCreated) {
+    	      gridOptions = {
+    	        columnDefs,
+    	        rowData: [],
+    	        defaultColDef: { resizable: true, sortable: true, filter: true },
+    	        onGridReady: async function (params) {
+    	          gridApi = params.api;
+    	          await loadData();
+    	        },
+    	      };
+    	      new agGrid.Grid(eGridDiv, gridOptions);
+    	      gridCreated = true;
+    	    } else {
+    	      await loadData();
+    	    }
+    	  });
+
+    	  async function loadData() {
+    		    try {
+    		        const { data } = await axios.get("/api/books/list");
+    		        console.log("API 데이터:", data); // 배열 확인
+    		        gridApi.setRowData(data);
+    		        gridApi.sizeColumnsToFit();
+    		    } catch (err) {
+    		        console.error("API 호출 에러:", err);
+    		    }
+    		}
+    	});
+    </script>
+   
+   
   </body>
 </html>

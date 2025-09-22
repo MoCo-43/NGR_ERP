@@ -1,27 +1,19 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <body>
-<nav th:fragment="header" class="navbar navbar-expand navbar-light bg-raccoon topbar mb-4 static-top shadow navbar-raccoon">
-  <!-- Sidebar Toggle (Topbar) -->
-  <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-    <i class="fa fa-bars text-raccoon"></i>
-  </button>
-
-  <a th:href="@{/}" class="navbar-brand text-raccoon font-weight-bold">🦝 ERP Demo</a>
-
-  <!-- Topbar Navbar -->
-  <ul class="navbar-nav ml-auto">
-    <li class="nav-item">
-      <a th:href="@{/}" class="nav-link" th:classappend="${activeMenu}=='home' ? ' active'">
-        <i class="fas fa-home mr-1"></i> Home
-      </a>
-    </li>
-    <li class="nav-item">
-      <a th:href="@{/vouchers}" class="nav-link" th:classappend="${activeMenu}=='vouchers' ? ' active'">
-        <i class="fas fa-file-invoice mr-1"></i> 전표
-      </a>
-    </li>
-  </ul>
-</nav>
+<!-- 상단 탭: 헤더/사이드바 색상 통일 -->
+<div class="topbar" th:fragment="header">
+  <nav class="tabs" role="tablist">
+    <a href="#" class="tab active" data-tab="hr" role="tab" aria-selected="true">인사</a>
+    <a href="#" class="tab" data-tab="inventory" role="tab" aria-selected="false">재고</a>
+    <a href="#" class="tab" data-tab="sales" role="tab" aria-selected="false">영업</a>
+    <a href="#" class="tab" data-tab="accounting" role="tab" aria-selected="false">회계</a>
+  </nav>
+  <div class="right">
+    <a href="#" aria-label="mypage">mypage</a>
+    <span>|</span>
+    <a href="#" aria-label="logout">로그아웃</a>
+  </div>
+</div>
 </body>
-</html>	
+</html>

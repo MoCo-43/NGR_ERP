@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+  <meta charset="UTF-8"/>
+  <title layout:fragment="title">NGR_ERP</title>
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/css/sb-admin-2.min.css"/>
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"/>
+  
+  <style>
+    body.bg-auth {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f8f9fc;
+    }
+    .auth-card {
+      width: 900px;
+      max-width: 95%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .auth-left {
+      background-color: rgb(255, 255, 128);
+      background-image: url('img/1.png');
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      min-height: 100%;
+    }
+    .auth-right {
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .auth-content {
+      width: 100%;
+      max-width: 360px;
+    }
+  </style>
+
+  <th:block layout:fragment="head_extra"></th:block>
+</head>
+<body class="bg-auth">
+
+<div class="auth-card">
+  <div class="row no-gutters">
+    <div class="col-lg-4 d-none d-lg-block auth-left"></div>
+    <div class="col-lg-8 auth-right">
+      <div class="auth-content">
+        <th:block layout:fragment="content"></th:block>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
+<th:block layout:fragment="body_extra"></th:block>
+</body>
+</html>
