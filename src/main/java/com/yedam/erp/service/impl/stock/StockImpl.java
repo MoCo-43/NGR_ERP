@@ -1,0 +1,35 @@
+package com.yedam.erp.service.impl.stock;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.yedam.erp.mapper.stock.StockMapper;
+import com.yedam.erp.service.stock.StockService;
+import com.yedam.erp.vo.stock.CustomerVO;
+import com.yedam.erp.vo.stock.ProductVO;
+
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+@Service
+public class StockImpl implements StockService{
+
+	
+	final private StockMapper mapper;
+	
+	
+	@Override
+	public int insertProduct(ProductVO product) {
+		
+		return mapper.insertProduct(product);
+	}
+
+
+	@Override
+	public List<CustomerVO> customerAll() {
+		// TODO Auto-generated method stub
+		return mapper.customerAll();
+	}
+
+}
