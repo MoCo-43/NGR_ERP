@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.yedam.erp.service.stock.StockService;
-import com.yedam.erp.vo.stock.CustomerVO;
+import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class StockController {
 	
 	
 	 @GetMapping("/cusList")
-	 public List<CustomerVO> cutList(){
+	 public List<PartnerVO> cutList(){
 		 return service.customerAll();
 	 }
 	

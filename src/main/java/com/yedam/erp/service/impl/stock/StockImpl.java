@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.yedam.erp.mapper.stock.StockMapper;
 import com.yedam.erp.service.stock.StockService;
-import com.yedam.erp.vo.stock.CustomerVO;
+import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class StockImpl implements StockService{
 
 
 	@Override
-	public List<CustomerVO> customerAll() {
+	public List<PartnerVO> customerAll() {
 		// TODO Auto-generated method stub
 		return mapper.customerAll();
 	}
