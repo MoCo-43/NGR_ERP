@@ -18,7 +18,7 @@ public class MainController {
 
 private final TestService testService;
 
-  @GetMapping("/account")
+  @GetMapping("/account/123")
   public String main(Model model){
     model.addAttribute("boardList", testService.selectAll());
     return "index";

@@ -14,11 +14,14 @@ public class MvcConfig implements WebMvcConfigurer {
 		// 영업
 		
 		// 회계
-		
+		registry.addViewController("/vouchers").setViewName("account/list");
+		registry.addViewController("/accountList").setViewName("account/accountlist");
+		registry.addViewController("/invoice").setViewName("account/invoice");
+		registry.addViewController("/invoiceModal").setViewName("account/invoiceModal");
 		// 재고
 		
 		// 인사
-		registry.addViewController("/vouchers").setViewName("account/list");
+		
 		
 
 	}

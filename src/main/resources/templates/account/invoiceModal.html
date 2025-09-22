@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>매출/매입 전표 등록</title>
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+
+<style>
+.modal-lg {
+	max-width: 900px;
+}
+
+.form-row {
+	margin-bottom: 0.5rem;
+}
+
+.btn-icon {
+	padding: 0.25rem 0.5rem;
+}
+
+#invoiceGrid.ag-theme-quartz {
+	height: 16rem;
+	width: 100%;
+	margin-top: 1rem;
+}
+
+.ag-theme-quartz .ag-row-pinned {
+	font-weight: 700;
+	background: #fafafa;
+}
+/* ✅ 버튼 하단 중앙 */
+.modal-footer {
+	justify-content: center;
+}
+</style>
+</head>
+<body>
+	<div th:fragment="invoiceModal">
+		<div class="modal fade" id="invoiceModal" tabindex="-1"
+			aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">매출/매입 전표</h5>
+						<button type="button" class="btn btn-light btn-sm border-0"
+							data-bs-dismiss="modal" aria-label="닫기">
+							<i class="fas fa-times"></i>
+						</button>
+					</div>
+
+					<div class="modal-body">
+						<!-- 전표 기본정보 -->
+						<div class="row mb-2">
+							<div class="col-md-3">
+								<label class="form-label">전표일자</label> <input type="date"
+									class="form-control" value="2025-12-31" readonly />
+							</div>
+							<div class="col-md-4">
+								<label class="form-label">주문서</label>
+								<div class="input-group">
+									<input type="text" class="form-control" />
+									<button class="btn btn-outline-secondary btn-icon">
+										<i class="fas fa-search"></i>
+									</button>
+								</div>
+							</div>
+							<div class="col-md-5">
+								<label class="form-label">부서명</label>
+								<div class="input-group">
+									<input type="text" class="form-control" />
+									<button class="btn btn-outline-secondary btn-icon">
+										<i class="fas fa-search"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+
+						<div class="row mb-2">
+							<div class="col-md-4">
+								<label class="form-label">부가세 유형</label> <select
+									class="form-select">
+									<option>과세</option>
+									<option>영세</option>
+									<option>면세</option>
+								</select>
+							</div>
+							<div class="col-md-8">
+								<label class="form-label">거래처</label>
+								<div class="input-group">
+									<input type="text" class="form-control" placeholder="코드" />
+									<button class="btn btn-outline-secondary btn-icon">
+										<i class="fas fa-search"></i>
+									</button>
+									<input type="text" class="form-control" placeholder="거래처명" />
+								</div>
+							</div>
+						</div>
+
+						<!-- 품목 Grid -->
+						<div id="invoiceGrid" class="ag-theme-quartz"></div>
+
+						<!-- 세부내역 -->
+						<div class="mb-2 mt-3">
+							<label class="form-label">세부내역</label>
+							<textarea class="form-control"></textarea>
+						</div>
+
+						<!-- 결제방식, 적요 -->
+						<div class="row mb-2">
+							<div class="col-md-6">
+								<label class="form-label">결제방식</label> <input type="text"
+									class="form-control" />
+							</div>
+							<div class="col-md-6">
+								<label class="form-label">적요</label> <input type="text"
+									class="form-control" />
+							</div>
+						</div>
+
+						<!-- 계정과목 -->
+						<div class="row mb-2">
+							<div class="col-md-6">
+								<label class="form-label">매출/매입 계정</label>
+								<div class="input-group">
+									<input type="text" class="form-control" placeholder="코드" />
+									<button class="btn btn-outline-secondary btn-icon">
+										<i class="fas fa-search"></i>
+									</button>
+									<input type="text" class="form-control" placeholder="계정과목명" />
+								</div>
+							</div>
+							<div class="col-md-6">
+								<label class="form-label">압출금 계좌</label>
+								<div class="input-group">
+									<input type="text" class="form-control" placeholder="코드" />
+									<button class="btn btn-outline-secondary btn-icon">
+										<i class="fas fa-search"></i>
+									</button>
+									<input type="text" class="form-control" placeholder="계좌번호" />
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- ✅ 버튼을 footer로 이동 -->
+					<div class="modal-footer">
+						<button class="btn btn-success">저장</button>
+						<button class="btn btn-danger">초기화</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script
+		src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+	<script th:inline="none">
+ 
+  
+</script>
+</body>
+</html>
