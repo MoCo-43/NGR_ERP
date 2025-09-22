@@ -33,6 +33,10 @@ public class StockController {
 
 	final private StockService service;
 	
+	@GetMapping("/productList")
+	public List<ProductVO> productList(){
+		return service.productAll();
+	}
 	
 	 @GetMapping("/cusList")
 	 public List<PartnerVO> cutList(){
