@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_auth_base}"> 
+<head>
+  <title layout:fragment="title">ERP 비밀번호 찾기</title>
+  
+  <th:block layout:fragment="head_extra">
+    <style>
+      .auth-forms h2 { text-align: center; margin-bottom: 1.5rem; color: #4d341e; }
+      .auth-forms .input-field { width: 100%; margin-bottom: 1rem; }
+      .auth-forms .input-field input { width: 100%; padding: 10px; border: none; border-bottom: 2px solid #ccc; background: transparent; outline: none; }
+      .auth-forms .btn-primary { width: 100%; padding: 12px; background: #4d341e; color: #fff; border: none; cursor: pointer; margin-top: 10px; }
+      .link-small { font-size: 0.9rem; text-align: center; margin-top: 1rem; }
+      .link-small a { color: #4d341e; }
+    </style>
+  </th:block>
+</head>
+<body>
+<th:block layout:fragment="content">
+<div class="auth-forms">
+  <div id="forgot">
+    <h2>비밀번호 찾기</h2>
+    <form th:action="@{/forgot-password}" method="post">
+      <div class="input-field"><input type="text" name="companyCode" placeholder="회사코드" required></div>
+      <div class="input-field"><input type="text" name="username" placeholder="아이디" required></div>
+      <div class="input-field"><input type="email" name="email" placeholder="이메일" required></div>
+      <button type="submit" class="btn-primary">재설정 메일 보내기</button>
+    </form>
+    <div class="link-small">
+      <a th:href="@{/login}">로그인으로 돌아가기</a>
+    </div>
+  </div>
+</div>
+</th:block>
+</body>
+</html>

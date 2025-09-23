@@ -7,5 +7,5 @@ public interface EmpLoginMapper {
 
 	EmpLoginVO findByEmpId(String empId);
     
-    EmpLoginVO findByEmpIdAndMatNo(@Param("empId") String empId, @Param("matNo") String matNo);
+    EmpLoginVO findByEmpIdAndMatNo(@Param("empId") String empId, @Param("matNo") Long matNo);
 }
