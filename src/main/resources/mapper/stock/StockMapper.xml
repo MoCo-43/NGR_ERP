@@ -37,6 +37,7 @@ SELECT
        biz_category,
        addr 
 FROM customer
+WHERE gbn = '구매처'
 </select>
 
 <select id="productAll" resultType="ProductVO">
@@ -48,14 +49,17 @@ FROM PRODUCT
 
 </select>
 
-<insert id="insertOrderPlan" useGeneratedKeys="true" keyProperty="xpCode" parameterType="OrderPlanVO">
+<insert id="insertOrderPlan" parameterType="OrderPlanVO">
+<selectKey keyProperty="xpCode" resultType="string" order="BEFORE">
+        SELECT CONCAT('OP', SEQ_EXPLAIN.nextval) FROM dual
+</selectKey>
 INSERT INTO EXPLAIN(
          XP_CODE
          ,EMP_ID
          ,INS_DATE
          ,VAT_TYPE
 )
-VALUES (CONCAT('OP',SEQ_EXPLAIN.nextval), #{empId}, #{insDate}, #{taxType})
+VALUES (#{xpCode}, #{empId}, #{insDate}, #{taxType})
 
 
 </insert>
@@ -88,7 +92,24 @@ VALUES (SEQ_EXPLAIN_DETAIL.nextval ,
 
 
 </insert>
+<!-- 발주 계획 조회 -->
+<select id="selectOrderPlans" resultMap="orderPlanResultMap">
+    SELECT *
+    FROM EXPLAIN
+    WHERE ins_date BETWEEN #{startDate} AND #{endDate}
+</select>
 
+<!-- ResultMap -->
+<resultMap id="orderPlanResultMap" type="OrderPlanVO">
+    <id property="xpCode" column="xp_code"/>
+    <result property="empId" column="emp_id"/>
+    <result property="insDate" column="ins_date"/>
+    <result property="taxType" column="vat_type"/>
+    
+    <!-- 디테일 매핑 -->
+    <collection property="details" ofType="OrderPlanDetailVO" 
+        select="selectOrderPlanDetailsByXpCode" column="xp_code"/>
+</resultMap>
 
 
 

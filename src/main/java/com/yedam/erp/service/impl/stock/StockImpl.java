@@ -42,6 +42,7 @@ public class StockImpl implements StockService{
         if(plan.getDetails() != null) {
             for(OrderPlanDetailVO item : plan.getDetails()) {
                 item.setXpCode(plan.getXpCode()); // 마스터 PK -> 디테일 FK
+                System.out.println("Detail XP_CODE: " + item.getXpCode()); // 디버깅용
                 mapper.insertOrderPlanDetail(item);
             }
         }
