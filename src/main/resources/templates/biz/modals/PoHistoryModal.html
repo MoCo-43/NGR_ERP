@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/styles/ag-theme-quartz.css"
+    />
+  </head>
+  <body>
+    <!-- fragment 이름을 PoHistoryModal 로 지정 -->
+    <div th:fragment="PoHistoryModal">
+      <div
+        class="modal fade"
+        id="PoHistoryModal"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">주문서이력조회</h5>
+            </div>
+
+            <!-- 모달 바디 시작 -->
+            <div class="modal-body">
+              <!-- 검색 결과 ag-Grid -->
+              <div
+                id="poHistoryGrid"
+                class="ag-theme-quartz"
+                style="height: 400px; width: 100%"
+              ></div>
+
+              <!-- 모달 바디 종료 -->
+            </div>
+
+            <!-- 모달 푸터 시작-->
+            <div class="modal-footer">
+              <!-- 모달 푸터 종료-->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

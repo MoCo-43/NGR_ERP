@@ -38,5 +38,9 @@ public class BizController {
       return service.insertPO(vo);
   }
   
-  // 주문서 등록 처리
+  // 주문서 이력 조회
+  @GetMapping("/pohistory")
+  public List<PurchaseOrderVO> getPOHistory() {
+      return service.getPOHistory();
+  }
 }

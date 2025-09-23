@@ -33,4 +33,9 @@ public class BizServiceImpl implements BizService {
 		return bizMapper.insertPO(vo);
 	}
 
+	// 주문서 이력 조회
+	@Override
+	public List<PurchaseOrderVO> getPOHistory() {
+		return bizMapper.getPOHistory();
+	}
 }
