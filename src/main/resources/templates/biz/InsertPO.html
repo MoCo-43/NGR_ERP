@@ -59,6 +59,7 @@
               id="btnOpenProduct"
               type="button"
               class="btn btn-outline-secondary btn-slim"
+              data-bs-target="#productModal"
             >
               품목코드
             </button>
@@ -102,17 +103,14 @@
               <div class="form-group col-md-5">
                 <label class="form-label">거래처</label>
                 <div class="input-group">
-                  <!-- 실제로는 select로 바인딩해도 됨: value = cusNo -->
-                  <input
-                    id="cusNo"
-                    class="form-control"
-                    placeholder="거래처 번호(=CUS_NO)"
-                  />
+                  <input id="cusNo" class="form-control" placeholder="거래처" />
                   <div class="input-group-append">
                     <button
                       id="btnFindCustomer"
                       type="button"
                       class="btn btn-outline-secondary"
+                      data-bs-toggle="modal"
+                      data-bs-target="#businessModal"
                     >
                       🔍
                     </button>
@@ -155,17 +153,9 @@
                   <input
                     id="creater"
                     class="form-control"
-                    placeholder="담당자(작성자)"
+                    placeholder="세션로그인사용자"
+                    disabled
                   />
-                  <div class="input-group-append">
-                    <button
-                      id="btnFindManager"
-                      type="button"
-                      class="btn btn-outline-secondary"
-                    >
-                      🔍
-                    </button>
-                  </div>
                 </div>
               </div>
 
@@ -287,6 +277,13 @@
           <div id="itemGrid" class="ag-theme-quartz"></div>
         </div>
       </div>
+
+      <!-- 거래처 검색 모달 -->
+      <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
+
+      <!-- 품목코드 모달 -->
+      <div th:replace="~{biz/modals/productModal :: ProductModal}"></div>
+      <!-- 주문서이력조회 모달 -->
     </section>
 
     <th:block layout:fragment="body_extra">
@@ -301,9 +298,6 @@
 
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
-          // ===== API 경로 (컨트롤러에 맞춤) =====
-          const API_INSERT = "/api/biz/poinsert"; // POST
-
           // ===== 기본값 세팅 =====
           const today = new Date().toISOString().slice(0, 10);
           setVal("poStart", today);
@@ -316,7 +310,7 @@
             byId("billDates").classList.toggle("d-none", !show);
           });
 
-          // ===== 그리드 =====
+          // 그리드 정의
           const VAT_RATE = 0.1; // 10%
           const columnDefs = [
             {
@@ -374,7 +368,7 @@
               valueParser: numberParser,
               valueFormatter: moneyFmt,
             },
-            { headerName: "비고", field: "remark", editable: true, width: 160 },
+            { headerName: "비고", field: "notes", editable: true, width: 160 },
           ];
 
           const gridOptions = {
@@ -415,7 +409,7 @@
             return Math.max(gross - dc, 0);
           }
           function calcVat(r) {
-            const applyVat = getVal("bizType") === "VAT_INCLUDED";
+            const applyVat = getVal("bizType") === "부가세율 적용";
             return applyVat ? Math.round(calcSupply(r) * VAT_RATE) : 0;
           }
           function numberParser(p) {
@@ -461,7 +455,7 @@
               unitPrice: null,
               orderQty: null,
               dcPrice: null,
-              remark: "",
+              notes: "",
             };
             gridApi.applyTransaction
               ? gridApi.applyTransaction({ add: [blank] })
@@ -493,14 +487,21 @@
               const totalPrice = supAmt + vatAmt; // 헤더 총액(예시)
 
               const body = {
-                // 헤더(매퍼에서 참조하는 필드만)
+                // PURCHASE_ORDER
                 cusNo: getVal("cusNo"),
                 creater: getVal("creater"),
+                poStart: getVal("poStart"),
+                exDate: getVal("exDate"),
+                poDate: getVal("poStart"), // 주문일자(PO_DATE)는 작성일자와 동일하게 처리
+                prdName: row.dPrdName, // 대표 품목명으로 첫번째 품목명 사용
                 totalPrice: totalPrice,
                 poStatus: getVal("poStatus"),
+                payMethod: getVal("payMethod"),
                 notes: getVal("notes"),
+                vatType: getVal("vatDocType"), // 부가세유형
+                poType: getVal("bizType"), // 거래유형
 
-                // 디테일(1행)
+                // PO_DETAIL (1행)
                 productCode: row.productCode,
                 orderQty: toNum(row.orderQty),
                 unitPrice: toNum(row.unitPrice),
@@ -512,7 +513,7 @@
 
               if (!body.cusNo)
                 return alert("거래처 번호(CUS_NO)를 입력하세요.");
-              await axios.post(API_INSERT, body);
+              await axios.post("/api/biz/poinsert", body);
               alert("등록되었습니다.");
               resetAll();
             } catch (e) {
@@ -532,7 +533,7 @@
             setVal("cusNo", "");
             setVal("cusName", "");
             setVal("creater", "");
-            setVal("bizType", "VAT_INCLUDED");
+            setVal("bizType", "부가세 적용");
             setVal("vatDocType", "TAX_INVOICE");
             setVal("payMethod", "CASH");
             setVal("poStatus", "WRITTEN");
@@ -555,13 +556,12 @@
           // 이력조회 버튼(예시)
           byId("btnOpenHistory").addEventListener("click", async () => {
             try {
-              await axios.get(API_POLIST);
+              await axios.get("/api/biz/polist");
               alert("주문서 이력조회는 별도 모달/페이지로 연결하세요.");
             } catch {
               alert("이력조회 API 호출 예시입니다.");
             }
           });
-
           // DOM helpers
           function byId(id) {
             return document.getElementById(id);
