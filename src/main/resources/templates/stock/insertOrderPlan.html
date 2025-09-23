@@ -8,7 +8,23 @@
     crossorigin="anonymous"
   />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/styles/ag-theme-quartz.css">
+  <!-- AG Grid CSS (Quartz) -->
+   <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
+    />
+   <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
+   />
+   <style type="text/css">
+   .ag-theme-quartz .ag-cell {
+	padding-left: 8px;
+  	padding-right: 8px;
+	}
+   
+   
+   </style>
   <meta charset="UTF-8">
   <title>너 구 름(Your Cloud)</title>
 </head>
@@ -29,7 +45,7 @@
   <!-- 폼 카드 -->
   <div class="card shadow-sm">
     <div class="card-body">
-      <form action="/api/v1/stock/productInsert" class="row g-3" id="insertOrderPlan"  method="post" enctype="application/x-www-form-urlencoded">
+      <form action="/api/v1/stock/orderPlanInsert" class="row g-3" id="insertOrderPlan"  method="post" enctype="application/x-www-form-urlencoded">
         <div class="col-md-4">
          <label for="insDate" class="form-label">등록일자</label>
           <input type="date" class="form-control" id="insDate" name="insDate">
@@ -46,6 +62,7 @@
 			<option value="0">영세율 적용</option>
 			</select>
         </div>
+        <!-- 
         <div class="col-md-4">
           <label for="businessCode" class="form-label">거래처코드</label>
           <div class="input-group">
@@ -57,6 +74,7 @@
           <label for="businessPartner" class="form-label">거래처명</label>
           <input type="text" class="form-control" id="businessPartner" name="businessPartner">
         </div>
+         -->
       </form>
     </div>
   </div>
@@ -75,8 +93,8 @@
           <th>제품코드</th>
           <th>제품명</th>
           <th>규격</th>
-          <th>거래처명</th>
           <th>거래처코드</th>
+          <th>거래처명</th>
           <th>수량</th>
           <th>구매단가</th>
           <th>공급가액</th>
@@ -126,21 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	let rowCount = tableBody.rows.length + 1; // 현재 행 개수 + 1
  	let gridApi = null;
  	let gridOptions = null;
- 	let gridCreated = false;
- 	
-	 const columnDefs = [
-	        { headerName: "담당자명", field: "empName" },
-	        { headerName: "거래처명", field: "cusName" },
-	        { headerName: "사업자번호", field: "bizNo" },
-	        { headerName: "대표명", field: "ceoName" },
-	        { headerName: "업태", field: "bizType" },
-	        { headerName: "종목", field: "bizCategory" },
-	        { headerName: "거래처주소", field: "addr" }
-	        
-	];
-	  const modalEl = document.getElementById("businessModal");
-	  if (!modalEl) return;
- 	
+ 	//let gridCreated = false;
  	
 	// 계산 함수
 	function calculateRow(row) {
@@ -158,6 +162,12 @@ document.addEventListener("DOMContentLoaded", () => {
 	});
 	
 	
+	// ------------------ 변수 초기화 ------------------
+	let productGridApi = null;
+	let productGridOptions = null;
+	let selectedProductRow = null; // 클릭한 행 저장용
+	const productModalEl = document.getElementById("productModal");
+	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
 	// 행 추가
 	addRowBtn.addEventListener('click', () => {
 	// const taxRate = parseFloat(taxSelect.value) || 0; // 현재 선택된 세율
@@ -168,8 +178,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	       <td><input type="text" class="form-control productCode" name="productCode[]"></td>
 	       <td><input type="text" class="form-control productName" name="productName[]"></td>
 	       <td><input type="text" class="form-control specification" name="specification[]"></td>
+	       <td><input type="text" class="form-control partnerCode" name="partnerCode[]" data-bs-toggle="modal" data-bs-target="#businessModal" readonly></td>
 	       <td><input type="text" class="form-control partnerName" name="partnerName[]"></td>
-	       <td><input type="text" class="form-control partnerCode" name="partnerCode[]"></td>
 	       <td><input type="number" class="form-control qty" name="qty[]" value="1" min="1"></td>
 	       <td><input type="number" class="form-control purchasePrice" name="purchasePrice[]" value="0" min="0"></td>
 	       <td><input type="number" class="form-control supAmt" name="supAmt[]" value="0" readonly></td>
@@ -180,11 +190,49 @@ document.addEventListener("DOMContentLoaded", () => {
 	    
 	    // 제품코드 클릭 시 모달 호출
 	    const productCodeInput = row.querySelector('.productCode');
-	    productCodeInput.addEventListener('click', () => {
-	        const modalEl = document.getElementById("productModal");
-	        const modal = new bootstrap.Modal(modalEl);
-	        modal.show();
-
+	    // ------------------ 제품코드 클릭 시 모달 ------------------
+	    productCodeInput.addEventListener('click', async () => {
+	        //const modalEl = document.getElementById("productModal");
+	        //const modal = new bootstrap.Modal(modalEl);
+	        selectedProductRow = row; // 현재 행 저장
+	        productModal.show();
+	        // Grid 한 번만 생성
+	        if (!productGridApi) {
+	            productGridOptions = {
+	                columnDefs: [
+	                    { headerName: "제품코드", field: "productCode" },
+	                    { headerName: "제품명", field: "productName" },
+	                    { headerName: "규격", field: "specification" },
+	                    
+	                ],
+	                rowData: [],
+	                rowSelection: "single",
+	                onGridReady: async (event) => {
+	                	 productGridApi = event.api;  // <- 반드시 할당
+	                	// 모달이 열릴 때 크기 조정         
+	                     productGridApi.sizeColumnsToFit();
+	                    // 익명 함수로 정의
+	                    //const gridApi = event.api;
+	                	 await loadProductData();
+	                	 
+	                },
+	                onRowDoubleClicked: (event) => {
+	                	if (!selectedProductRow) return;
+	                    // 선택한 데이터 현재 행에 반영
+	                    //productCodeInput.value = event.data.productCode;
+	                    //const row = productCodeInput.closest('tr');
+	                    selectedProductRow.querySelector('.productCode').value = event.data.productCode;
+	                    selectedProductRow.querySelector('.productName').value = event.data.productName;
+	                    selectedProductRow.querySelector('.specification').value = event.data.specification;
+	                    productModal.hide();
+	                }
+	            };
+	            new agGrid.Grid(document.querySelector('#productGrid'), productGridOptions);
+	        } else {
+	            // 모달이 이미 생성된 경우에도 sizeColumnsToFit 호출
+	            productGridApi.sizeColumnsToFit();
+	            await loadProductData();
+	        }
 	        // 모달에서 선택 후 값 채워주기
 	        // 예시: 선택된 데이터
 	        // productCodeInput.value = "선택된 코드";
@@ -202,29 +250,108 @@ document.addEventListener("DOMContentLoaded", () => {
 	    // 삭제 버튼
 	    row.querySelector('.deleteRowBtn').addEventListener('click', () => row.remove());
 
+	    // 거래처코드 클릭 시 모달
+	    row.querySelector('.partnerCode').addEventListener('click', () => {
+	        selectedRow = row; // 클릭한 행 저장
+	        const modalEl = document.getElementById("businessModal");
+	        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+	        modal.show();
+
+	        if (!gridApi) initBusinessGrid();
+	        else loadBusinessData();
+	    });
+	    
 	    tableBody.appendChild(row);
+	    
+	    
  });
+	
+	// 거래처 그리드 초기화
+	function initBusinessGrid() {
+	    const eGridDiv = document.getElementById('myGrid');
+	    const columnDefs = [
+	        { headerName: "거래처코드", field: "cusCode" },
+	        { headerName: "거래처명", field: "cusName" },
+	        { headerName: "담당자명", field: "empName" },
+	        { headerName: "사업자번호", field: "bizNo" },
+	        { headerName: "대표명", field: "ceoName" },
+	        { headerName: "업태", field: "bizType" },
+	        { headerName: "종목", field: "bizCategory" },
+	        { headerName: "거래처주소", field: "addr" }
+	    ];
+
+	    const gridOptions = {
+	        columnDefs,
+	        rowSelection: "single",
+	        rowData: [],
+	        onGridReady: (event) => {
+	            gridApi = event.api;
+	            gridApi.sizeColumnsToFit();
+	            loadBusinessData();
+	        },
+	        defaultColDef: {
+	            resizable: true,   // 컬럼 너비 조절 가능
+	            sortable: true,    // 정렬 가능
+	            minWidth: 100,     // 최소 너비
+	        },
+	        onRowDoubleClicked: (event) => {
+	            if (!selectedRow) return;
+	            selectedRow.querySelector('.partnerCode').value = event.data.cusCode;
+	            selectedRow.querySelector('.partnerName').value = event.data.cusName;
+	            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
+	        }
+	    };
+	    new agGrid.Grid(eGridDiv, gridOptions);
+	}
+	// 거래처 데이터 로드
+	async function loadBusinessData() {
+	    try {
+	        const res = await axios.get("/api/v1/stock/cusList");
+	        if (gridApi) {
+	            gridApi.setRowData(res.data);
+	            gridApi.sizeColumnsToFit();
+	        }
+	    } catch (err) { console.error(err); }
+	}
+	
+	// ------------------ Grid 데이터 로드 함수 ------------------
+	async function loadProductData() {
+	    if (!productGridApi) return;
+	    try {
+	        const res = await axios.get("/api/v1/stock/productList");
+	        productGridApi.setRowData(res.data);
+	    } catch(err) {
+	        console.error(err);
+	    }
+	}
 
 
 
-
-
+	const modalEl = document.getElementById("businessModal");
+	const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   // CALL MODAL
-  document.querySelector("#businessCode").addEventListener("click",()=>{
-	  const modalEl = document.getElementById("businessModal");
-	  const modal = new bootstrap.Modal(modalEl);
-	  modal.show();
-	  
-	  // 모달이 열리면 데이터 로드
-	  loadModalData();
-  });
+  //document.querySelector("#businessCode").addEventListener("click",()=>{
+	//modal.show();
+	  //loadModalData();
+  //});
 	//모달 데이터 로드 함수
-	 function loadModalData() {
+	async function loadModalData() {
 
-		// ag-Grid + axios 초기화 함수
-		async function initBusinessGrid() {
-		   
-
+			const eGridDiv = document.querySelector('#myGrid'); // div 선택
+			if(!eGridDiv)  return console.error("myGrid div가 존재하지 않습니다!");
+			
+			 const columnDefs = [
+				    { headerName: "거래처코드", field: "cusCode" },
+				    { headerName: "거래처명", field: "cusName" },
+			        { headerName: "담당자명", field: "empName" },
+			        { headerName: "사업자번호", field: "bizNo" },
+			        { headerName: "대표명", field: "ceoName" },
+			        { headerName: "업태", field: "bizType" },
+			        { headerName: "종목", field: "bizCategory" },
+			        { headerName: "거래처주소", field: "addr" }
+			        
+			];
+    	if (!gridApi) {
 		    const gridOptions = {
 		        columnDefs: columnDefs,
 		        rowSelection: "single",
@@ -234,26 +361,32 @@ document.addEventListener("DOMContentLoaded", () => {
 		            
 		        },
 		        onRowDoubleClicked: function(event) {
-		            document.getElementById("businessCode").value = event.data.code;  // 실제 데이터 필드명 확인 필요
-		            document.getElementById("businessPartner").value = event.data.name;
-		            bootstrap.Modal.getInstance(document.getElementById("businessModal")).hide();
+		            document.getElementById("businessCode").value = event.data.cusCode;  // 실제 데이터 필드명 확인 필요
+		            document.getElementById("businessPartner").value = event.data.cusName;
+		            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
+		            
 		          }
-		        
-		    };
-		    new agGrid.Grid(eGridDiv, gridOptions);
-  	      	gridCreated = true;
-		    // axios로 데이터 가져오기
-		      try {
-				    const res = await axios.get("/api/v1/stock/cusList");
-				    gridOptions.api.setRowData(res.data); // api가 생성된 후 호출
-				  } catch(err) {
-				     console.error(err);
-				  }
-		}
-		
-		
-		 initBusinessGrid();
-	  }
+		     
+		    	};
+		    		new agGrid.Grid(eGridDiv, gridOptions);
+    	}
+
+		// axios로 데이터 가져오기	  
+		try {
+				const res = await axios.get("/api/v1/stock/cusList");
+				// gridApi가 준비되었는지 확인
+				if (gridApi) {
+					gridApi.setRowData(res.data);
+				} else {
+				    // gridApi가 아직 준비 안된 경우 100ms 후 재시도
+				    setTimeout(() => loadModalData(), 100);
+				}
+			} catch (err) {
+				 console.error(err);
+			}
+	}// end of loadModalData
+	
+
 
   // Axios 등록 + Toast
 	const form = document.getElementById('insertProductForm');

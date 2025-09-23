@@ -13,7 +13,7 @@ INSERT INTO product(
 		,NOTE
 		,INSERT_DATE
 )
-VALUES(LPAD(seq_product.nextval,5,'0'),
+VALUES(CONCAT('P',LPAD(seq_product.nextval,5,'0')),
        #{productName},
        #{specification},
        #{empName},
@@ -39,6 +39,20 @@ SELECT
 FROM customer
 </select>
 
+<select id="productAll" resultType="ProductVO">
+SELECT PRODUCT_CODE
+       ,PRODUCT_NAME
+       ,SPECIFICATION
+FROM PRODUCT
+
+
+</select>
+
+<insert id="insertOrderPlan" parameterType="OrderPlanVO">
+
+
+
+</insert>
 
 
 
