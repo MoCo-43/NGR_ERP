@@ -4,14 +4,15 @@ import java.util.List;
 import com.yedam.erp.vo.hr.DeptVO;
 
 public interface DeptMapper {
-	List<DeptVO> selectDeptList();
 
-	// 등록
-	int insertDept(DeptVO vo);
+    // 목록 
+    List<DeptVO> selectDeptList(DeptVO param);
 
-	// 수정
-	int updateDept(DeptVO vo);
+    // 단건
+    DeptVO selectDept(String dept_code);
 
-	// 삭제
-	int deleteDept(String deptCode);
+    // 등록/수정/삭제
+    int insertDept(DeptVO vo);
+    int updateDept(DeptVO vo);
+    int deleteDept(String dept_code);
 }

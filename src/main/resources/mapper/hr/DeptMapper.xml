@@ -5,32 +5,91 @@
 
 <mapper namespace="com.yedam.erp.mapper.hr.DeptMapper">
 
-  <!-- 부서 리스트 -->
-  <select id="selectDeptList" resultType="com.yedam.erp.vo.hr.DeptVO">
-    SELECT DEPT_CODE, DEPT_NAME, USE_YN, MEMBER_CNT, MANAGER_EMP_ID
-    FROM DEPT
-    ORDER BY DEPT_CODE
-  </select>
+	<!-- ================================ 부서 목록 (부서장 이름 포함) ================================ -->
+	<resultMap id="DeptMap" type="com.yedam.erp.vo.hr.DeptVO">
+		<id property="dept_code" column="DEPT_CODE" />
+		<result property="dept_name" column="DEPT_NAME" />
+		<result property="use_yn" column="USE_YN" />
+		<result property="member_cnt" column="MEMBER_CNT" />
+		<result property="manager_emp_id" column="MANAGER_EMP_ID" />
+		<result property="manager_name" column="MANAGER_NAME" />
+	</resultMap>
 
-  <!-- 부서 등록 -->
-  <insert id="insertDept" parameterType="com.yedam.erp.vo.hr.DeptVO">
-    INSERT INTO DEPT (DEPT_NAME, USE_YN, MEMBER_CNT, MANAGER_EMP_ID)
-    VALUES (#{deptName}, #{useYn}, #{memberCnt}, #{managerEmpId})
-  </insert>
+	<select id="selectDeptList"
+		parameterType="com.yedam.erp.vo.hr.DeptVO" resultMap="DeptMap">
+		SELECT
+		d.DEPT_CODE,
+		d.DEPT_NAME,
+		d.USE_YN,
+		d.MANAGER_EMP_ID,
+		m.NAME AS MANAGER_NAME,
+		COUNT(e.EMP_ID) AS MEMBER_CNT
+		FROM DEPT d
+		LEFT JOIN EMP e
+		ON d.DEPT_CODE = e.DEPT_CODE
+		AND (e.LEAVE_DATE IS NULL OR e.LEAVE_DATE > SYSDATE)
+		LEFT JOIN EMP m
+		ON d.MANAGER_EMP_ID = m.EMP_ID
+		<where>
+			<if test="dept_code != null and dept_code != ''">
+				AND d.DEPT_CODE LIKE '%' || #{dept_code} || '%'
+			</if>
+			<if test="dept_name != null and dept_name != ''">
+				AND d.DEPT_NAME LIKE '%' || #{dept_name} || '%'
+			</if>
+			<if test="use_yn != null and use_yn != ''">
+				AND d.USE_YN = #{use_yn}
+			</if>
+		</where>
+		GROUP BY d.DEPT_CODE, d.DEPT_NAME, d.USE_YN, d.MANAGER_EMP_ID, m.NAME
+		ORDER BY d.DEPT_CODE
+	</select>
 
-  <!-- 부서 수정 -->
-  <update id="updateDept" parameterType="com.yedam.erp.vo.hr.DeptVO">
-    UPDATE DEPT
-    SET DEPT_NAME = #{deptName},
-        USE_YN = #{useYn},
-        MEMBER_CNT = #{memberCnt},
-        MANAGER_EMP_ID = #{managerEmpId}
-    WHERE DEPT_CODE = #{deptCode}
-  </update>
+	<!-- ================================ 단건 조회 ================================ -->
+	<select id="selectDept" parameterType="string"
+		resultMap="DeptMap">
+		SELECT
+		d.DEPT_CODE,
+		d.DEPT_NAME,
+		d.USE_YN,
+		d.MANAGER_EMP_ID,
+		m.NAME AS MANAGER_NAME,
+		NVL( (SELECT COUNT(1) FROM EMP e
+		WHERE e.DEPT_CODE = d.DEPT_CODE
+		AND (e.LEAVE_DATE IS NULL OR e.LEAVE_DATE > SYSDATE)), 0 ) AS MEMBER_CNT
+		FROM DEPT d
+		LEFT JOIN EMP m
+		ON d.MANAGER_EMP_ID = m.EMP_ID
+		WHERE d.DEPT_CODE = #{dept_code}
+	</select>
 
-  <!-- 부서 삭제 -->
-  <delete id="deleteDept" parameterType="string">
-    DELETE FROM DEPT WHERE DEPT_CODE = #{deptCode}
-  </delete>
+	<!-- ================================ 등록 ================================ -->
+	<insert id="insertDept"
+		parameterType="com.yedam.erp.vo.hr.DeptVO">
+		INSERT INTO DEPT (
+		DEPT_NAME, USE_YN, MEMBER_CNT, MANAGER_EMP_ID
+		) VALUES (
+		#{dept_name}, #{use_yn}, #{member_cnt}, #{manager_emp_id}
+		)
+	</insert>
+
+	<!-- ================================ 수정 ================================ -->
+	<update id="updateDept"
+		parameterType="com.yedam.erp.vo.hr.DeptVO">
+		UPDATE DEPT
+		<set>
+			<if test="dept_name != null"> DEPT_NAME = #{dept_name},</if>
+			<if test="use_yn != null"> USE_YN = #{use_yn},</if>
+			<if test="member_cnt != null"> MEMBER_CNT = #{member_cnt},</if>
+			<if test="manager_emp_id != null"> MANAGER_EMP_ID = #{manager_emp_id},</if>
+		</set>
+		WHERE DEPT_CODE = #{dept_code}
+	</update>
+
+	<!-- ================================ 삭제 ================================ -->
+	<delete id="deleteDept" parameterType="string">
+		DELETE FROM DEPT
+		WHERE DEPT_CODE = #{dept_code}
+	</delete>
 
 </mapper>

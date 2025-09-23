@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+  <title layout:fragment="title">부서관리</title>
+
+  <th:block layout:fragment="head_extra">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
+
+    <!-- CSRF (Spring Security 사용 시) -->
+    <meta name="_csrf" th:content="${_csrf?.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}"/>
+
+    <style>
+      :root { --gap:1rem; }
+      .two-col{
+        display:grid; gap:var(--gap);
+        grid-template-columns:minmax(520px,1fr) minmax(420px,480px);
+      }
+      @media (max-width:1200px){ .two-col{ grid-template-columns:1fr; } }
+
+      #deptGrid.ag-theme-quartz { height: 640px; width: 100%; }
+      .ag-theme-quartz { --ag-row-height:42px; --ag-font-size:13px; }
+      .ag-header-cell-label{ white-space:nowrap; }
+
+      .form-label{ font-weight:600; }
+      .btn-use { padding:.2rem .6rem; font-size:12px; }
+
+      /* 우측 하단 버튼 간격 */
+      .form-actions { gap:.75rem; }
+    </style>
+  </th:block>
+</head>
+
+<body>
+<section layout:fragment="content" class="container-fluid py-3">
+  <div class="two-col">
+    <!-- ============== 좌: 검색 + 목록 ============== -->
+    <div class="card shadow mb-0">
+      <div class="card-header py-3">
+        <h6 class="m-0 fw-bold text-primary">부서 목록</h6>
+      </div>
+
+      <div class="card-body">
+        <!-- 검색(부서코드/부서명 한 칸) -->
+        <div class="row g-2 align-items-end mb-2">
+          <div class="col-12 col-md-8">
+            <label class="form-label">부서코드/부서명</label>
+            <input id="qKeyword" class="form-control" placeholder="예) DEPT-001 / 인사팀">
+          </div>
+          <div class="col-12 col-md-4 d-flex justify-content-md-end">
+            <button id="btnSearch" class="btn btn-secondary w-100 w-md-auto" type="button">검색</button>
+          </div>
+        </div>
+
+        <!-- ag-Grid -->
+        <div id="deptGrid" class="ag-theme-quartz"></div>
+      </div>
+    </div>
+
+    <!-- ============== 우: 등록/수정 폼 ============== -->
+    <div class="card shadow mb-0">
+      <div class="card-header bg-white py-3">
+        <div class="fw-bold">부서 등록 / 수정</div>
+      </div>
+
+      <div class="card-body">
+        <form id="deptForm" onsubmit="return false;">
+          <input type="hidden" id="mode" value="create"/>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">부서코드</label>
+              <input id="dept_code" type="text" class="form-control" placeholder="자동생성" disabled>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">부서명</label>
+              <input id="dept_name" type="text" class="form-control" required>
+            </div>
+
+            <!-- 사용여부는 그리드에서 버튼으로 토글하므로, 폼 기본값만 유지(Y) -->
+            <input type="hidden" id="use_yn" value="Y"/>
+
+            <div class="col-md-6">
+              <label class="form-label">인원수</label>
+              <input id="member_cnt" type="number" class="form-control" value="0" min="0">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">부서장 사번</label>
+              <div class="input-group">
+                <input id="manager_emp_id" type="text" class="form-control" placeholder="예) EMP-2025-001">
+                <button class="btn btn-outline-secondary" type="button" id="btnFindManager" title="사원검색">
+                  <i class="fa fa-magnifying-glass"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-footer bg-white d-flex justify-content-end form-actions">
+        <button class="btn btn-secondary" id="btnFormReset" type="button">초기화</button>
+        <button class="btn btn-primary"   id="btnSave"      type="button">저장</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<th:block layout:fragment="body_extra">
+  <script defer src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+
+  <script th:inline="none">
+    document.addEventListener('DOMContentLoaded', () => {
+      const API_BASE = '/api/hr/dept';
+      const CSRF_TOKEN  = document.querySelector('meta[name="_csrf"]')?.content;
+      const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+      // elements
+      const gridDiv = document.getElementById('deptGrid');
+      const btnSearch = document.getElementById('btnSearch');
+      const btnFormReset = document.getElementById('btnFormReset');
+      const btnSave = document.getElementById('btnSave');
+      const qKeyword = document.getElementById('qKeyword');
+
+      let gridApi = null;
+
+      // 사용여부 토글 버튼 렌더러
+      function useToggleRenderer(p){
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-use ' + ((p.value ?? 'Y') === 'Y' ? 'btn-success' : 'btn-danger');
+        btn.textContent = (p.value ?? 'Y') === 'Y' ? '사용' : '중지';
+
+        btn.addEventListener('click', async () => {
+          const row = p.data;
+          const next = (row.use_yn ?? 'Y') === 'Y' ? 'N' : 'Y';
+          // 화면 즉시 반영
+          row.use_yn = next;
+          btn.className = 'btn btn-sm btn-use ' + (next === 'Y' ? 'btn-success' : 'btn-danger');
+          btn.textContent = next === 'Y' ? '사용' : '중지';
+
+          // 서버 반영(부분 업데이트)
+          try{
+            const headers = { 'Content-Type':'application/json' };
+            if (CSRF_TOKEN && CSRF_HEADER) headers[CSRF_HEADER] = CSRF_TOKEN;
+            await axios.put(`${API_BASE}/${encodeURIComponent(row.dept_code)}`, { use_yn: next }, { headers });
+          }catch(e){
+            // 실패 시 원복
+            const prev = next === 'Y' ? 'N' : 'Y';
+            row.use_yn = prev;
+            btn.className = 'btn btn-sm btn-use ' + (prev === 'Y' ? 'btn-success' : 'btn-danger');
+            btn.textContent = prev === 'Y' ? '사용' : '중지';
+            console.error('useYn toggle error:', e);
+            alert('사용여부 변경에 실패했습니다.');
+          }
+        });
+
+        return btn;
+      }
+
+      // 컬럼 정의(선택/코드/명/사용(버튼)/부서장/인원)
+      const columnDefs = [
+        { headerName:'', width:60, checkboxSelection:true, headerCheckboxSelection:true,
+          filter:false, suppressMenu:true, pinned:'left' },
+        { headerName:'부서코드', field:'dept_code', width:140, sortable:true },
+        { headerName:'부서명',   field:'dept_name', flex:1, minWidth:160, sortable:true },
+        { headerName:'사용',     field:'use_yn', width:100, sortable:false, cellRenderer: useToggleRenderer },
+        { headerName:'부서장',   field:'manager_name', width:140, sortable:true },
+        { headerName:'인원수',   field:'member_cnt', width:100, sortable:true, type:'numericColumn' }
+      ];
+
+      const gridOptions = {
+        columnDefs,
+        rowData: [],
+        rowSelection: 'single',
+        pagination: true,
+        paginationPageSize: 12,
+        animateRows: true,
+        defaultColDef: { sortable:true, resizable:true, filter:false, suppressMenu:true },
+        onGridReady: (params) => { gridApi = params.api; fetchList(); },
+        onSelectionChanged: () => {
+          const rows = gridApi.getSelectedRows();
+          if (rows && rows[0]) fillForm(rows[0]);
+        },
+        onRowDoubleClicked: (e) => fillForm(e.data)
+      };
+
+      if (window.agGrid?.createGrid) agGrid.createGrid(gridDiv, gridOptions);
+      else new agGrid.Grid(gridDiv, gridOptions), gridApi = gridOptions.api;
+
+      // 검색
+      btnSearch.addEventListener('click', fetchList);
+      qKeyword.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); fetchList(); } });
+
+      // 폼 버튼
+      btnFormReset.addEventListener('click', openCreate);
+      btnSave.addEventListener('click', save);
+
+      // 목록 조회 (코드/이름 단일 검색창)
+      async function fetchList(){
+        const q = (qKeyword.value || '').trim();
+        const params = {};
+        if (q) {
+          if (/^DEPT[-_]/i.test(q) || /^[A-Z0-9\-]+$/.test(q)) params.dept_code = q;
+          else params.dept_name = q;
+        }
+        try{
+          const { data } = await axios.get(API_BASE, { params });
+          setRows(Array.isArray(data) ? data : (data?.data ?? []));
+        }catch(e){
+          console.error('list error:', e?.response?.status, e);
+          alert('부서 목록 조회 중 오류가 발생했습니다.');
+          setRows([]);
+        }
+      }
+      function setRows(rows){
+        if(gridApi?.setGridOption) gridApi.setGridOption('rowData', rows);
+        else gridApi.setRowData(rows);
+      }
+
+      // 폼 유틸: 행 선택 시 수정모드, 미선택은 등록모드(코드 자동)
+      function openCreate(){
+        setVal('mode','create');
+        setVal('dept_code','');
+        setVal('dept_name','');
+        setVal('use_yn','Y');             // 기본값 사용
+        setVal('member_cnt', 0);
+        setVal('manager_emp_id','');
+        gridApi?.deselectAll?.();
+      }
+      function fillForm(r){
+        setVal('mode','update');
+        setVal('dept_code',      r.dept_code || '');
+        setVal('dept_name',      r.dept_name || '');
+        setVal('use_yn',         r.use_yn ?? 'Y');
+        setVal('member_cnt',     r.member_cnt ?? 0);
+        setVal('manager_emp_id', r.manager_emp_id || '');
+      }
+      function getVal(id){ return document.getElementById(id)?.value; }
+      function setVal(id,v){ const el=document.getElementById(id); if(el) el.value = v ?? ''; }
+
+      // 저장: 행 미선택(=mode create) → INSERT(코드 자동), 행 선택(=mode update) → UPDATE
+      async function save(){
+        const mode = getVal('mode');
+        const payload = {
+          dept_name: (getVal('dept_name') || '').trim(),
+          use_yn: getVal('use_yn') || 'Y',
+          member_cnt: Number(getVal('member_cnt') || 0),
+          manager_emp_id: (getVal('manager_emp_id') || '').trim() || null
+        };
+        if(!payload.dept_name){ alert('부서명을 입력하세요.'); return; }
+
+        try{
+          const headers = { 'Content-Type':'application/json' };
+          if (CSRF_TOKEN && CSRF_HEADER) headers[CSRF_HEADER] = CSRF_TOKEN;
+
+          if(mode === 'create'){
+            await axios.post(API_BASE, payload, { headers });
+          }else{
+            const code = getVal('dept_code');
+            await axios.put(`${API_BASE}/${encodeURIComponent(code)}`, payload, { headers });
+          }
+          await fetchList();
+          openCreate(); // 저장 후 등록모드로 초기화(신규 연속 입력 용이)
+          alert('저장되었습니다.');
+        }catch(e){
+          console.error('save error:', e?.response?.status, e);
+          alert('저장 중 오류가 발생했습니다.');
+        }
+      }
+
+      // 최초 상태: 등록모드 + 목록 로드
+      openCreate();
+    });
+  </script>
+</th:block>
+</body>
+</html>

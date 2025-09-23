@@ -10,11 +10,10 @@ const MENUS = {
         ["공제등록", "/hr/deduct"],
       ]},
       { title: "부서관리", items: [
-        ["부서관리", "/hr/dept"],
+        ["부서관리", "/dept"],
       ]},
       { title: "급여관리", items: [
         ["급여대장", "/hr/payroll"],
-        ["사원급여조회", "/hr/payview"],
         ["급여이체현황", "/hr/transfer"]
       ]},
     ]

@@ -17,6 +17,7 @@ public class EmpVO {
 	String emp_id; // 사번
 	String name; // 이름
 	String dept_code; // 부서코드
+	String dept_name; // 부서명
 	String position; // 직급
 	String title; // 직책
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
