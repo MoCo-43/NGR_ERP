@@ -20,7 +20,10 @@ public interface StockMapper {
 	// 거래처 조회
 	public List<PartnerVO> customerAll();
 	
-	// 발주걔획 등록
+	// 발주계획 등록
 	public void insertOrderPlan(OrderPlanVO orderPlan); // 마스터
 	public int insertOrderPlanDetail(OrderPlanDetailVO item); // 상세
+	
+	// 발주계획 조회
+	public List<OrderPlanVO> getOrderPlanList();
 }
