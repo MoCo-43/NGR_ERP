@@ -17,6 +17,6 @@ public interface StockService {
 	public List<PartnerVO> customerAll();
 	
 	// 발주걔획 등록
-	public int insertOrderPlan(OrderPlanVO orderPlan);
+	public void insertOrderPlan(OrderPlanVO orderPlan); // 마스터
 	
 }

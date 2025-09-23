@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import com.yedam.erp.vo.stock.OrderPlanDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
@@ -20,5 +21,6 @@ public interface StockMapper {
 	public List<PartnerVO> customerAll();
 	
 	// 발주걔획 등록
-	public int insertOrderPlan(OrderPlanVO orderPlan);
+	public void insertOrderPlan(OrderPlanVO orderPlan); // 마스터
+	public int insertOrderPlanDetail(OrderPlanDetailVO item); // 상세
 }

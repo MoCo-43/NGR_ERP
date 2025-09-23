@@ -34,7 +34,7 @@ const MENUS = {
       ]},
       { title: "발주관리", items: [
         ["발주계획조회","/inv/po/plan"],
-        ["발주계획등록","/inv/po/plan/new"],
+        ["발주계획등록","/stock/plan/insert"],
         ["발주서 조회","/inv/po/list"],
         ["발주서 등록","/inv/po/new"],
       ]},
@@ -42,7 +42,7 @@ const MENUS = {
         ["재고결산","/inv/closing"]
       ]},
       { title: "제품관리", items: [
-        ["제품등록","/inv/product"]
+        ["제품등록","/stock/product/insert"]
       ]}
     ]
   },

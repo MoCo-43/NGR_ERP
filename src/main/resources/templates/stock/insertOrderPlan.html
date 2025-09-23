@@ -1,13 +1,19 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	 layout:decorate="~{layout/base}">
 <head>
-  <!-- Bootstrap CSS -->
+  <meta charset="UTF-8">
+  <title layout:fragment="title">너 구 름(Your Cloud)</title>
+  <th:block layout:fragment="head_extra">
+     <!-- Bootstrap CSS -->
+  	<!--  base에 있는 버전과 달라서 강제 주입 --> 
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
     rel="stylesheet"
     crossorigin="anonymous"
   />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <!-- AG Grid CSS (Quartz) -->
    <link
      rel="stylesheet"
@@ -22,15 +28,13 @@
 	padding-left: 8px;
   	padding-right: 8px;
 	}
-   
-   
    </style>
-  <meta charset="UTF-8">
-  <title>너 구 름(Your Cloud)</title>
+  </th:block>
 </head>
-<body class="bg-light">
+<body>
+<section layout:fragment="content">
 <!-- 컨테이너 시작 -->
-<div class="container py-5">
+<div class="py-5">
   <!-- 마스터 카드 -->
   <div class="card shadow-sm mb-4">
     <div class="card-header bg-primary text-white">
@@ -45,7 +49,7 @@
   <!-- 폼 카드 -->
   <div class="card shadow-sm">
     <div class="card-body">
-      <form action="/api/v1/stock/orderPlanInsert" class="row g-3" id="insertOrderPlan"  method="post" enctype="application/x-www-form-urlencoded">
+      <form class="row g-3" id="insertOrderPlan" enctype="application/x-www-form-urlencoded">
         <div class="col-md-4">
          <label for="insDate" class="form-label">등록일자</label>
           <input type="date" class="form-control" id="insDate" name="insDate">
@@ -56,10 +60,10 @@
         </div>
       	<div class="col-4">
          <label for="taxType" class="form-label">세율유형</label>
-         <select class="form-select" aria-label="Default select example" id="taxType" name="taxType">
+         <select class="form-select"aria-label="Default select example" id="taxType" name="taxType">
           <option value="" selected>선택안함</option>
-			<option value="0.1">부가세율 적용</option>
-			<option value="0">영세율 적용</option>
+			<option value="부가세율">부가세율 적용</option>
+			<option value="영세율">영세율 적용</option>
 			</select>
         </div>
         <!-- 
@@ -127,7 +131,9 @@
    <!-- 모달 include              경로             ::  div id 부분  -->   
   <div th:replace="~{stock/modals/productModal :: productModal}"></div>
   
-
+</section>
+  
+<th:block layout:fragment="body_extra">
  <!-- Axios 등록 -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
  <!-- Bootstrap JS -->
@@ -150,7 +156,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	function calculateRow(row) {
 	  const qty = parseFloat(row.querySelector('.qty').value) || 0;
 	  const price = parseFloat(row.querySelector('.purchasePrice').value) || 0;
-	  const taxRate = parseFloat(taxSelect.value) || 0;
+	  if(taxSelect.value == "부가세율"){
+		const taxRate = 0.1;
+	  }else if(taxSelect.value == "영세율"){
+	  	const taxRate = 0;
+	  }
 
 	  row.querySelector('.vatAmt').value = Math.floor(price * taxRate); // 단가 기준 부가세
 	  row.querySelector('.supAmt').value = Math.floor(qty * price * (1 + taxRate)); // 공급가액
@@ -168,6 +178,9 @@ document.addEventListener("DOMContentLoaded", () => {
 	let selectedProductRow = null; // 클릭한 행 저장용
 	const productModalEl = document.getElementById("productModal");
 	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
+	const businessModalEl = document.getElementById("businessModal");
+	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
+	
 	// 행 추가
 	addRowBtn.addEventListener('click', () => {
 	// const taxRate = parseFloat(taxSelect.value) || 0; // 현재 선택된 세율
@@ -175,15 +188,15 @@ document.addEventListener("DOMContentLoaded", () => {
 	
 	row.innerHTML = `
 		<td class="text-center">${rowCount}</td>
-	       <td><input type="text" class="form-control productCode" name="productCode[]"></td>
-	       <td><input type="text" class="form-control productName" name="productName[]"></td>
-	       <td><input type="text" class="form-control specification" name="specification[]"></td>
-	       <td><input type="text" class="form-control partnerCode" name="partnerCode[]" data-bs-toggle="modal" data-bs-target="#businessModal" readonly></td>
-	       <td><input type="text" class="form-control partnerName" name="partnerName[]"></td>
-	       <td><input type="number" class="form-control qty" name="qty[]" value="1" min="1"></td>
-	       <td><input type="number" class="form-control purchasePrice" name="purchasePrice[]" value="0" min="0"></td>
-	       <td><input type="number" class="form-control supAmt" name="supAmt[]" value="0" readonly></td>
-	       <td><input type="number" class="form-control vatAmt" name="vatAmt[]" value="0" readonly></td>
+	       <td><input type="text" class="form-control productCode" name="productCode"></td>
+	       <td><input type="text" class="form-control productName" name="productName"></td>
+	       <td><input type="text" class="form-control specification" name="specification"></td>
+	       <td><input type="text" class="form-control partnerCode" name="partnerCode" readonly></td>
+	       <td><input type="text" class="form-control partnerName" name="partnerName"></td>
+	       <td><input type="number" class="form-control qty" name="qty" value="1" min="1"></td>
+	       <td><input type="number" class="form-control purchasePrice" name="purchasePrice" value="0" min="0"></td>
+	       <td><input type="number" class="form-control supAmt" name="supAmt" value="0" readonly></td>
+	       <td><input type="number" class="form-control vatAmt" name="vatAmt" value="0" readonly></td>
 	       <td><button type="button" class="btn btn-sm btn-danger deleteRowBtn">삭제</button></td>
 	    `;
 	    rowCount++;
@@ -253,10 +266,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	    // 거래처코드 클릭 시 모달
 	    row.querySelector('.partnerCode').addEventListener('click', () => {
 	        selectedRow = row; // 클릭한 행 저장
-	        const modalEl = document.getElementById("businessModal");
-	        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-	        modal.show();
-
+	        //const modalEl = document.getElementById("businessModal");
+	        //const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+	        //modal.show();
+			businessModal.show(); // 항상 동일한 인스턴스 사용
+			
 	        if (!gridApi) initBusinessGrid();
 	        else loadBusinessData();
 	    });
@@ -283,6 +297,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	    const gridOptions = {
 	        columnDefs,
 	        rowSelection: "single",
+	        pagination: true,
+	        domLayout: 'normal',
 	        rowData: [],
 	        onGridReady: (event) => {
 	            gridApi = event.api;
@@ -389,31 +405,64 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   // Axios 등록 + Toast
-	const form = document.getElementById('insertProductForm');
+	const form = document.getElementById('insertOrderPlan');
 	const submitBtn = document.getElementById('submitBtn');
 	const toastEl = document.getElementById('successToast');
 	const toast = new bootstrap.Toast(toastEl);
 	
-	submitBtn.addEventListener('click', (event) => {
+	submitBtn.addEventListener('click', async (event) => {
 		event.preventDefault(); // 페이지 새로고침 방지
-	    const formData = new FormData(form);
+		
+		const master = {
+			    insDate: document.getElementById('insDate').value,
+			    empId: document.getElementById('empId').value,
+			    taxType: document.getElementById('taxType').value
+			  };
+		
+		 const details = [];
+		  document.querySelectorAll('#orderItemsTable tbody tr').forEach(row => {
+		    details.push({
+		      productCode: row.querySelector('.productCode').value,
+		      productName: row.querySelector('.productName').value,
+		      businessPartner: row.querySelector('.businessPartner').value,
+		      businessCode: row.querySelector('.businessCode').value,
+		      specification: row.querySelector('.specification').value,
+		      amount: row.querySelector('.qty').value,
+		      purchasePrice: row.querySelector('.purchasePrice').value,
+		      supAmt: row.querySelector('.supAmt').value,
+		      vatAmt: row.querySelector('.vatAmt').value
+		    });
+		  });
+
+		  const payload = { master, details };
+		  try {
+			    await axios.post('/api/v1/stock/orderPlanInsert', payload, {
+			      headers: { 'Content-Type': 'application/json' }
+			    });
+			    toast.show();
+			    form.reset();
+			  } catch (err) {
+			    alert('등록 실패: ' + err.message);
+			  }
+		
+	//    const formData = new FormData(form);
 	
-	    axios.post('/api/v1/stock/productInsert', formData, {
-	        headers: { 'Content-Type': 'multipart/form-data' }
-	    })
-	    .then(response => {
-	        toast.show(); // Toast 알림
-	        form.reset();  // 폼 초기화
-	        document.getElementById('imageCard').style.display = 'none'; // 미리보기 숨김
-	    })
-	    .catch(error => {
-	        alert('등록 실패: ' + error.response.data.message || error.message);
-	    });
+	    //axios.post('/api/v1/stock/productInsert', formData, {
+	      //  headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+	    //})
+	    //.then(response => {
+	      //  toast.show(); // Toast 알림
+	       // form.reset();  // 폼 초기화
+	        //document.getElementById('imageCard').style.display = 'none'; // 미리보기 숨김
+	    //})
+	    //.catch(error => {
+	      //  alert('등록 실패: ' + error.response.data.message || error.message);
+	    //});
 	});
   
 });
 </script>
-
+</th:block>
 
 </body>
 </html>
