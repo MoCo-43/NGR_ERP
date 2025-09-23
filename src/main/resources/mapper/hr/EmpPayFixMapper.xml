@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.EmpPayFixMapper">
+
+	<!-- 조회 -->
+	<select id="selectByEmpId" parameterType="string"
+		resultType="com.yedam.erp.vo.hr.EmpPayFixVO">
+		SELECT
+		EMP_ID AS emp_id,
+		BASE_PAY AS base_pay,
+		BIRTH_CARE AS birth_care,
+		FAMILY_ALLOW AS family_allow,
+		MEAL_ALLOW AS meal_allow,
+		ANNUAL_ALLOW AS annual_allow
+		FROM EMP_PAY_FIX
+		WHERE EMP_ID = #{empId}
+	</select>
+
+	<!-- 신규 -->
+	<insert id="insert"
+		parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
+		INSERT INTO EMP_PAY_FIX (
+		EMP_ID, BASE_PAY, BIRTH_CARE, FAMILY_ALLOW, MEAL_ALLOW, ANNUAL_ALLOW
+		) VALUES (
+		#{emp_id}, #{base_pay}, #{birth_care}, #{family_allow}, #{meal_allow},
+		#{annual_allow}
+		)
+	</insert>
+
+	<!-- 수정 -->
+	<update id="update"
+		parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
+		UPDATE EMP_PAY_FIX
+		SET BASE_PAY = #{base_pay},
+		BIRTH_CARE = #{birth_care},
+		FAMILY_ALLOW = #{family_allow},
+		MEAL_ALLOW = #{meal_allow},
+		ANNUAL_ALLOW = #{annual_allow}
+		WHERE EMP_ID = #{emp_id}
+	</update>
+
+	<!-- MERGE(있으면 수정, 없으면 삽입) : Oracle -->
+	<update id="upsert"
+		parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
+		MERGE INTO EMP_PAY_FIX t
+		USING (SELECT #{emp_id} AS EMP_ID,
+		#{base_pay} AS BASE_PAY,
+		#{birth_care} AS BIRTH_CARE,
+		#{family_allow} AS FAMILY_ALLOW,
+		#{meal_allow} AS MEAL_ALLOW,
+		#{annual_allow} AS ANNUAL_ALLOW
+		FROM dual) s
+		ON (t.EMP_ID = s.EMP_ID)
+		WHEN MATCHED THEN
+		UPDATE SET t.BASE_PAY = s.BASE_PAY,
+		t.BIRTH_CARE = s.BIRTH_CARE,
+		t.FAMILY_ALLOW = s.FAMILY_ALLOW,
+		t.MEAL_ALLOW = s.MEAL_ALLOW,
+		t.ANNUAL_ALLOW = s.ANNUAL_ALLOW
+		WHEN NOT MATCHED THEN
+		INSERT (EMP_ID, BASE_PAY, BIRTH_CARE, FAMILY_ALLOW, MEAL_ALLOW,
+		ANNUAL_ALLOW)
+		VALUES (s.EMP_ID, s.BASE_PAY, s.BIRTH_CARE, s.FAMILY_ALLOW, s.MEAL_ALLOW,
+		s.ANNUAL_ALLOW)
+	</update>
+
+</mapper>

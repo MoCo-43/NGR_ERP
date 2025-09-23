@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.DeptMapper">
+
+  <!-- 부서 리스트 -->
+  <select id="selectDeptList" resultType="com.yedam.erp.vo.hr.DeptVO">
+    SELECT DEPT_CODE, DEPT_NAME, USE_YN, MEMBER_CNT, MANAGER_EMP_ID
+    FROM DEPT
+    ORDER BY DEPT_CODE
+  </select>
+
+  <!-- 부서 등록 -->
+  <insert id="insertDept" parameterType="com.yedam.erp.vo.hr.DeptVO">
+    INSERT INTO DEPT (DEPT_NAME, USE_YN, MEMBER_CNT, MANAGER_EMP_ID)
+    VALUES (#{deptName}, #{useYn}, #{memberCnt}, #{managerEmpId})
+  </insert>
+
+  <!-- 부서 수정 -->
+  <update id="updateDept" parameterType="com.yedam.erp.vo.hr.DeptVO">
+    UPDATE DEPT
+    SET DEPT_NAME = #{deptName},
+        USE_YN = #{useYn},
+        MEMBER_CNT = #{memberCnt},
+        MANAGER_EMP_ID = #{managerEmpId}
+    WHERE DEPT_CODE = #{deptCode}
+  </update>
+
+  <!-- 부서 삭제 -->
+  <delete id="deleteDept" parameterType="string">
+    DELETE FROM DEPT WHERE DEPT_CODE = #{deptCode}
+  </delete>
+
+</mapper>
