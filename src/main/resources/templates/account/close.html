@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+  <meta charset="UTF-8"/>
+  <title layout:fragment="title">일반 전표 마감</title>
+
+  <!-- ✅ 베이스 레이아웃의 head 영역에 주입 -->
+  <th:block layout:fragment="head_extra">
+    <!-- Bootstrap -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+    <!-- AG Grid CSS -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
+    <style>
+      h3 { margin-bottom: 1rem; font-weight: 700; }
+      .btn { font-weight: 600; }
+      .section-title { margin-top: 1.5rem; margin-bottom: .5rem; font-weight: 700; }
+      .ag-theme-quartz { height: 220px; width: 100%; }
+    </style>
+  </th:block>
+</head>
+
+<body>
+  <!-- ✅ 베이스 레이아웃이 삽입할 본문 영역 (조각 이름은 base의 기대값과 일치해야 함) -->
+  <section layout:fragment="content">
+    <h3>일반 전표 마감</h3>
+
+    <!-- 상단 영역 -->
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <label class="form-label mb-0">조회일자</label>
+      <input type="date" class="form-control form-control-sm" style="width:150px" value="2025-09-10"/>
+      <button class="btn btn-dark btn-sm">조회</button>
+      <button class="btn btn-success btn-sm">제출</button>
+      <button class="btn btn-warning btn-sm">승인</button>
+      <button class="btn btn-danger btn-sm">역분개</button>
+    </div>
+
+    <!-- 전표 리스트 -->
+    <div class="section-title">전표 리스트</div>
+    <div id="voucherGrid" class="ag-theme-quartz"></div>
+
+    <!-- 전표 상세 -->
+    <div class="section-title">전표 상세</div>
+    <div class="row mb-2">
+      <div class="col-md-3">
+        <label class="form-label">전표번호</label>
+        <input class="form-control form-control-sm" value="20250915-001"/>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">작성자</label>
+        <input class="form-control form-control-sm" value="홍길동"/>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">전표일자</label>
+        <input class="form-control form-control-sm" value="2025-09-10"/>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">적요</label>
+        <input class="form-control form-control-sm" value="상품 매출 분개"/>
+      </div>
+    </div>
+
+    <div id="detailGrid" class="ag-theme-quartz"></div>
+
+    <!-- 마감 로그 -->
+    <div class="section-title">마감 로그</div>
+    <div id="logGrid" class="ag-theme-quartz"></div>
+
+    <div class="mt-3 text-end">
+      <button class="btn btn-danger">close</button>
+    </div>
+
+    <!-- ✅ 스크립트는 content 내부 맨 아래에서 DOM 이후 실행 -->
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        // 전표 리스트 Grid
+        const voucherGridOptions = {
+          columnDefs: [
+            { headerName: '선택', checkboxSelection: true, headerCheckboxSelection: true, width: 70 },
+            { headerName: '전표번호', field: 'no', width: 120 },
+            { headerName: '전표일자', field: 'date', width: 120 },
+            { headerName: '적요', field: 'desc', flex: 1 },
+            { headerName: '상태', field: 'status', width: 120 }
+          ],
+          rowData: [
+            { no: '001', date: '2025-09-10', desc: '상품 매출', status: '승인' },
+            { no: '002', date: '2025-09-10', desc: '반품 조정', status: '제출' },
+            { no: 'R001', date: '2025-09-11', desc: '역분개 건', status: '역분개' }
+          ],
+          rowSelection: 'multiple',
+          defaultColDef: { sortable: true, filter: true, resizable: true }
+        };
+        new agGrid.Grid(document.getElementById('voucherGrid'), voucherGridOptions);
+
+        // 전표 상세 Grid
+        const detailGridOptions = {
+          columnDefs: [
+            { headerName: '코드', field: 'code', width: 100 },
+            { headerName: '계정과목', field: 'acct', width: 150 },
+            { headerName: '적요', field: 'desc', flex: 1 },
+            { headerName: '차변', field: 'debit', width: 120, type: 'numericColumn', valueFormatter: p=>p.value?.toLocaleString() },
+            { headerName: '대변', field: 'credit', width: 120, type: 'numericColumn', valueFormatter: p=>p.value?.toLocaleString() }
+          ],
+          rowData: [
+            { code:'4100', acct:'매출', desc:'상품 매출', debit:110000, credit:null },
+            { code:'1120', acct:'외상매출금', desc:'거래처 A', debit:null, credit:110000 }
+          ],
+          defaultColDef: { resizable:true },
+          pinnedBottomRowData: [
+            { acct:'합계:', debit:110000, credit:110000 }
+          ]
+        };
+        new agGrid.Grid(document.getElementById('detailGrid'), detailGridOptions);
+
+        // 마감 로그 Grid
+        const logGridOptions = {
+          columnDefs: [
+            { headerName: '마감일자', field: 'date', width: 150 },
+            { headerName: '전표범위', field: 'range', width: 150 },
+            { headerName: '건수', field: 'count', width: 100 },
+            { headerName: '차변', field: 'debit', width: 120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() },
+            { headerName: '대변', field: 'credit', width: 120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() },
+            { headerName: '상태', field: 'status', flex: 1 }
+          ],
+          rowData: [
+            { date:'2025-09-10', range:'001 - 012', count:12, debit:110000, credit:110000, status:'완료' }
+          ],
+          defaultColDef: { resizable:true }
+        };
+        new agGrid.Grid(document.getElementById('logGrid'), logGridOptions);
+      });
+    </script>
+  </section>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
+<head>
+<title layout:fragment="title">일반 전표</title>
+<th:block layout:fragment="head_extra">
+	<!-- AG Grid -->
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+	<style>
+#generalVoucherGrid.ag-theme-quartz {
+	height: 34rem;
+	width: 100%;
+	margin-top: 1rem;
+}
+
+.btn-bar {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.badge-debit {
+	background: #fee2e2;
+	color: #b91c1c;
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+
+.badge-credit {
+	background: #dbeafe;
+	color: #1d4ed8;
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+</style>
+</th:block>
+</head>
+<body>
+	<section layout:fragment="content">
+		<div class="card shadow mb-3">
+			<div
+				class="card-header py-3 d-flex align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">일반 전표</h6>
+			</div>
+			<div class="card-body">
+				<!-- 조회 영역 -->
+				<div class="btn-bar">
+					<button class="btn btn-outline-secondary btn-sm" id="btnPeriod">기간별</button>
+					<button class="btn btn-outline-secondary btn-sm" id="btnMonth">월별</button>
+					<input type="date" class="form-control form-control-sm"
+						id="fromDate" style="max-width: 180px" /> <span class="mx-1">~</span>
+					<input type="date" class="form-control form-control-sm" id="toDate"
+						style="max-width: 180px" />
+					<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
+				</div>
+
+				<!-- 일반전표 목록 Grid -->
+				<div id="generalVoucherGrid" class="ag-theme-quartz"></div>
+			</div>
+		</div>
+	</section>
+
+	<th:block layout:fragment="body_extra">
+		<script
+			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+		<script
+			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+		<script th:inline="none">
+  let gvApi;
+
+  // === 데이터 불러오기 ===
+  async function loadAndRenderGeneralVoucher() {
+    try {
+      const { data } = await axios.get("/api/account/generalVoucher");
+      gvApi.setGridOption("rowData", Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      alert("일반전표 데이터를 불러오지 못했습니다.");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // === Grid 정의 ===
+    const columnDefs = [
+      { headerName: "월", valueGetter: p => p.data?.voucherDate ? new Date(p.data.voucherDate).getMonth() + 1 : "", flex: .5 },
+      { headerName: "일", valueGetter: p => p.data?.voucherDate ? new Date(p.data.voucherDate).getDate() : "", flex: .5 },
+      { headerName: "전표번호", field: "voucherNo", flex: 1 },
+      { headerName: "구분", field: "gbn", flex: 1, 
+        cellRenderer: p => {
+          if(p.value === "차변") return `<span class="badge-debit">차변</span>`;
+          if(p.value === "대변") return `<span class="badge-credit">대변</span>`;
+          return p.value ?? "";
+        }},
+      { headerName: "코드", field: "acctCode", flex: 1 },
+      { headerName: "계정과목", field: "acctName", flex: 1 },
+      { headerName: "거래처코드", field: "partnerCode", flex: 1 },
+      { headerName: "거래처", field: "partner", flex: 1 },
+      { headerName: "적요", field: "note", flex: 1 },
+      { headerName: "차변(출금)", field: "debit", flex: 1, valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
+      { headerName: "대변(입금)", field: "credit", flex: 1, valueFormatter: p => p.value ? p.value.toLocaleString() : "" }
+    ];
+
+    gvApi = agGrid.createGrid(document.querySelector("#generalVoucherGrid"), {
+      columnDefs,
+      rowData: [],
+      pagination: true,
+      paginationPageSize: 15,
+      defaultColDef: { resizable: true, filter: true }
+    });
+
+    // 최초 데이터 로딩
+    loadAndRenderGeneralVoucher();
+  });
+</script>
+	</th:block>
+</body>
+</html>
