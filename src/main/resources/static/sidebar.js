@@ -5,7 +5,7 @@ const MENUS = {
     content: "인사 대시보드",
     groups: [
       { title: "사원관리", items: [
-        ["사원관리", "/hr/emp"],
+        ["사원 목록", "/emps"],
         ["수당등록", "/hr/allow"],
         ["공제등록", "/hr/deduct"],
       ]},
@@ -34,7 +34,7 @@ const MENUS = {
       ]},
       { title: "발주관리", items: [
         ["발주계획조회","/inv/po/plan"],
-        ["발주계획등록","/inv/po/plan/new"],
+        ["발주계획등록","/stock/plan/insert"],
         ["발주서 조회","/inv/po/list"],
         ["발주서 등록","/inv/po/new"],
       ]},
@@ -42,7 +42,7 @@ const MENUS = {
         ["재고결산","/inv/closing"]
       ]},
       { title: "제품관리", items: [
-        ["제품등록","/inv/product"]
+        ["제품등록","/stock/product/insert"]
       ]}
     ]
   },
@@ -104,6 +104,7 @@ const contentTitle = () => $('contentTitle');
 /** 사이드바 렌더 */
 function renderSidebar(key){
   const data = MENUS[key] || MENUS.hr;
+  const currentPath = window.location.pathname;
 
   if (sidebarTitle()) sidebarTitle().textContent = data.title;
   if (contentTitle()) contentTitle().textContent = data.content;
@@ -122,14 +123,26 @@ function renderSidebar(key){
 
     const ul = document.createElement('ul');
     ul.className = 'sub';
+    let hasActiveItem = false;
+
     grp.items.forEach(([label, href])=>{
       const li = document.createElement('li');
       const a = document.createElement('a');
       a.href = href;
       a.textContent = label;
+
+      if (a.pathname === currentPath) {
+        a.classList.add('active');
+        hasActiveItem = true;
+      }
+      
       li.appendChild(a);
       ul.appendChild(li);
     });
+
+    if (hasActiveItem) {
+      ul.classList.add('open');
+    }
 
     gtitle.addEventListener('click', ()=>{
       ul.classList.toggle('open');
@@ -144,7 +157,29 @@ function renderSidebar(key){
 /** 탭 이벤트 */
 function initTabs(){
   const tabs = document.querySelectorAll('.tab');
+  const currentPath = window.location.pathname;
+  let activeTabKey = 'hr';
+
+  for(const key in MENUS) {
+    const groups = MENUS[key].groups;
+    for(const group of groups) {
+      if(group.items.some(([label, href]) => href === currentPath)) {
+        activeTabKey = key;
+        break;
+      }
+    }
+    if (activeTabKey !== 'hr') break;
+  }
+
   tabs.forEach(t=>{
+    if (t.dataset.tab === activeTabKey) {
+      t.classList.add('active');
+      t.setAttribute('aria-selected','true');
+    } else {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected','false');
+    }
+    
     t.addEventListener('click', (e)=>{
       e.preventDefault();
       tabs.forEach(x=>{ x.classList.remove('active'); x.setAttribute('aria-selected','false'); });
@@ -153,10 +188,11 @@ function initTabs(){
       renderSidebar(t.dataset.tab);
     });
   });
+
+  renderSidebar(activeTabKey);
 }
 
 /** 초기 구동 */
 document.addEventListener('DOMContentLoaded', ()=>{
   initTabs();
-  renderSidebar('hr');
 });

@@ -3,9 +3,11 @@ package com.yedam.erp.service.impl.stock;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.stock.StockMapper;
 import com.yedam.erp.service.stock.StockService;
+import com.yedam.erp.vo.stock.OrderPlanDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
@@ -33,11 +35,16 @@ public class StockImpl implements StockService{
 		return mapper.customerAll();
 	}
 
-
+	@Transactional
 	@Override
-	public int insertOrderPlan(OrderPlanVO orderPlan) {
-		
-		return mapper.insertOrderPlan(orderPlan);
+	public void insertOrderPlan(OrderPlanVO plan) {
+		mapper.insertOrderPlan(plan);
+        if(plan.getDetails() != null) {
+            for(OrderPlanDetailVO item : plan.getDetails()) {
+                item.setXpCode(plan.getXpCode()); // 마스터 PK -> 디테일 FK
+                mapper.insertOrderPlanDetail(item);
+            }
+        }
 	}
 
 

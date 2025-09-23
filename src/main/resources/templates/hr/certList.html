@@ -1,0 +1,68 @@
+<div id="certList" th:fragment="certList">
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="fw-bold small text-secondary">사원 자격증 리스트</div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary btn-sm" id="btnCertAdd"
+                  data-bs-toggle="modal" data-bs-target="#certFormModal">등록</button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle cert-table">
+          <thead class="table-light">
+            <tr>
+              <th>자격번호</th>
+              <th class="flex-grow-2">자격증명</th>
+              <th>등급</th>
+              <th>발급기관</th>
+              <th>취득일</th>
+              <th>유효기간</th>
+              <th>비고</th>
+              <th>삭제</th>
+            </tr>
+          </thead>
+          <tbody id="certTbody"><!-- JS Render --></tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-end small text-secondary mt-2">
+        <span id="certRowCount">0건</span>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .cert-table thead tr, .cert-table tbody tr { display:flex; align-items:center; }
+    .cert-table thead th, .cert-table tbody td { flex:1; text-align:center; padding:.75rem .5rem; }
+    .cert-table th:first-child, .cert-table td:first-child { flex:.7; }  /* 자격번호 */
+    .cert-table .flex-grow-2 { flex:2; }                                /* 자격증명 넓게 */
+    .cert-table th:last-child, .cert-table td:last-child { flex:.8; }    /* 삭제 버튼 */
+  </style>
+
+  <script>
+  (function(){
+    // 등록 버튼 클릭 시 현재 empId를 hidden에 세팅
+    document.addEventListener('click', function(e){
+      const el = e.target;
+      if(!(el instanceof Element) || el.id!=='btnCertAdd') return;
+      const empId = document.getElementById('f_emp_id')?.value || '';
+      const hidden = document.getElementById('certEmpId');
+      if(hidden) hidden.value = empId;
+      const modalEl = document.getElementById('certFormModal');
+      if(modalEl){
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    });
+
+    // 모달 열릴 때 포커스
+    document.addEventListener('shown.bs.modal', function(e){
+      if(!(e.target instanceof Element) || e.target.id!=='certFormModal') return;
+      const first = e.target.querySelector('input[name="certName"]');
+      first?.focus();
+    });
+  })();
+  </script>
+</div>

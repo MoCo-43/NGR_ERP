@@ -1,71 +1,198 @@
-<!-- templates/hr/eduList.html -->
+<!-- =========================
+     교육 리스트 (Fragment)
+     파일: templates/hr/eduList.html
+     ========================= -->
 <div id="eduList" th:fragment="eduList">
   <div class="card shadow-sm">
-    <div class="card-body">
+    <div class="card-body pb-2">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="fw-bold small text-secondary">사원 교육 리스트</div>
-        <div class="d-flex gap-2">
-          <!-- Bootstrap 4: data-toggle/data-target 사용 -->
-          <button
-            type="button"
-            class="btn btn-primary btn-sm"
-            id="btnEduAdd"
-            data-toggle="modal"
-            data-target="#eduFormModal"
-          >등록</button>
-        </div>
+        <button type="button"
+                class="btn btn-primary btn-sm"
+                id="btnEduAdd"
+                data-bs-toggle="modal"
+                data-bs-target="#eduFormModal">등록</button>
       </div>
 
-      <div class="table-responsive">
-        <table class="table table-hover align-middle">
+      <!-- 스크롤 영역 + 헤더 고정 -->
+      <div class="table-responsive edu-scroll">
+        <table class="table table-hover table-sm align-middle edu-table">
+          <colgroup>
+            <col style="width: 90px" />   <!-- 교육번호 -->
+            <col />                       <!-- 교육명 -->
+            <col style="width: 110px" />  <!-- 종류 -->
+            <col style="width: 90px"  />  <!-- 결과 -->
+            <col style="width: 80px"  />  <!-- 점수 -->
+            <col style="width: 120px" />  <!-- 수료일 -->
+            <col style="width: 120px" />  <!-- 유효기간 -->
+            <col style="width: 70px"  />  <!-- 삭제 -->
+          </colgroup>
+
           <thead class="table-light">
             <tr>
-              <th style="width:100px;">교육번호</th>
-              <th>교육명</th>
-              <th style="width:120px;">종류</th>
-              <th style="width:100px;">결과</th>
-              <th style="width:90px; text-align:right;">점수</th>
-              <th style="width:120px;">수료일</th>
-              <th style="width:120px;">유효기간</th>
-              <th style="width:80px;">삭제</th>
+              <th class="text-center sticky-th">번호</th>
+              <th class="sticky-th">교육명</th>
+              <th class="text-center sticky-th">종류</th>
+              <th class="text-center sticky-th">결과</th>
+              <th class="text-end sticky-th">점수</th>
+              <th class="text-center sticky-th">수료일</th>
+              <th class="text-center sticky-th">유효기간</th>
+              <th class="text-center sticky-th">삭제</th>
             </tr>
           </thead>
-          <tbody id="eduTbody"><!-- JS 렌더 --></tbody>
+
+          <tbody id="eduTbody"><!-- JS 렌더링 --></tbody>
         </table>
       </div>
 
-      <div class="d-flex justify-content-end small text-secondary mt-2">
+      <div class="d-flex justify-content-end small text-secondary mt-1">
         <span id="eduRowCount">0건</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ✅ 모달 강제 오픈 & empId 세팅 (Bootstrap 4용) -->
+<!-- ===== 스타일 ===== -->
+<style>
+/* 모달 내부 높이에 맞게 표만 스크롤되도록 */
+.edu-scroll {
+  max-height: 360px;           /* 필요시 모달 높이에 맞춰 조정 */
+  overflow: auto;
+}
+
+/* 헤더 고정 */
+.sticky-th {
+  position: sticky; top: 0; z-index: 2;
+}
+
+/* 셀 기본: 한 줄, 넘치면 ...  */
+.edu-table th, .edu-table td {
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 교육명만 2줄 허용 + 깔끔한 줄바꿈 */
+.edu-table td:nth-child(2), 
+.edu-table th:nth-child(2) {
+  white-space: normal;       /* 줄바꿈 허용 */
+  word-break: break-word;    /* 단어 단위로 줄바꿈 */
+  overflow: visible;         /* 숨기지 않고 다 보여주기 */
+}
+
+/* 좁은 칼럼 정렬 미세조정 */
+.edu-table td:nth-child(1),
+.edu-table td:nth-child(3),
+.edu-table td:nth-child(4),
+.edu-table td:nth-child(6),
+.edu-table td:nth-child(7),
+.edu-table td:nth-child(8) { text-align: center; }
+
+.edu-table td:nth-child(5) { text-align: right; } /* 점수 */
+</style>
+
+<!-- ===== 스크립트 ===== -->
 <script>
 (function(){
-  // 등록 버튼 클릭 시: empId 세팅 + 모달 보이기
-  document.addEventListener('click', function(e){
-    if (!e.target || e.target.id !== 'btnEduAdd') return;
+  // 유틸: 안전한 값 표시
+  const val = (v, d='-') => (v === null || v === undefined || v === '') ? d : v;
 
-    var empId = document.getElementById('f_emp_id')?.value || '';
-    var hidden = document.getElementById('eduEmpId');
-    if (hidden) hidden.value = empId;
+  // 날짜 yyyy-mm-dd로 잘려서 온다면 그대로, 아니면 포맷 시도
+  const fmtDate = (d) => {
+    if (!d) return '-';
+    if (typeof d === 'string' && d.length >= 10) return d.substring(0,10);
+    try { return new Date(d).toISOString().substring(0,10); } catch { return val(d); }
+  };
 
-    var $modal = $('#eduFormModal');
-    if ($modal.length === 0) {
-      console.error('[교육모달] #eduFormModal 요소 없음 (fragment 포함/ID 오타 확인)');
-      alert('교육 등록 모달이 화면에 준비되지 않았습니다.');
+  // 리스트 렌더링 (백엔드 응답 키: eduId, eduName, eduType, result, score, completeDate, expireDate 등)
+  window.renderEduList = function(items){
+    const tb = document.getElementById('eduTbody');
+    const cnt = document.getElementById('eduRowCount');
+    if(!tb) return;
+
+    if(!Array.isArray(items) || items.length === 0){
+      tb.innerHTML = `<tr><td colspan="8" class="text-center text-secondary py-4">등록된 교육 이력이 없습니다.</td></tr>`;
+      if (cnt) cnt.textContent = '0건';
       return;
     }
-    // Bootstrap 4 jQuery API
-    $modal.modal('show');
+
+    tb.innerHTML = items.map(row => `
+      <tr data-id="${val(row.eduId,'')}">
+        <td class="text-center">${val(row.eduId,'-')}</td>
+        <td title="${val(row.eduName,'')}">${val(row.eduName,'')}</td>
+        <td class="text-center" title="${val(row.eduType,'')}">${val(row.eduType,'-')}</td>
+        <td class="text-center" title="${val(row.result,'')}">${val(row.result,'-')}</td>
+        <td class="text-end">${val(row.score,'-')}</td>
+        <td class="text-center">${fmtDate(row.completeDate || row.complete_dt || row.completeDateStr)}</td>
+        <td class="text-center">${fmtDate(row.expireDate   || row.expire_dt   || row.expireDateStr)}</td>
+        <td class="text-center">
+          <button type="button" class="btn btn-outline-danger btn-xs btn-sm btn-edu-del">삭제</button>
+        </td>
+      </tr>
+    `).join('');
+
+    if (cnt) cnt.textContent = `${items.length}건`;
+  };
+
+  // 등록 버튼: empId hidden 세팅 + 모달 오픈 보장
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('#btnEduAdd');
+    if(!btn) return;
+
+    const empId = document.getElementById('f_emp_id')?.value || '';
+    const hidden = document.getElementById('eduEmpId');
+    if (hidden) hidden.value = empId;
+
+    const modalEl = document.getElementById('eduFormModal');
+    if (modalEl) (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl)).show();
+    else alert('교육 등록 모달이 화면에 준비되지 않았습니다.');
   });
 
   // 모달 열릴 때 첫 입력 포커스
-  $(document).on('shown.bs.modal', '#eduFormModal', function(){
-    var $first = $(this).find('input[name="eduName"]');
-    if ($first.length) $first.focus();
+  document.addEventListener('shown.bs.modal', function(e){
+    if(e.target?.id !== 'eduFormModal') return;
+    e.target.querySelector('input[name="eduName"]')?.focus();
+  });
+
+  // 삭제 버튼 (이벤트 위임)
+  document.addEventListener('click', async function(e){
+    const btn = e.target.closest('.btn-edu-del');
+    if(!btn) return;
+
+    const tr = btn.closest('tr');
+    const eduId = tr?.dataset?.id;
+    const empId = document.getElementById('f_emp_id')?.value || '';
+
+    if(!eduId) return;
+
+    if(!confirm('이 교육 이력을 삭제할까요?')) return;
+
+    try{
+      const resp = await fetch(`/api/hr/edu/${encodeURIComponent(eduId)}?empId=${encodeURIComponent(empId)}`, {
+        method: 'DELETE'
+      });
+      const result = await resp.json().catch(()=>null); // int 반환 시 json 파싱 실패할 수 있음
+      if(resp.ok){
+        // 로컬에서 즉시 제거
+        tr.remove();
+        // 건수 갱신
+        const cnt = document.getElementById('eduRowCount');
+        const rows = document.querySelectorAll('#eduTbody tr');
+        if (rows.length === 0) {
+          document.getElementById('eduTbody').innerHTML =
+            `<tr><td colspan="8" class="text-center text-secondary py-4">등록된 교육 이력이 없습니다.</td></tr>`;
+          if (cnt) cnt.textContent = '0건';
+        } else {
+          if (cnt) cnt.textContent = `${rows.length}건`;
+        }
+      } else {
+        alert('삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    }catch(err){
+      console.error(err);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
   });
 })();
 </script>

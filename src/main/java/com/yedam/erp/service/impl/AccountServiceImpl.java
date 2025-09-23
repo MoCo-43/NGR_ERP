@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.yedam.erp.mapper.account.accountMapper;
 import com.yedam.erp.service.AccountService;
 import com.yedam.erp.vo.account.accountVO;
+import com.yedam.erp.vo.account.invoiceVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -65,6 +66,12 @@ public class AccountServiceImpl implements AccountService {
 	public int bulkInsert(List<accountVO> accounts) {
 		    return accmapper.bulkInsert(accounts);
 	
+	}
+
+	// 매출 매입전표 출력
+	@Override
+	public List<invoiceVO> selectInvoice() {
+		return accmapper.selectInvoice();
 	}
 
 }

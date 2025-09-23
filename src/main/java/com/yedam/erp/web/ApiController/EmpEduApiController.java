@@ -1,14 +1,15 @@
 package com.yedam.erp.web.ApiController;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,50 +26,33 @@ public class EmpEduApiController {
 
     private final EmpEduService service;
 
-    // ===== 조회: empId로 목록 (프론트가 대문자 키 기대하므로 변환해서 내려줌)
+    // ===== 조회: empId로 목록 =====
     @GetMapping
-    public List<Map<String, Object>> list(@RequestParam("empId") String empId) {
+    public List<EmpEduVO> list(@RequestParam("empId") String empId) {
         EmpEduVO param = new EmpEduVO();
         param.setEmpId(empId);
-        List<EmpEduVO> vos = service.selectEmpEduList(param);
-
-        List<Map<String, Object>> out = new ArrayList<>();
-        for (EmpEduVO v : vos) {
-            Map<String, Object> m = new HashMap<>();
-            m.put("EDU_NO", v.getEduNo());
-            m.put("EMP_ID", v.getEmpId());
-            m.put("EDU_NAME", v.getEduName());
-            m.put("EDU_TYPE", v.getEduType());
-            m.put("RESULT", v.getResult());
-            m.put("SCORE", v.getScore());
-            m.put("COMPLETE_AT", v.getCompleteAt());
-            m.put("EXPIRES_AT",  v.getExpiresAt());
-            m.put("REMARKS",     v.getRemarks());
-            out.add(m);
-        }
-        return out;
+        return service.selectEmpEduList(param);
     }
 
-    // ===== 등록 (form-urlencoded)
-    @PostMapping(consumes = "application/x-www-form-urlencoded")
-    public Map<String, Object> create(EmpEduVO vo) {
+    // ===== 등록: JSON 바디 받기 =====
+    @PostMapping   // <-- consumes 제거, @RequestBody 사용
+    public Map<String, Object> create(@RequestBody EmpEduVO vo) {
         Map<String, Object> res = new HashMap<>();
-        if (vo.getEmpId() == null || vo.getEmpId().isEmpty()) {
+        if (!StringUtils.hasText(vo.getEmpId())) {
             res.put("success", false);
             res.put("message", "사번(empId)이 필요합니다.");
             return res;
         }
-        boolean ok = service.insertEmpEdu(vo);
-        res.put("success", ok);
+        int cnt = service.insertEmpEdu(vo) ? 1 : 0; // 서비스 시그니처에 맞춰서
+        res.put("success", cnt > 0);
         return res;
     }
 
-    // ===== 삭제
     @DeleteMapping("/{eduNo}")
     public Map<String, Object> delete(@PathVariable("eduNo") Long eduNo) {
         EmpEduVO vo = new EmpEduVO();
-        vo.setEduNo(eduNo);
-        boolean ok = service.deleteEmpEdu(vo);
+        vo.setEduNo(eduNo); // VO에 eduNo 세팅
+        boolean ok = service.deleteEmpEdu(vo);  // 기존 서비스 호출
         Map<String, Object> res = new HashMap<>();
         res.put("success", ok);
         return res;

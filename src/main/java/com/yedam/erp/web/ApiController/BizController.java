@@ -32,10 +32,11 @@ public class BizController {
       return service.selectPO();
   }
   
-  // 주문서 등록
+  // 주문서 등록 페이지
   @PostMapping("/poinsert")
   public int insertPO(@RequestBody PurchaseOrderVO vo) {
       return service.insertPO(vo);
   }
   
+  // 주문서 등록 처리
 }

@@ -13,20 +13,48 @@
 
 <!-- 주문서 조회 -->
 <select id="selectPO" resultType="com.yedam.erp.vo.Biz.PurchaseOrderVO">
-SELECT p.PO_START, c.CUS_NAME, p.CREATER, pd.ORDER_QTY, c.BIZ_TYPE, c.CEO_NAME, p.TOTAL_PRICE, p.PO_STATUS, p.notes
-FROM CUSTOMER c
-LEFT JOIN PURCHASE_ORDER p ON c.CUS_NO = p.CUS_NO
-LEFT JOIN PO_DETAIL pd ON pd.PO_ID = p.PO_ID
-ORDER BY PO_START DESC
+SELECT
+    p.PO_START,
+    c.CUS_NAME,
+    p.CREATER,
+    CASE
+        WHEN pd_counts.cnt > 1 THEN p.PRD_NAME || ' 외 ' || (pd_counts.cnt - 1) || '건'
+        ELSE p.PRD_NAME
+    END AS PRD_NAME,
+    c.BIZ_TYPE,
+    c.CEO_NAME,
+    p.TOTAL_PRICE,
+    p.PO_STATUS,
+    p.NOTES
+FROM
+    CUSTOMER c
+LEFT JOIN
+    PURCHASE_ORDER p ON c.CUS_NO = p.CUS_NO
+LEFT JOIN
+    (SELECT PO_ID, COUNT(*) as cnt FROM PO_DETAIL GROUP BY PO_ID) pd_counts
+ON
+    p.PO_ID = pd_counts.PO_ID
+ORDER BY
+    p.PO_START DESC
 </select>
 
-<!-- 주문서 입력 -->
-<insert id="insertPO" parameterType="com.yedam.erp.vo.Biz.PurchaseOrderVO">
-  INSERT ALL 
-  INTO PURCHASE_ORDER (PO_ID, CUS_NO, CREATER, TOTAL_PRICE, PO_STATUS, NOTES)
-  VALUES (PO_ID_SEQ.NEXTVAL(), #{cusNo}, #{creater}, #{totalPrice}, #{poStatus}, #{notes})
-  INTO PO_DETAIL (POD_ID , PO_ID, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE, DC_PRICE, SUP_AMT, VAT_AMT, D_PRD_NAME)
-  VALUES (POD_ID_SEQ.NEXTVAL(), PO_ID_SEQ.CURRVAL(), #{productCode}, #{orderQty}, #{unitPrice}, #{dcPrice}, #{supAmt}, #{vatAmt}, #{dPrdName})
+<!-- 주문서 입력 페이지 -->
+<insert id="insertPO" parameterType="com.yedam.erp.vo.Biz.PoInsertVO">
+  INSERT ALL
+    INTO PURCHASE_ORDER (
+        PO_ID, CUS_NO, CREATER, PO_START, EX_DATE, PO_DATE, PRD_NAME,
+        TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
+    ) VALUES (
+        PO_ID_SEQ.NEXTVAL, #{cusNo}, #{creater}, #{poStart}, #{exDate}, #{poDate}, #{prdName},
+        #{totalPrice}, #{poStatus}, #{payMethod}, #{notes}, #{vatType}, #{poType}
+    )
+    INTO PO_DETAIL (
+        POD_ID, PO_ID, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
+        DC_PRICE, SUP_AMT, VAT_AMT, D_PRD_NAME
+    ) VALUES (
+        POD_ID_SEQ.NEXTVAL, PO_ID_SEQ.CURRVAL, #{productCode}, #{orderQty}, #{unitPrice},
+        #{dcPrice}, #{supAmt}, #{vatAmt}, #{dPrdName}
+    )
 </insert>
 
 

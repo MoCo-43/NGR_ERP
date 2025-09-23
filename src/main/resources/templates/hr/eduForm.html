@@ -2,19 +2,13 @@
 <div class="modal fade" id="eduFormModal" tabindex="-1" aria-hidden="true" th:fragment="eduFormModal">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">
-
       <div class="modal-header">
-        <h5 class="modal-title fw-bold">사원 교육 등록</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="닫기">
-          <span aria-hidden="true">&times;</span>
-        </button>
+      <h5 class="modal-title fw-bold" style="color: #000000;">사원 교육 등록</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
       </div>
-
       <div class="modal-body">
         <form id="eduFormDetail" onsubmit="return false;">
-          <!-- 현재 선택 사번(외부에서 세팅) -->
-          <input type="hidden" name="empId" id="eduEmpId" th:value="${empId}"/>
-
+          <input type="hidden" name="empId" id="eduEmpId"/>
           <div class="row g-3">
             <div class="col-12">
               <label class="form-label">교육명 <span class="text-danger">*</span></label>
@@ -26,33 +20,31 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">결과</label>
-              <input type="text" name="result" class="form-control" placeholder="예) 수료/미수료">
+              <input type="text" name="result" class="form-control">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+              <label class="form-label">점수</label>
+              <input type="number" name="score" class="form-control" min="0" max="100" step="1">
+            </div>
+            <div class="col-md-4">
               <label class="form-label">수료일</label>
               <input type="date" name="completeAt" class="form-control">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label">유효기간</label>
               <input type="date" name="expiresAt" class="form-control">
             </div>
-            <div class="col-md-6">
-              <label class="form-label">점수</label>
-              <input type="number" name="score" class="form-control" min="0" step="1">
-            </div>
             <div class="col-12">
               <label class="form-label">비고</label>
-              <textarea name="remarks" class="form-control" rows="3"></textarea>
+              <input type="text" name="remarks" class="form-control">
             </div>
-          </div>
-
-          <div class="mt-3 d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-success" id="btnEduSave">저장</button>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
           </div>
         </form>
       </div>
-
+      <div class="modal-footer">
+        <button type="button" id="btnEduSave" class="btn btn-primary">저장</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+      </div>
     </div>
   </div>
 </div>

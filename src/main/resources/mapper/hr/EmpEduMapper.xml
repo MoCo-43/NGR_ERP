@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.yedam.erp.mapper.hr.EmpEduMapper">
 
-  <!-- 사번별 교육 리스트 -->
-  <select id="selectEmpEduList" parameterType="com.yedam.erp.vo.hr.EmpEduVO"
+  <select id="selectEmpEduList"
+          parameterType="string"
           resultType="com.yedam.erp.vo.hr.EmpEduVO">
     SELECT
       EDU_NO       AS eduNo,
@@ -14,37 +15,34 @@
       EDU_TYPE     AS eduType,
       RESULT       AS result,
       SCORE        AS score,
-      COMPLETE_AT  AS completeAt,
-      EXPIRES_AT   AS expiresAt,
+      COMPLETE_AT  AS completeAt,   <!-- DATE 그대로 -->
+      EXPIRES_AT   AS expiresAt,    <!-- DATE 그대로 -->
       REMARKS      AS remarks
     FROM EMP_EDU
-    <where>
-      <if test="empId != null and empId != ''">
-        EMP_ID = #{empId}
-      </if>
-    </where>
+    WHERE EMP_ID = #{empId}
     ORDER BY EDU_NO DESC
   </select>
 
-
   <!-- 등록 -->
-  <insert id="insertEmpEdu" parameterType="com.yedam.erp.vo.hr.EmpEduVO">
-    INSERT INTO EMP_EDU
-      (EMP_ID, EDU_NAME, EDU_TYPE, RESULT, SCORE, COMPLETE_AT, EXPIRES_AT, REMARKS)
-    VALUES
-      (#{empId},
-       #{eduName},
-       #{eduType},
-       #{result},
-       #{score},
-       #{completeAt},
-       #{expiresAt},
-       #{remarks})
+  <insert id="insert" parameterType="com.yedam.erp.vo.hr.EmpEduVO">
+    INSERT INTO EMP_EDU (
+      EDU_NO, EMP_ID, EDU_NAME, EDU_TYPE, RESULT, SCORE,
+      COMPLETE_AT, EXPIRES_AT, REMARKS
+    ) VALUES (
+      SEQ_EMP_EDU_NO.NEXTVAL,
+      #{empId},
+      #{eduName},
+      #{eduType},
+      #{result},
+      #{score},
+      #{completeAt,jdbcType=DATE},
+      #{expiresAt,jdbcType=DATE},
+      #{remarks}
+    )
   </insert>
 
-
   <!-- 삭제 -->
-  <delete id="deleteEmpEdu" parameterType="com.yedam.erp.vo.hr.EmpEduVO">
+  <delete id="deleteByPk" parameterType="long">
     DELETE FROM EMP_EDU WHERE EDU_NO = #{eduNo}
   </delete>
 
