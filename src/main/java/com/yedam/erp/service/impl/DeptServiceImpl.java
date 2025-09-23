@@ -3,6 +3,7 @@ package com.yedam.erp.service.impl;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.hr.DeptMapper;
 import com.yedam.erp.service.DeptService;
@@ -14,25 +15,33 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DeptServiceImpl implements DeptService {
 
-    private final DeptMapper mapper;
+	private final DeptMapper deptMapper;
 
-    @Override
-    public List<DeptVO> getDeptList() {
-        return mapper.selectDeptList();
-    }
+	@Override
+	public List<DeptVO> getDeptList(DeptVO param) {
+		return deptMapper.selectDeptList(param);
+	}
 
-    @Override
-    public void addDept(DeptVO vo) {
-        mapper.insertDept(vo);
-    }
+	@Override
+	public DeptVO getDept(String dept_code) {
+		return deptMapper.selectDept(dept_code);
+	}
 
-    @Override
-    public void editDept(DeptVO vo) {
-        mapper.updateDept(vo);
-    }
+	@Override
+	@Transactional
+	public int addDept(DeptVO vo) {
+		return deptMapper.insertDept(vo);
+	}
 
-    @Override
-    public void removeDept(String deptCode) {
-        mapper.deleteDept(deptCode);
-    }
+	@Override
+	@Transactional
+	public int editDept(DeptVO vo) {
+		return deptMapper.updateDept(vo);
+	}
+
+	@Override
+	@Transactional
+	public int removeDept(String dept_code) {
+		return deptMapper.deleteDept(dept_code);
+	}
 }

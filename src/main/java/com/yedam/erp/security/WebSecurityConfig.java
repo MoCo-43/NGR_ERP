@@ -24,7 +24,7 @@ public class WebSecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(requests -> requests
-                .requestMatchers("/**", "/*.css", "/*.js", "/img/**", "/prodimg/**", "/sign/**").permitAll()
+                .requestMatchers("/**", "/api/**","/*.css", "/*.js", "/img/**", "/prodimg/**", "/sign/**").permitAll()
             )
 			.formLogin(form -> form
 				      .loginPage("/login") //GET 로그인 페이지 표시

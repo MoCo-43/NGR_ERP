@@ -4,14 +4,16 @@ import java.util.List;
 import com.yedam.erp.vo.hr.DeptVO;
 
 public interface DeptService {
-	List<DeptVO> getDeptList();
+	// 목록(검색: dept_code / dept_name / use_yn)
+	List<DeptVO> getDeptList(DeptVO param);
 
-	// 등록
-	void addDept(DeptVO vo);
+	// 단건
+	DeptVO getDept(String dept_code);
 
-	// 수정
-	void editDept(DeptVO vo);
+	// 등록/수정/삭제
+	int addDept(DeptVO vo);
 
-	// 삭제
-	void removeDept(String deptCode);
+	int editDept(DeptVO vo);
+
+	int removeDept(String dept_code);
 }
