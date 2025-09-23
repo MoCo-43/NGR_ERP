@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.yedam.erp.service.AccountService;
 import com.yedam.erp.vo.account.accountVO;
+import com.yedam.erp.vo.account.invoiceVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,5 +46,10 @@ public class AccountController {
 	        e.printStackTrace();
 	        return "업로드 실패: " + e.getMessage();
 	    }
+	}
+	
+	@GetMapping("/invoice")
+	public List<invoiceVO> list(){
+		return accountService.selectInvoice();
 	}
 }

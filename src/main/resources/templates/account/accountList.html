@@ -120,19 +120,19 @@
               pinned: "left",
             },
             {
-              field: "acct_code",
+              field: "acctCode",
               headerName: "코드",
               minWidth: 90,
               valueGetter: (p) => p.data.acct_code ?? p.data.acctCode,
             },
             {
-              field: "acct_name",
+              field: "acctName",
               headerName: "계정과목",
               flex: 1,
               valueGetter: (p) => p.data.acct_name ?? p.data.acctName,
             },
             {
-              field: "std_acct_name",
+              field: "stdAcctName",
               headerName: "표준계정과목",
               flex: 1,
               valueGetter: (p) => p.data.std_acct_name ?? p.data.stdAcctName,
@@ -145,7 +145,7 @@
             },
             {
               headerName: "사용여부",
-              field: "use_yn",
+              field: "useYn",
               minWidth: 110,
               cellRenderer: (p) => {
                 const btn = document.createElement("button");

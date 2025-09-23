@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.yedam.erp.vo.account.accountVO;
+import com.yedam.erp.vo.account.invoiceVO;
 
 public interface AccountService {
 	
@@ -19,4 +20,8 @@ public interface AccountService {
 	
 	//엑셀 인서트
 	public int bulkInsert(List<accountVO> accounts);
+	
+	//매입 매출전표 
+	List<invoiceVO> selectInvoice();
+	
 }
