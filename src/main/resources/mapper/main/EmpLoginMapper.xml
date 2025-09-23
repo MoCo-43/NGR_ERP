@@ -23,5 +23,25 @@
         WHERE
             emp_id = #{empId}
 	</select>
-
+ <select id="findByEmpIdAndMatNo" resultType="com.yedam.erp.vo.main.EmpLoginVO">
+        SELECT
+            emp_id_no,
+            emp_pw,
+            emp_id,
+            emp_no,
+            create_at,
+            is_used,
+            mat_no,
+            is_locked,
+            lock_until,
+            failed_login_att,
+            dept_code,
+            code_id,
+            two_step_method,
+            token
+        FROM
+            emp_login
+        WHERE
+            emp_id = #{empId} AND mat_no = #{matNo}
+    </select>
 </mapper>

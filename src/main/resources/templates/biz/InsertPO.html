@@ -59,7 +59,8 @@
               id="btnOpenProduct"
               type="button"
               class="btn btn-outline-secondary btn-slim"
-              data-bs-target="#productModal"
+              data-bs-toggle="modal"
+              data-bs-target="#productModalTwo"
             >
               품목코드
             </button>
@@ -67,6 +68,8 @@
               id="btnOpenHistory"
               type="button"
               class="btn btn-outline-secondary btn-slim"
+              data-bs-toggle="modal"
+              data-bs-target="#PoHistoryModal"
             >
               주문서이력조회
             </button>
@@ -121,26 +124,6 @@
                     placeholder="거래처명"
                     readonly
                   />
-                </div>
-              </div>
-
-              <div class="form-group col-md-2">
-                <label class="form-label d-block">빠른버튼</label>
-                <div class="btn-group">
-                  <button
-                    id="btnQuickReset"
-                    type="button"
-                    class="btn btn-outline-secondary btn-slim"
-                  >
-                    초기화
-                  </button>
-                  <button
-                    id="btnQuickSave"
-                    type="button"
-                    class="btn btn-primary btn-slim"
-                  >
-                    등록
-                  </button>
                 </div>
               </div>
             </div>
@@ -282,8 +265,10 @@
       <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
 
       <!-- 품목코드 모달 -->
-      <div th:replace="~{biz/modals/productModal :: ProductModal}"></div>
+      <div th:replace="~{biz/modals/productModal :: productModalFr}"></div>
+
       <!-- 주문서이력조회 모달 -->
+      <div th:replace="~{biz/modals/PoHistoryModal :: PoHistoryModal}"></div>
     </section>
 
     <th:block layout:fragment="body_extra">
@@ -383,7 +368,7 @@
               },
             ],
             defaultColDef: { sortable: true, resizable: true, filter: true },
-            rowSelection: "single",
+            rowSelection: "multiRow",
             onGridReady: (p) => {
               gridApi = p.api;
               updatePinned();
@@ -557,6 +542,7 @@
           byId("btnOpenHistory").addEventListener("click", async () => {
             try {
               await axios.get("/api/biz/polist");
+              gridApi.setRowData(res.data);
               alert("주문서 이력조회는 별도 모달/페이지로 연결하세요.");
             } catch {
               alert("이력조회 API 호출 예시입니다.");
@@ -574,6 +560,82 @@
             if (el) el.value = v ?? "";
           }
         });
+
+        // 주문서조회 모달
+        const poHistoryModalEl = document.getElementById("PoHistoryModal");
+        let poHistoryGridApi; // 주문 이력 그리드 API를 저장할 변수
+
+        // 주문 이력 그리드의 컬럼 정의
+        const poHistoryColumnDefs = [
+          { headerName: "작성일자", field: "poStart", width: 120 },
+          { headerName: "거래처명", field: "cusName", flex: 1, minWidth: 150 },
+          { headerName: "담당자", field: "creater", width: 100 },
+          {
+            headerName: "대표 품목명",
+            field: "prdName",
+            flex: 1,
+            minWidth: 180,
+          },
+          { headerName: "납기일자", field: "exDate", width: 120 },
+          {
+            headerName: "총액",
+            field: "totalPrice",
+            width: 150,
+            type: "rightAligned",
+            valueFormatter: (p) =>
+              p.value ? p.value.toLocaleString("ko-KR") : "",
+          },
+          {
+            cellRenderer: "agCheckboxCellRenderer",
+            cellEditor: "agCheckboxCellEditor",
+          },
+        ];
+        // 주문 이력 그리드 옵션
+        const poHistoryGridOptions = {
+          columnDefs: poHistoryColumnDefs,
+          rowSelection: {
+            mode: "multiRow",
+          },
+          rowData: [],
+          defaultColDef: { sortable: true, resizable: true, filter: true },
+          onGridReady: (params) => {
+            poHistoryGridApi = params.api;
+          },
+        };
+
+        // 서버에서 주문 이력 데이터를 가져오는 함수
+        async function fetchPoHistoryData() {
+          if (!poHistoryGridApi) return; // 그리드가 준비되지 않았으면 실행하지 않음
+          try {
+            const response = await axios.get("/api/biz/pohistory");
+            poHistoryGridApi.setRowData(response.data);
+            poHistoryGridApi.sizeColumnsToFit();
+          } catch (error) {
+            console.error("주문 이력 조회 실패:", error);
+            alert("데이터를 불러오는 데 실패했습니다.");
+          }
+        }
+
+        // 모달이 화면에 완전히 표시된 후에 그리드를 생성하고 데이터를 불러옴
+        if (poHistoryModalEl) {
+          poHistoryModalEl.addEventListener("shown.bs.modal", () => {
+            // 그리드가 아직 생성되지 않았다면 생성
+            if (!poHistoryGridApi) {
+              const gridDiv = document.getElementById("poHistoryGrid");
+              if (window.agGrid?.createGrid) {
+                poHistoryGridApi = agGrid.createGrid(
+                  gridDiv,
+                  poHistoryGridOptions
+                );
+              } else {
+                new agGrid.Grid(gridDiv, poHistoryGridOptions);
+                poHistoryGridApi = poHistoryGridOptions.api;
+              }
+            }
+            // 모달이 열릴 때마다 최신 데이터를 불러옴
+            fetchPoHistoryData();
+          });
+        }
       </script>
     </th:block>
   </body>

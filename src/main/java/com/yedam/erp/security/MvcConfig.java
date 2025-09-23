@@ -12,7 +12,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		// 메인
 		registry.addViewController("/").setViewName("main/homeMain");
 		registry.addViewController("/login").setViewName("main/login");
-		registry.addViewController("/register").setViewName("main/login");
+		registry.addViewController("/register").setViewName("main/register");
 		registry.addViewController("/subscribe").setViewName("main/subscribe");
 		// 영업
 
@@ -21,6 +21,8 @@ public class MvcConfig implements WebMvcConfigurer {
 
 		registry.addViewController("/biz/polist").setViewName("biz/ViewAllPO");
 		registry.addViewController("/biz/poinsert").setViewName("biz/InsertPO");
+		// 영업-주문이력조회
+		registry.addViewController("/biz/pohistory").setViewName("biz/modals/PoHistoryModal");
 
 		// 회계
 		registry.addViewController("/vouchers").setViewName("account/list");
@@ -28,6 +30,9 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/invoice").setViewName("account/invoice");
 		registry.addViewController("/invoiceModal").setViewName("account/invoiceModal");
 		registry.addViewController("/taxInvoice").setViewName("account/taxInvoice");
+		registry.addViewController("/journal").setViewName("account/journal");
+		registry.addViewController("/close").setViewName("account/close");
+		
 		// 재고
 		registry.addViewController("/stock").setViewName("index");
 		registry.addViewController("/stock/product/insert").setViewName("stock/insertProduct");

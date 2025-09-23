@@ -1,69 +1,102 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
 <head>
-  <title layout:fragment="title">매입 매출 전표</title>
-  <th:block layout:fragment="head_extra">
-   <th:block th:replace="~{account/taxInvoiceModal :: taxInvoiceModalStyles}"></th:block>
-    <!-- AG Grid -->
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
-    <style>
-      #voucherGrid.ag-theme-quartz { height: 32rem; width: 100%; }
-      #detailGrid.ag-theme-quartz { height: 20rem; width: 100%; margin-top: 1rem; display: none; }
-      #invoiceGrid.ag-theme-quartz { height: 20rem; width: 100%; margin-top: 1rem; }
-      .btn-bar { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+<title layout:fragment="title">매입 매출 전표</title>
+<th:block layout:fragment="head_extra">
+	<th:block
+		th:replace="~{account/taxInvoiceModal :: taxInvoiceModalStyles}"></th:block>
+	<!-- AG Grid -->
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+	<style>
+#voucherGrid.ag-theme-quartz {
+	height: 32rem;
+	width: 100%;
+}
 
-      /* ✅ '유형' 컬럼만 배지 스타일로 강조 */
-      .badge-type {
-        display: inline-block;
-        padding: 0.125rem 0.5rem;
-        border-radius: 9999px;
-        font-weight: 700;
-        font-size: 0.875rem;
-        line-height: 1.2;
-      }
-      .badge-sales { background:#fee2e2; color:#b91c1c; }     /* 매출(S) 빨강 */
-      .badge-purchase { background:#dbeafe; color:#1d4ed8; }  /* 매입(P) 파랑 */
-    </style>
-  </th:block>
+#detailGrid.ag-theme-quartz {
+	height: 20rem;
+	width: 100%;
+	margin-top: 1rem;
+	display: none;
+}
+
+#invoiceGrid.ag-theme-quartz {
+	height: 20rem;
+	width: 100%;
+	margin-top: 1rem;
+}
+
+.btn-bar {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+/* ✅ '유형' 컬럼만 배지 스타일로 강조 */
+.badge-type {
+	display: inline-block;
+	padding: 0.125rem 0.5rem;
+	border-radius: 9999px;
+	font-weight: 700;
+	font-size: 0.875rem;
+	line-height: 1.2;
+}
+
+.badge-sales {
+	background: #fee2e2;
+	color: #b91c1c;
+} /* 매출(S) 빨강 */
+.badge-purchase {
+	background: #dbeafe;
+	color: #1d4ed8;
+} /* 매입(P) 파랑 */
+</style>
+</th:block>
 </head>
 <body>
-<section layout:fragment="content">
-  <div class="card shadow mb-3">
-    <div class="card-header py-3 d-flex align-items-center justify-content-between">
-      <h6 class="m-0 fw-bold text-primary">매입 매출 전표</h6>
-    </div>
-    <div class="card-body">
-      <!-- 버튼 영역 -->
-      <div class="btn-bar">
-        <button class="btn btn-danger btn-sm open-invoice" data-bs-toggle="modal"
-                data-bs-target="#invoiceModal" data-type="S">매출</button>
-        <button class="btn btn-primary btn-sm open-invoice" data-bs-toggle="modal"
-                data-bs-target="#invoiceModal" data-type="P">매입</button>
-        <button class="btn btn-success btn-sm open-taxinvoice" data-bs-toggle="modal"
-        		 data-bs-target="#taxInvoiceModal">전자세금</button>
-      </div>
+	<section layout:fragment="content">
+		<div class="card shadow mb-3">
+			<div
+				class="card-header py-3 d-flex align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">매입 매출 전표</h6>
+			</div>
+			<div class="card-body">
+				<!-- 버튼 영역 -->
+				<div class="btn-bar">
+					<button class="btn btn-danger btn-sm open-invoice"
+						data-bs-toggle="modal" data-bs-target="#invoiceModal"
+						data-type="S">매출</button>
+					<button class="btn btn-primary btn-sm open-invoice"
+						data-bs-toggle="modal" data-bs-target="#invoiceModal"
+						data-type="P">매입</button>
+					<button class="btn btn-success btn-sm open-taxinvoice"
+						data-bs-toggle="modal" data-bs-target="#taxInvoiceModal">전자세금</button>
+				</div>
 
-      <!-- 전표 목록 Grid -->
-      <div id="voucherGrid" class="ag-theme-quartz"></div>
+				<!-- 전표 목록 Grid -->
+				<div id="voucherGrid" class="ag-theme-quartz"></div>
 
-      <!-- 분개 상세 Grid -->
-      <div id="detailGrid" class="ag-theme-quartz"></div>
-    </div>
-  </div>
-  <!-- ✅ 모달 fragment include -->
-  <div th:replace="~{account/invoiceModal :: invoiceModal}"></div>
-  <div th:replace="~{account/taxInvoiceModal :: taxInvoiceModal}"></div>
-</section>
+				<!-- 분개 상세 Grid -->
+				<div id="detailGrid" class="ag-theme-quartz"></div>
+			</div>
+		</div>
+		<!-- ✅ 모달 fragment include -->
+		<div th:replace="~{account/invoiceModal :: invoiceModal}"></div>
+		<div th:replace="~{account/taxInvoiceModal :: taxInvoiceModal}"></div>
+		<div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
+	</section>
 
-<th:block layout:fragment="body_extra">
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
-<script th:inline="none">
+	<th:block layout:fragment="body_extra">
+		<script
+			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+		<script
+			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+		<script th:inline="none">
   let voucherApi, detailApi;
 
   // === 전표 데이터 불러오기 ===
@@ -163,8 +196,9 @@
   });
 </script>
 
-<script th:inline="none">
-//매입 매출 모달
+		<!--  매입매출 모달 -->
+		<script th:inline="none">
+
 document.addEventListener("DOMContentLoaded", () => {
   const modalEl = document.getElementById('invoiceModal');
   let invoiceGridApi;
@@ -205,6 +239,105 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
-</th:block>
+
+		<!--  거래처 모달 -->
+		<script th:inline="none">
+let businessGridApi = null;
+
+async function loadBusinessData() {
+  try {
+    const res = await axios.get("/api/v1/stock/cusList");
+    if (businessGridApi) {
+      businessGridApi.setRowData(res.data);
+      businessGridApi.sizeColumnsToFit();
+    }
+  } catch (err) {
+    console.error("cusList 로드 실패:", err);
+  }
+}
+
+function initBusinessGrid() {
+  const gridDiv = document.querySelector("#businessModal #myGrid") || document.querySelector("#myGrid");
+  if (!gridDiv) {
+    console.error("거래처 그리드 컨테이너(#myGrid)를 찾을 수 없습니다.");
+    return;
+  }
+
+  const columnDefs = [
+    { headerName: "거래처코드", field: "cusCode" },
+    { headerName: "거래처명", field: "cusName" },
+    { headerName: "담당자명", field: "empName" },
+    { headerName: "사업자번호", field: "bizNo" },
+    { headerName: "대표명", field: "ceoName" },
+    { headerName: "업태", field: "bizType" },
+    { headerName: "종목", field: "bizCategory" },
+    { headerName: "거래처주소", field: "addr" }
+  ];
+
+  const gridOptions = {
+    columnDefs,
+    rowSelection: "single",
+    pagination: true,
+    rowData: [],
+    defaultColDef: { resizable: true, sortable: true, minWidth: 100 },
+    onGridReady: (e) => {
+      businessGridApi = e.api;
+      businessGridApi.sizeColumnsToFit();
+      loadBusinessData();
+    },
+    onRowDoubleClicked: (e) => {
+      // 값 반영
+      document.getElementById("cusCodeInput").value = e.data.cusCode ?? "";
+      document.getElementById("cusNameInput").value = e.data.cusName ?? "";
+
+      // 거래처 모달 닫고 → 전표 모달 다시 열기
+      const businessModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal"));
+      businessModal.hide();
+
+      const invoiceModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("invoiceModal"));
+      invoiceModal.show();
+    }
+  };
+
+  new agGrid.Grid(gridDiv, gridOptions);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const invoiceModalEl = document.getElementById("invoiceModal");
+  const businessModalEl = document.getElementById("businessModal");
+  if (!invoiceModalEl || !businessModalEl) {
+    console.error("invoiceModal 또는 businessModal 요소가 없습니다.");
+    return;
+  }
+
+  const invoiceModal = bootstrap.Modal.getOrCreateInstance(invoiceModalEl);
+  const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
+
+  // 버튼 클릭 → 전표모달 닫고 → 닫힌 후 거래처 모달 열기 (연쇄)
+  document.getElementById("openBusinessModalBtn").addEventListener("click", () => {
+    const openBusinessAfterHide = () => {
+      // 한 번만 실행하고 핸들러 제거
+      invoiceModalEl.removeEventListener("hidden.bs.modal", openBusinessAfterHide);
+
+      // 거래처 모달 열기
+      businessModal.show();
+    };
+
+    // 전표 모달이 완전히 닫힌 뒤 실행
+    invoiceModalEl.addEventListener("hidden.bs.modal", openBusinessAfterHide);
+    invoiceModal.hide(); // 먼저 닫는다
+  });
+
+  // 거래처 모달이 보여질 때 그리드 준비/리사이즈/로딩
+  businessModalEl.addEventListener("shown.bs.modal", () => {
+    if (!businessGridApi) initBusinessGrid();
+    else {
+      businessGridApi.sizeColumnsToFit();
+      loadBusinessData();
+    }
+  });
+});
+</script>
+	</th:block>
 </body>
 </html>
