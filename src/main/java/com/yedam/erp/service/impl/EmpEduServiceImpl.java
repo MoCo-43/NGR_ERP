@@ -3,7 +3,6 @@ package com.yedam.erp.service.impl;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.hr.EmpEduMapper;
 import com.yedam.erp.service.EmpEduService;
@@ -15,24 +14,21 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmpEduServiceImpl implements EmpEduService {
 
-    private final EmpEduMapper mapper;
+    private final EmpEduMapper empEduMapper;
 
     @Override
-    public List<EmpEduVO> selectEmpEduList(EmpEduVO empEduVO) {
-        return mapper.selectEmpEduList(empEduVO);
+    public List<EmpEduVO> selectEmpEduList(EmpEduVO vo) {
+        // Mapper는 empId만 필요하므로 VO에서 꺼내서 전달
+        return empEduMapper.selectEmpEduList(vo != null ? vo.getEmpId() : null);
     }
 
-    @Transactional
     @Override
-    public boolean insertEmpEdu(EmpEduVO empEduVO) {
-        // EDU_NO는 트리거로 자동 생성
-        return mapper.insertEmpEdu(empEduVO) > 0;
+    public boolean insertEmpEdu(EmpEduVO vo) {
+        return empEduMapper.insert(vo) == 1;
     }
 
-    @Transactional
     @Override
-    public boolean deleteEmpEdu(EmpEduVO empEduVO) {
-        return mapper.deleteEmpEdu(empEduVO) > 0;
+    public boolean deleteEmpEdu(EmpEduVO vo) {
+        return empEduMapper.deleteByPk(vo.getEduNo()) == 1;
     }
 }
-

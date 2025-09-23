@@ -3,18 +3,19 @@ package com.yedam.erp.mapper.hr;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import com.yedam.erp.vo.hr.EmpEduVO;
 
 @Mapper
 public interface EmpEduMapper {
 
-	// 사번별 교육 리스트 조회
-	List<EmpEduVO> selectEmpEduList(EmpEduVO empEduVO);
+    // 전체조회
+    List<EmpEduVO> selectEmpEduList(@Param("empId") String empId);
 
-	// 등록
-	int insertEmpEdu(EmpEduVO empEduVO);
+    // 등록
+    int insert(EmpEduVO vo);
 
-	// 삭제
-	int deleteEmpEdu(EmpEduVO empEduVO);
+    // 삭제
+    int deleteByPk(@Param("eduNo") Long eduNo);
 }

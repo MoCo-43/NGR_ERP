@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.EmpCertMapper">
+
+  <resultMap id="EmpCertMap" type="com.yedam.erp.vo.hr.EmpCertVO">
+    <id column="CERT_NO" property="certNo"/>
+    <result column="EMP_ID" property="empId"/>
+    <result column="CERT_NAME" property="certName"/>
+    <result column="GRADE" property="grade"/>
+    <result column="ORG_NAME" property="orgName"/>
+    <result column="ACQUIRED_AT" property="acquiredAt" jdbcType="DATE"/>
+    <result column="EXPIRES_AT" property="expiresAt" jdbcType="DATE"/>
+    <result column="REMARKS" property="remarks"/>
+  </resultMap>
+
+  <select id="selectEmpCertList" parameterType="string" resultMap="EmpCertMap">
+    SELECT
+      CERT_NO, EMP_ID, CERT_NAME, GRADE, ORG_NAME,
+      ACQUIRED_AT, EXPIRES_AT, REMARKS
+    FROM EMP_CERT
+    WHERE EMP_ID = #{empId}
+    ORDER BY CERT_NO DESC
+  </select>
+
+  <insert id="insert" parameterType="com.yedam.erp.vo.hr.EmpCertVO">
+    INSERT INTO EMP_CERT (
+      CERT_NO, EMP_ID, CERT_NAME, GRADE, ORG_NAME,
+      ACQUIRED_AT, EXPIRES_AT, REMARKS
+    ) VALUES (
+      SEQ_EMP_CERT_NO.NEXTVAL,
+      #{empId},
+      #{certName},
+      #{grade},
+      #{orgName},
+      #{acquiredAt,jdbcType=DATE},
+      #{expiresAt,jdbcType=DATE},
+      #{remarks}
+    )
+  </insert>
+
+  <delete id="deleteByPk" parameterType="long">
+    DELETE FROM EMP_CERT WHERE CERT_NO = #{certNo}
+  </delete>
+
+</mapper>
