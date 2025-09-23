@@ -1,4 +1,4 @@
-package com.yedam.erp.service;
+package com.yedam.erp.service.main;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
