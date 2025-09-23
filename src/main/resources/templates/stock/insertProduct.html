@@ -1,18 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	 layout:decorate="~{layout/base}">
 <head>
-  <!-- Bootstrap CSS -->
+
+  <meta charset="UTF-8">
+  <title layout:fragment="title">너 구 름(Your Cloud)</title>
+  <th:block layout:fragment="head_extra">
+    <!-- Bootstrap CSS -->
+  	<!-- --> 
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
     rel="stylesheet"
     crossorigin="anonymous"
   />
-  <meta charset="UTF-8">
-  <title>Form with Master Grid Card</title>
+  </th:block>
 </head>
-<body class="bg-light">
+<body>
+<section layout:fragment="content">
 <!-- 컨테이너 시작 -->
-<div class="container py-5">
+<div class="py-5">
   <!-- 마스터 카드 -->
   <div class="card shadow-sm mb-4">
     <div class="card-header bg-primary text-white">
@@ -84,7 +91,8 @@
   
   <!-- 컨테이너 종료 -->
 </div>
-
+</section>
+<th:block layout:fragment="body_extra">
  <!-- Axios 등록 -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
  <!-- Bootstrap JS -->
@@ -138,7 +146,7 @@
   
   
 </script>
-
+</th:block>
 
 </body>
 </html>

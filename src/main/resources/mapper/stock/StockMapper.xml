@@ -48,12 +48,46 @@ FROM PRODUCT
 
 </select>
 
-<insert id="insertOrderPlan" parameterType="OrderPlanVO">
-
+<insert id="insertOrderPlan" useGeneratedKeys="true" keyProperty="xpCode" parameterType="OrderPlanVO">
+INSERT INTO EXPLAIN(
+         XP_CODE
+         ,EMP_ID
+         ,INS_DATE
+         ,VAT_TYPE
+)
+VALUES (CONCAT('OP',SEQ_EXPLAIN.nextval), #{empId}, #{insDate}, #{taxType})
 
 
 </insert>
+<insert id="insertOrderPlanDetail" parameterType="OrderPlanDetailVO">
+INSERT INTO EXPLAIN_DETAIL(
+         XD_NO
+        ,PRODUCT_CODE
+        ,PRODUCT_NAME
+        ,SPECIFICATION
+        ,BUSINESS_PARTNER
+        ,BUSINESS_CODE
+        ,AMOUNT
+        ,PURCHASE_PRICE
+        ,SUP_AMT
+        ,VAT_AMT
+        ,XP_CODE
+)
+VALUES (SEQ_EXPLAIN_DETAIL.nextval ,
+        #{productCode}, 
+        #{productName},
+        #{specification}, 
+        #{businessPartner},
+        #{businessCode},
+        #{amount},
+        #{purchasePrice},
+        #{supAmt},
+        #{vatAmt},
+        #{xpCode}
+)
 
+
+</insert>
 
 
 

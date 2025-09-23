@@ -16,11 +16,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.yedam.erp.service.stock.StockService;
+import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
@@ -32,6 +34,12 @@ import lombok.RequiredArgsConstructor;
 public class StockController {
 
 	final private StockService service;
+	
+	@PostMapping("/orderPlanInsert")
+	public ResponseEntity<String> insertOrderPlan(@RequestBody OrderPlanVO plan) {
+		 service.insertOrderPlan(plan);
+		 return ResponseEntity.ok("등록 성공");
+	}
 	
 	@GetMapping("/productList")
 	public List<ProductVO> productList(){
