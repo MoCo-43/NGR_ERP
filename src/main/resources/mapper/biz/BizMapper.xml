@@ -57,5 +57,11 @@ ORDER BY
     )
 </insert>
 
+<!-- 주문서 이력 조회 -->
+<select id="getPOHistory" resultType="com.yedam.erp.vo.Biz.PoHistoryVO">
+SELECT po.PO_START, po.CUS_NAME, po.creater, po.PRD_NAME, po.EX_DATE, po.TOTAL_PRICE
+FROM PURCHASE_ORDER po
+LEFT JOIN PO_DETAIL pd ON pd.PO_ID = po.PO_ID
+</select>
 
 </mapper>

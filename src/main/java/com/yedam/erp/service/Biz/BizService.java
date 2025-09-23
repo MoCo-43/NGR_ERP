@@ -13,4 +13,7 @@ public interface BizService {
 
   // 주문서 등록
   int insertPO(PurchaseOrderVO vo);
+
+  // 주문서 이력 조회
+  List<PurchaseOrderVO> getPOHistory();
 }

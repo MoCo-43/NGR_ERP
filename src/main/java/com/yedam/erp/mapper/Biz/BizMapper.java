@@ -15,4 +15,6 @@ public interface BizMapper {
   List<PurchaseOrderVO> selectPO();
   // 주문서 등록
   int insertPO(PurchaseOrderVO vo);
+  // 주문서 이력 조회
+  List<PurchaseOrderVO> getPOHistory();
 }
