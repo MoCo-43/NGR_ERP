@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_auth_base}"> 
+<head>
+  <title layout:fragment="title">ERP 회원가입</title>
+  
+  <th:block layout:fragment="head_extra">
+    <style>
+      .auth-forms h2 { text-align: center; margin-bottom: 1.5rem; color: #4d341e; }
+      .auth-forms .input-field { width: 100%; margin-bottom: 1rem; position: relative; }
+      .auth-forms .input-field input { width: 100%; padding: 10px; border: none; border-bottom: 2px solid #ccc; background: transparent; outline: none; }
+      .auth-forms .btn-primary { width: 100%; padding: 12px; background: #4d341e; color: #fff; border: none; cursor: pointer; margin-top: 10px; }
+      .link-small { font-size: 0.9rem; text-align: center; margin-top: 1rem; }
+      .link-small a { color: #4d341e; }
+      
+      /* 주소 검색 버튼 스타일 */
+      .btn-find-address {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 5px 10px;
+        background-color: #eee;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      
+      /* 아이디 중복 확인 버튼 */
+      .btn-check-username {
+         position: absolute;
+         right: 0;
+         top: 50%;
+         transform: translateY(-50%);
+         padding: 5px;
+         font-size: 11px;
+         background: #f0f0f0;
+         border: 1px solid #ccc;
+         cursor: pointer;
+      }
+    </style>
+  </th:block>
+</head>
+<body>
+<th:block layout:fragment="content">
+<div class="auth-forms">
+  <div id="register" class="auth-section active">
+    <h2>회원가입</h2>
+    <form th:action="@{/register}" method="post">
+      <div class="input-field">
+        <input type="text" name="username" placeholder="아이디" required>
+        <button type="button" class="btn-check-username">중복확인</button>
+      </div>
+      <div class="input-field"><input type="text" name="companyCode" placeholder="회사코드" required></div>
+      <div class="input-field"><input type="password" name="password" placeholder="비밀번호" required></div>
+      <div class="input-field"><input type="password" name="repassword" placeholder="비밀번호 재확인" required></div>
+      <div class="input-field"><input type="text" name="ceo" placeholder="CEO" required></div>
+      <div class="input-field"><input type="text" name="comManager" placeholder="담당자" required></div>      
+      <div class="input-field"><input type="text" name="phone" placeholder="휴대폰" required></div>
+      <div class="input-field"><input type="email" name="email" placeholder="이메일" required></div>
+
+      <div class="input-field">
+        <input type="text" id="postcode" name="postcode" placeholder="우편번호" readonly>
+        <input type="button" onclick="execDaumPostcode()" value="우편번호 찾기" class="btn-find-address">
+      </div>
+      <div class="input-field">
+        <input type="text" id="roadAddress" name="roadAddress" placeholder="도로명주소" readonly>
+      </div>
+      <div class="input-field">
+        <input type="text" id="jibunAddress" name="jibunAddress" placeholder="지번주소" readonly>
+        <span id="guide" style="color:#999;display:none"></span>
+      </div>
+      <div class="input-field">
+        <input type="text" id="detailAddress" name="detailAddress" placeholder="상세주소">
+      </div>
+      <input type="hidden" id="extraAddress" placeholder="참고항목">
+      
+      <button type="submit" class="btn-primary">가입하기</button>
+    </form>
+    <div class="link-small">
+      <a href="/login">로그인으로 돌아가기</a>
+    </div>
+  </div>
+</div>
+</th:block>
+
+<th:block layout:fragment="body_extra">
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script>
+    function execDaumPostcode() {
+        new daum.Postcode({
+            oncomplete: function(data) {
+                // 각 주소 변수 초기화
+                var roadAddr = data.roadAddress; // 도로명 주소
+                var extraRoadAddr = ''; // 참고 항목
+
+                // 법정동명이 있을 경우 추가
+                if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
+                    extraRoadAddr += data.bname;
+                }
+                // 건물명이 있고, 공동주택일 경우 추가
+                if(data.buildingName !== '' && data.apartment === 'Y'){
+                   extraRoadAddr += (extraRoadAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                }
+                // 최종 참고항목 조합
+                if(extraRoadAddr !== ''){
+                    extraRoadAddr = ' (' + extraRoadAddr + ')';
+                }
+
+                // 우편번호와 주소 정보를 해당 필드에 삽입
+                document.getElementById('postcode').value = data.zonecode;
+                document.getElementById("roadAddress").value = roadAddr;
+                document.getElementById("jibunAddress").value = data.jibunAddress;
+                
+                // 참고항목 삽입
+                if(roadAddr !== ''){
+                    document.getElementById("extraAddress").value = extraRoadAddr;
+                } else {
+                    document.getElementById("extraAddress").value = '';
+                }
+
+                // 가이드 메시지 처리
+                var guideTextBox = document.getElementById("guide");
+                if(data.autoRoadAddress) {
+                    var expRoadAddr = data.autoRoadAddress + extraRoadAddr;
+                    guideTextBox.innerHTML = '(예상 도로명 주소 : ' + expRoadAddr + ')';
+                    guideTextBox.style.display = 'block';
+                } else if(data.autoJibunAddress) {
+                    var expJibunAddr = data.autoJibunAddress;
+                    guideTextBox.innerHTML = '(예상 지번 주소 : ' + expJibunAddr + ')';
+                    guideTextBox.style.display = 'block';
+                } else {
+                    guideTextBox.innerHTML = '';
+                    guideTextBox.style.display = 'none';
+                }
+            }
+        }).open();
+    }
+</script>
+</th:block>
+</body>
+</html>
