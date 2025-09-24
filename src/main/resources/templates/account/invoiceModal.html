@@ -44,8 +44,8 @@
             <div class="col-md-5">
               <label class="form-label">부서명</label>
               <div class="input-group">
-                <input type="text" class="form-control" th:value="${invoiceHeader?.deptCode}" readonly/>
-                <button class="btn btn-outline-secondary btn-icon" type="button">
+                <input type="text" id="deptNameInput" class="form-control" th:value="${invoiceHeader?.deptName}" readonly/>
+                <button class="btn btn-outline-secondary btn-icon" type="button" id="openDeptModalBtn">
                   <i class="fas fa-search"></i>
                 </button>
               </div>
@@ -125,7 +125,7 @@
 
         <div class="modal-footer">
           <button class="btn btn-success" type="button">저장</button>
-          <button class="btn btn-danger" type="button" data-bs-dismiss="modal">닫기</button>
+         <button class="btn btn-warning" type="button" id="resetInvoiceBtn">초기화</button>
         </div>
 
       </div>
@@ -145,6 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
     dateInput.value = `${yyyy}-${mm}-${dd}`;
   }
 });
+
 </script>
 
 </body>
