@@ -4,25 +4,29 @@ const MENUS = {
     title: "인사",
     content: "인사 대시보드",
     groups: [
-      { title: "사원관리", items: [
-        ["사원 목록", "/emps"],
-        ["수당등록", "/hr/allow"],
-        ["공제등록", "/hr/deduct"],
-      ]},
-      { title: "부서관리", items: [
-        ["부서관리", "/dept"],
-      ]},
-      { title: "급여관리", items: [
-        ["급여대장", "/hr/payroll"],
-        ["급여이체현황", "/hr/transfer"]
-      ]},
-    ]
+      {
+        title: "사원관리",
+        items: [
+          ["사원 목록", "/emps"],
+          ["수당등록", "/hr/allow"],
+          ["공제등록", "/hr/deduct"],
+        ],
+      },
+      { title: "부서관리", items: [["부서관리", "/dept"]] },
+      {
+        title: "급여관리",
+        items: [
+          ["급여대장", "/hr/payroll"],
+          ["급여이체현황", "/hr/transfer"],
+        ],
+      },
+    ],
   },
-
   inventory: {
     title: "재고",
     content: "재고 대시보드",
     groups: [
+
       { title: "입고관리", items: [
         ["입고조회","/inv/in/list"],
         ["입고등록","/inv/in/new"],
@@ -50,58 +54,67 @@ const MENUS = {
     title: "영업",
     content: "영업 대시보드",
     groups: [
-      { title: "주문서", items: [
-        ["주문서조회","/sales/order/list"],
-        ["주문서입력","/sales/order/new"]
-      ]},
-      { title: "출하지시서", items: [
-        ["출하지시서조회","/sales/shipping/list"],
-        ["출하지시서입력","/sales/shipping/new"]
-      ]},
-      { title: "거래처", items: [
-        ["거래처관리","/sales/accounts"],
-        ["여신관리","/sales/credit"]
-      ]},
-      { title: "영업관리현황", items: [
-        ["거래명세서","/sales/statement"],
-        ["주문서현황","/sales/order/status"],
-        ["출하지시서현황","/sales/shipping/status"]
-      ]}
-    ]
+      {
+        title: "주문서",
+        items: [
+          ["주문서조회", "/biz/polist"],
+          ["주문서입력", "/biz/poinsert"],
+        ],
+      },
+      {
+        title: "출하지시서",
+        items: [
+          ["출하지시서조회", "/sales/shipping/list"],
+          ["출하지시서입력", "/sales/shipping/new"],
+        ],
+      },
+      {
+        title: "거래처",
+        items: [
+          ["거래처관리", "/sales/accounts"],
+          ["여신관리", "/sales/credit"],
+        ],
+      },
+      {
+        title: "영업관리현황",
+        items: [
+          ["거래명세서", "/sales/statement"],
+          ["주문서현황", "/sales/order/status"],
+          ["출하지시서현황", "/sales/shipping/status"],
+        ],
+      },
+    ],
   },
 
   accounting: {
     title: "회계",
     content: "회계 대시보드",
     groups: [
-      { title: "계정 과목", items: [
-        ["계정 과목 관리","/accountList"]
-      ]},
-      { title: "전표", items: [
-        ["매출매입전표","/invoice"],
-        ["일반전표","journal"],
-        ["자금전표","/acc/voucher/fund"],
-        ["급여전표","/acc/voucher/payroll"],
-        ["전표 마감","/close"]
-      ]},
-      { title: "손익계산서", items: [
-        ["손익계산서","/acc/pl"]
-      ]},
-      { title: "재무상태표", items: [
-        ["재무상태표","/acc/bs"]
-      ]}
-    ]
-  }
+      { title: "계정 과목", items: [["계정 과목 관리", "/accountList"]] },
+      {
+        title: "전표",
+        items: [
+          ["매출매입전표", "/invoice"],
+          ["일반전표", "/journal"],
+          ["자금전표", "/acc/voucher/fund"],
+          ["급여전표", "/acc/voucher/payroll"],
+          ["전표 마감", "/close"],
+        ],
+      },
+      { title: "손익계산서", items: [["손익계산서", "/acc/pl"]] },
+      { title: "재무상태표", items: [["재무상태표", "/acc/bs"]] },
+    ],
+  },
 };
 
 /** DOM 참조 */
-const $ = id => document.getElementById(id);
-const sidebarTitle = () => $('sidebarTitle');
-const navRoot = () => $('navRoot');
-const contentTitle = () => $('contentTitle');
+const $ = (id) => document.getElementById(id);
+const sidebarTitle = () => $("sidebarTitle");
+const navRoot = () => $("navRoot");
+const contentTitle = () => $("contentTitle");
 
 /** 사이드바 렌더 */
-function renderSidebar(key){
+function renderSidebar(key) {
   const data = MENUS[key] || MENUS.hr;
   const currentPath = window.location.pathname;
 
@@ -110,41 +123,41 @@ function renderSidebar(key){
 
   const root = navRoot();
   if (!root) return;
-  root.innerHTML = '';
+  root.innerHTML = "";
 
-  data.groups.forEach((grp)=>{
-    const wrap = document.createElement('div');
-    wrap.className = 'group';
+  data.groups.forEach((grp) => {
+    const wrap = document.createElement("div");
+    wrap.className = "group";
 
-    const gtitle = document.createElement('div');
-    gtitle.className = 'group-title';
+    const gtitle = document.createElement("div");
+    gtitle.className = "group-title";
     gtitle.textContent = grp.title;
 
-    const ul = document.createElement('ul');
-    ul.className = 'sub';
+    const ul = document.createElement("ul");
+    ul.className = "sub";
     let hasActiveItem = false;
 
-    grp.items.forEach(([label, href])=>{
-      const li = document.createElement('li');
-      const a = document.createElement('a');
+    grp.items.forEach(([label, href]) => {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
       a.href = href;
       a.textContent = label;
 
       if (a.pathname === currentPath) {
-        a.classList.add('active');
+        a.classList.add("active");
         hasActiveItem = true;
       }
-      
+
       li.appendChild(a);
       ul.appendChild(li);
     });
 
     if (hasActiveItem) {
-      ul.classList.add('open');
+      ul.classList.add("open");
     }
 
-    gtitle.addEventListener('click', ()=>{
-      ul.classList.toggle('open');
+    gtitle.addEventListener("click", () => {
+      ul.classList.toggle("open");
     });
 
     wrap.appendChild(gtitle);
@@ -154,36 +167,39 @@ function renderSidebar(key){
 }
 
 /** 탭 이벤트 */
-function initTabs(){
-  const tabs = document.querySelectorAll('.tab');
+function initTabs() {
+  const tabs = document.querySelectorAll(".tab");
   const currentPath = window.location.pathname;
-  let activeTabKey = 'hr';
+  let activeTabKey = "hr";
 
-  for(const key in MENUS) {
+  for (const key in MENUS) {
     const groups = MENUS[key].groups;
-    for(const group of groups) {
-      if(group.items.some(([label, href]) => href === currentPath)) {
+    for (const group of groups) {
+      if (group.items.some(([label, href]) => href === currentPath)) {
         activeTabKey = key;
         break;
       }
     }
-    if (activeTabKey !== 'hr') break;
+    if (activeTabKey !== "hr") break;
   }
 
-  tabs.forEach(t=>{
+  tabs.forEach((t) => {
     if (t.dataset.tab === activeTabKey) {
-      t.classList.add('active');
-      t.setAttribute('aria-selected','true');
+      t.classList.add("active");
+      t.setAttribute("aria-selected", "true");
     } else {
-      t.classList.remove('active');
-      t.setAttribute('aria-selected','false');
+      t.classList.remove("active");
+      t.setAttribute("aria-selected", "false");
     }
-    
-    t.addEventListener('click', (e)=>{
+
+    t.addEventListener("click", (e) => {
       e.preventDefault();
-      tabs.forEach(x=>{ x.classList.remove('active'); x.setAttribute('aria-selected','false'); });
-      t.classList.add('active');
-      t.setAttribute('aria-selected','true');
+      tabs.forEach((x) => {
+        x.classList.remove("active");
+        x.setAttribute("aria-selected", "false");
+      });
+      t.classList.add("active");
+      t.setAttribute("aria-selected", "true");
       renderSidebar(t.dataset.tab);
     });
   });
@@ -192,6 +208,6 @@ function initTabs(){
 }
 
 /** 초기 구동 */
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener("DOMContentLoaded", () => {
   initTabs();
 });

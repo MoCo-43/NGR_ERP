@@ -55,6 +55,11 @@
 	background: #dbeafe;
 	color: #1d4ed8;
 } /* 매입(P) 파랑 */
+
+#btnRegisterDetail{
+	display: none;
+}
+
 </style>
 </th:block>
 </head>
@@ -80,7 +85,11 @@
 
 				<!-- 전표 목록 Grid -->
 				<div id="voucherGrid" class="ag-theme-quartz"></div>
-
+				<div id="actionBar" class="d-flex justify-content-end gap-2 my-2"
+					>
+					<button id="btnRegisterDetail" type="button"
+						class="btn btn-primary btn-sm">등록</button>
+				</div>
 				<!-- 분개 상세 Grid -->
 				<div id="detailGrid" class="ag-theme-quartz"></div>
 			</div>
@@ -89,6 +98,8 @@
 		<div th:replace="~{account/invoiceModal :: invoiceModal}"></div>
 		<div th:replace="~{account/taxInvoiceModal :: taxInvoiceModal}"></div>
 		<div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
+		<div th:replace="~{hr/codeLookup :: codeLookupModal}"></div>
+
 	</section>
 
 	<th:block layout:fragment="body_extra">
@@ -98,7 +109,7 @@
 			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 		<script th:inline="none">
   let voucherApi, detailApi;
-
+  let selectedInvoice = null; // ✅ 현재 선택한 상단 전표행 저장
   // === 전표 데이터 불러오기 ===
   async function loadAndRenderVoucher() {
     try {
@@ -150,6 +161,7 @@
         const details = createDetailsFromInvoice(e.data);
         detailApi.setGridOption("rowData", details);
         document.getElementById("detailGrid").style.display = "block";
+        document.getElementById("btnRegisterDetail").style.display = "block";
       }
     });
 
@@ -194,6 +206,30 @@
 
     loadAndRenderVoucher();
   });
+  
+
+//✅ 초기화 버튼 동작
+document.getElementById("resetInvoiceBtn")?.addEventListener("click", () => {
+ const modalEl = document.getElementById("invoiceModal");
+
+ // 모든 input, textarea, select 초기화
+ modalEl.querySelectorAll("input, textarea, select").forEach(el => {
+   if (el.type === "date") {
+     el.value = ""; // 날짜는 공백 처리
+   } else if (el.tagName === "SELECT") {
+     el.selectedIndex = 0; // 첫번째 옵션으로
+   } else {
+     el.value = "";
+   }
+ });
+
+ // ag-grid 초기화
+ const gridDiv = document.getElementById("invoiceGrid");
+ if (gridDiv && gridDiv.api) {
+   gridDiv.api.setRowData([]); // 행 비우기
+ }
+});
+
 </script>
 
 		<!--  매입매출 모달 -->
@@ -240,7 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-		<!--  거래처 모달 -->
+		<!--  invoice 모달안에서  모달 -->
 		<script th:inline="none">
 let businessGridApi = null;
 
@@ -302,9 +338,12 @@ function initBusinessGrid() {
   new agGrid.Grid(gridDiv, gridOptions);
 }
 
+// DOM 렌더링시 
 document.addEventListener("DOMContentLoaded", () => {
   const invoiceModalEl = document.getElementById("invoiceModal");
   const businessModalEl = document.getElementById("businessModal");
+
+  
   if (!invoiceModalEl || !businessModalEl) {
     console.error("invoiceModal 또는 businessModal 요소가 없습니다.");
     return;
@@ -313,6 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const invoiceModal = bootstrap.Modal.getOrCreateInstance(invoiceModalEl);
   const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
 
+  
   // 버튼 클릭 → 전표모달 닫고 → 닫힌 후 거래처 모달 열기 (연쇄)
   document.getElementById("openBusinessModalBtn").addEventListener("click", () => {
     const openBusinessAfterHide = () => {
@@ -338,6 +378,33 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
+		<!-- 부서 모달 -->
+		<script th:inline="none">
+document.addEventListener('DOMContentLoaded', () => {
+  const invoiceModalEl = document.getElementById('invoiceModal');
+  const btn = invoiceModalEl?.querySelector('#btnDeptLookup');
+  if (!btn) return;
+
+  // 중복 바인딩 방지
+  if (btn.dataset.bound === '1') return;
+  btn.dataset.bound = '1';
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    CodeLookup.open({
+      source: 'dept',
+      title:  '부서 선택',
+      // 필요한대로 지정
+      // targetId: 'deptCodeInput',
+      targetNameId: 'deptNameInput',
+    });
+  });
+});
+</script>
+
 	</th:block>
 </body>
 </html>

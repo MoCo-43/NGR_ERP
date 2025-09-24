@@ -1,6 +1,9 @@
 package com.yedam.erp.service.Biz;
 
 import java.util.List;
+
+import com.yedam.erp.vo.Biz.PoInsertVO;
+import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
 
 public interface BizService {
@@ -12,8 +15,11 @@ public interface BizService {
   List<PurchaseOrderVO> selectPO();
 
   // 주문서 등록
-  int insertPO(PurchaseOrderVO vo);
+  int insertPO(PoInsertVO pvo);
 
   // 주문서 이력 조회
   List<PurchaseOrderVO> getPOHistory();
+
+  // 품목 조회
+  List<ProductCodeVO> getProducts();
 }

@@ -15,27 +15,32 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmpServiceImpl implements EmpService {
 
-    private final EmpMapper empMapper;
+	private final EmpMapper empMapper;
 
-    @Override
-    public List<EmpVO> getEmpList(EmpVO empVO) {
-        return empMapper.selectEmpList(empVO);
-    }
+	@Override
+	public List<EmpVO> getEmpList(EmpVO empVO) {
+		return empMapper.selectEmpList(empVO);
+	}
 
-    @Override
-    public EmpVO getEmp(EmpVO empVO) {
-        return empMapper.selectEmp(empVO);
-    }
+	@Override
+	public EmpVO getEmp(EmpVO empVO) {
+		return empMapper.selectEmp(empVO);
+	}
 
-    @Override
-    @Transactional
-    public int insertEmp(EmpVO empVO) {
-        return empMapper.insertEmp(empVO);
-    }
+	@Override
+	@Transactional
+	public int insertEmp(EmpVO empVO) {
+		return empMapper.insertEmp(empVO);
+	}
 
-    @Override
-    @Transactional
-    public int updateEmp(EmpVO empVO) {
-        return empMapper.updateEmp(empVO);
-    }
+	@Override
+	@Transactional
+	public int updateEmp(EmpVO empVO) {
+		return empMapper.updateEmp(empVO);
+	}
+
+	@Override
+	public List<EmpVO> getManagers(EmpVO empVO) {
+		return empMapper.selectManagers(empVO);
+	}
 }

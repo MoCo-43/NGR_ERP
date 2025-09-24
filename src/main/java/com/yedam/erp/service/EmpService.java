@@ -18,4 +18,7 @@ public interface EmpService {
     // 수정 (WHERE emp_id)
     int updateEmp(EmpVO empVO);
     
+    //팀장 조회
+    List<EmpVO> getManagers(EmpVO empVO);
+    
 }

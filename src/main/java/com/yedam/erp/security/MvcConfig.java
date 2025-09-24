@@ -14,6 +14,8 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/login").setViewName("main/login");
 		registry.addViewController("/register").setViewName("main/register");
 		registry.addViewController("/subscribe").setViewName("main/subscribe");
+		registry.addViewController("/subDetail").setViewName("main/subdetail");
+		registry.addViewController("/eContract").setViewName("main/eContract");
 		// 영업
 
 		registry.addViewController("/vouchers").setViewName("account/list");
@@ -23,6 +25,8 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/biz/poinsert").setViewName("biz/InsertPO");
 		// 영업-주문이력조회
 		registry.addViewController("/biz/pohistory").setViewName("biz/modals/PoHistoryModal");
+		// 영업-품목코드조회
+		registry.addViewController("/biz/productcode").setViewName("biz/modals/ProductCodeModal");
 
 		// 회계
 		registry.addViewController("/vouchers").setViewName("account/list");
@@ -43,10 +47,6 @@ public class MvcConfig implements WebMvcConfigurer {
 		// 인사
 		 registry.addViewController("/emps").setViewName("hr/EmpList");
 		 registry.addViewController("/dept").setViewName("hr/deptList");
-		 
-		 
-
-		
 
 	}
 

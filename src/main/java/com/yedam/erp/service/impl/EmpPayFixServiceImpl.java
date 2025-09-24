@@ -1,6 +1,7 @@
 package com.yedam.erp.service.impl;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.hr.EmpPayFixMapper;
 import com.yedam.erp.service.EmpPayFixService;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class EmpPayFixServiceImpl implements EmpPayFixService {
 
 	private final EmpPayFixMapper mapper;

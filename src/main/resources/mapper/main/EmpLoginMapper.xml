@@ -44,4 +44,7 @@
         WHERE
             emp_id = #{empId} AND mat_no = #{matNo}
     </select>
+    <insert id="insertVO">
+    
+    </insert>
 </mapper>

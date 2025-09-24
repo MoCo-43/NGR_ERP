@@ -1,315 +1,243 @@
 <!DOCTYPE html>
-<html lang="ko"
-      xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
 <head>
-  <title layout:fragment="title">사원 리스트</title>
+<title layout:fragment="title">사원 리스트</title>
 
-  <th:block layout:fragment="head_extra">
-    <!-- AG Grid CSS (Quartz) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
+<th:block layout:fragment="head_extra">
+	<!-- AG Grid CSS -->
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
 
-    <style>
-      /* ag-Grid 높이 */
-      #empGrid.ag-theme-quartz { height: 600px; width: 100%; }
+	<style>
+#empGrid.ag-theme-quartz {
+	height: 600px;
+	width: 100%;
+}
 
-      /* 라벨 색 (테마 영향 방지) */
-      .form-label, label { color:#212529 !important; }
-      .form-label{ font-weight:600; }
-      @media (min-width:576px){ .form-label{text-align:right; } }
+.form-label, label {
+	color: #212529 !important;
+}
 
-      .toolbar-right{ gap:.5rem; }
-      .ag-theme-quartz{ --ag-row-height:42px; --ag-font-size:13px; }
-      .ag-header-cell-label{ white-space:nowrap; }
+.form-label {
+	font-weight: 600;
+}
 
-      /* 버튼 간격 */
-      .gap-2 { gap: .5rem !important; }
-      @media (max-width: 575.98px){
-        .card-body .row > .col-6:last-child .d-flex { justify-content: flex-start; }
-      }
-    </style>
-  </th:block>
+@media ( min-width :576px) {
+	.form-label {
+		text-align: right;
+	}
+}
+
+.ag-theme-quartz {
+	--ag-row-height: 42px;
+	--ag-font-size: 13px;
+}
+
+.ag-header-cell-label {
+	white-space: nowrap;
+}
+
+/* 버튼 색상 커스텀 */
+#btnSearch {
+	background-color: #000;
+	color: #fff;
+	border: none;
+}
+
+#btnSearch:hover {
+	background-color: #333;
+}
+
+#btnReset {
+	background-color: #dc3545;
+	color: #fff;
+	border: none;
+}
+
+#btnReset:hover {
+	background-color: #b02a37;
+}
+
+.gap-2 {
+	gap: .5rem !important;
+}
+</style>
+</th:block>
 </head>
 
 <body>
-<section layout:fragment="content">
+	<section layout:fragment="content">
 
-  <!-- **************** 검색 + 버튼 **************** -->
-  <div class="card shadow mb-4">
-    <div class="card-header py-3">
-      <h6 class="m-0 font-weight-bold text-primary">사원 리스트</h6>
-    </div>
+		<!-- ******** 검색 영역 ******** -->
+		<div class="card shadow mb-4">
+			<div class="card-header py-3">
+				<h6 class="m-0 font-weight-bold text-primary">사원 리스트</h6>
+			</div>
 
-    <div class="card-body">
-      <div class="row g-2 align-items-center">
-        <!-- 검색어 입력 -->
-        <div class="col-12 col-md-6">
-          <input id="keyword" class="form-control" placeholder="사번/성명을 입력하세요">
-        </div>
+			<div class="card-body">
+				<div class="row g-2 align-items-center">
+					<!-- 키워드 -->
+					<div class="col-12 col-md-4">
+						<input id="keyword" class="form-control" placeholder="사번/성명 검색">
+					</div>
+					<!-- 부서명 -->
+					<div class="col-6 col-md-2">
+						<input id="srchDept" class="form-control"
+							placeholder="부서명 (예: 인사팀)">
+					</div>
+					<!-- 직급 -->
+					<div class="col-6 col-md-2">
+						<input id="srchPosition" class="form-control"
+							placeholder="직급 (예: 과장)">
+					</div>
+					<!-- 직책 -->
+					<div class="col-6 col-md-2">
+						<input id="srchTitle" class="form-control"
+							placeholder="직책 (예: 팀장)">
+					</div>
 
-        <!-- 검색 버튼 -->
-        <div class="col-6 col-md-2">
-          <button id="btnSearch" class="btn btn-secondary w-100">검색</button>
-        </div>
+					<!-- 검색/초기화 -->
+					<div class="col-6 col-md-2 d-flex justify-content-md-end">
+						<div class="d-flex gap-2 w-100 justify-content-end">
+							<button id="btnSearch" class="btn w-50">검색</button>
+							<button id="btnReset" class="btn w-50">초기화</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 
-        <!-- 등록/수정 버튼 -->
-        <div class="col-6 col-md-4 d-flex justify-content-md-end">
-          <div class="d-flex gap-2 w-100 justify-content-end">
-            <button id="btnCreateOpen" class="btn btn-primary">등록</button>
-            <button id="btnEditOpen" class="btn btn-success" disabled>수정</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+		<!-- ******** 목록 ******** -->
+		<div class="card shadow mb-0">
+			<div class="card-header py-3">
+				<h6 class="m-0 font-weight-bold text-primary">목록</h6>
+			</div>
+			<div class="card-body">
+				<div id="empGrid" class="ag-theme-quartz"></div>
 
-  <!-- **************** 목록 (ag-Grid) **************** -->
-  <div class="card shadow mb-0">
-    <div class="card-header py-3">
-      <h6 class="m-0 font-weight-bold text-primary">목록</h6>
-    </div>
-    <div class="card-body">
-      <div id="empGrid" class="ag-theme-quartz"></div>
-    </div>
-  </div>
+				<!-- 등록/수정 버튼 -->
+				<div class="d-flex justify-content-end gap-2 mt-3">
+					<button id="btnCreateOpen" class="btn btn-primary">등록</button>
+					<button id="btnEditOpen" class="btn btn-success" disabled>수정</button>
+				</div>
+			</div>
+		</div>
 
-  <!-- ============ 모달 include ============ -->
-  <div th:replace="~{hr/empModal :: empModal}"></div>
-  <!-- ★ 교육 등록 모달은 반드시 empModal 바깥에 둬야 정상 동작 -->
-  <div th:replace="~{hr/eduForm :: eduFormModal}"></div>
-  <!-- ★ 자격증 등록 모달도 동일하게 바깥에 둠 -->
-  <div th:replace="~{hr/certForm :: certFormModal}"></div>
-</section>
+		<!-- 모달 include -->
+		<div th:replace="~{hr/empModal :: empModal}"></div>
+		<div th:replace="~{hr/eduForm :: eduFormModal}"></div>
+		<div th:replace="~{hr/certForm :: certFormModal}"></div>
+	</section>
 
-<th:block layout:fragment="body_extra">
-  <!-- libs -->
-  <script defer src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+	<th:block layout:fragment="body_extra">
+		<script defer
+			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+		<script defer
+			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 
-  <script th:inline="none">
-    document.addEventListener('DOMContentLoaded', () => {
-      const gridDiv = document.getElementById('empGrid');
-      const btnSearch = document.getElementById('btnSearch');
-      const btnCreateOpen = document.getElementById('btnCreateOpen');
-      const btnEditOpen = document.getElementById('btnEditOpen');
-      const keyword = document.getElementById('keyword');
+		<script th:inline="none">
+  document.addEventListener('DOMContentLoaded', async () => {
+    const gridDiv = document.getElementById('empGrid');
 
-      const empModalEl = document.getElementById('empModal');
-      const empModal = new bootstrap.Modal(empModalEl);
-      const modalTitle = document.getElementById('empModalTitle');
+    const btnSearch = document.getElementById('btnSearch');
+    const btnReset  = document.getElementById('btnReset');
+    const btnCreateOpen = document.getElementById('btnCreateOpen');
+    const btnEditOpen   = document.getElementById('btnEditOpen');
 
-      let gridApi = null;
-      let mode = 'create';
+    const keyword   = document.getElementById('keyword');
+    const srchDept  = document.getElementById('srchDept');
+    const srchPos   = document.getElementById('srchPosition');
+    const srchTitle = document.getElementById('srchTitle');
 
-      const columnDefs = [
-        { headerName:'선택', width:70, checkboxSelection:true, headerCheckboxSelection:false,
-          filter:false, suppressMenu:true, pinned:'left' },
-        { headerName:'사번', field:'emp_id', width:130 },
-        { headerName:'성명', field:'name', width:140 },
-        { headerName:'부서', field:'dept_name', width:160 },
-        { headerName:'직급', field:'position', width:120 },
-        { headerName:'전화번호', field:'phone', width:160 },
-        { headerName:'이메일', field:'email', flex:1, minWidth:220 },
-        { headerName:'입사일자', field:'joinDate', width:140, valueFormatter:(p)=>formatDate(p.value) }
-      ];
+    const empModalEl = document.getElementById('empModal');
+    const empModal   = new bootstrap.Modal(empModalEl);
 
-      const gridOptions = {
-        columnDefs,
-        rowData: [],
-        rowSelection: 'single',
-        pagination: true,
-        paginationPageSize: 10,
-        animateRows: true,
-        defaultColDef: { sortable:true, resizable:true, filter:false, suppressMenu:true },
-        onGridReady: (params) => { gridApi = params.api; fetchList(); },
-        onSelectionChanged: () => { btnEditOpen.disabled = gridApi.getSelectedRows().length === 0; }
-      };
+    let gridApi = null;
+    let rowDataCache = []; // 서버에서 가져온 전체 데이터 캐시
 
-      if (window.agGrid?.createGrid) agGrid.createGrid(gridDiv, gridOptions);
-      else new agGrid.Grid(gridDiv, gridOptions), gridApi = gridOptions.api;
+    const columnDefs = [
+      { headerName:'선택', width:70, checkboxSelection:true, pinned:'left' },
+      { headerName:'사번', field:'emp_id', width:130 },
+      { headerName:'성명', field:'name', width:140 },
+      { headerName:'부서', field:'dept_name', width:160 },
+      { headerName:'직급', field:'position', width:120 },
+      { headerName:'직책', field:'title', width:160 },
+      { headerName:'전화번호', field:'phone', width:160 },
+      { headerName:'이메일', field:'email', flex:1, minWidth:220 },
+      { headerName:'주소', field:'address', flex:1, minWidth:220 },
+      { headerName:'입사일자', field:'joinDate', width:140,
+        valueFormatter:(p)=>formatDate(p.value) }
+    ];
 
-      // ===== 데이터 조회 =====
-      async function fetchList(){
-        const q = (keyword.value || '').trim();
-        const params = {};
-        if (q) {
-          const isEmpId = /^emp[-\s]?\d{4}-?\d{3}$/i.test(q) || /^\d{5,}$/.test(q);
-          if (isEmpId) params.emp_id = q;
-          else params.name = q;
-        }
+    const gridOptions = {
+      columnDefs,
+      rowData: [],
+      rowSelection: 'single',
+      pagination: true,
+      paginationPageSize: 10,
+      animateRows: true,
+      defaultColDef: { sortable:true, resizable:true, filter:true },
+      onGridReady: (params) => { gridApi = params.api; }
+    };
 
-        try{
-          const { data } = await axios.get('/api/v1/emps', { params });
-          const rows = Array.isArray(data) ? data : (data?.data ?? []);
-          setRows(rows);
-          applyQuickFilter();
-        }catch(e){
-          console.error(e);
-          alert('사원 목록 조회 중 오류가 발생했습니다.');
-          setRows([]);
-        }
-        btnEditOpen.disabled = true;
-      }
+    new agGrid.Grid(gridDiv, gridOptions);
+    gridApi = gridOptions.api;
 
-      // ===== QuickFilter =====
-      function applyQuickFilter() {
-        const k = keyword.value?.trim() || '';
-        if (gridApi?.setGridOption) gridApi.setGridOption('quickFilterText', k);
-        else gridApi.setQuickFilter(k);
-      }
+    // === 서버에서 전체 데이터 한번만 가져오기 ===
+    try {
+      const { data } = await axios.get('/api/v1/emps');
+      rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
+      gridApi.setRowData(rowDataCache);
+    } catch(err){
+      console.error(err);
+      alert('사원 목록 조회 실패');
+    }
 
-      // ===== 모달 =====
-      function openCreateModal(){
-        mode='create';
-        modalTitle.textContent='사원 등록 기본사항';
-        clearForm();
-        setVal('f_joinDate', new Date().toISOString().slice(0,10));
+    // === 프론트 필터링 ===
+    function applyFrontFilter(){
+      const kw   = keyword.value.trim().toLowerCase();
+      const dept = srchDept.value.trim().toLowerCase();
+      const pos  = srchPos.value.trim().toLowerCase();
+      const tit  = srchTitle.value.trim().toLowerCase();
 
-        // 급여지급사항 초기화
-        if (window.__payFix) window.__payFix.clear();
-
-        // 교육/자격증 탭 hidden 초기화
-        const eduEmp = document.getElementById('eduEmpId');
-        if (eduEmp) eduEmp.value = '';
-        const certEmp = document.getElementById('certEmpId');
-        if (certEmp) certEmp.value = '';
-
-        empModal.show();
-        // 기본 탭으로 이동
-        const t = empModalEl.querySelector('button[data-bs-target="#tab-basic"]');
-        if (t) new bootstrap.Tab(t).show();
-      }
-
-      async function openEditModal(row){
-        const r = row || gridApi.getSelectedRows()[0];
-        if(!r){ alert('수정할 사원을 선택하세요.'); return; }
-        mode='edit'; modalTitle.textContent='사원 수정 기본사항';
-        fillForm(r);
-
-        // 교육/자격증 탭 hidden 동기화
-        const eduEmp = document.getElementById('eduEmpId');
-        if (eduEmp) eduEmp.value = r.emp_id || '';
-        const certEmp = document.getElementById('certEmpId');
-        if (certEmp) certEmp.value = r.emp_id || '';
-
-        // 급여지급사항 로드
-        try{
-          const { data } = await axios.get(`/api/v1/emps/${r.emp_id}/pay-fix`);
-          if(window.__payFix) window.__payFix.setValues(data || { emp_id:r.emp_id });
-        }catch(e){
-          console.warn('pay-fix load fail', e);
-          if(window.__payFix) window.__payFix.setValues({ emp_id:r.emp_id });
-        }
-
-        empModal.show();
-        const t = empModalEl.querySelector('button[data-bs-target="#tab-basic"]');
-        if (t) new bootstrap.Tab(t).show();
-      }
-
-      // 모달이 열릴 때 hidden 동기화 (#f_emp_id → #eduEmpId / #certEmpId)
-      empModalEl.addEventListener('shown.bs.modal', ()=>{
-        const fEmp = document.getElementById('f_emp_id')?.value || '';
-        const eduEmp = document.getElementById('eduEmpId');
-        if (eduEmp && !eduEmp.value) eduEmp.value = fEmp;
-        const certEmp = document.getElementById('certEmpId');
-        if (certEmp && !certEmp.value) certEmp.value = fEmp;
+      const filtered = rowDataCache.filter(r=>{
+        const matchKw   = !kw   || (r.emp_id?.toLowerCase().includes(kw) || r.name?.toLowerCase().includes(kw));
+        const matchDept = !dept || (r.dept_name?.toLowerCase().includes(dept));
+        const matchPos  = !pos  || (r.position?.toLowerCase().includes(pos));
+        const matchTit  = !tit  || (r.title?.toLowerCase().includes(tit));
+        return matchKw && matchDept && matchPos && matchTit;
       });
+      gridApi.setRowData(filtered);
+    }
 
-      // ===== 저장 =====
-      async function save(){
-        const payload = readForm(mode==='edit');
-        if(!validate(payload)) return;
-
-        const payFix = window.__payFix ? window.__payFix.getValues() : null;
-
-        try{
-          if(mode==='create'){
-            await axios.post('/api/v1/emps', payload);
-            if (payFix) await axios.post('/api/v1/emps/pay-fix', payFix);
-          }else{
-            await axios.put(`/api/v1/emps/${payload.emp_id}`, payload);
-            if (payFix) await axios.put(`/api/v1/emps/${payload.emp_id}/pay-fix`, payFix);
-          }
-          empModal.hide();
-          await fetchList();
-          alert('저장되었습니다.');
-        }catch(e){
-          console.error(e);
-          alert('저장 중 오류가 발생했습니다.');
-        }
-      }
-
-      // ===== Form 유틸 =====
-      function fillForm(r){
-        setVal('f_emp_id', r.emp_id||''); setVal('f_name', r.name||'');
-        setVal('f_dept_code', r.dept_code||''); setVal('f_position', r.position||'');
-        setVal('f_title', r.title||''); setVal('f_birth', toDateInput(r.birth));
-        setVal('f_phone', r.phone||''); setVal('f_email', r.email||'');
-        setVal('f_joinDate', toDateInput(r.joinDate)); setVal('f_leaveDate', toDateInput(r.leaveDate));
-        setVal('f_leaveReason', r.leaveReason||''); setVal('f_bankCode', r.bankCode||'');
-        setVal('f_accountNo', r.accountNo||''); setVal('f_accountName', r.accountName||'');
-        setVal('f_zipCode', r.zipCode||''); setVal('f_address', r.address||'');
-        const detail = r.addressDetail || '';
-        const el = document.getElementById('f_address_detail'); if (el) el.value = detail;
-      }
-      function clearForm(){
-        ['f_emp_id','f_name','f_dept_code','f_position','f_title','f_birth','f_phone','f_email',
-         'f_joinDate','f_leaveDate','f_leaveReason','f_bankCode','f_accountNo','f_accountName',
-         'f_zipCode','f_address','f_address_detail'].forEach(id=>setVal(id,''));
-      }
-      function readForm(includeId){
-        const p = {
-          name:getVal('f_name')?.trim(),
-          dept_code:getVal('f_dept_code')?.trim(),
-          position:getVal('f_position')?.trim(),
-          title:getVal('f_title')?.trim(),
-          birth:getVal('f_birth')||null,
-          phone:getVal('f_phone')?.trim(),
-          email:getVal('f_email')?.trim(),
-          joinDate:getVal('f_joinDate')||null,
-          leaveDate:getVal('f_leaveDate')||null,
-          leaveReason:getVal('f_leaveReason')?.trim(),
-          bankCode:getVal('f_bankCode')?.trim(),
-          accountNo:getVal('f_accountNo')?.trim(),
-          accountName:getVal('f_accountName')?.trim(),
-          zipCode:getVal('f_zipCode')?.trim(),
-          address:getVal('f_address')?.trim(),
-          addressDetail:getVal('f_address_detail')?.trim(),
-        };
-        if(includeId) p.emp_id=getVal('f_emp_id');
-        return p;
-      }
-      function validate(p){
-        if(!p.name){ alert('성명을 입력하세요.'); return false; }
-        if(!p.dept_code){ alert('부서를 입력하세요.'); return false; }
-        if(!p.email){ alert('이메일을 입력하세요.'); return false; }
-        if(!p.joinDate){ alert('입사일자를 입력하세요.'); return false; }
-        return true;
-      }
-
-      // helpers
-      function setRows(rows){
-        if(gridApi?.setGridOption) gridApi.setGridOption('rowData', rows);
-        else gridApi.setRowData(rows);
-      }
-      function getVal(id){ return document.getElementById(id).value; }
-      function setVal(id,v){ const el=document.getElementById(id); if(el) el.value = v ?? ''; }
-      function toDateInput(v){ return v ? String(v).slice(0,10) : ''; }
-      function formatDate(v){ const s = toDateInput(v); return s || ''; }
-
-      // events
-      btnSearch.addEventListener('click', () => { fetchList().then(applyQuickFilter); });
-      keyword.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); fetchList().then(applyQuickFilter); } });
-      btnCreateOpen.addEventListener('click', openCreateModal);
-      btnEditOpen.addEventListener('click', ()=>openEditModal());
-      document.getElementById('btnSave')?.addEventListener('click', save);
-
-      // 이름 클릭으로 수정 모달 열기 (그리드 셀 렌더러에서 호출 가능)
-      window.openEditModal = openEditModal;
+    btnSearch.addEventListener('click', applyFrontFilter);
+    btnReset.addEventListener('click', ()=>{
+      keyword.value=''; srchDept.value=''; srchPos.value=''; srchTitle.value='';
+      gridApi.setRowData(rowDataCache);
     });
+
+    // Enter로도 필터링 가능
+    [keyword,srchDept,srchPos,srchTitle].forEach(el=>{
+      el.addEventListener('keydown', e=>{
+        if(e.key==='Enter'){ e.preventDefault(); applyFrontFilter(); }
+      });
+    });
+
+    // === 기타 ===
+    function formatDate(v){ return v ? String(v).slice(0,10) : ''; }
+
+    btnCreateOpen.addEventListener('click', ()=>empModal.show());
+    btnEditOpen.addEventListener('click', ()=>{
+      const sel = gridApi.getSelectedRows();
+      if(!sel.length){ alert('수정할 사원을 선택하세요.'); return; }
+      empModal.show();
+    });
+  });
   </script>
-</th:block>
+	</th:block>
 </body>
 </html>

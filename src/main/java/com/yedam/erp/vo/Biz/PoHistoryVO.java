@@ -10,5 +10,5 @@ public class PoHistoryVO {
     private String creater;     // 작성자/담당자
     private String prdName;     // 품목명
     private Date exDate;        // 납기일자
-    private int totalPrice;     // 총액
+    private int unitPrice;     // 단가
 }
