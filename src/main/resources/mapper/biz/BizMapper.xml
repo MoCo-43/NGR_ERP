@@ -6,13 +6,13 @@
 <mapper namespace="com.yedam.erp.mapper.Biz.BizMapper">
 
 <!-- 테스트용 전체 주문서 목록 조회 -->
-<select id="getAllPO" resultType="com.yedam.erp.vo.Biz.PurchaseOrderVO">
+<select id="getAllPO" resultType="PurchaseOrderVO">
   SELECT * 
   FROM PURCHASE_ORDER
 </select>
 
 <!-- 주문서 조회 -->
-<select id="selectPO" resultType="com.yedam.erp.vo.Biz.PurchaseOrderVO">
+<select id="selectPO" resultType="PurchaseOrderVO">
 SELECT
     p.PO_START,
     c.CUS_NAME,
@@ -39,29 +39,43 @@ ORDER BY
 </select>
 
 <!-- 주문서 입력 페이지 -->
-<insert id="insertPO" parameterType="com.yedam.erp.vo.Biz.PoInsertVO">
+<insert id="insertPO" parameterType="PoInsertVO">
   INSERT ALL
     INTO PURCHASE_ORDER (
         PO_ID, CUS_NO, CREATER, PO_START, EX_DATE, PO_DATE, PRD_NAME,
         TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
     ) VALUES (
         PO_ID_SEQ.NEXTVAL, #{cusNo}, #{creater}, #{poStart}, #{exDate}, #{poDate}, #{prdName},
-        #{totalPrice}, #{poStatus}, #{payMethod}, #{notes}, #{vatType}, #{poType}
+        #{totalPrice}, '작성완료', #{payMethod}, #{notes}, #{vatType}, #{poType}
     )
+    <foreach collection="poDetails" item="pod">
     INTO PO_DETAIL (
         POD_ID, PO_ID, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
         DC_PRICE, SUP_AMT, VAT_AMT, D_PRD_NAME
     ) VALUES (
-        POD_ID_SEQ.NEXTVAL, PO_ID_SEQ.CURRVAL, #{productCode}, #{orderQty}, #{unitPrice},
-        #{dcPrice}, #{supAmt}, #{vatAmt}, #{dPrdName}
+        POD_ID_SEQ.NEXTVAL, PO_ID_SEQ.CURRVAL, #{pod.productCode}, #{pod.orderQty}, #{pod.unitPrice},
+        #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.dPrdName}
     )
+    </foreach>
 </insert>
 
 <!-- 주문서 이력 조회 -->
-<select id="getPOHistory" resultType="com.yedam.erp.vo.Biz.PoHistoryVO">
-SELECT po.PO_START, po.CUS_NAME, po.creater, po.PRD_NAME, po.EX_DATE, po.TOTAL_PRICE
+<select id="getPOHistory" resultType="PoHistoryVO">
+SELECT po.PO_START, po.CUS_NAME, po.creater, po.PRD_NAME, po.EX_DATE, pd.UNIT_PRICE
 FROM PURCHASE_ORDER po
 LEFT JOIN PO_DETAIL pd ON pd.PO_ID = po.PO_ID
 </select>
 
+<!-- 품목조회 -->
+<select id="getProducts" resultType="ProductCodeVO">
+  SELECT PRODUCT_CODE, PRODUCT_NAME
+  FROM PRODUCT
+</select>
+
+<!-- 거래처 조회 -->
+<select id="getCustomers" resultType="CusModalVO">
+  SELECT c.CUS_CODE, c.CUS_NAME, cm.CREDIT_GRADE, cm.LEFT_PRICE
+  FROM CUSTOMER c
+  LEFT JOIN CREDIT_MASTER cm ON c.CUS_NO = cm.CUS_NO
+  </select>
 </mapper>

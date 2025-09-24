@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yedam.erp.service.Biz.BizService;
+import com.yedam.erp.vo.Biz.PoInsertVO;
+import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
 
 
@@ -34,13 +36,19 @@ public class BizController {
   
   // 주문서 등록 페이지
   @PostMapping("/poinsert")
-  public int insertPO(@RequestBody PurchaseOrderVO vo) {
-      return service.insertPO(vo);
+  public int insertPO(@RequestBody PoInsertVO pvo) {
+      return service.insertPO(pvo);
   }
   
   // 주문서 이력 조회
   @GetMapping("/pohistory")
   public List<PurchaseOrderVO> getPOHistory() {
       return service.getPOHistory();
+  }
+
+  // 품목 조회
+  @GetMapping("/productcode")
+  public List<ProductCodeVO> getProducts() {
+      return service.getProducts();
   }
 }

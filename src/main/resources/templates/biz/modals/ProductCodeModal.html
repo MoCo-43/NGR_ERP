@@ -13,11 +13,11 @@
     />
   </head>
   <body>
-    <!-- fragment 이름을 productModal 로 지정 -->
-    <div th:fragment="productModalFr">
+    <!-- fragment 이름을 productcodeModal 로 지정 -->
+    <div th:fragment="productcodeModal">
       <div
         class="modal fade"
-        id="productModalTwo"
+        id="productcodeModal"
         tabindex="-1"
         aria-hidden="true"
       >
@@ -36,12 +36,6 @@
             <div class="modal-body">
               <!-- 버튼 영역: 카드 밖, 오른쪽 상단 고정 -->
               <div class="d-flex justify-content-end mb-2 gap-2">
-                <button type="submit" form="searchForm" class="btn btn-primary">
-                  검색
-                </button>
-                <button type="reset" form="searchForm" class="btn btn-danger">
-                  초기화
-                </button>
               </div>
 
               <!-- 검색폼 카드 -->
@@ -66,18 +60,27 @@
               </form>
               <!-- 검색 결과 ag-Grid -->
               <div
-                id="myGrid"
+                id="productGrid"
                 class="ag-theme-quartz"
                 style="height: 400px; width: 100%"
               ></div>
-
+              <div>
+                <button
+                id="PrcImportBtn"
+                type="button"
+                class="btn btn-primary"
+                >
+                가져오기
+              </button>
+            </div>
               <!-- 모달 바디 종료 -->
             </div>
 
             <!-- 모달 푸터 시작-->
             <div class="modal-footer">
-              <!-- 모달 푸터 종료-->
+
             </div>
+            <!-- 모달 푸터 종료-->
           </div>
         </div>
       </div>
