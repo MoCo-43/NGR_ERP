@@ -124,11 +124,21 @@
         animateRows: true,
         defaultColDef: { sortable:true, resizable:true, filter:false, suppressMenu:true },
         onGridReady: (params) => { gridApi = params.api; fetchList(); },
-        onSelectionChanged: () => { btnEditOpen.disabled = gridApi.getSelectedRows().length === 0; }
+        onSelectionChanged: () => {
+          if (!gridApi) return;
+          const sel = gridApi.getSelectedRows ? gridApi.getSelectedRows() : [];
+          btnEditOpen.disabled = sel.length === 0;
+        }
       };
 
-      if (window.agGrid?.createGrid) agGrid.createGrid(gridDiv, gridOptions);
-      else new agGrid.Grid(gridDiv, gridOptions), gridApi = gridOptions.api;
+      /* === ag-Grid 안전 초기화 (문법 에러 방지) === */
+      if (window.agGrid && typeof window.agGrid.createGrid === 'function') {
+        window.agGrid.createGrid(gridDiv, gridOptions);
+        gridApi = gridOptions.api;
+      } else {
+        new agGrid.Grid(gridDiv, gridOptions);
+        gridApi = gridOptions.api;
+      }
 
       // ===== 데이터 조회 =====
       async function fetchList(){
@@ -155,9 +165,10 @@
 
       // ===== QuickFilter =====
       function applyQuickFilter() {
-        const k = keyword.value?.trim() || '';
-        if (gridApi?.setGridOption) gridApi.setGridOption('quickFilterText', k);
-        else gridApi.setQuickFilter(k);
+        const k = (keyword.value || '').trim();
+        if (!gridApi) return;
+        if (typeof gridApi.setGridOption === 'function') gridApi.setGridOption('quickFilterText', k);
+        else if (typeof gridApi.setQuickFilter === 'function') gridApi.setQuickFilter(k);
       }
 
       // ===== 모달 =====
@@ -168,7 +179,7 @@
         setVal('f_joinDate', new Date().toISOString().slice(0,10));
 
         // 급여지급사항 초기화
-        if (window.__payFix) window.__payFix.clear();
+        if (window.__payFix && typeof window.__payFix.clear === 'function') window.__payFix.clear();
 
         // 교육/자격증 탭 hidden 초기화
         const eduEmp = document.getElementById('eduEmpId');
@@ -183,7 +194,7 @@
       }
 
       async function openEditModal(row){
-        const r = row || gridApi.getSelectedRows()[0];
+        const r = row || (gridApi && gridApi.getSelectedRows ? gridApi.getSelectedRows()[0] : null);
         if(!r){ alert('수정할 사원을 선택하세요.'); return; }
         mode='edit'; modalTitle.textContent='사원 수정 기본사항';
         fillForm(r);
@@ -197,10 +208,14 @@
         // 급여지급사항 로드
         try{
           const { data } = await axios.get(`/api/v1/emps/${r.emp_id}/pay-fix`);
-          if(window.__payFix) window.__payFix.setValues(data || { emp_id:r.emp_id });
+          if (window.__payFix && typeof window.__payFix.setValues === 'function') {
+            window.__payFix.setValues(data || { emp_id:r.emp_id });
+          }
         }catch(e){
           console.warn('pay-fix load fail', e);
-          if(window.__payFix) window.__payFix.setValues({ emp_id:r.emp_id });
+          if (window.__payFix && typeof window.__payFix.setValues === 'function') {
+            window.__payFix.setValues({ emp_id:r.emp_id });
+          }
         }
 
         empModal.show();
@@ -222,7 +237,8 @@
         const payload = readForm(mode==='edit');
         if(!validate(payload)) return;
 
-        const payFix = window.__payFix ? window.__payFix.getValues() : null;
+        const payFix = (window.__payFix && typeof window.__payFix.getValues === 'function')
+          ? window.__payFix.getValues() : null;
 
         try{
           if(mode==='create'){
@@ -291,10 +307,11 @@
 
       // helpers
       function setRows(rows){
-        if(gridApi?.setGridOption) gridApi.setGridOption('rowData', rows);
-        else gridApi.setRowData(rows);
+        if (!gridApi) return;
+        if (typeof gridApi.setGridOption === 'function') gridApi.setGridOption('rowData', rows);
+        else if (typeof gridApi.setRowData === 'function') gridApi.setRowData(rows);
       }
-      function getVal(id){ return document.getElementById(id).value; }
+      function getVal(id){ const el=document.getElementById(id); return el ? el.value : ''; }
       function setVal(id,v){ const el=document.getElementById(id); if(el) el.value = v ?? ''; }
       function toDateInput(v){ return v ? String(v).slice(0,10) : ''; }
       function formatDate(v){ const s = toDateInput(v); return s || ''; }
@@ -304,7 +321,9 @@
       keyword.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); fetchList().then(applyQuickFilter); } });
       btnCreateOpen.addEventListener('click', openCreateModal);
       btnEditOpen.addEventListener('click', ()=>openEditModal());
-      document.getElementById('btnSave')?.addEventListener('click', save);
+
+      const btnSave = document.getElementById('btnSave');
+      if (btnSave) btnSave.addEventListener('click', save);
 
       // 이름 클릭으로 수정 모달 열기 (그리드 셀 렌더러에서 호출 가능)
       window.openEditModal = openEditModal;
