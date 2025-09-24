@@ -1,8 +1,6 @@
 package com.yedam.erp.security;
 
 import org.springframework.security.core.userdetails.UserDetails;
-
-//(다른 import 구문들은 그대로)
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -19,80 +17,51 @@ import com.yedam.erp.vo.main.EmpLoginVO;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
-* @description 로그인 폼에서 넘어온 정보를 검증하는 '인증 전문가'입니다.
-*/
+ * CustomAuthenticationProvider
+ * - 사용자 인증 처리 (회사ID + 직원ID + 비밀번호 검증)
+ */
 @Component
 public class CustomAuthenticationProvider implements AuthenticationProvider {
 
- @Autowired
- private EmpLoginMapper empLoginMapper; // DB 조회 전문가
+    @Autowired
+    private EmpLoginMapper empLoginMapper;
 
- @Autowired
- @Lazy
- private PasswordEncoder passwordEncoder; // 비밀번호 암호화 전문가
+    @Autowired
+    @Lazy
+    private PasswordEncoder passwordEncoder;
 
- @Override
- public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-     
-     // --- 1단계: 사용자가 입력한 로그인 정보 꺼내기 ---
-     String empId = authentication.getName(); // 사용자가 적은 ID
-     String empPw = (String) authentication.getCredentials(); // 사용자가 적은 비밀번호
-     
-     // [핵심] 로그인 폼의 '회사 ID'는 따로 챙겨줍니다.
-     HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-     String matNoStr = request.getParameter("matNo");
-     
-     if (matNoStr == null || matNoStr.isEmpty()) {
-         throw new BadCredentialsException("회사 아이디를 입력해주세요.");
-     }
-     Long matNo = Long.parseLong(matNoStr);
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
-     
-     // --- 2단계: DB에서 진짜 회원 정보 찾아오기 ---
-     
-     // 회사ID와 직원ID를 둘 다 사용해서 정확한 한 명을 찾아냅니다.
-     EmpLoginVO userVO = empLoginMapper.findByEmpIdAndMatNo(empId, matNo);
+        // 1. 요청 파라미터 추출
+        String empId = authentication.getName();
+        String empPw = (String) authentication.getCredentials();
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        String matNoStr = request.getParameter("matNo");
 
-     
-     // --- 3단계: 정보가 맞는지 최종 확인 ---
-     
-     // 찾아온 회원이 없거나, 비밀번호가 다르면 로그인 실패!
-     if (userVO == null || !passwordEncoder.matches(empPw, userVO.getEmpPw())) {
-         throw new BadCredentialsException("아이디, 비밀번호 또는 회사 아이디가 틀렸습니다.");
-     }
-     
-     
-     // --- 4단계: 인증 성공! '표준 신분증' 발급해서 보고하기 ---
-     
-     // [수정 포인트 ①]
-     // DB에서 찾은 '서류 뭉치(userVO)'를
-     // 스프링 시큐리티가 알아보기 쉬운 '표준 신분증(CustomUserDetails)'에 담아줍니다.
-     UserDetails userDetails = new CustomUserDetails(userVO);
+        if (matNoStr == null || matNoStr.isEmpty()) {
+            throw new BadCredentialsException("회사 아이디를 입력해주세요.");
+        }
+        Long matNo = Long.parseLong(matNoStr);
 
-     // [수정 포인트 ②]
-     // "인증 성공했습니다!" 라고 보고할 때,
-     // 지저분한 '서류 뭉치' 대신, 깔끔한 '표준 신분증'을 제출합니다.
-     return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
- }
+        // 2. DB 조회
+        EmpLoginVO userVO = empLoginMapper.findByEmpIdAndMatNo(empId, matNo);
 
- @Override
- public boolean supports(Class<?> authentication) {
-     return authentication.equals(UsernamePasswordAuthenticationToken.class);
- }
+        // 3. 계정 검증
+        if (userVO == null || !passwordEncoder.matches(empPw, userVO.getEmpPw())) {
+            throw new BadCredentialsException("아이디, 비밀번호 또는 회사 아이디가 올바르지 않습니다.");
+        }
+
+        // 4. 인증 성공 처리
+        UserDetails userDetails = new CustomUserDetails(userVO);
+        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+    }
+ //어떤 타입이든 허용
+    @Override
+    public boolean supports(Class<?> authentication) {
+        return authentication.equals(UsernamePasswordAuthenticationToken.class);
+    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //

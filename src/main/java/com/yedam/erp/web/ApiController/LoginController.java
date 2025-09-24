@@ -25,7 +25,7 @@ public class LoginController {
 
     @Autowired
     private LoginService loginService;
-
+    //보안문자 이미지 + 정답 확인 필요한 고유 키 -> 생성된 이미지와 키 model담아 main/login.html페이지로 전달-> 화면 보안문자 포함된 로그인 화면 확인
     @GetMapping("/login")
     public String showLoginPage(Model model) throws IOException {
         String captchaKey = naverCaptchaService.getCaptchaKey();
@@ -44,5 +44,5 @@ public class LoginController {
         return "captcha_ok";
     }
     
-    // 이전에 있던 @PostMapping("/login") 메서드는 시큐리티와 중복되어 로그인 흐름 꼬이는 문제로 인해 제거
+    // 이전에 있던 @PostMapping("/login") 메서드는 시큐리티가 DB조회 후 비밀번호 비교를 진행해주는데 중복되서 로그인 흐름 꼬이는 문제로 인해 제거
 }

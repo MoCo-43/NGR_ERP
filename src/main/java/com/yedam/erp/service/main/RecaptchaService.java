@@ -1,5 +1,5 @@
 package com.yedam.erp.service.main;
-
+//구글 리캡차의 사람과 봇 구분하려고 사용한 서비스
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;

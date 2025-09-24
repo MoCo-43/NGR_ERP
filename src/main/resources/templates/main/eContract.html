@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>NGR_ERP 서비스 이용계약서</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4; /* 카드와 대비되는 배경색 추가 */
+        }
+        
+        /* 카드 스타일 추가 */
+        .card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px 40px; /* 내부 여백 조정 */
+            margin: 40px auto; /* 상하좌우 자동 마진으로 중앙 정렬 */
+            max-width: 800px; /* 카드의 최대 너비 설정 */
+        }
+
+        h1, h2, h3 {
+            font-weight: bold;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        h2 {
+            margin-top: 40px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        h3 {
+            margin-top: 25px;
+        }
+        p, li {
+            text-align: justify;
+        }
+        .introduction {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+        .article-content ul {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        .sub-list {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        .appendix {
+            margin-top: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+  <div th:replace="~{layout/main_header :: headerFragment}"></div>
+  
+  <div>
+    <div class="card">
+        <main>
+            <h1>NGR_ERP 서비스 이용계약서</h1>
+            <p class="introduction">본 계약서는 NGR_ERP 서비스 이용과 관련하여 필요한 제반 사항을 규정함을 목적으로 합니다.</p>
+
+            <h2>제1장 총칙</h2>
+            
+            <article>
+                <h3>제1조 (목적)</h3>
+                <p>본 약관은 엔지알(이하 "회사")이 제공하는 NGR_ERP 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자(이하 "고객")의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
+            </article>
+
+            <article>
+                <h3>제2조 (용어의 정의)</h3>
+                <div class="article-content">
+                    <ul>
+                        <li><strong>서비스:</strong> 회사가 고객에게 제공하는 전사적자원관리(ERP) 시스템 및 관련 부가 서비스를 의미합니다.</li>
+                        <li><strong>고객:</strong> 회사와 서비스 이용계약을 체결하고 회사가 제공하는 서비스를 이용하는 법인 또는 개인사업자를 의미합니다.</li>
+                        <li><strong>이용요금:</strong> 고객이 서비스를 이용하는 대가로 회사에 지불해야 하는 비용을 의미합니다.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article>
+                <h3>제3조 (약관의 효력 및 변경)</h3>
+                <div class="article-content">
+                    <ol>
+                        <li>본 약관은 서비스를 신청한 고객이 동의함으로써 효력이 발생합니다.</li>
+                        <li>회사는 합리적인 사유가 발생할 경우 관련 법령에 위배되지 않는 범위에서 본 약관을 개정할 수 있습니다.</li>
+                        <li>회사가 약관을 개정할 경우에는 적용일자 및 개정사유를 명시하여 현행약관과 함께 서비스 홈페이지에 그 적용일자 7일 이전부터 적용일자 전일까지 공지합니다.</li>
+                    </ol>
+                </div>
+            </article>
+
+            <h2>제2장 서비스 이용계약</h2>
+
+            <article>
+                <h3>제4조 (이용계약의 성립)</h3>
+                <p>이용계약은 고객이 회사가 정한 소정의 절차에 따라 이용신청을 하고, 회사가 이에 대해 승낙함으로써 체결됩니다.</p>
+            </article>
+
+            <article>
+                <h3>제5조 (서비스의 제공 및 변경)</h3>
+                <div class="article-content">
+                    <ol>
+                        <li>회사는 계약에서 정한 바에 따라 안정적인 서비스를 지속적으로 제공할 의무가 있습니다.</li>
+                        <li>서비스의 내용에 변경이 있을 경우, 회사는 이를 고객에게 사전에 공지하여야 합니다.</li>
+                        <li>회사는 정기점검, 시스템 개선 등의 사유로 서비스 제공을 일시적으로 중단할 수 있으며, 이 경우 사전에 공지합니다.</li>
+                    </ol>
+                </div>
+            </article>
+
+            <h2>제3장 당사자의 의무</h2>
+
+            <article>
+                <h3>제6조 (회사의 의무)</h3>
+                <div class="article-content">
+                    <ol>
+                        <li>회사는 고객의 정보 보안을 위해 최선을 다하며, 개인정보처리방침을 준수합니다.</li>
+                        <li>회사는 서비스 이용과 관련하여 고객으로부터 제기된 의견이나 불만이 정당하다고 인정될 경우에는 이를 신속하게 처리하여야 합니다.</li>
+                    </ol>
+                </div>
+            </article>
+            
+            <article>
+                <h3>제7조 (고객의 의무)</h3>
+                <div class="article-content">
+                    <ol>
+                        <li>고객은 서비스 이용에 따른 이용요금을 지정된 기일에 납부하여야 합니다.</li>
+                        <li>고객은 부여받은 아이디와 비밀번호의 관리 소홀로 인해 발생하는 모든 책임은 고객 본인에게 있습니다.</li>
+                        <li>고객은 서비스 이용과 관련하여 다음 각 호의 행위를 하여서는 안 됩니다.
+                            <ul class="sub-list">
+                                <li>타인의 정보를 도용하는 행위</li>
+                                <li>서비스를 이용하여 얻은 정보를 회사의 사전 승낙 없이 복제, 유통하거나 상업적으로 이용하는 행위</li>
+                                <li>회사의 지적재산권을 침해하는 행위</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+            </article>
+
+            <h2>제4장 계약의 해지 및 이용 제한</h2>
+
+            <article>
+                <h3>제8조 (계약의 해지)</h3>
+                <p>고객 또는 회사는 부득이한 사유가 있는 경우 상대방에게 서면 통보함으로써 본 계약을 해지할 수 있습니다.</p>
+            </article>
+				
+            <article>
+                <h3>제9조 (이용 제한)</h3>
+                <p>회사는 고객이 본 약관의 의무를 위반하거나 서비스의 정상적인 운영을 방해한 경우, 서비스 이용을 제한하거나 계약을 해지할 수 있습니다.</p>
+            </article>
+
+            <h2>제5장 손해배상 및 면책</h2>
+
+            <article>
+                <h3>제10조 (손해배상)</h3>
+                <p>당사자 일방이 본 계약상의 의무를 위반하여 상대방에게 손해를 입힌 경우, 귀책사유 있는 당사자는 상대방이 입은 손해를 배상하여야 합니다.</p>
+            </article>
+
+            <article>
+                <h3>제11조 (면책)</h3>
+                <div class="article-content">
+                    <ol>
+                        <li>천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에 관한 책임이 면제됩니다.</li>
+                        <li>회사는 고객의 귀책사유로 인한 서비스 이용의 장애에 대하여는 책임을 지지 않습니다.</li>
+                    </ol>
+                </div>
+            </article>
+        </main>
+    </div>
+  </div>
+  
+  <div th:replace="~{layout/main_footer :: footerFragment}"></div>
+</body>
+</html>
