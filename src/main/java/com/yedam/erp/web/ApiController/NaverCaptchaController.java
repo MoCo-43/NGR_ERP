@@ -1,3 +1,4 @@
+//네이버캡차기능 모아둔 컨트롤러
 package com.yedam.erp.web.ApiController;
 import java.io.IOException;
 import java.util.Base64;
@@ -21,7 +22,7 @@ public class NaverCaptchaController {
     public NaverCaptchaController(NaverCaptchaService naverCaptchaService) {
         this.naverCaptchaService = naverCaptchaService;
     }
-
+    
     @GetMapping("/naver-captcha")
     public String showLoginForm(Model model) throws IOException {
         String captchaKey = naverCaptchaService.getCaptchaKey();
@@ -32,7 +33,7 @@ public class NaverCaptchaController {
         model.addAttribute("captchaImage", base64Image);
         return "main/login"; // login.html
     }
-
+    //보안문자 검증 처리,성공유무와 새로운 보안문자이미지/키를 model담아 다시 login.html페이지를 보여줌
     @PostMapping("/validate")
     public String validateCaptcha(@RequestParam("captchaKey") String key,
                                   @RequestParam("captchaValue") String value,
@@ -49,7 +50,7 @@ public class NaverCaptchaController {
 
         return "main/login"; // login.html
     }
-    
+    //보안문자 새로고침 기능-Map형태-json형식으로 반환되어 브라우저 전달
     @GetMapping("/refreshCaptcha")
     @ResponseBody
     public Map<String, String> refreshCaptcha() throws IOException {

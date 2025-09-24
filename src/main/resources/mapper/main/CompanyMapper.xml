@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yedam.erp.mapper.main.CompanyMapper">
+    
+    <resultMap id="CompanyMap" type="com.yedam.erp.vo.main.CompanyVO">
+        </resultMap>
 
-
+    <insert id="insertCompany" parameterType="com.yedam.erp.vo.main.CompanyVO">
+        <selectKey keyProperty="matNo" resultType="long" order="BEFORE">
+            SELECT SEQ_COMPANY.NEXTVAL FROM DUAL
+        </selectKey>
+        
+        INSERT INTO company (
+            mat_no, ceo, comp_name, mat_name, mat_tel, mat_mail,
+            comp_addr, sub_date, zip_code, com_tel, comp_del_addr, com_code
+        ) VALUES (
+            <!-- <selectKey>에서 가져온 값을 #{matNo}로 참조하여 사용합니다. -->
+            #{matNo}, #{ceo}, #{compName}, #{matName}, #{matTel}, #{matMail},
+            #{compAddr}, SYSDATE, #{zipCode}, #{comTel}, #{compDelAddr}, #{comCode}
+        )
+    </insert>
 
 </mapper>

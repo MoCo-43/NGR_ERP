@@ -106,17 +106,34 @@
       <div class="plan-card">
         <h3>베이직</h3>
         <p>최소인원</p>
-        <p class="plan-features">재고, 영업</p>
+        <p class="plan-features">재고,영업</p>
         <div class="plan-price">금액/구독</div>
         <div class="button-wrapper featured">
-            <button class="plan-button" onclick="">시작하겠습니까?</button>
+            <button class="plan-button" onclick="location.href='/subDetail'">시작하겠습니까?</button>
+        </div>
+      </div>
+      <div class="plan-card">
+        <h3>스탠다드</h3>
+        <p>최소인원</p>
+        <p class="plan-features">인사,회계</p>
+        <div class="plan-price">구독/금액</div>
+        <div class="button-wrapper featured">
+            <button class="plan-button" onclick="location.href='/subDetail'">시작하겠습니까?</button>
+        </div>
+      </div>
+       <div class="plan-card">
+        <h3>프리미엄</h3>
+        <p>최소인원</p>
+        <p class="plan-features">재고,영업,인사,회계</p>
+        <div class="plan-price">금액/구독</div>
+        <div class="button-wrapper featured">
+            <button class="plan-button" onclick="location.href='/subDetail'">시작하겠습니까?</button>
         </div>
       </div>
     </div>
   </section>
 </main>
    </div>
-   </main>
     <!-- 공통 footer -->
   <div th:replace="~{layout/main_footer :: footerFragment}"></div>
 </body>
