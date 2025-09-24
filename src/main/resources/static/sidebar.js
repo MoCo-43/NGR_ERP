@@ -32,7 +32,7 @@ const MENUS = {
         ["출고등록","/inv/out/new"],
       ]},
       { title: "발주관리", items: [
-        ["발주계획조회","/inv/po/plan"],
+        ["발주계획조회","/stock/plan/list"],
         ["발주계획등록","/stock/plan/insert"],
         ["발주서 조회","/inv/po/list"],
         ["발주서 등록","/inv/po/new"],

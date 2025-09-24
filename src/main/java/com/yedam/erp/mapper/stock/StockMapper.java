@@ -25,5 +25,7 @@ public interface StockMapper {
 	public int insertOrderPlanDetail(OrderPlanDetailVO item); // 상세
 	
 	// 발주계획 조회
-	public List<OrderPlanVO> getOrderPlanList();
+	public List<OrderPlanVO> selectOrderPlans();
+	List<OrderPlanDetailVO> selectOrderPlanDetailsByXpCode(String xpCode);
+	
 }

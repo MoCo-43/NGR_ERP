@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	 layout:decorate="~{layout/base}">
+<head>
+  <meta charset="UTF-8">
+  <title layout:fragment="title">너 구 름(Your Cloud)</title>
+  <th:block layout:fragment="head_extra">
+     <!-- Bootstrap CSS -->
+  	<!--  base에 있는 버전과 달라서 강제 주입 --> 
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    crossorigin="anonymous"
+  />
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <!-- AG Grid CSS (Quartz) -->
+   <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
+    />
+   <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
+   />
+   <!-- TOASTR -->
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+   <style type="text/css">
+   .ag-theme-quartz .ag-cell {
+	padding-left: 8px;
+  	padding-right: 8px;
+	}
+   </style>
+  </th:block>
+</head>
+<body>
+<section layout:fragment="content">
+<!-- 컨테이너 시작 -->
+<div class="card shadow">
+  <!-- 마스터 카드 -->
+  <!-- <div class="card shadow-sm mb-4"> -->
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="mb-0 font-weight-bold text-primary">발주 계획 조회 페이지</h5>
+    </div>
+  <!-- </div>  -->
+
+  <!-- 폼 카드 -->
+  <!-- <div class="card shadow-sm">  -->
+    <div class="card-body">
+    <div class="btn-bar">
+    	 <!-- 버튼 영역 (폼 전체 최상단 오른쪽) -->
+      <div class="d-flex justify-content-end mb-3">
+	    <button type="submit" class="btn btn-dark me-2" id="submitBtn">조회</button>
+	    <button type="reset" class="btn btn-danger" form="searchOrderPlan">초기화</button>
+       </div>
+    </div>
+    
+      <form class="row g-3" id="searchOrderPlan" enctype="application/x-www-form-urlencoded">
+        <div class="col-md-4">
+         <label for="partnerName" class="form-label">거래처명</label>
+         <input type="text" class="form-control" id="partnerName" name="partnerName">
+        </div>
+        <div class="col-md-4">
+          <label for="productName" class="form-label">제품명</label>
+          <input type="text" class="form-control" id="productName" name="productName">
+        </div>
+      	<div class="col-4">
+         <label for="insDate" class="form-label">등록일자</label>
+         <input type="date" class="form-control" id="insDate" name="insDate">
+        </div>
+      </form>
+    </div>
+  <!-- </div>  -->
+  
+  <div class="card shadow-sm mt-4">
+  <div class="card-header bg-secondary text-white">
+    <h5 class="mb-0">발주 계획 목록</h5>
+  </div>
+  <div class="card-body">
+  <!-- 
+    <table class="table table-bordered" id="orderItemsTable">
+      <thead class="table-light">
+        <tr style="text-align:center">
+          <th>No.</th>
+          <th>발주계획코드</th>
+          <th>거래처명</th>
+          <th>거래처코드</th>
+          <th>담당자</th>
+          <th>제품명</th>
+          <th>수량</th>
+          <th>공급가액</th>
+          <th>세율유형</th>
+          <th>최종합산금</th>
+          <th>발주서</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+      </tbody>
+    </table>
+     -->
+     
+      <!-- AG Grid container -->
+    <div id="orderPlansGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
+     
+  </div>
+</div>
+  
+  
+  
+  
+  <!-- Toast (닫기 버튼 제거) -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+  <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-body" id="toastMessage">조회 성공!</div>
+  </div>
+</div>
+  
+  <!-- 컨테이너 종료 -->
+</div>
+
+  <!-- 모달 include              경로             ::  div id 부분  -->   
+  <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
+   <!-- 모달 include              경로             ::  div id 부분  -->   
+  <div th:replace="~{stock/modals/productModal :: productModal}"></div>
+  <!-- 모달 include              경로             ::  div id 부분  -->   
+  <div th:replace="~{stock/modals/requestOrderModal :: orderModal}"></div>
+  
+</section>
+  
+<th:block layout:fragment="body_extra">
+ <!-- Axios 등록 -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+ <!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+ <!-- ag-Grid JS -->
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/dist/ag-grid-community.min.noStyle.js"></script>
+ <!-- toastr -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- 스크립트 -->
+<script th:inline="none">
+document.addEventListener("DOMContentLoaded", () => {
+	/**
+	 * 공통 Grid 초기화 함수
+	 * @param {Object} config - grid 설정 객체
+	 * @param {string} config.el - grid를 붙일 div의 id
+	 * @param {Array} config.columnDefs - 컬럼 정의
+	 * @param {Function} [config.onRowDoubleClicked] - 행 더블클릭 이벤트 핸들러
+	 * @param {Function} [config.onGridReady] - grid ready 이벤트 핸들러
+	 * @returns {Object} { gridApi, gridOptions }
+	 */
+	const searchPartner = document.getElementById('partnerName');
+	const searchProduct = document.getElementById('productName');
+	const tableBody = document.querySelector('#orderItemsTable tbody');
+	let productGrid = null; // 전역 변수
+ 
+ 	let gridOptions = null;
+ 	let gridCreated = false;
+ 	let gridApi = null;
+ 	
+ 	// 공통 모달 호출 함수
+ 	function initGrid(config) {
+ 	    const eGridDiv = document.getElementById(config.el);
+ 	    if (!eGridDiv) {
+ 	        console.error(`${config.el} div를 찾을 수 없습니다!`);
+ 	        return null;
+ 	    }
+ 		let gridApi = null;
+ 	    const gridOptions = {
+ 	        columnDefs: config.columnDefs || [],
+ 	        rowSelection: config.rowSelection || "single",
+ 	        pagination: true,
+ 	        paginationPageSize: config.paginationPageSize || 12,
+ 	        domLayout: config.domLayout || "normal",
+ 	        rowData: [],
+ 	        defaultColDef: {
+ 	            resizable: true,
+ 	            sortable: true,
+ 	            minWidth: 100,
+ 	        },
+ 	        onRowDoubleClicked: (event) => {
+ 	            if (typeof config.onRowDoubleClicked === "function") {
+ 	                config.onRowDoubleClicked(event);
+ 	            }
+ 	        },
+ 	       onRowClicked: (event) => {
+	            if (typeof config.onRowClicked === "function") {
+	                config.onRowClicked(event);
+	            }
+	        },
+ 	        onGridReady: (event) => {
+ 	            if (typeof config.onGridReady === "function") {
+ 	                config.onGridReady(event);
+ 	            }
+ 	            event.api.sizeColumnsToFit();
+ 	        },
+ 	    };
+
+ 	    new agGrid.Grid(eGridDiv, gridOptions);
+ 	    return { gridApi: gridOptions.api, gridOptions };
+}// END OF FUNCTION
+
+// 발주 계획 리스트 
+const plansDiv = document.getElementById('orderPlansGrid');
+const orderPlansGrid = initGrid({
+    el: "orderPlansGrid",
+    columnDefs: [
+        { headerName: "No.", valueGetter: "node.rowIndex + 1", width: 70 },
+        { headerName: "발주계획코드", field: "xpCode" },
+        { headerName: "등록일자", field: "insDate" },
+        { headerName: "거래처명", field: "businessPartner" },
+        { headerName: "거래처코드", field: "businessCode" },
+        { headerName: "담당자", field: "empId" },
+        { headerName: "제품명", field: "productName" },
+        { headerName: "수량", field: "amount" },
+        { headerName: "공급가액", field: "supAmt" },
+        { headerName: "세율유형", field: "taxType" },
+        {  field: "orderSheetLink",
+            cellRenderer: (params) => {
+                const xpCode = params.data.xpCode;
+                const hasOrderSheet = params.data.orderSheetLink;
+                const button = document.createElement('button');
+                button.innerText = '조회';
+                button.className = 'btn btn-sm';
+
+                if (!hasOrderSheet) {
+                    button.classList.add('btn-primary');
+                   // button.disabled = false;
+                    button.addEventListener('click', async () => {
+                        try {
+                        	 // 서버에서 PDF URL 확인 (또는 바로 xpCode 기반 URL 생성)
+                            // 여기서는 바로 PDF URL 생성 예제
+                            const pdfUrl = `/api/v1/stock/orderSheet/${xpCode}`;
+
+                            // iframe src에 PDF 로드
+                            const iframe = document.querySelector('#orderModal iframe#pdfFrame');
+                            iframe.src = pdfUrl;
+
+                            // 모달 띄우기
+                            const orderModal = new bootstrap.Modal(document.getElementById('orderModal'));
+                            orderModal.show();
+                        } catch (err) {
+                            toast.error("발주서 조회 실패", err);
+                        }
+                    });
+                } else {
+                    button.classList.add('btn-secondary');
+                    button.disabled = true;
+                }
+
+                return button;
+            },
+            width: 100
+         }
+    ],
+    paginationPageSize: 20,
+    domLayout: "normal"
+});
+
+// 데이터 로드
+async function loadOrderPlans() {
+    try {
+        const res = await axios.get("/api/v1/stock/orderPlans");
+        orderPlansGrid.gridOptions.api.setRowData(res.data);
+        orderPlansGrid.gridOptions.api.sizeColumnsToFit();
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+loadOrderPlans();
+
+
+
+
+// 제품목록 조회 모달
+async function openProductModal() {
+	 if (!productGrid) {
+	        // 최초 초기화
+	        productGrid = initGrid({
+	            el: "productGrid",
+	            columnDefs: [
+	                { headerName: "제품코드", field: "productCode" },
+	                { headerName: "제품명", field: "productName" },
+	                { headerName: "규격", field: "specification" },
+	            ],
+	            onGridReady: async (event) => {
+	                try {
+	                    const res = await axios.get("/api/v1/stock/productList");
+	                    event.api.setRowData(res.data);
+	                } catch (err) {
+	                    console.error("제품리스트 데이터 로드 실패:", err);
+	                }
+	            },
+	            onRowDoubleClicked:  (event) => {
+	                // 모달 안에서 선택한 행의 제품명만 가져오기
+	                document.getElementById("productName").value = event.data.productName;
+	                productModal.hide();
+	            }
+	        });
+	  } else {
+	        // 이미 초기화된 Grid이면 기존 Grid를 재사용
+	        try {
+	            const res = await axios.get("/api/v1/stock/productList");
+	            productGrid.gridOptions.api.setRowData(res.data);
+	            productGrid.gridOptions.api.sizeColumnsToFit();
+	        } catch (err) {
+	            console.error("제품리스트 데이터 로드 실패:", err);
+	        }
+	    }
+    productModal.show();
+}
+ 	
+ 	
+ 	
+	
+	// ------------------ 변수 초기화 ------------------
+	let productGridApi = null;
+	let productGridOptions = null;
+	let selectedProductRow = null; // 클릭한 행 저장용
+	const productModalEl = document.getElementById("productModal");
+	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
+	const businessModalEl = document.getElementById("businessModal");
+	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
+	
+    // 거래처명 클릭 시 모달
+	searchPartner.addEventListener('click', () => {
+			businessModal.show(); // 항상 동일한 인스턴스 사용
+	        if (!gridApi) initBusinessGrid();
+	        else loadBusinessData();
+ });
+	  // 제품명 클릭 시 모달
+	searchProduct.addEventListener('click', () => {	openProductModal(); });
+	
+	// 거래처 그리드 초기화
+	function initBusinessGrid() {
+	    const eGridDiv = document.getElementById('myGrid');
+	    const columnDefs = [
+	        { headerName: "거래처코드", field: "cusCode" },
+	        { headerName: "거래처명", field: "cusName" },
+	        { headerName: "담당자명", field: "empName" },
+	        { headerName: "사업자번호", field: "bizNo" },
+	        { headerName: "대표명", field: "ceoName" },
+	        { headerName: "업태", field: "bizType" },
+	        { headerName: "종목", field: "bizCategory" },
+	        { headerName: "거래처주소", field: "addr" }
+	    ];
+
+	    const gridOptions = {
+	        columnDefs,
+	        rowSelection: "single",
+	        pagination: true,
+	        domLayout: 'normal',
+	        rowData: [],
+	        onGridReady: (event) => {
+	            gridApi = event.api;
+	            gridApi.sizeColumnsToFit();
+	            loadBusinessData();
+	        },
+	        defaultColDef: {
+	            resizable: true,   // 컬럼 너비 조절 가능
+	            sortable: true,    // 정렬 가능
+	            minWidth: 100,     // 최소 너비
+	        },
+	        onRowDoubleClicked: (event) => {
+	        	document.getElementById("partnerName").value = event.data.cusName;
+	            
+	            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
+	        }
+	    };
+	    new agGrid.Grid(eGridDiv, gridOptions);
+	}
+	// 거래처 데이터 로드
+	async function loadBusinessData() {
+	    try {
+	        const res = await axios.get("/api/v1/stock/cusList");
+	        if (gridApi) {
+	            gridApi.setRowData(res.data);
+	            gridApi.sizeColumnsToFit();
+	        }
+	    } catch (err) { console.error(err); }
+	}
+	
+	// ------------------ Grid 데이터 로드 함수 ------------------
+	async function loadProductData() {
+	    if (!productGridApi) return;
+	    try {
+	        const res = await axios.get("/api/v1/stock/productList");
+	        productGridApi.setRowData(res.data);
+	    } catch(err) {
+	        console.error(err);
+	    }
+	}
+
+
+
+	const modalEl = document.getElementById("businessModal");
+	const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  	// CALL MODAL
+	//모달 데이터 로드 함수
+	async function loadModalData() {
+
+			const eGridDiv = document.querySelector('#myGrid'); // div 선택
+			if(!eGridDiv)  return console.error("myGrid div가 존재하지 않습니다!");
+			
+			 const columnDefs = [
+				    { headerName: "거래처코드", field: "cusCode" },
+				    { headerName: "거래처명", field: "cusName" },
+			        { headerName: "담당자명", field: "empName" },
+			        { headerName: "사업자번호", field: "bizNo" },
+			        { headerName: "대표명", field: "ceoName" },
+			        { headerName: "업태", field: "bizType" },
+			        { headerName: "종목", field: "bizCategory" },
+			        { headerName: "거래처주소", field: "addr" }
+			        
+			];
+    	if (!gridApi) {
+		    const gridOptions = {
+		        columnDefs: columnDefs,
+		        rowSelection: "single",
+		        rowData: [],
+		        onGridReady: async function(event) {
+		        	gridApi = event.api;
+		            
+		        },
+		        onRowDoubleClicked: function(event) {
+		            document.getElementById("businessCode").value = event.data.cusCode;  // 실제 데이터 필드명 확인 필요
+		            document.getElementById("businessPartner").value = event.data.cusName;
+		            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
+		            
+		          }
+		     
+		    	};
+		    		new agGrid.Grid(eGridDiv, gridOptions);
+    	}
+
+		// axios로 데이터 가져오기	  
+		try {
+				const res = await axios.get("/api/v1/stock/cusList");
+				// gridApi가 준비되었는지 확인
+				if (gridApi) {
+					gridApi.setRowData(res.data);
+				} else {
+				    // gridApi가 아직 준비 안된 경우 100ms 후 재시도
+				    setTimeout(() => loadModalData(), 100);
+				}
+			} catch (err) {
+				 console.error(err);
+			}
+	}// end of loadModalData
+	
+
+
+  // Axios 등록 + Toast
+	const toastEl = document.getElementById('successToast');
+	const toast = new bootstrap.Toast(toastEl);
+
+	
+	
+
+});
+</script>
+</th:block>
+
+</body>
+</html>
