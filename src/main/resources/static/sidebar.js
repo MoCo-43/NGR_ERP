@@ -100,7 +100,7 @@ const MENUS = {
         title: "전표",
         items: [
           ["매출매입전표", "/invoice"],
-          ["일반전표", "journal"],
+          ["일반전표", "/journal"],
           ["자금전표", "/acc/voucher/fund"],
           ["급여전표", "/acc/voucher/payroll"],
           ["전표 마감", "/close"],

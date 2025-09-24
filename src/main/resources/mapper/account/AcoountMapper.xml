@@ -52,6 +52,7 @@
 		    STATUS, CREATED_AT, UPDATED_AT
     FROM INVOICE_HEADER
 	</select>
-	
+
+
 	
 </mapper>

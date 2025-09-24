@@ -45,7 +45,7 @@
               <label class="form-label">부서명</label>
               <div class="input-group">
                 <input type="text" id="deptNameInput" class="form-control" th:value="${invoiceHeader?.deptName}" readonly/>
-                <button class="btn btn-outline-secondary btn-icon" type="button" id="openDeptModalBtn">
+                <button class="btn btn-outline-secondary btn-icon" type="button" id="btnDeptLookup">
                   <i class="fas fa-search"></i>
                 </button>
               </div>
@@ -97,31 +97,6 @@
               <input type="text" class="form-control" th:value="${invoiceHeader?.note}"/>
             </div>
           </div>
-
-          <!-- 계정과목 -->
-          <div class="row mb-2">
-            <div class="col-md-6">
-              <label class="form-label">매출/매입 계정</label>
-              <div class="input-group">
-                <input type="text" class="form-control" th:value="${invoiceHeader?.arApAcct}" placeholder="코드"/>
-                <button class="btn btn-outline-secondary btn-icon" type="button">
-                  <i class="fas fa-search"></i>
-                </button>
-                <input type="text" class="form-control" placeholder="계정과목명"/>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">자금 계좌</label>
-              <div class="input-group">
-                <input type="text" class="form-control" th:value="${invoiceHeader?.cashAccount}" placeholder="코드"/>
-                <button class="btn btn-outline-secondary btn-icon" type="button">
-                  <i class="fas fa-search"></i>
-                </button>
-                <input type="text" class="form-control" placeholder="계좌번호"/>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div class="modal-footer">
           <button class="btn btn-success" type="button">저장</button>
