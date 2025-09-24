@@ -20,5 +20,8 @@ public interface EmpMapper {
 
 	// 수정 
 	int updateEmp(EmpVO empVO);
+	 
+	//팀장 조회
+	List<EmpVO> selectManagers(EmpVO empVO);
 
 }

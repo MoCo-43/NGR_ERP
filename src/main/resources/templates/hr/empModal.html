@@ -8,8 +8,9 @@
 				<div class="modal-header">
 					<h5 class="modal-title title-highlight" id="empModalTitle">사원
 						등록 기본사항</h5>
-					<button type="button" class="btn-close" data-bs-dismiss="modal"
-						aria-label="닫기"></button>
+					<button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal" aria-label="닫기">
+            <i class="fas fa-times"></i>
+          </button>
 				</div>
 
 				<!-- Body -->
@@ -187,7 +188,7 @@
 				</div>
 
 				<!-- Footer -->
-				<div class="modal-footer">
+				<div class="modal-footer" id="empModalFooter">
 					<button type="button" class="btn btn-success" id="btnSave">저장</button>
 					<button type="button" class="btn btn-secondary"
 						data-bs-dismiss="modal">닫기</button>
@@ -204,11 +205,7 @@
 	gap: .5rem;
 	border-bottom: 1px solid #dee2e6;
 }
-
-#empModal .nav-tabs .nav-item {
-	flex: 1 1 0;
-}
-
+#empModal .nav-tabs .nav-item { flex: 1 1 0; }
 #empModal .nav-tabs .nav-link {
 	width: 100%;
 	display: flex;
@@ -217,30 +214,20 @@
 	font-weight: 600;
 	height: 40px;
 }
-
-@media ( max-width :576px) {
-	#empModal .nav-tabs {
-		flex-wrap: wrap;
-	}
-	#empModal .nav-tabs .nav-item {
-		flex: 1 1 50%;
-	}
+@media (max-width:576px) {
+	#empModal .nav-tabs { flex-wrap: wrap; }
+	#empModal .nav-tabs .nav-item { flex: 1 1 50%; }
 }
-
-#empModal .form-label {
-	font-weight: 600;
-	margin-bottom: .25rem;
-}
-
+#empModal .form-label { font-weight: 600; margin-bottom: .25rem; }
 #empModal .title-highlight {
-	color: #0d6efd;
-	font-weight: 800;
-	font-size: 1.3rem;
-	padding-bottom: 3px;
+	color: #0d6efd; font-weight: 800; font-size: 1.3rem; padding-bottom: 3px;
 }
+#empModal .modal-dialog { max-width: 1200px; }
 
-#empModal .modal-dialog {
-	max-width: 1200px;
+#empModal #tab-pay .tab-footer{
+  border-top: 1px solid #dee2e6; /* 밑줄 */
+  padding-top: .75rem;           /* 윗여백 */
+  margin-top: .25rem;            /* 위쪽 살짝 간격 */
 }
 </style>
 
@@ -252,6 +239,14 @@
 
       const getEmpId = () =>
         $('f_emp_id')?.value || $('eduEmpId')?.value || $('certEmpId')?.value || '';
+
+      // ===== footer 토글 (급여 탭이면 숨김, 나머지 보임) =====
+      function toggleFooterByTab(activeTarget){
+        const footer = $('empModalFooter');
+        if(!footer) return;
+        const isPay = (activeTarget === '#tab-pay');
+        footer.classList.toggle('d-none', isPay);
+      }
 
       // =======================
       // 공통코드 모달 연결
@@ -266,7 +261,6 @@
             source: 'dept',
             title:  '부서 선택',
             targetId: 'f_dept_code'
-            // targetNameId: 'f_dept_name'  // 필요하면 hidden 추가 후 사용
           });
         }
         // 직급
@@ -292,8 +286,8 @@
           CodeLookup.open({
             groupId: 'BK',
             title: '은행 선택',
-            targetId: 'f_bankCode',     // hidden: 은행코드
-            targetNameId: 'f_bankName'  // 표시: 은행명
+            targetId: 'f_bankCode',
+            targetNameId: 'f_bankName'
           });
         }
       });
@@ -350,7 +344,7 @@
         const el = e.target;
         if(!(el instanceof Element)) return;
 
-        // 교육 저장 (eduForm 모달 내부의 저장 버튼)
+        // 교육 저장
         if(el.id==='btnEduSave'){
           const form = $('eduFormDetail');
           const payload = Object.fromEntries(new FormData(form).entries());
@@ -425,7 +419,7 @@
         const el = e.target;
         if(!(el instanceof Element)) return;
 
-        // 자격증 저장 (certForm 모달 내부의 저장 버튼)
+        // 자격증 저장
         if(el.id==='btnCertSave'){
           const form = $('certFormDetail');
           const payload = Object.fromEntries(new FormData(form).entries());
@@ -446,18 +440,28 @@
       });
 
       // =======================
-      // 모달 열릴 때 hidden 동기화
+      // 모달 열릴 때: 사번 동기화 + footer 토글
       // =======================
       $('empModal')?.addEventListener('shown.bs.modal', ()=>{
         const id = $('f_emp_id')?.value || '';
         if($('eduEmpId') && !$('eduEmpId').value)  $('eduEmpId').value  = id;
         if($('certEmpId') && !$('certEmpId').value) $('certEmpId').value = id;
+        // 급여 폼 hidden 사번도 보정
+        if($('pf_emp_id') && !$('pf_emp_id').value) $('pf_emp_id').value = id;
+
+        const activeTarget = document
+          .querySelector('#empTabs .nav-link.active')
+          ?.getAttribute('data-bs-target');
+        toggleFooterByTab(activeTarget);
       });
 
-      // 탭 전환 시 리스트 로드
+      // =======================
+      // 탭 전환 시 리스트 로드 + 급여 사번 보정 + footer 토글
+      // =======================
       empTabs?.addEventListener('shown.bs.tab', (e)=>{
         const target = e.target.getAttribute('data-bs-target');
         const id = getEmpId();
+
         if(target==='#tab-edu'){
           if($('eduEmpId')) $('eduEmpId').value = id;
           refreshEdu();
@@ -465,6 +469,47 @@
         if(target==='#tab-cert'){
           if($('certEmpId')) $('certEmpId').value = id;
           refreshCert();
+        }
+        if(target==='#tab-pay'){
+          if($('pf_emp_id') && !$('pf_emp_id').value) $('pf_emp_id').value = id;
+        }
+        toggleFooterByTab(target);
+      });
+
+      // =======================
+      // 공용 저장 버튼 라우팅 (급여 탭 -> payFix 저장)
+      // =======================
+      $('btnSave')?.addEventListener('click', async ()=>{
+        const activeTarget = document
+          .querySelector('#empTabs .nav-link.active')
+          ?.getAttribute('data-bs-target');
+
+        if(activeTarget === '#tab-pay'){
+          // 저장 직전 사번 방어 보정
+          if($('pf_emp_id') && !$('pf_emp_id').value) $('pf_emp_id').value = $('f_emp_id')?.value || '';
+          try{
+            // payFix에서 window.__payFix.save()가 정의돼 있어야 함
+            await window.__payFix?.save?.();
+          }catch(err){
+            console.error(err);
+            alert(err?.message || '저장 실패');
+          }
+          return;
+        }
+
+        if(activeTarget === '#tab-basic'){
+          // TODO: 기본사항 저장 로직 연결
+          alert('기본사항 저장 로직을 연결하세요.');
+          return;
+        }
+
+        if(activeTarget === '#tab-edu'){
+          $('btnEduSave')?.click();
+          return;
+        }
+        if(activeTarget === '#tab-cert'){
+          $('btnCertSave')?.click();
+          return;
         }
       });
 
@@ -474,7 +519,7 @@
       tag.src    = SCRIPT_URL; document.head.appendChild(tag);
     })();
 
-    // 주소 검색
+    // 주소 검색 (전역)
     function openPostcodeApi(){
       const $ = (id)=>document.getElementById(id);
       new daum.Postcode({

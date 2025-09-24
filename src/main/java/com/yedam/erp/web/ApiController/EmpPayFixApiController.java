@@ -1,6 +1,5 @@
 package com.yedam.erp.web.ApiController;
 
-//package com.yedam.erp.web.ApiController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,31 +18,35 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/emps")
 public class EmpPayFixApiController {
 
-	private final EmpPayFixService service;
+    private final EmpPayFixService service;
 
-	// 단건 조회 (/api/v1/emps/{emp_id}/pay-fix)
-	@GetMapping("/{emp_id}/pay-fix")
-	public EmpPayFixVO get(@PathVariable("emp_id") String empId) {
-		return service.get(empId);
-	}
+    // 조회
+    @GetMapping("/{emp_id}/pay-fix")
+    public EmpPayFixVO get(@PathVariable("emp_id") String empId) {
+        return service.get(empId);
+    }
 
-	// 등록 (/api/v1/emps/pay-fix) - body JSON keys는 snake_case
-	@PostMapping("/pay-fix")
-	public boolean create(@RequestBody EmpPayFixVO vo) {
-		return service.insert(vo);
-	}
+    // 등록 
+    @PostMapping("/{emp_id}/pay-fix")
+    public boolean create(@PathVariable("emp_id") String empId,
+                          @RequestBody EmpPayFixVO vo) {
+        vo.setEmp_id(empId);
+        return service.insert(vo);
+    }
 
-	// 수정 (/api/v1/emps/{emp_id}/pay-fix)
-	@PutMapping("/{emp_id}/pay-fix")
-	public boolean update(@PathVariable("emp_id") String empId, @RequestBody EmpPayFixVO vo) {
-		vo.setEmp_id(empId);
-		return service.update(vo);
-	}
+    // 수정
+    @PutMapping("/{emp_id}/pay-fix")
+    public boolean update(@PathVariable("emp_id") String empId,
+                          @RequestBody EmpPayFixVO vo) {
+        vo.setEmp_id(empId);
+        return service.update(vo);
+    }
 
-	// upsert 필요시
-	@PutMapping("/{emp_id}/pay-fix:upsert")
-	public boolean upsert(@PathVariable("emp_id") String empId, @RequestBody EmpPayFixVO vo) {
-		vo.setEmp_id(empId);
-		return service.upsert(vo);
-	}
+    // upsert
+    @PutMapping("/{emp_id}/pay-fix:upsert")
+    public boolean upsert(@PathVariable("emp_id") String empId,
+                          @RequestBody EmpPayFixVO vo) {
+        vo.setEmp_id(empId);
+        return service.upsert(vo);
+    }
 }
