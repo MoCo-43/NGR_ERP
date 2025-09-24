@@ -13,5 +13,5 @@ public interface EmpPayFixMapper {
 
 	int update(EmpPayFixVO vo);
 
-	int upsert(EmpPayFixVO vo); // MERGE (선택)
+	int upsert(EmpPayFixVO vo); 
 }
