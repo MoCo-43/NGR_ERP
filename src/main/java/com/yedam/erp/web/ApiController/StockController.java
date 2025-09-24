@@ -2,6 +2,9 @@ package com.yedam.erp.web.ApiController;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.yedam.erp.service.JasperService;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.PartnerVO;
@@ -34,6 +38,50 @@ import lombok.RequiredArgsConstructor;
 public class StockController {
 
 	final private StockService service;
+	final private JasperService jasper;
+	
+	
+	@PostMapping("/requestOrderInsert")
+	public ResponseEntity<String> insertOrder(@RequestBody OrderPlanVO plan) {
+        
+            // 1️⃣ DB에 발주 등록
+            service.insertOrderPlan(plan);
+            return ResponseEntity.ok("발주 등록 완료");
+    }
+	
+	
+	@GetMapping("/orderSheet/{xpCode}")
+	public ResponseEntity<?> getOrderSheet(@PathVariable String xpCode) {
+	    try {
+	        Path pdfPath = Paths.get("C:/pdfs/order_" + xpCode + ".pdf");
+
+	        if (!Files.exists(pdfPath)) {
+	            return ResponseEntity.notFound().build();
+	        }
+
+	        org.springframework.core.io.Resource resource =
+	                new org.springframework.core.io.FileSystemResource(pdfPath.toFile());
+
+	        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+	        headers.add(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+	                "inline; filename=\"order_" + xpCode + ".pdf\"");
+
+	        return ResponseEntity.ok()
+	                .headers(headers)
+	                .contentLength(Files.size(pdfPath))
+	                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+	                .body(resource);
+
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        return ResponseEntity.internalServerError().build();
+	    }
+	}
+	
+	@GetMapping("/orderPlans")
+	public List<OrderPlanVO> getOrderPlans() {
+        return service.getOrderPlans();
+    }
 	
 	@PostMapping("/orderPlanInsert")
 	public ResponseEntity<String> insertOrderPlan(@RequestBody OrderPlanVO plan) {

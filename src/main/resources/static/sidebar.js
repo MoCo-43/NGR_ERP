@@ -22,37 +22,32 @@ const MENUS = {
       },
     ],
   },
-
   inventory: {
     title: "재고",
     content: "재고 대시보드",
     groups: [
-      {
-        title: "입고관리",
-        items: [
-          ["입고조회", "/inv/in/list"],
-          ["입고등록", "/inv/in/new"],
-        ],
-      },
-      {
-        title: "출고관리",
-        items: [
-          ["출고조회", "/inv/out/list"],
-          ["출고등록", "/inv/out/new"],
-        ],
-      },
-      {
-        title: "발주관리",
-        items: [
-          ["발주계획조회", "/inv/po/plan"],
-          ["발주계획등록", "/stock/plan/insert"],
-          ["발주서 조회", "/inv/po/list"],
-          ["발주서 등록", "/inv/po/new"],
-        ],
-      },
-      { title: "재고결산", items: [["재고결산", "/inv/closing"]] },
-      { title: "제품관리", items: [["제품등록", "/stock/product/insert"]] },
-    ],
+
+      { title: "입고관리", items: [
+        ["입고조회","/inv/in/list"],
+        ["입고등록","/inv/in/new"],
+      ]},
+      { title: "출고관리", items: [
+        ["출고조회","/inv/out/list"],
+        ["출고등록","/inv/out/new"],
+      ]},
+      { title: "발주관리", items: [
+        ["발주계획조회","/stock/plan/list"],
+        ["발주계획등록","/stock/plan/insert"],
+        ["발주서 조회","/inv/po/list"],
+        ["발주서 등록","/inv/po/new"],
+      ]},
+      { title: "재고결산", items: [
+        ["재고결산","/inv/closing"]
+      ]},
+      { title: "제품관리", items: [
+        ["제품등록","/stock/product/insert"]
+      ]}
+    ]
   },
 
   sales: {

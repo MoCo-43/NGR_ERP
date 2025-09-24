@@ -127,13 +127,18 @@
 	const toastEl = document.getElementById('successToast');
 	const toast = new bootstrap.Toast(toastEl);
 	
+	
 	submitBtn.addEventListener('click', (event) => {
 		event.preventDefault(); // 페이지 새로고침 방지
+		const purInput = document.getElementById('purchasePrice');
+		const salInput = document.getElementById('salesPrice');
+		
+		purInput.value = purInput.value || 0;
+		salInput.value= salInput.value || 0;
+		
 	    const formData = new FormData(form);
-	
-	    axios.post('/api/v1/stock/productInsert', formData, {
-	        headers: { 'Content-Type': 'multipart/form-data' }
-	    })
+		
+	    axios.post('/api/v1/stock/productInsert', formData)
 	    .then(response => {
 	        toast.show(); // Toast 알림
 	        form.reset();  // 폼 초기화

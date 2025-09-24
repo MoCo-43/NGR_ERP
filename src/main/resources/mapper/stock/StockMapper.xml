@@ -94,9 +94,28 @@ VALUES (SEQ_EXPLAIN_DETAIL.nextval ,
 </insert>
 <!-- 발주 계획 조회 -->
 <select id="selectOrderPlans" resultMap="orderPlanResultMap">
-    SELECT *
-    FROM EXPLAIN
-    WHERE ins_date BETWEEN #{startDate} AND #{endDate}
+SELECT 
+    m.xp_code as "xp_code",
+    min(d.business_partner) as "business_partner",
+    min(d.business_code) as "business_code",  
+    m.emp_id as "emp_id",
+    m.vat_type as "vat_type",
+    m.ins_date as "ins_date",
+    case
+        when count(d.xd_no) > 1 
+            then min(d.product_name) || ' 외 ' || (count(d.xd_no) - 1) || '건' 
+        else min(d.product_name) 
+    end as "product_name",
+    sum(d.amount) as "amount",
+    sum(d.sup_amt) as "sup_amt" 
+FROM explain m 
+JOIN explain_detail d 
+    ON m.xp_code = d.xp_code 
+GROUP BY 
+    m.xp_code, 
+    m.emp_id, 
+    m.vat_type,
+    m.ins_date
 </select>
 
 <!-- ResultMap -->
@@ -111,6 +130,22 @@ VALUES (SEQ_EXPLAIN_DETAIL.nextval ,
         select="selectOrderPlanDetailsByXpCode" column="xp_code"/>
 </resultMap>
 
+<!-- 발주 계획 상세 조회 -->
+<select id="selectOrderPlanDetailsByXpCode" parameterType="string" resultType="OrderPlanDetailVO">
+SELECT 
+    xd_no       as xd_no,
+    product_code as product_code,
+    product_name as product_name,
+    specification as specification,
+    business_partner as business_partner,
+    business_code as business_code,
+    amount as amount,
+    purchase_price as purchase_price,
+    sup_amt as sup_amt,
+    vat_amt as vat_amt
+FROM explain_detail
+WHERE xp_code = #{xpCode}
+</select>
 
 
 

@@ -19,4 +19,7 @@ public interface StockService {
 	// 발주걔획 등록
 	public void insertOrderPlan(OrderPlanVO orderPlan); // 마스터
 	
+	// 발주계획 조회
+	List<OrderPlanVO> getOrderPlans();
+	
 }

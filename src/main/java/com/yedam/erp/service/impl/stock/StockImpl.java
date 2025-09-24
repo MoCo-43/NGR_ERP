@@ -55,4 +55,11 @@ public class StockImpl implements StockService{
 		return mapper.productAll();
 	}
 
+
+	@Override
+	public List<OrderPlanVO> getOrderPlans() {
+		// TODO Auto-generated method stub
+		return mapper.selectOrderPlans();
+	}
+
 }
