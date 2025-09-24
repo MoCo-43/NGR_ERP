@@ -89,6 +89,7 @@
 		<div th:replace="~{account/invoiceModal :: invoiceModal}"></div>
 		<div th:replace="~{account/taxInvoiceModal :: taxInvoiceModal}"></div>
 		<div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
+		<div th:replace="~{account/deptModal :: deptModal}"></div>
 	</section>
 
 	<th:block layout:fragment="body_extra">
@@ -194,10 +195,34 @@
 
     loadAndRenderVoucher();
   });
+  
+
+//✅ 초기화 버튼 동작
+document.getElementById("resetInvoiceBtn")?.addEventListener("click", () => {
+ const modalEl = document.getElementById("invoiceModal");
+
+ // 모든 input, textarea, select 초기화
+ modalEl.querySelectorAll("input, textarea, select").forEach(el => {
+   if (el.type === "date") {
+     el.value = ""; // 날짜는 공백 처리
+   } else if (el.tagName === "SELECT") {
+     el.selectedIndex = 0; // 첫번째 옵션으로
+   } else {
+     el.value = "";
+   }
+ });
+
+ // ag-grid 초기화
+ const gridDiv = document.getElementById("invoiceGrid");
+ if (gridDiv && gridDiv.api) {
+   gridDiv.api.setRowData([]); // 행 비우기
+ }
+});
+
 </script>
 
-		<!--  매입매출 모달 -->
-		<script th:inline="none">
+<!--  매입매출 모달 -->
+<script th:inline="none">
 
 document.addEventListener("DOMContentLoaded", () => {
   const modalEl = document.getElementById('invoiceModal');
@@ -240,8 +265,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-		<!--  거래처 모달 -->
-		<script th:inline="none">
+<!--  invoice 모달안에서  모달 -->
+<script th:inline="none">
 let businessGridApi = null;
 
 async function loadBusinessData() {
@@ -302,9 +327,12 @@ function initBusinessGrid() {
   new agGrid.Grid(gridDiv, gridOptions);
 }
 
+// DOM 렌더링시 
 document.addEventListener("DOMContentLoaded", () => {
   const invoiceModalEl = document.getElementById("invoiceModal");
   const businessModalEl = document.getElementById("businessModal");
+  const deptModalEl = document.getElementById("deptModal");
+  
   if (!invoiceModalEl || !businessModalEl) {
     console.error("invoiceModal 또는 businessModal 요소가 없습니다.");
     return;
@@ -312,7 +340,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const invoiceModal = bootstrap.Modal.getOrCreateInstance(invoiceModalEl);
   const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
-
+  const deptModal = bootstrap.Modal.getOrCreateInstance(deptModalEl);
+  
   // 버튼 클릭 → 전표모달 닫고 → 닫힌 후 거래처 모달 열기 (연쇄)
   document.getElementById("openBusinessModalBtn").addEventListener("click", () => {
     const openBusinessAfterHide = () => {
@@ -338,6 +367,92 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
+<!-- 부서 모달 -->
+<script th:inline="none">
+document.addEventListener("DOMContentLoaded", () => {
+  const invoiceModalEl = document.getElementById("invoiceModal");
+  const deptModalEl    = document.getElementById("deptModal");
+
+  if (!invoiceModalEl || !deptModalEl) return;
+
+  // ✅ invoiceModal, deptModal 인스턴스 생성
+  const invoiceModal = bootstrap.Modal.getOrCreateInstance(invoiceModalEl);
+  const deptModal    = new bootstrap.Modal(deptModalEl, { backdrop: false }); // 🔑 동시에 띄울 수 있게
+
+  // ====== 부서 버튼 클릭 시 → invoiceModal 닫지 않고 deptModal 강제로 열기 ======
+  invoiceModalEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("#openDeptModalBtn");
+    if (!btn) return;
+    deptModal.show();
+  });
+
+  // ====== 부서 그리드 ======
+  let deptGridApi = null;
+  const deptData = [
+   
+  ];
+
+  function initDeptGrid() {
+    if (deptGridApi) return;
+    const gridDiv = document.getElementById("deptGrid");
+    const gridOptions = {
+      columnDefs: [
+        { headerName: "부서코드", field: "deptCode", flex: 1 },
+        { headerName: "부서명",   field: "deptName", flex: 1 },
+        { headerName: "관리자",   field: "managerEmpId", flex: 1 }
+      ],
+      rowData: deptData,
+      rowSelection: "single",
+      defaultColDef: { resizable: true, sortable: true, minWidth: 30 },
+      onGridReady: (e) => {
+          loadDeptData();
+        },
+      onRowDoubleClicked: (e) => {
+        // 선택한 부서 → invoiceModal input에 반영
+        document.getElementById("deptNameInput").value = e.data.deptName;
+        // deptCodeInput 이 있다면 반영
+        if (document.getElementById("deptCodeInput")) {
+          document.getElementById("deptCodeInput").value = e.data.deptCode;
+        }
+
+        // 부서 모달만 닫고 invoiceModal은 그대로 둔다
+        deptModal.hide();
+      }
+    };
+    deptGridApi = agGrid.createGrid(gridDiv, gridOptions);
+  }
+
+  // 모달이 열리면 그리드 준비 + 리사이즈
+  deptModalEl.addEventListener("shown.bs.modal", () => {
+    initDeptGrid();
+    setTimeout(() => deptGridApi?.sizeColumnsToFit(), 0);
+  });
+
+  // 검색
+  document.getElementById("deptSearchBtn")?.addEventListener("click", () => {
+    const kw = (document.getElementById("deptSearchInput")?.value || "").toLowerCase();
+    const filtered = deptData.filter(r => r.deptName.toLowerCase().includes(kw));
+    deptGridApi?.setRowData(filtered);
+  });
+  document.getElementById("deptResetBtn")?.addEventListener("click", () => {
+    deptGridApi?.setRowData(deptData);
+  });
+});
+
+async function loadDeptData() {
+	  try {
+	    const res = await axios.get("/api/hr/dept");
+	    if (deptGridApi) {
+	    	deptGridApi.setRowData(res.data);
+	    	deptGridApi.sizeColumnsToFit();
+	    }
+	  } catch (err) {
+	    console.error("dept 로드 실패:", err);
+	  }
+	}
+</script>
+
 	</th:block>
 </body>
 </html>
