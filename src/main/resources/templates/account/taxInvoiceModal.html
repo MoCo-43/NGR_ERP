@@ -4,11 +4,11 @@
 <th:block th:fragment="taxInvoiceModalStyles">
   <style>
     :root{
-      --border:#8b95a1; --line:#ccd2d9; --ink:#111827; --muted:#6b7280;
+      --border:rgb(0, 0, 0); --line:#ccd2d9; --ink:#111827;
       --blue:#2563eb; --blue-50:#eaf1ff; --red:#ef4444; --red-50:#ffecec; --bg:#ffffff;
     }
     *{box-sizing:border-box}
-    .ti-page{background:var(--bg); border:1.5px solid var(--border); border-radius:12px; overflow:hidden}
+    .ti-page{background:var(--bg); border:1.5px solid var(--border); border-radius:12px; overflow:hidden; color:black;}
     .ti-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1.5px solid var(--border)}
     .ti-title{font-size:22px;font-weight:800;letter-spacing:.02em}
     .ti-approval{display:flex;align-items:center;gap:10px;border-left:6px solid var(--red); padding:6px 10px;background:var(--red-50);font-weight:700}
@@ -39,23 +39,23 @@
     .ti-supplier input::placeholder, .ti-buyer input::placeholder{color:currentColor; opacity:.55}
 
     .ti-summary{display:grid;grid-template-columns:180px 1fr 1fr 1fr 1fr;border-bottom:1.5px solid var(--border)}
-    .ti-summary .cell{padding:10px 12px;border-right:1px solid var(--line)}
-    .ti-summary .cell:last-child{border-right:none}
-    .ti-summary .k{font-weight:700;background:#fafbfc}
-    .ti-summary .v{text-align:right;font-variant-numeric:tabular-nums}
-    .ti-summary .v input{width:100%;text-align:right;border:none;background:transparent;font-size:15px}
+    .ti-summary .cell{padding:10px 12px;border-right:1px solid var(--line); color:black;}
+    .ti-summary .cell:last-child{border-right:none; color:black;}
+    .ti-summary .k{font-weight:700;background:#fafbfc; color:black;}
+    .ti-summary .v{text-align:right;font-variant-numeric:tabular-nums; color:black;}
+    .ti-summary .v input{width:100%;text-align:right;border:none;background:transparent;font-size:15px; color:black;}
 
-    .ti-table{width:100%;border-collapse:collapse}
-    .ti-table th, .ti-table td{border:1px solid var(--line);padding:8px 10px;font-size:14px}
-    .ti-table thead th{background:#f8fafc;font-weight:800}
+    .ti-table{width:100%;border-collapse:collapse;color:black;}
+    .ti-table th, .ti-table td{border:1px solid var(--line);padding:8px 10px;font-size:14px;color:black;}
+    .ti-table thead th{background:#f8fafc;font-weight:800;color:black;}
     .right{text-align:right;font-variant-numeric:tabular-nums}
     .center{text-align:center}
 
-    .ti-foot{display:grid;grid-template-columns:repeat(6,1fr);border-top:0;border-bottom:1.5px solid var(--border)}
-    .ti-foot .cell{padding:8px 10px;border-right:1px solid var(--line)}
-    .ti-foot .cell:last-child{border-right:none}
-    .ti-foot .k{background:#fafbfc;font-weight:700}
-    .ti-foot .v{text-align:right}
+    .ti-foot{display:grid;grid-template-columns:repeat(6,1fr);border-top:0;border-bottom:1.5px solid var(--border);color:black;}
+    .ti-foot .cell{padding:8px 10px;border-right:1px solid var(--line);color:black;}
+    .ti-foot .cell:last-child{border-right:none;color:black;}
+    .ti-foot .k{background:#fafbfc;font-weight:700;color:black;}
+    .ti-foot .v{text-align:right;color:black;}
     .ti-foot input{width:100%;border:none;text-align:right;background:transparent}
 
     .ti-actions{display:flex;justify-content:flex-end;gap:10px;padding:10px 4px}
@@ -75,6 +75,7 @@
       .ti-actions{display:none}
       input, textarea{border:none !important; outline:none !important}
     }
+   
   </style>
 </th:block>
 
@@ -130,10 +131,10 @@
             <div class="ti-summary">
               <div class="cell k">작성일자</div>
               <div class="cell v"><input id="tiWriteDate" value="2025-09-23" /></div>
-              <div class="cell k">공급가액</div>
-              <div class="cell v"><input id="tiSumSupply" value="300000" /></div>
-              <div class="cell v"><input id="tiSumVat" value="30000" /></div>
-              <div class="cell k" style="grid-column: 5/6; text-align:right;">세액</div>
+            <div class="cell v"><input id="tiSumSupply" value="300000" /></div>
+<div class="cell v" style="border-right:2px solid #000;"><input id="tiSumVat" value="30000" /></div>
+<div class="cell k" style="grid-column: 5/6; text-align:right;">세액</div>
+
             </div>
 
             <!-- 수정사유 / 비고 -->

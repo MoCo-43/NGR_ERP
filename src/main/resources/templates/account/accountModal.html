@@ -1,0 +1,141 @@
+<div th:fragment="accountModal">
+	<div class="modal fade" id="accountModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+
+				<!-- Header -->
+				<div class="modal-header">
+					<h5 class="modal-title">계정과목 조회</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="닫기"></button>
+
+				</div>
+
+				<!-- Body -->
+				<div class="modal-body">
+					<div class="tabbar">
+						<button class="btn btn-primary btn-sm" data-category="">
+							전체</button>
+						<button class="btn btn-outline-secondary btn-sm"
+							data-category="자산">자산</button>
+						<button class="btn btn-outline-secondary btn-sm"
+							data-category="부채">부채</button>
+						<button class="btn btn-outline-secondary btn-sm"
+							data-category="자본">자본</button>
+						<button class="btn btn-outline-secondary btn-sm"
+							data-category="수익">수익</button>
+						<button class="btn btn-outline-secondary btn-sm"
+							data-category="비용">비용</button>
+
+					</div>
+					<div id="accountGrid" class="ag-theme-quartz"
+						style="height: 420px; width: 100%;"></div>
+					<!-- Footer -->
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary"
+							data-bs-dismiss="modal">닫기</button>
+					</div>
+
+				</div>
+			</div>
+		</div>
+		<script th:inline="none">
+let accountGridApi = null;
+
+
+async function loadAccountData() {
+  try {
+    const res = await axios.get("/api/account/list"); // ✅ 계정과목 API 호출
+    if (accountGridApi) {
+      accountGridApi.setRowData(res.data);
+      accountGridApi.sizeColumnsToFit();
+    }
+  } catch (err) {
+    console.error("계정과목 로드 실패:", err);
+  }
+}
+
+function initAccountGrid() {
+  const gridDiv = document.querySelector("#accountGrid");
+  if (!gridDiv) return;
+
+  const columnDefs = [
+    { headerName: "계정코드", field: "acctCode", flex: 1 },
+    { headerName: "계정명", field: "acctName", flex: 1.5 },
+    {
+        field: "category",
+        headerName: "카테고리",
+        flex: 1.5,
+        valueGetter: (p) => p.data.category,
+      },
+  ];
+
+  const gridOptions = {
+    columnDefs,
+    rowSelection: "single",
+    pagination: true,
+    rowData: [],
+    defaultColDef: { resizable: true, sortable: true, minWidth: 100,filter:true },
+    onGridReady: (e) => {
+      accountGridApi = e.api;
+      accountGridApi.sizeColumnsToFit();
+      loadAccountData();
+    },
+    onRowDoubleClicked: (e) => {
+      if (selectedRowNode) { // ✅ 일반전표 grid에서 클릭한 row에 값 반영
+        selectedRowNode.setDataValue("acctCode", e.data.acctCode);
+        selectedRowNode.setDataValue("acctName", e.data.acctName);
+      }
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("accountModal")).hide();
+    }
+  };
+
+  new agGrid.Grid(gridDiv, gridOptions);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const accountModalEl = document.getElementById("accountModal");
+  if (!accountModalEl) return;
+
+  accountModalEl.addEventListener("shown.bs.modal", () => {
+    if (!accountGridApi) initAccountGrid();
+    else {
+      accountGridApi.sizeColumnsToFit();
+      loadAccountData();
+    }
+  });
+//탭 클릭: category 문자열 그대로 전달
+  document.querySelectorAll(".tabbar .btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      document.querySelectorAll(".tabbar .btn").forEach((b) => {
+        b.classList.remove("btn-primary");
+        b.classList.add("btn-outline-secondary");
+      });
+      1;
+      btn.classList.remove("btn-outline-secondary");
+      btn.classList.add("btn-primary");
+
+      const category = btn.getAttribute("data-category") || "";
+      if (!category) {
+        // 전체 보기 (필터 해제)
+        accountGridApi.setFilterModel(null);
+      } else {
+        // category 컬럼에서 해당 값만 남김
+        accountGridApi.setFilterModel({
+          category: {
+            type: "contains",
+            filter: category,
+          },
+        });
+      }
+      accountGridApi.onFilterChanged(); // 적용
+    });
+  });
+
+});
+
+
+</script>
+
+	</div>

@@ -38,25 +38,26 @@ ORDER BY
     p.PO_START DESC
 </select>
 
-<!-- 주문서 입력 페이지 -->
 <insert id="insertPO" parameterType="PoInsertVO">
   INSERT ALL
-    INTO PURCHASE_ORDER (
-        PO_ID, CUS_NO, CREATER, PO_START, EX_DATE, PO_DATE, PRD_NAME,
-        TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
+    INTO purchase_order (
+      PO_ID, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
+      PRD_NAME, TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
     ) VALUES (
-        PO_ID_SEQ.NEXTVAL, #{cusNo}, #{creater}, #{poStart}, #{exDate}, #{poDate}, #{prdName},
-        #{totalPrice}, '작성완료', #{payMethod}, #{notes}, #{vatType}, #{poType}
+      PO_ID_SEQ.NEXTVAL,
+      #{cusCode}, #{cusName}, #{creater}, #{poStart}, #{exDate}, #{poDate},
+      #{prdName}, #{totalPrice}, '작성완료', #{payMethod}, #{notes}, #{vatType}, #{poType}
     )
     <foreach collection="poDetails" item="pod">
-    INTO PO_DETAIL (
+      INTO po_detail (
         POD_ID, PO_ID, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
         DC_PRICE, SUP_AMT, VAT_AMT, D_PRD_NAME
-    ) VALUES (
-        POD_ID_SEQ.NEXTVAL, PO_ID_SEQ.CURRVAL, #{pod.productCode}, #{pod.orderQty}, #{pod.unitPrice},
-        #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.dPrdName}
-    )
+      ) VALUES (
+        POD_ID_SEQ.NEXTVAL, PO_ID_SEQ.CURRVAL, #{pod.productCode}, #{pod.orderQty},
+        #{pod.unitPrice}, #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.dPrdName}
+      )
     </foreach>
+  SELECT 1 FROM DUAL
 </insert>
 
 <!-- 주문서 이력 조회 -->
