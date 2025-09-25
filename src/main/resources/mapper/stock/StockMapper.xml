@@ -147,6 +147,35 @@ FROM explain_detail
 WHERE xp_code = #{xpCode}
 </select>
 
+<!-- 발주서 마스터 조회 -->
+<select id="selectOrderByXpCode" resultType="OrderVO" parameterType="String">
+    SELECT 
+        om.XP_CODE AS xpCode,
+        om.CUS_CODE AS cusCode,
+        c.CUS_NAME AS cusName,
+        om.due_DATE AS dueDate
+    FROM order_req om
+    JOIN customer c ON om.CUS_CODE = c.CUS_CODE
+    WHERE om.XP_CODE = #{xpCode}
+</select>
+
+<!-- 발주서 상세 조회 -->
+<select id="selectOrderDetailsByXpCode" resultType="OrderDetailVO" parameterType="String">
+SELECT 
+    od.PRODUCT_CODE AS PRODUCT_CODE,
+    od.PRODUCT_NAME AS PRODUCT_NAME,
+    od.QTY AS QTY,
+    od.ORDER_PRICE AS ORDER_PRICE,
+    od.SUP_AMT AS SUP_AMT,
+    od.VAT_AMT AS VAT_AMT
+FROM order_req om
+JOIN order_detail od ON om.ORDER_CODE = od.ORDER_CODE
+JOIN customer c ON om.CUS_CODE = c.CUS_CODE
+JOIN explain ex ON ex.xp_code = om.xp_code
+WHERE om.xp_code = #{xpCode}
+ORDER BY od.OD_NO
+</select>
+
 
 
 </mapper>

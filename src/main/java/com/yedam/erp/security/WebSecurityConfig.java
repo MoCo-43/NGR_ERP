@@ -58,6 +58,8 @@ public class WebSecurityConfig {
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout")
                 .deleteCookies("JSESSIONID", "remember-me")// 로그아웃 시 쿠키 삭제
+            ).headers(headers -> headers
+                .frameOptions(frame -> frame.sameOrigin()) // PDF 시큐리티 허가(모달로 띄우려면 무조건 필요)
             );
 
         return http.build();
