@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
@@ -21,4 +22,6 @@ public interface BizMapper {
   List<PurchaseOrderVO> getPOHistory();
   // 품목 조회
   List<ProductCodeVO> getProducts();
+  // 거래처 조회
+  List<CustomerVO> getCustomers();
 }
