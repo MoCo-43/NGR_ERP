@@ -1,4 +1,4 @@
-package com.yedam.erp.service.impl;
+package com.yedam.erp.service.impl.hr;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.hr.DeptMapper;
-import com.yedam.erp.service.DeptService;
+import com.yedam.erp.service.hr.DeptService;
 import com.yedam.erp.vo.hr.DeptVO;
 
 import lombok.RequiredArgsConstructor;

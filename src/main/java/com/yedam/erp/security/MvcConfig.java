@@ -28,6 +28,8 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/biz/pohistory").setViewName("biz/modals/PoHistoryModal");
 		// 영업-품목코드조회
 		registry.addViewController("/biz/productcode").setViewName("biz/modals/ProductCodeModal");
+		// 영업-거래처조회
+		registry.addViewController("/biz/customercode").setViewName("biz/modals/PoCustomerModal");
 
 		// 회계
 		registry.addViewController("/vouchers").setViewName("account/list");
@@ -48,6 +50,8 @@ public class MvcConfig implements WebMvcConfigurer {
 		// 인사
 		 registry.addViewController("/emps").setViewName("hr/EmpList");
 		 registry.addViewController("/dept").setViewName("hr/deptList");
+		 registry.addViewController("/allowcode").setViewName("hr/PayAllowCode");
+		 registry.addViewController("/deductcode").setViewName("hr/PayDeductCode");
 
 	}
 

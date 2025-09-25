@@ -1,4 +1,4 @@
-package com.yedam.erp.service;
+package com.yedam.erp.service.hr;
 
 import com.yedam.erp.vo.hr.EmpPayFixVO;
 

@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.springframework.web.bind.annotation.*;
 
-import com.yedam.erp.service.DeptService;
+import com.yedam.erp.service.hr.DeptService;
 import com.yedam.erp.vo.hr.DeptVO;
 
 import lombok.RequiredArgsConstructor;

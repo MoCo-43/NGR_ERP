@@ -8,7 +8,7 @@ import com.yedam.erp.vo.account.JournalVO;
 
 @Mapper
 public interface JournalMapper {
-
+	String selectNextJrnNo();
     // 단건 등록
     int insertJournal(JournalVO vo);
 

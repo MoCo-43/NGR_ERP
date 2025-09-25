@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JournalVO {
-
+	private String jrnCode;		//기본키
     private Long lineNo;          // 라인 번호
     private String jrnNo;           // 전표 번호
     private Date jrnDate;         // 전표일자

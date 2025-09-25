@@ -55,4 +55,9 @@ public class JournalServiceImpl implements JournalService {
     public List<JournalVO> selectJournalList() {
         return journalMapper.selectJournalList();
     }
+
+    @Override
+    public String getNextJrnNo() {
+        return journalMapper.selectNextJrnNo();
+    }
 }

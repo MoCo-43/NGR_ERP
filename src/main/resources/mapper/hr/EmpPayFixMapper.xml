@@ -79,7 +79,7 @@
                 NVL(s.BIRTH_CARE,    0),
                 NVL(s.FAMILY_ALLOW,  0),
                 NVL(s.MEAL_ALLOW,    0),
-                NVL(s.ANNUAL_ALLOW,  0) );
+                NVL(s.ANNUAL_ALLOW,  0) )
   </update>
 
 </mapper>
