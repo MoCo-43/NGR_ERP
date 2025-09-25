@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.PayAllowCodeMapper">
+
+	<!-- 목록 조회 -->
+	<select id="selectPayAllowList"
+		resultType="com.yedam.erp.vo.hr.PayAllowCodeVO">
+		SELECT
+		ALLOW_CODE AS allowCode,
+		ALLOW_NAME AS allowName,
+		TAX_TYPE AS taxType,
+		PAY_TYPE AS payType,
+		METHOD_DESC AS methodDesc,
+		USE_YN AS useYn
+		FROM PAY_ALLOW_CODE
+		<where>
+			<if test="allowName != null and allowName != ''">
+				ALLOW_NAME LIKE '%' || #{allowName} || '%'
+			</if>
+			<if test="useYn != null and useYn != ''">
+				AND USE_YN = #{useYn}
+			</if>
+		</where>
+		ORDER BY ALLOW_CODE
+	</select>
+
+	<!-- 단건 조회 -->
+	<select id="selectPayAllow" parameterType="string"
+		resultType="com.yedam.erp.vo.hr.PayAllowCodeVO">
+		SELECT
+		ALLOW_CODE AS allowCode,
+		ALLOW_NAME AS allowName,
+		TAX_TYPE AS taxType,
+		PAY_TYPE AS payType,
+		METHOD_DESC AS methodDesc,
+		USE_YN AS useYn
+		FROM PAY_ALLOW_CODE
+		WHERE ALLOW_CODE = #{allowCode}
+	</select>
+
+	<!-- 등록 -->
+	<insert id="insertPayAllow"
+		parameterType="com.yedam.erp.vo.hr.PayAllowCodeVO">
+		INSERT INTO PAY_ALLOW_CODE
+		(ALLOW_CODE, ALLOW_NAME, TAX_TYPE, PAY_TYPE, METHOD_DESC, USE_YN)
+		VALUES
+		(#{allowCode}, #{allowName}, #{taxType}, #{payType}, #{methodDesc}, #{useYn})
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updatePayAllow"
+		parameterType="com.yedam.erp.vo.hr.PayAllowCodeVO">
+		UPDATE PAY_ALLOW_CODE
+		SET ALLOW_NAME = #{allowName},
+		TAX_TYPE = #{taxType},
+		PAY_TYPE = #{payType},
+		METHOD_DESC = #{methodDesc},
+		USE_YN = #{useYn}
+		WHERE ALLOW_CODE = #{allowCode}
+	</update>
+
+	<!-- 사용여부만 변경 -->
+	<update id="updateUseYn"
+		parameterType="com.yedam.erp.vo.hr.PayAllowCodeVO">
+		UPDATE PAY_ALLOW_CODE
+		SET USE_YN = #{useYn}
+		WHERE ALLOW_CODE = #{allowCode}
+	</update>
+
+</mapper>

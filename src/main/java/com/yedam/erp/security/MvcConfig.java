@@ -47,6 +47,8 @@ public class MvcConfig implements WebMvcConfigurer {
 		// 인사
 		 registry.addViewController("/emps").setViewName("hr/EmpList");
 		 registry.addViewController("/dept").setViewName("hr/deptList");
+		 registry.addViewController("/allowcode").setViewName("hr/PayAllowCode");
+		 registry.addViewController("/deductcode").setViewName("hr/PayDeductCode");
 
 	}
 

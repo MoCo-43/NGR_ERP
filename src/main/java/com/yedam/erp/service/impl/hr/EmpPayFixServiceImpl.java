@@ -1,10 +1,10 @@
-package com.yedam.erp.service.impl;
+package com.yedam.erp.service.impl.hr;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.hr.EmpPayFixMapper;
-import com.yedam.erp.service.EmpPayFixService;
+import com.yedam.erp.service.hr.EmpPayFixService;
 import com.yedam.erp.vo.hr.EmpPayFixVO;
 
 import lombok.RequiredArgsConstructor;

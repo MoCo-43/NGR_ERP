@@ -1,67 +1,64 @@
 <!-- templates/hr/payFix.html -->
 <div id="payFix" th:fragment="payFix">
-	<form id="payFixForm" onsubmit="return false;">
-		<input type="hidden" id="pf_emp_id" name="emp_id" />
+  <form id="payFixForm" onsubmit="return false;">
+    <input type="hidden" id="pf_emp_id" name="emp_id" />
 
-		<div class="container-fluid">
-			<div class="row g-3">
-				<div class="col-12">
-					<div class="fw-bold small text-secondary">고정 수당</div>
-				</div>
+    <div class="container-fluid">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="fw-bold small text-secondary">고정 수당</div>
+        </div>
 
-				<div class="col-md-6">
-					<label for="pf_basePay" class="form-label">기본급</label> <input
-						type="text" id="pf_basePay" name="base_pay" class="form-control"
-						placeholder="예: 3,000,000">
-				</div>
+        <div class="col-md-6">
+          <label for="pf_basePay" class="form-label">기본급</label>
+          <input type="text" id="pf_basePay" name="base_pay" class="form-control" placeholder="예: 3,000,000">
+        </div>
 
-				<div class="col-md-6">
-					<label for="pf_birthCare" class="form-label">출산 보육수당</label> <input
-						type="text" id="pf_birthCare" name="birth_care"
-						class="form-control">
-				</div>
+        <div class="col-md-6">
+          <label for="pf_birthCare" class="form-label">출산 보육수당</label>
+          <input type="text" id="pf_birthCare" name="birth_care" class="form-control">
+        </div>
 
-				<div class="col-md-6">
-					<label for="pf_familyAllow" class="form-label">부양 가족수당</label> <input
-						type="text" id="pf_familyAllow" name="family_allow"
-						class="form-control">
-				</div>
+        <div class="col-md-6">
+          <label for="pf_familyAllow" class="form-label">부양 가족수당</label>
+          <input type="text" id="pf_familyAllow" name="family_allow" class="form-control">
+        </div>
 
-				<div class="col-md-6">
-					<label for="pf_mealAllow" class="form-label">식대</label> <input
-						type="text" id="pf_mealAllow" name="meal_allow"
-						class="form-control">
-				</div>
+        <div class="col-md-6">
+          <label for="pf_mealAllow" class="form-label">식대</label>
+          <input type="text" id="pf_mealAllow" name="meal_allow" class="form-control">
+        </div>
 
-				<div class="col-md-6">
-					<label for="pf_annualAllow" class="form-label">연차 수당</label> <input
-						type="text" id="pf_annualAllow" name="annual_allow"
-						class="form-control">
-				</div>
+        <div class="col-md-6">
+          <label for="pf_annualAllow" class="form-label">연차 수당</label>
+          <input type="text" id="pf_annualAllow" name="annual_allow" class="form-control">
+        </div>
 
-				<div class="col-md-6">
-					<label for="pf_total" class="form-label fw-bold">월정 금액</label> <input
-						type="text" id="pf_total" class="form-control" readonly>
-				</div>
+        <div class="col-md-6">
+          <label for="pf_total" class="form-label fw-bold">월정 금액</label>
+          <input type="text" id="pf_total" class="form-control" readonly>
+        </div>
 
+        <div class="modal-footer" id="empModalFooter">
+          <button type="button" class="btn btn-success" id="pf_saveBtn">저장</button>
+          <button type="button" class="btn btn-secondary" id="pf_closeBtn" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </div>
+    </div>
+  </form>
 
-				
-				<div class="col-12">
-					<div class="tab-footer d-flex justify-content-end gap-2 mt-2">
-						<button type="button" class="btn btn-success" id="pf_saveBtn">저장</button>
-						<button type="button" class="btn btn-secondary" id="pf_closeBtn"
-							data-bs-dismiss="modal">닫기</button>
-					</div>
-				</div>
-
-			</div>
-		</div>
-</div>
-</form>
-
-<script>
+  <script>
   (function(){
     const formatter = new Intl.NumberFormat('ko-KR');
+
+    // ✅ CSRF 메타에서 읽기
+    const CSRF_TOKEN  = document.querySelector('meta[name="_csrf"]')?.content;
+    const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.content;
+    const makeHeaders = () => {
+      const h = { 'Content-Type':'application/json' };
+      if (CSRF_TOKEN && CSRF_HEADER) h[CSRF_HEADER] = CSRF_TOKEN;
+      return h;
+    };
 
     function parseNumber(str){ if(!str) return 0; return Number(String(str).replace(/,/g,'')); }
     function formatInput(el){ const val=parseNumber(el.value); el.value = val?formatter.format(val):''; }
@@ -92,11 +89,14 @@
           base_pay:g('pf_basePay'),
           birth_care:g('pf_birthCare'),
           family_allow:g('pf_familyAllow'),
-          meal_allow:g('pf_mealAllow'),
+          meal_allow:g('pf_mealAllow'),     // ✅ 오타 주의
           annual_allow:g('pf_annualAllow')
         };
       },
-      clear(){ ['pf_basePay','pf_birthCare','pf_familyAllow','pf_mealAllow','pf_annualAllow','pf_total'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';}); },
+      clear(){
+        ['pf_basePay','pf_birthCare','pf_familyAllow','pf_mealAllow','pf_annualAllow','pf_total']
+          .forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+      },
       calcTotal
     };
 
@@ -106,6 +106,10 @@
     });
 
     async function onSave(){
+      // 저장 직전 emp_id 보정
+      const hid=document.getElementById('pf_emp_id');
+      if(hid && !hid.value){ hid.value = document.getElementById('f_emp_id')?.value || ''; }
+
       const data=window.__payFix.getValues();
       if(!data.emp_id){ alert('사번(emp_id)이 비었습니다.'); return; }
 
@@ -117,23 +121,36 @@
       }
 
       try{
-        const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-        const ok=await res.json();
-        alert(ok?'저장 완료':'저장 실패');
-      }catch(err){ console.error(err); alert('저장 중 오류'); }
+        const res=await fetch(url,{method,headers:makeHeaders(),body:JSON.stringify(data)});
+        if(!res.ok){ throw new Error('저장 실패 ('+res.status+')'); }
+        await res.text(); // 응답 형태 무관
+       
+      }catch(err){ console.error(err); alert(err.message || '저장 중 오류'); }
     }
 
     async function isExisting(empId){
       try{
-        const res=await fetch(`/api/v1/emps/${encodeURIComponent(empId)}/pay-fix`);
+        const res=await fetch(`/api/v1/emps/${encodeURIComponent(empId)}/pay-fix`, { headers: makeHeaders() });
+        if(res.status===404) return false;
         if(!res.ok) return false;
-        const obj=await res.json();
-        return !!obj && !!obj.emp_id;
+        const obj=await res.json().catch(()=>null);
+        return !!obj && !!(obj.emp_id ?? obj.empId);
       }catch(e){ return false; }
     }
 
     document.getElementById('pf_saveBtn')?.addEventListener('click',onSave);
-    document.getElementById('pf_clearBtn')?.addEventListener('click',()=>window.__payFix.clear());
+
+    // ✅ 모달 공용 저장 버튼에서 사용할 수 있게 공개
+    window.__payFix.save = onSave;
+
+    // 닫기(옵션: data-bs-dismiss로 충분)
+    document.getElementById('pf_closeBtn')?.addEventListener('click', (e)=>{
+      const modalEl = e.target.closest('.modal');
+      try{
+        const inst = (window.bootstrap && bootstrap.Modal.getInstance(modalEl)) || (modalEl ? new bootstrap.Modal(modalEl) : null);
+        inst?.hide();
+      }catch(_){}
+    });
   })();
   </script>
 </div>

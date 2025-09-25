@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.yedam.erp.service.EmpEduService;
+import com.yedam.erp.service.hr.EmpEduService;
 import com.yedam.erp.vo.hr.EmpEduVO;
 
 import lombok.RequiredArgsConstructor;

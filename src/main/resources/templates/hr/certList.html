@@ -9,21 +9,23 @@
         </div>
       </div>
 
-      <div class="table-responsive">
-        <table class="table table-hover align-middle cert-table">
+      <div class="table-responsive cert-scroll">
+        <table class="table table-hover table-sm align-middle cert-table w-100">
           <thead class="table-light">
             <tr>
-              <th>자격번호</th>
-              <th class="flex-grow-2">자격증명</th>
-              <th>등급</th>
-              <th>발급기관</th>
-              <th>취득일</th>
-              <th>유효기간</th>
-              <th>비고</th>
-              <th>삭제</th>
+              <th class="sticky-th">자격번호</th>
+              <th class="sticky-th">자격증명</th>
+              <th class="sticky-th">등급</th>
+              <th class="sticky-th">발급기관</th>
+              <th class="sticky-th">취득일</th>
+              <th class="sticky-th">유효기간</th>
+              <th class="sticky-th">비고</th>
+              <th class="sticky-th">삭제</th>
             </tr>
           </thead>
-          <tbody id="certTbody"><!-- JS Render --></tbody>
+          <tbody id="certTbody">
+            <!-- JS 렌더링 시 삭제 버튼 포함 -->
+          </tbody>
         </table>
       </div>
 
@@ -34,16 +36,88 @@
   </div>
 
   <style>
-    .cert-table thead tr, .cert-table tbody tr { display:flex; align-items:center; }
-    .cert-table thead th, .cert-table tbody td { flex:1; text-align:center; padding:.75rem .5rem; }
-    .cert-table th:first-child, .cert-table td:first-child { flex:.7; }  /* 자격번호 */
-    .cert-table .flex-grow-2 { flex:2; }                                /* 자격증명 넓게 */
-    .cert-table th:last-child, .cert-table td:last-child { flex:.8; }    /* 삭제 버튼 */
+    .cert-scroll {
+      max-height: 360px;
+      overflow: auto;
+      scrollbar-gutter: stable both-edges;
+    }
+    .cert-table {
+      table-layout: fixed;
+      margin: 0!important;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: .925rem;
+    }
+    .cert-table th,
+    .cert-table td {
+      box-sizing: border-box;
+      padding: .45rem .5rem;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+    }
+    .cert-table td:nth-child(2) {
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-height: 1.28;
+      max-height: calc(1.28em * 2);
+    }
+    .cert-table td:not(:nth-child(2)) {
+      white-space: nowrap;
+    }
+    .sticky-th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f8f9fa;
+      box-shadow: 0 1px 0 rgba(0,0,0,.06);
+    }
+    .btn-cert-del {
+      padding: 2px 8px;
+      line-height: 1.2;
+    }
   </style>
 
   <script>
   (function(){
-    // 등록 버튼 클릭 시 현재 empId를 hidden에 세팅
+    window.renderCertList = function(items){
+      const tb = document.getElementById('certTbody');
+      const cnt = document.getElementById('certRowCount');
+      if(!tb) return;
+
+      if(!Array.isArray(items) || items.length === 0){
+        tb.innerHTML = `<tr><td colspan="7" class="text-center text-secondary py-4">등록된 자격증 이력이 없습니다.</td></tr>`;
+        if(cnt) cnt.textContent = '0건';
+        return;
+      }
+
+      tb.innerHTML = items.map(row=>{
+        const certId = row.certId || row.CERT_NO || '-';
+        const certNm = row.certName || row.CERT_NAME || '';
+        const grade  = row.grade || row.GRADE || '-';
+        const agency = row.agency || row.AGENCY || '-';
+        const acqDt  = row.acquireDate || row.ACQUIRE_DT || '-';
+        const expDt  = row.expireDate || row.EXPIRE_DT || '-';
+
+        return `
+          <tr data-id="${certId}">
+            <td>${certId}</td>
+            <td title="${certNm}">${certNm}</td>
+            <td>${grade}</td>
+            <td>${agency}</td>
+            <td>${acqDt}</td>
+            <td>${expDt}</td>
+            <td><button type="button" class="btn btn-danger btn-sm btn-cert-del">삭제</button></td>
+          </tr>`;
+      }).join('');
+
+      if(cnt) cnt.textContent = `${items.length}건`;
+    };
+
+    // 등록 버튼
     document.addEventListener('click', function(e){
       const el = e.target;
       if(!(el instanceof Element) || el.id!=='btnCertAdd') return;
@@ -57,11 +131,41 @@
       }
     });
 
-    // 모달 열릴 때 포커스
+    // 모달 포커스
     document.addEventListener('shown.bs.modal', function(e){
       if(!(e.target instanceof Element) || e.target.id!=='certFormModal') return;
-      const first = e.target.querySelector('input[name="certName"]');
-      first?.focus();
+      e.target.querySelector('input[name="certName"]')?.focus();
+    });
+
+    // 삭제 버튼
+    document.addEventListener('click', async function(e){
+      const btn = e.target.closest('.btn-cert-del');
+      if(!btn) return;
+      const tr = btn.closest('tr');
+      const certId = tr?.dataset?.id;
+      const empId = document.getElementById('f_emp_id')?.value || '';
+      if(!certId) return;
+      if(!confirm('이 자격증 이력을 삭제할까요?')) return;
+
+      try{
+        const resp = await fetch(`/api/hr/cert/${encodeURIComponent(certId)}?empId=${encodeURIComponent(empId)}`, {method:'DELETE'});
+        if(resp.ok){
+          tr.remove();
+          const rows = document.querySelectorAll('#certTbody tr');
+          const cnt = document.getElementById('certRowCount');
+          if(rows.length===0){
+            document.getElementById('certTbody').innerHTML = `<tr><td colspan="7" class="text-center text-secondary py-4">등록된 자격증 이력이 없습니다.</td></tr>`;
+            if(cnt) cnt.textContent='0건';
+          }else{
+            if(cnt) cnt.textContent=`${rows.length}건`;
+          }
+        }else{
+          alert('삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
+      }catch(err){
+        console.error(err);
+        alert('삭제 중 오류가 발생했습니다.');
+      }
     });
   })();
   </script>
