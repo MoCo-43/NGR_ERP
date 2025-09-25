@@ -13,10 +13,10 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 public class SubPlanController {
-	final private SubPlanService service;
+	private final SubPlanService service;
 	
 	@GetMapping("/subscribes")
 	public List<SubPlanVO> subscribe(){
-		return service.selectSubPlan();
+		return service.selectSubPlan();//json반환
 	}
 }

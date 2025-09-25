@@ -121,6 +121,11 @@
 			<version>4.10.0</version>
 		</dependency>
 		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.15.2</version>
+		</dependency>
+		<dependency>
 			<groupId>org.mybatis</groupId>
 			<artifactId>mybatis-typehandlers-jsr310</artifactId>
 			<version>1.0.2</version>
@@ -136,6 +141,12 @@
 			<groupId>net.sf.jasperreports</groupId>
 			<artifactId>jasperreports-pdf</artifactId>
 			<version>7.0.3</version>
+		</dependency>
+		<!-- SMS문자관련-->
+		<dependency>
+			<groupId>com.solapi</groupId>
+			<artifactId>sdk</artifactId>
+			<version>1.0.3</version>
 		</dependency>
 	</dependencies>
 <dependencyManagement>

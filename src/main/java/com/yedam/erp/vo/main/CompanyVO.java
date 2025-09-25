@@ -8,7 +8,8 @@ import lombok.Data;
 public class CompanyVO {
 	private Long matNo;
 	private String ceo;
-	private String compNmae;
+	private String compName;
+	private String matName;
 	private String matTel;
 	private String matMail;
 	private String compAddr;
@@ -17,4 +18,5 @@ public class CompanyVO {
 	private String comTel;
 	private String compDelAddr;
 	private String comCode;
+	private String jibunAddress;
 }

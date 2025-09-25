@@ -30,7 +30,7 @@ public class WebSecurityConfig {
 	
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder();// BCrypt 방식으로 암호화
     }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {

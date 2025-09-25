@@ -1,140 +1,138 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>ERP구독</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-    .subscription-section {
-      background-color: #ffffff;
-      padding: 60px 20px;
-      font-family: 'Pretendard', sans-serif; /* 시스템에 설치된 폰트나 웹폰트를 사용하면 좋습니다. */
-      text-align: center;
-    }
+<title>ERP 구독</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: #f2f2f2;
+  }
 
-    .subscription-title {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 40px;
-      color: #333;
-    }
+  .subscription-section {
+    background-color: #ffffff;
+    padding: 60px 20px;
+    text-align: center;
+  }
 
-    .plan-container {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      flex-wrap: wrap; /* 화면이 작아지면 카드가 아래로 내려가도록 설정 */
-    }
+  .subscription-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 40px;
+    color: #333;
+  }
 
-    .plan-card {
-      background-color: #f8f9fa;
-      border: 1px solid #e0e0e0;
-      border-radius: 16px;
-      width: 300px;
-      padding: 30px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
+  .plan-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+  }
 
-    .plan-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-    }
+  .plan-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 16px;
+    width: 300px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
 
-    .plan-card h3 {
-      font-size: 1.8rem;
-      font-weight: 600;
-      margin-top: 0;
-      margin-bottom: 15px;
-    }
+  .plan-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
 
-    .plan-card p {
-      font-size: 1rem;
-      color: #666;
-      margin-bottom: 10px;
-    }
-    
-    .plan-features {
-      min-height: 40px; /* 기능 목록 높이를 비슷하게 맞춰 정렬 개선 */
-    }
+  .plan-card h3 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 15px;
+  }
 
-    .plan-price {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #333;
-      padding: 40px 0;
-      border-top: 1px solid #e0e0e0;
-      border-bottom: 1px solid #e0e0e0;
-      margin: 20px 0;
-    }
-    
-    .button-wrapper {
-      position: relative; /* 숫자 '1'의 위치 기준점 */
-    }
+  .plan-card p {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 10px;
+  }
 
+  .plan-features {
+    min-height: 40px;
+  }
 
-    .plan-button {
-      background-color: #A5D6A7; /* 연한 녹색 */
-      color: #2E7D32; /* 진한 녹색 텍스트 */
-      border: none;
-      border-radius: 8px;
-      padding: 15px 20px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      width: 100%;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
+  .plan-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    padding: 40px 0;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+    margin: 20px 0;
+  }
 
-    .plan-button:hover {
-      background-color: #81C784; /* 호버 시 조금 더 진한 녹색 */
-    }
+  .plan-button {
+    background-color: #A5D6A7;
+    color: #2E7D32;
+    border: none;
+    border-radius: 8px;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
 
-  </style>
+  .plan-button:hover {
+    background-color: #81C784;
+  }
+</style>
 </head>
 
 <body>
   <!-- 공통 header -->
   <div th:replace="~{layout/main_header :: headerFragment}"></div>
-   <div>
-<main>
-  <section class="subscription-section">
-    <h2 class="subscription-title">구독 플랜</h2>
-    <div class="plan-container">
 
-      <div class="plan-card">
-        <h3>베이직</h3>
-        <p>최소인원</p>
-        <p class="plan-features">재고,영업</p>
-        <div class="plan-price">금액/구독</div>
-        <div class="button-wrapper featured">
-            <button class="plan-button" onclick="location.href='/subDetail'">시작하겠습니까?</button>
-        </div>
+  <main>
+    <section class="subscription-section">
+      <h2 class="subscription-title">구독 플랜</h2>
+      <div class="plan-container">
+        <!-- JS로 카드 동적 생성 -->
       </div>
-      <div class="plan-card">
-        <h3>스탠다드</h3>
-        <p>최소인원</p>
-        <p class="plan-features">인사,회계</p>
-        <div class="plan-price">구독/금액</div>
-        <div class="button-wrapper featured">
-            <button class="plan-button" onclick="location.href='/subDetail'">시작하겠습니까?</button>
-        </div>
-      </div>
-       <div class="plan-card">
-        <h3>프리미엄</h3>
-        <p>최소인원</p>
-        <p class="plan-features">재고,영업,인사,회계</p>
-        <div class="plan-price">금액/구독</div>
-        <div class="button-wrapper featured">
-            <button class="plan-button" onclick="location.href='/subDetail'">시작하겠습니까?</button>
-        </div>
-      </div>
-    </div>
-  </section>
-</main>
-   </div>
-    <!-- 공통 footer -->
+    </section>
+  </main>
+
+  <!-- 공통 footer -->
   <div th:replace="~{layout/main_footer :: footerFragment}"></div>
+
+  <script>
+    // /subscribes API 호출 후 동적 렌더링
+    fetch('/subscribes')
+      .then(res => res.json())
+      .then(data => {
+        const container = document.querySelector('.plan-container');
+        container.innerHTML = '';
+
+        data.forEach(plan => {
+          const card = document.createElement('div');
+          card.className = 'plan-card';
+          card.innerHTML = `
+            <h3>${plan.planName}</h3>
+            <p>최소인원: ${plan.minUsers}</p>
+            <p class="plan-features">${plan.avaiModules}</p>
+            <div class="plan-price">${plan.baseSalary}</div>
+            <div class="button-wrapper">
+              <button class="plan-button" onclick="location.href='/subDetail?planId=${plan.subPlanNo}'">시작</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      })
+      .catch(err => console.error('구독 데이터 로드 실패:', err));
+  </script>
 </body>
 </html>

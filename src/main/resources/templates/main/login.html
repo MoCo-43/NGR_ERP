@@ -72,22 +72,8 @@
     </form>
 
     <div class="link-small">
-      <a href="#" onclick="showSection('forgot'); return false;">비밀번호 찾기</a> | 
+      <a th:href="@{/findpw}">비밀번호 찾기</a> | 
       <a th:href="@{/register}">회원가입</a> <!-- 회원가입 링크 수정 -->
-    </div>
-  </div>
-
-  <!-- 비밀번호 찾기 섹션 -->
-  <div id="forgot" class="auth-section">
-    <h2>비밀번호 찾기</h2>
-    <form th:action="@{/forgot-password}" method="post">
-      <div class="input-field"><input type="text" name="companyCode" placeholder="회사코드" required></div>
-      <div class="input-field"><input type="text" name="empId" placeholder="아이디" required></div>
-      <div class="input-field"><input type="email" name="email" placeholder="이메일" required></div>
-      <button type="submit" class="btn-primary">재설정 메일 보내기</button>
-    </form>
-    <div class="link-small">
-      <a href="#" onclick="showSection('login'); return false;">로그인으로 돌아가기</a>
     </div>
   </div>
 </div>
