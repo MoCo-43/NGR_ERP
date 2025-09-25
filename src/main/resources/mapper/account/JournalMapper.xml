@@ -24,33 +24,46 @@
 	</resultMap>
 
 	<select id="selectJournalList" resultType="JournalNamesVO">
-    SELECT
-        J.JRN_CODE,
-        J.LINE_NO,
-        J.JRN_NO,
-        J.JRN_DATE,
-        J.ACCT_CODE,
-        A.ACCT_NAME,   -- 계정명
-        J.DC_TYPE,
-        J.AMOUNT,
-        J.REMARKS,
-        J.STATUS,
-        J.CREATED_AT,
-        J.CREATED_BY,
-        J.CUS_CODE,
-        C.CUS_NAME,    -- 거래처명
-        J.CLOSE_NO
-    FROM JOURNAL J
-    LEFT JOIN ACCOUNT A
-           ON J.ACCT_CODE = A.ACCT_CODE
-    LEFT JOIN CUSTOMER C
-           ON J.CUS_CODE = C.CUS_CODE
-    ORDER BY J.JRN_DATE DESC, J.JRN_NO DESC, J.LINE_NO ASC
-</select>
+		SELECT
+		J.JRN_CODE,
+		J.LINE_NO,
+		J.JRN_NO,
+		J.JRN_DATE,
+		J.ACCT_CODE,
+		A.ACCT_NAME, -- 계정명
+		J.DC_TYPE,
+		J.AMOUNT,
+		J.REMARKS,
+		J.STATUS,
+		J.CREATED_AT,
+		J.CREATED_BY,
+		J.CUS_CODE,
+		C.CUS_NAME, -- 거래처명
+		J.CLOSE_NO
+		FROM JOURNAL J
+		LEFT JOIN ACCOUNT A
+		ON J.ACCT_CODE = A.ACCT_CODE
+		LEFT JOIN CUSTOMER C
+		ON J.CUS_CODE = C.CUS_CODE
+		ORDER BY CREATED_AT ASC, LINE_NO ASC
+	</select>
 
+	<!-- 전표번호 생성 (DB 함수 호출) -->
+	<select id="selectNextJrnNo" resultType="string">
+		SELECT FN_NEXT_JRN_NO(SYSDATE) FROM dual
+	</select>
 	
 <insert id="insertJournal" parameterType="com.yedam.erp.vo.account.JournalVO">
+    
+    <!-- ✅ 시퀀스로 JRN_CODE 먼저 채워줌 -->
+    <selectKey keyProperty="jrnCode" order="BEFORE" resultType="string">
+        SELECT 'J-' || TO_CHAR(SYSDATE, 'YYYYMMDD') || '-' ||
+               LPAD(SEQ_JRN_CODE.NEXTVAL, 3, '0')
+        FROM dual
+    </selectKey>
+
     INSERT INTO JOURNAL (
+        JRN_CODE,    -- ✅ 시퀀스로 생성된 값
         JRN_NO,
         LINE_NO,
         JRN_DATE,
@@ -65,18 +78,39 @@
         CLOSE_NO
     )
     VALUES (
-        FN_NEXT_JRN_NO(SYSDATE),
-        NVL((SELECT MAX(LINE_NO) FROM JOURNAL WHERE JRN_NO = FN_NEXT_JRN_NO(SYSDATE)), 0) + 1, 
+        #{jrnCode},  -- ✅ selectKey로 먼저 채워진 값
+        #{jrnNo},  
+        NVL((SELECT MAX(LINE_NO) FROM JOURNAL WHERE JRN_NO = #{jrnNo}), 0) + 1,
         #{jrnDate},
         #{acctCode},
         #{dcType},
         #{amount},
         #{remarks},
-        #{status},
+        'open',
         SYSDATE,
         #{createdBy},
         #{cusCode},
         #{closeNo}
     )
 </insert>
+
+
+	<!-- 일반 전표 UPDATE -->
+	<update id="updateJournal"
+		parameterType="com.yedam.erp.vo.account.JournalVO">
+		UPDATE JOURNAL
+		SET 
+		  ACCT_CODE = #{acctCode}
+		, DC_TYPE = #{dcType}
+		, AMOUNT = #{amount}
+		, REMARKS = #{remarks}
+		, STATUS = #{status}
+		, CUS_CODE = #{cusCode}
+		, CLOSE_NO = #{closeNo}
+		, CREATED_BY = #{createdBy}  <!-- 필요하다면 유지 -->
+		 WHERE JRN_CODE = #{jrnCode}
+    	AND LINE_NO = #{lineNo}
+	</update>
+
+
 </mapper>

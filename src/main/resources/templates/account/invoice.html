@@ -5,6 +5,7 @@
 <head>
 <title layout:fragment="title">매입 매출 전표</title>
 <th:block layout:fragment="head_extra">
+
 	<th:block
 		th:replace="~{account/taxInvoiceModal :: taxInvoiceModalStyles}"></th:block>
 	<!-- AG Grid -->
@@ -19,7 +20,7 @@
 }
 
 #detailGrid.ag-theme-quartz {
-	height: 20rem;
+	height: 14rem;
 	width: 100%;
 	margin-top: 1rem;
 	display: none;
@@ -231,156 +232,10 @@ document.getElementById("resetInvoiceBtn")?.addEventListener("click", () => {
 });
 
 </script>
-
-		<!--  매입매출 모달 -->
-		<script th:inline="none">
-
-document.addEventListener("DOMContentLoaded", () => {
-  const modalEl = document.getElementById('invoiceModal');
-  let invoiceGridApi;
-  let invoiceGridCreated = false;
-
-  modalEl.addEventListener('shown.bs.modal', () => {
-    const gridDiv = document.querySelector("#invoiceGrid");
-
-    if (!invoiceGridCreated) {
-      const gridOptions = {
-        columnDefs: [
-          { headerName: "품목코드", field: "itemCode", flex: 1 },
-          { headerName: "품목명",   field: "itemName", flex: 1 },
-          { headerName: "단가",     field: "price",    flex: 1,
-            valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
-          { headerName: "수량",     field: "qty",      flex: 1 },
-          { headerName: "공급가액", field: "supply",   flex: 1,
-            valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
-          { headerName: "부가세",   field: "vat",      flex: 1,
-            valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
-          { headerName: "비고",     field: "note",     flex: 1 }
-        ],
-        rowData: /*[[${invoiceItems}]]*/ [],
-        defaultColDef: { resizable: true },
-        pinnedBottomRowData: [
-          {
-            itemName: "합계",
-            supply: /*[[${invoiceHeader?.subtotalAmt}]]*/ 0,
-            vat: /*[[${invoiceHeader?.vatAmt}]]*/ 0
-          }
-        ]
-      };
-      invoiceGridApi = agGrid.createGrid(gridDiv, gridOptions);
-      invoiceGridCreated = true;
-    } else {
-      invoiceGridApi.resetRowHeights();
-    }
-  });
-});
-</script>
-
-		<!--  invoice 모달안에서  모달 -->
-		<script th:inline="none">
-let businessGridApi = null;
-
-async function loadBusinessData() {
-  try {
-    const res = await axios.get("/api/v1/stock/cusList");
-    if (businessGridApi) {
-      businessGridApi.setRowData(res.data);
-      businessGridApi.sizeColumnsToFit();
-    }
-  } catch (err) {
-    console.error("cusList 로드 실패:", err);
-  }
-}
-
-function initBusinessGrid() {
-  const gridDiv = document.querySelector("#businessModal #myGrid") || document.querySelector("#myGrid");
-  if (!gridDiv) {
-    console.error("거래처 그리드 컨테이너(#myGrid)를 찾을 수 없습니다.");
-    return;
-  }
-
-  const columnDefs = [
-    { headerName: "거래처코드", field: "cusCode" },
-    { headerName: "거래처명", field: "cusName" },
-    { headerName: "담당자명", field: "empName" },
-    { headerName: "사업자번호", field: "bizNo" },
-    { headerName: "대표명", field: "ceoName" },
-    { headerName: "업태", field: "bizType" },
-    { headerName: "종목", field: "bizCategory" },
-    { headerName: "거래처주소", field: "addr" }
-  ];
-
-  const gridOptions = {
-    columnDefs,
-    rowSelection: "single",
-    pagination: true,
-    rowData: [],
-    defaultColDef: { resizable: true, sortable: true, minWidth: 100 },
-    onGridReady: (e) => {
-      businessGridApi = e.api;
-      businessGridApi.sizeColumnsToFit();
-      loadBusinessData();
-    },
-    onRowDoubleClicked: (e) => {
-      // 값 반영
-      document.getElementById("cusCodeInput").value = e.data.cusCode ?? "";
-      document.getElementById("cusNameInput").value = e.data.cusName ?? "";
-
-      // 거래처 모달 닫고 → 전표 모달 다시 열기
-      const businessModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal"));
-      businessModal.hide();
-
-      const invoiceModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("invoiceModal"));
-      invoiceModal.show();
-    }
-  };
-
-  new agGrid.Grid(gridDiv, gridOptions);
-}
-
-// DOM 렌더링시 
-document.addEventListener("DOMContentLoaded", () => {
-  const invoiceModalEl = document.getElementById("invoiceModal");
-  const businessModalEl = document.getElementById("businessModal");
-
-  
-  if (!invoiceModalEl || !businessModalEl) {
-    console.error("invoiceModal 또는 businessModal 요소가 없습니다.");
-    return;
-  }
-
-  const invoiceModal = bootstrap.Modal.getOrCreateInstance(invoiceModalEl);
-  const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
-
-  
-  // 버튼 클릭 → 전표모달 닫고 → 닫힌 후 거래처 모달 열기 (연쇄)
-  document.getElementById("openBusinessModalBtn").addEventListener("click", () => {
-    const openBusinessAfterHide = () => {
-      // 한 번만 실행하고 핸들러 제거
-      invoiceModalEl.removeEventListener("hidden.bs.modal", openBusinessAfterHide);
-
-      // 거래처 모달 열기
-      businessModal.show();
-    };
-
-    // 전표 모달이 완전히 닫힌 뒤 실행
-    invoiceModalEl.addEventListener("hidden.bs.modal", openBusinessAfterHide);
-    invoiceModal.hide(); // 먼저 닫는다
-  });
-
-  // 거래처 모달이 보여질 때 그리드 준비/리사이즈/로딩
-  businessModalEl.addEventListener("shown.bs.modal", () => {
-    if (!businessGridApi) initBusinessGrid();
-    else {
-      businessGridApi.sizeColumnsToFit();
-      loadBusinessData();
-    }
-  });
-});
-</script>
-
-		<!-- 부서 모달 -->
-		<script th:inline="none">
+<!--  invoice 모달안에서  모달 -->
+		
+	<!-- 부서 모달 -->
+<script th:inline="none">
 document.addEventListener('DOMContentLoaded', () => {
   const invoiceModalEl = document.getElementById('invoiceModal');
   const btn = invoiceModalEl?.querySelector('#btnDeptLookup');
@@ -405,6 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-	</th:block>
+</th:block>
 </body>
 </html>
