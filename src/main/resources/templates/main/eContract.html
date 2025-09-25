@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
 <title>NGR_ERP 서비스 이용계약서</title>
@@ -9,17 +9,16 @@
             line-height: 1.6;
             margin: 0;
             padding: 20px;
-            background-color: #f4f4f4; /* 카드와 대비되는 배경색 추가 */
+            background-color: #f4f4f4;
         }
         
-        /* 카드 스타일 추가 */
         .card {
             background-color: #ffffff;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 30px 40px; /* 내부 여백 조정 */
-            margin: 40px auto; /* 상하좌우 자동 마진으로 중앙 정렬 */
-            max-width: 800px; /* 카드의 최대 너비 설정 */
+            padding: 30px 40px;
+            margin: 40px auto;
+            max-width: 800px;
         }
 
         h1, h2, h3 {
@@ -55,28 +54,97 @@
             list-style-type: none;
             padding-left: 20px;
         }
-        .appendix {
-            margin-top: 50px;
+        
+        /* --- 서명 및 버튼 관련 스타일 --- */
+        .signature-section {
             text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            border-top: 1px solid #eee;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .btn-primary { background-color: #4d341e; color: white; }
+        .btn-primary:hover { background-color: #3c2a1a; }
+        .btn-reset { background: #e74c3c; color: white; }
+        .btn-save { background: #2ecc71; color: white; }
+        .btn-container { margin-top: 15px; }
+
+
+        /* --- 모달창 스타일 --- */
+        .modal-overlay {
+            display: none; /* 평소에는 숨김 */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            position: relative;
+            background: white;
+            padding: 30px 40px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #aaa;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+        .close-modal:hover { color: #333; }
+        
+        /* --- 서명패드 스타일 (모달 내부) --- */
+        .signature-container {
+             margin-top:20px;
+        }
+        #signature-pad {
+            border: 1px solid #999;
+            border-radius: 5px;
+            width: 100%;
+            height: 200px;
+            cursor: crosshair;
+        }
+        .signed-info {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #333;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-  <div th:replace="~{layout/main_header :: headerFragment}"></div>
-  
   <div>
-    <div class="card">
+  <!-- 이미지 만들고 싶은 계약서 -->
+    <div class="card" id="contract-document">
         <main>
             <h1>NGR_ERP 서비스 이용계약서</h1>
             <p class="introduction">본 계약서는 NGR_ERP 서비스 이용과 관련하여 필요한 제반 사항을 규정함을 목적으로 합니다.</p>
 
             <h2>제1장 총칙</h2>
-            
             <article>
                 <h3>제1조 (목적)</h3>
                 <p>본 약관은 엔지알(이하 "회사")이 제공하는 NGR_ERP 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자(이하 "고객")의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
             </article>
-
             <article>
                 <h3>제2조 (용어의 정의)</h3>
                 <div class="article-content">
@@ -87,7 +155,6 @@
                     </ul>
                 </div>
             </article>
-
             <article>
                 <h3>제3조 (약관의 효력 및 변경)</h3>
                 <div class="article-content">
@@ -98,14 +165,11 @@
                     </ol>
                 </div>
             </article>
-
             <h2>제2장 서비스 이용계약</h2>
-
             <article>
                 <h3>제4조 (이용계약의 성립)</h3>
                 <p>이용계약은 고객이 회사가 정한 소정의 절차에 따라 이용신청을 하고, 회사가 이에 대해 승낙함으로써 체결됩니다.</p>
             </article>
-
             <article>
                 <h3>제5조 (서비스의 제공 및 변경)</h3>
                 <div class="article-content">
@@ -116,9 +180,7 @@
                     </ol>
                 </div>
             </article>
-
             <h2>제3장 당사자의 의무</h2>
-
             <article>
                 <h3>제6조 (회사의 의무)</h3>
                 <div class="article-content">
@@ -128,7 +190,6 @@
                     </ol>
                 </div>
             </article>
-            
             <article>
                 <h3>제7조 (고객의 의무)</h3>
                 <div class="article-content">
@@ -145,26 +206,20 @@
                     </ol>
                 </div>
             </article>
-
             <h2>제4장 계약의 해지 및 이용 제한</h2>
-
             <article>
                 <h3>제8조 (계약의 해지)</h3>
                 <p>고객 또는 회사는 부득이한 사유가 있는 경우 상대방에게 서면 통보함으로써 본 계약을 해지할 수 있습니다.</p>
             </article>
-				
             <article>
                 <h3>제9조 (이용 제한)</h3>
                 <p>회사는 고객이 본 약관의 의무를 위반하거나 서비스의 정상적인 운영을 방해한 경우, 서비스 이용을 제한하거나 계약을 해지할 수 있습니다.</p>
             </article>
-
             <h2>제5장 손해배상 및 면책</h2>
-
             <article>
                 <h3>제10조 (손해배상)</h3>
                 <p>당사자 일방이 본 계약상의 의무를 위반하여 상대방에게 손해를 입힌 경우, 귀책사유 있는 당사자는 상대방이 입은 손해를 배상하여야 합니다.</p>
             </article>
-
             <article>
                 <h3>제11조 (면책)</h3>
                 <div class="article-content">
@@ -175,9 +230,139 @@
                 </div>
             </article>
         </main>
+        
+        <div class="signature-section">
+            <p>상기 계약 내용을 모두 확인하였으며, 이에 동의합니다.</p>
+            <button id="open-modal-btn" class="btn btn-primary">계약 내용에 동의하고 서명하기</button>
+        </div>
     </div>
   </div>
   
-  <div th:replace="~{layout/main_footer :: footerFragment}"></div>
+  <div id="signature-modal" class="modal-overlay">
+    <div class="modal-content">
+        <button id="close-modal-btn" class="close-modal">&times;</button>
+        <h2>전자서명</h2>
+        <p>계약 내용을 확인하였으며, 아래 영역에 서명해주세요.</p>
+        <div class="signature-container">
+            <canvas id="signature-pad"></canvas>
+            <div class="btn-container">
+                <button id="clear-signature" class="btn btn-reset">다시 서명</button>
+                <button id="save-signature" class="btn btn-save">서명 완료</button>
+            </div>
+            <div class="signed-info" id="signed-info"></div>
+        </div>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.0/dist/signature_pad.umd.min.js"></script>
+<!-- html pdf변환 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // 모달 관련 요소
+    const modal = document.getElementById('signature-modal');
+    const openModalBtn = document.getElementById('open-modal-btn');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+
+    // 서명패드 관련 요소
+    const canvas = document.getElementById('signature-pad');
+    const signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgb(255, 255, 255)'
+    });
+    const clearBtn = document.getElementById('clear-signature');
+    const saveBtn = document.getElementById('save-signature');
+    const signedInfo = document.getElementById('signed-info');
+
+    // 캔버스 크기 조정 함수
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        signaturePad.clear(); // 리사이즈 후 패드 초기화
+    }
+
+    // 창 크기가 변경될 때마다 캔버스 크기 조정
+    window.addEventListener("resize", resizeCanvas);
+
+
+    // 모달 열기
+    openModalBtn.addEventListener('click', () => {
+        modal.style.display = 'flex';
+        // 모달이 표시된 후 캔버스 크기를 재조정해야 정확한 크기를 계산할 수 있습니다.
+        resizeCanvas(); 
+    });
+
+    // 모달 닫기
+    function closeModal() {
+        modal.style.display = 'none';
+        signaturePad.clear(); // 모달 닫을 때 서명 초기화
+        signedInfo.innerHTML = '';
+    }
+    closeModalBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (event) => {
+        // 모달 바깥(회색 영역)을 클릭하면 닫히도록 설정
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    // 서명 초기화 버튼
+    clearBtn.addEventListener('click', () => {
+        signaturePad.clear();
+        signedInfo.innerHTML = '';
+    });
+
+    // 서명 저장 버튼
+    saveBtn.addEventListener('click', () => {
+        if (signaturePad.isEmpty()) {
+            alert("서명이 필요합니다.");
+            return;
+        }
+        
+        // 서명 데이터를 Base64 형식의 이미지 URL로 변환
+        const dataURL = signaturePad.toDataURL("image/png");
+        
+        // 서명 완료 정보 표시 (실제로는 로그인된 사용자 정보 사용)
+        const username = "예담 서강중"; 
+        const date = new Date().toISOString().split('T')[0];
+        signedInfo.innerHTML = `✔ ${username}님 ${date}에 서명 완료`;
+
+        console.log("서명 이미지 (Base64 데이터):", dataURL);
+        
+        // TODO: 여기서 fetch 또는 ajax를 사용하여 dataURL을 서버로 전송합니다.
+        // 예시:
+        /*
+        fetch('/api/contract/sign', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                signatureImage: dataURL,
+                userId: 'someUserId' // 실제 사용자 ID
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('서버 응답:', data);
+            alert('서명이 성공적으로 저장되었습니다.');
+            closeModal();
+            // 필요하다면 다른 페이지로 이동
+            // window.location.href = '/main'; 
+        })
+        .catch(error => {
+            console.error('서명 저장 오류:', error);
+            alert('서명 저장 중 오류가 발생했습니다.');
+        });
+        */
+       
+       // 임시로 1초 후 모달 닫기
+       setTimeout(closeModal, 1000);
+    });
+
+});
+</script>
 </body>
 </html>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.erp.mapper.main.PwResetTokenMapper">
+
+    <insert id="save" parameterType="com.yedam.erp.vo.main.PwResetTokenVO">
+        INSERT INTO pw_reset_token (
+            token_id, 
+            emp_id_no, 
+            token, 
+            start_date, 
+            end_date
+        ) VALUES (
+            SEQ_PW_RESET_TOKEN.NEXTVAL,  -- 토큰 ID를 위한 시퀀스가 필요합니다.
+            #{empIdNo}, 
+            #{token}, 
+            #{startDate}, 
+            #{endDate}
+        )
+    </insert>
+
+</mapper>

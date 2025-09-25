@@ -20,4 +20,5 @@ public class EmpLoginVO {
 	private String codeId;
 	private String twoStepMethod;
 	private String token;
+	private String empMobile;
 }
