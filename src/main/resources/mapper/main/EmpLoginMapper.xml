@@ -38,7 +38,8 @@
             dept_code,
             code_id,
             two_step_method,
-            token
+            token,
+            emp_mobile
         FROM
             emp_login
         WHERE

@@ -11,256 +11,305 @@
 	<link rel="stylesheet"
 		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
 	<style>
+/* 차액행 전체 배경 (연한 빨강) */
+.ag-theme-quartz .ag-row.row-diff {
+  background-color: #feecec !important;
+  font-weight: 600;
+}
 #generalVoucherGrid.ag-theme-quartz {
-  height: 34rem;
-  width: 100%;
-  margin-top: 1rem;
+	height: 38rem;
+	width: 100%;
+	margin-top: 1rem;
 }
-
 .btn-bar {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+.badge-debit {
+	background: #fee2e2;
+	color: #b91c1c;
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+.badge-credit {
+	background: #dbeafe;
+	color: #1d4ed8;
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+/* 입력 고정행 스타일 */
+.ag-theme-quartz .ag-floating-top .ag-row {
+	background: #fafafa;
+	font-weight: 500;
+	border-bottom: 1px solid #e5e7eb;
+}
+.badge-status-open {
+  background: #dcfce7;  /* 연한 초록 */
+  color: #15803d;       /* 진한 초록 */
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 2px 8px;
 }
 
-.badge-debit {
-  background: #fee2e2;
+.badge-status-close {
+  background: #fee2e2;  /* 차변과 동일 */
   color: #b91c1c;
   font-weight: 600;
   border-radius: 8px;
   padding: 2px 8px;
 }
-.badge-credit {
-  background: #dbeafe;
-  color: #1d4ed8;
-  font-weight: 600;
-  border-radius: 8px;
-  padding: 2px 8px;
-}
-
-/* 입력 고정행 스타일 */
-.ag-theme-quartz .ag-floating-top .ag-row {
-  background: #fafafa;
-  font-weight: 500;
-  border-bottom: 1px solid #e5e7eb;
-}
 </style>
-
 </th:block>
 </head>
 <body>
 	<section layout:fragment="content">
 		<div class="card shadow mb-3">
-			<div
-				class="card-header py-3 d-flex align-items-center justify-content-between">
+			<div class="card-header py-3 d-flex align-items-center justify-content-between">
 				<h6 class="m-0 font-weight-bold text-primary">일반 전표</h6>
 			</div>
 			<div class="card-body">
 				<!-- 조회 영역 -->
 				<div class="btn-bar">
-					<button class="btn btn-outline-secondary btn-sm" id="btnPeriod">기간별</button>
-					<button class="btn btn-outline-secondary btn-sm" id="btnMonth">월별</button>
 					<input type="date" class="form-control form-control-sm"
-						id="fromDate" style="max-width: 180px" /> <span class="mx-1">~</span>
+						id="fromDate" style="max-width: 180px" /> 
+					<span class="mx-1">~</span>
 					<input type="date" class="form-control form-control-sm" id="toDate"
 						style="max-width: 180px" />
 					<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
 				</div>
-
 				<!-- 일반전표 목록 Grid -->
 				<div id="generalVoucherGrid" class="ag-theme-quartz"></div>
 			</div>
 		</div>
+		<!-- 거래처 모달 fragment include -->
 		<div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
+		<div th:replace="~{account/accountModal :: accountModal}"></div>
 	</section>
 
 	<th:block layout:fragment="body_extra">
-		<script
-			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-		<script
-			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
-
-	<script th:inline="none">
-	  let gvApi;
-
-	  // ===== 유틸 =====
-	  const toNumber = (v) => {
-	    if (v === null || v === undefined || v === "") return null;
-	    const n = Number(String(v).replaceAll(",", "").trim());
-	    return Number.isFinite(n) ? n : null;
-	  };
-	  const todayStr = () => {
-	    const d = new Date();
-	    const mm = String(d.getMonth()+1).padStart(2,'0');
-	    const dd = String(d.getDate()).padStart(2,'0');
-	    return `${d.getFullYear()}-${mm}-${dd}`; // yyyy-MM-dd
-	  };
-	  const getMonthStr = (dateStr) => (dateStr?.substring(5,7) ? Number(dateStr.substring(5,7)) : "");
-	  const getDayStr   = (dateStr) => (dateStr?.substring(8,10)? Number(dateStr.substring(8,10)) : "");
-
-	  // 입력 전용 고정행
-	  function newInputRow(){
-	    return {
-	      _isInput: true,
-	
-	      jrnNo: null,
-	      lineNo: null,
-	      jrnDate: todayStr(), // ✅ 오늘 날짜 자동 세팅
-	      acctCode: "",
-	      acctName: "",        // ✅ 새 컬럼
-	      dcType: "",
-	      amount: null,
-
-	      remarks: "",
-	      status: "",
-	      createdAt: null,
-	      createdBy: "",
-	      cusCode: "",
-	      cusName: "",         // ✅ 새 컬럼
-	      closeNo: null
-	    };
-	  }
-
-	  // 목록 로드
-	  async function loadList(){
-	    const { data } = await axios.get("/api/account/journal");
-	    gvApi.setGridOption("rowData", Array.isArray(data) ? data : []);
-	    gvApi.refreshClientSideRowModel('sort');
-	  }
-
-	  // 필수값 검증 (행 단위)
-	  function isSavable(d){
-	    return !!d && d.jrnDate && (d.dcType === 'D' || d.dcType === 'C') && d.acctCode && toNumber(d.amount) !== null;
-	  }
-
-	  // 저장 (입력행→INSERT / 본문행→UPDATE)
-	  async function saveRow(data, isPinnedTop){
-	    const payload = {
-	     
-	      jrnNo: data.jrnNo || null,
-	      lineNo: data.lineNo || null,
-	      jrnDate: data.jrnDate || null,
-	      acctCode: data.acctCode || "",
-	      dcType: (data.dcType || "").toUpperCase(),
-	      amount: toNumber(data.amount),
-
-	      remarks: data.remarks || "",
-	      status: data.status || "",
-	      createdAt: data.createdAt || null,
-	      createdBy: data.createdBy || "",
-	      cusCode: data.cusCode || "",
-	      closeNo: data.closeNo ?? null,
-	      // 참고: acctName, cusName은 서버에서 관리한다면 payload에서 제외 가능
-	    };
-
-	    if (!isSavable(payload)) return;
-
-	    if (isPinnedTop) {
-	      // INSERT
-	      const { data: res } = await axios.post("/api/account/journal", payload);
-	      await loadList();                                  // 서버 정렬 기준으로 재배치
-	      gvApi.setGridOption("pinnedTopRowData", [ newInputRow() ]); // 입력행 리셋(오늘 날짜)
-	    } else {
-	      // UPDATE
-	      if (data.jrnNo == null || data.lineNo == null) return;
-	      await axios.put(`/api/account/journal/${data.jrnNo}/${data.lineNo}`, payload);
-	      gvApi.refreshClientSideRowModel('sort');
-	    }
-	  }
-
-	  document.addEventListener("DOMContentLoaded", async () => {
-	    const columnDefs = [
-	      { headerName: "월", valueGetter: p => getMonthStr(p.data?.jrnDate), editable: false, flex: .5 },
-	      { headerName: "일", valueGetter: p => getDayStr(p.data?.jrnDate),   editable: false, flex: .5 },
-
-	      // 전표번호: 숫자 PK를 보여주거나, 사람이 읽는 코드 보여줄거면 field: "jrnCode"로 변경
-	      { headerName: "전표번호", field: "jrnNo", editable: false, flex: 1 },
-
-	      { headerName: "구분", field: "dcType", flex: .9, editable: true,
-	        cellEditor: "agSelectCellEditor",
-	        cellEditorParams: { values: ["D","C"] },
-	        cellRenderer: p => {
-	          const v = (p.value || "").toUpperCase();
-	          if (v === "D") return `<span class="badge-debit">차변</span>`;
-	          if (v === "C") return `<span class="badge-credit">대변</span>`;
-	          return v || "";
-	        }
-	      },
-
-	      { headerName: "계정코드", field: "acctCode", editable: true, flex: 1.1 },
-	      { headerName: "계정",     field: "acctName", editable: true, flex: 1.2 },  // ✅ 추가
-
-	      // ✅ 거래처 코드/명 클릭 시 모달 열기
-	      { headerName: "거래처코드", field: "cusCode", editable: true, flex: 1,
-	        onCellClicked: () => {
-	          const businessModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal"));
-	          businessModal.show();
-	        }
-	      },
-	      { headerName: "거래처", field: "cusName", editable: true, flex: 1.2,
-	        onCellClicked: () => {
-	          const businessModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal"));
-	          businessModal.show();
-	        }
-	      },
-	      { headerName: "적요", field: "remarks", editable: true, flex: 1.5 },
-
-	      { headerName: "금액", field: "amount", flex: 1, editable: true,
-	        valueParser: p => toNumber(p.newValue),
-	        valueFormatter: p => p.value ? Number(p.value).toLocaleString() : ""
-	      },
-
-
-
-	      { headerName: "일자", field: "jrnDate", flex: 1.2, editable: true,
-	        valueFormatter: p => p.value || ""
-	      },
-
-	      { headerName: "상태", field: "status", editable: true, flex: .8 }
-	    ];
-
-	    gvApi = agGrid.createGrid(document.querySelector("#generalVoucherGrid"), {
-	      columnDefs,
-	      rowData: [],
-	      pagination: true,
-	      paginationPageSize: 15,
-	      defaultColDef: { resizable: true, filter: true },
-	      // ✅ 핵심: 행 단위 편집 + 행 단위 저장
-	      editType: 'fullRow',
-	      singleClickEdit: true,
-	      stopEditingWhenCellsLoseFocus: true,
-
-	      // 기본 정렬
-	      sortModel: [
-	        { colId: "jrnDate", sort: "desc" },
-	        { colId: "jrnNo",   sort: "desc" },
-	        { colId: "lineNo",  sort: "asc"  }
-	      ],
-
-	      // ✅ 행 편집 종료 시(다른 행 클릭, 엔터 등) 저장
-	      onRowValueChanged: (ev) => {
-	        const isPinnedTop = ev.node.rowPinned === 'top';
-	        saveRow(ev.data, isPinnedTop).catch(err => {
-	          console.error(err);
-	          alert("저장 실패: 입력값을 확인하세요.");
-	        });
-	      },
-
-	      // 최초 준비
-	      onGridReady: async () => {
-	        // 입력 고정행 1줄(오늘 날짜) + 본문 데이터 로드
-	        gvApi.setGridOption("pinnedTopRowData", [ newInputRow() ]);
-	        await loadList();
-	      }
-	    });
-
-	    // 조회 버튼(필요 시 기간 파라미터 붙여 확장)
-	    document.getElementById("btnSearch").addEventListener("click", async () => {
-	      await loadList();
-	    });
-	  });
-	</script>
+	<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 <script th:inline="none">
+
+let gvApi;
+let selectedRowNode = null;
+let currentJrnNo = null; // 전역 전표번호 유지
+
+// ===== 유틸 =====
+const toNumber = (v) => {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(String(v).replaceAll(",", "").trim());
+  return Number.isFinite(n) ? n : null;
+};
+const todayStr = () => {
+  const d = new Date();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+};
+const getMonthStr = (dateStr) => (dateStr?.substring(5,7) ? Number(dateStr.substring(5,7)) : "");
+const getDayStr   = (dateStr) => (dateStr?.substring(8,10)? Number(dateStr.substring(8,10)) : "");
+
+// 입력 전용 고정행
+function newInputRow(){
+  return {
+    _isInput: true,
+    jrnNo: null,
+    lineNo: null,
+    jrnDate: todayStr(),
+    acctCode: "",
+    acctName: "",
+    dcType: "",
+    amount: null,
+    remarks: "",
+    status: "",
+    createdAt: null,
+    createdBy: "",
+    cusCode: "",
+    cusName: "",
+    closeNo: null
+  };
+}
+
+// 목록 로드 + 차액행 처리
+async function loadList() {
+  const { data } = await axios.get("/api/account/journal");
+  let rows = Array.isArray(data) ? data : [];
+
+  // === 전표별 차변/대변 합계 계산 ===
+  const grouped = {};
+  rows.forEach(r => {
+    if (!grouped[r.jrnNo]) grouped[r.jrnNo] = { rows: [], debit: 0, credit: 0 };
+    grouped[r.jrnNo].rows.push(r);
+    if (r.dcType === "D") grouped[r.jrnNo].debit += toNumber(r.amount) || 0;
+    if (r.dcType === "C") grouped[r.jrnNo].credit += toNumber(r.amount) || 0;
+  });
+
+  // === 전표별 마지막 뒤에 차액행 추가 ===
+  let finalRows = [];
+  Object.entries(grouped).forEach(([jrnNo, g]) => {
+    finalRows = finalRows.concat(g.rows); // 원래 행들 넣고
+    const diff = g.debit - g.credit;
+    const seq = jrnNo.substring(jrnNo.lastIndexOf("-") + 1); // 전표번호 마지막 숫자
+    if (diff !== 0) {
+      finalRows.push({
+        jrnNo:"",
+        lineNo: null,
+        jrnDate: "",
+        acctCode: "",
+        acctName: "",
+        dcType:`소계(${seq})`, // 부족한 쪽 반대로
+        amount: Math.abs(diff),
+        remarks:  diff > 0 ? "차변차액합계" : "대변차액합계",
+        closeNo: null,
+        _isDiffRow: true
+      });
+    }
+  });
+
+  gvApi.setGridOption("rowData", finalRows);
+  gvApi.refreshClientSideRowModel('sort');
+}
+// 기간 필터링
+async function loadFilteredList() {
+  try {
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate   = document.getElementById("toDate").value;
+    const { data } = await axios.get("/api/account/journal");
+    let rows = Array.isArray(data) ? data : [];
+    if (fromDate) rows = rows.filter(r => r.jrnDate >= fromDate);
+    if (toDate)   rows = rows.filter(r => r.jrnDate <= toDate);
+    gvApi.setGridOption("rowData", rows);
+    gvApi.refreshClientSideRowModel('sort');
+  } catch(err) {
+    console.error(err);
+    alert("조회 실패");
+  }
+}
+
+// 필수값 검증
+function isSavable(d){
+  return !!d && d.jrnDate && (d.dcType === 'D' || d.dcType === 'C') && d.acctCode && toNumber(d.amount) !== null;
+}
+
+// 저장
+async function saveRow(data){
+  if (data._isDiffRow) {
+    alert("차액 행은 저장할 수 없습니다.");
+    return;
+  }
+
+  if (data.status && data.status.toLowerCase() === "close") {
+    alert("마감(CLOSE)된 전표는 수정할 수 없습니다.");
+    return;
+  }
+
+  if (!currentJrnNo) {
+    const { data: newNo } = await axios.get("/api/account/nextJrnNo");
+    currentJrnNo = newNo;
+  }
+  data.jrnNo = currentJrnNo;
+
+  const payload = {
+    jrnNo: data.jrnNo,
+    lineNo: data.lineNo || null,
+    jrnDate: data.jrnDate || todayStr(),
+    acctCode: data.acctCode || "",
+    dcType: (data.dcType || "").toUpperCase(),
+    amount: toNumber(data.amount),
+    remarks: data.remarks || "",
+    status: data.status || "open",
+    createdBy: data.createdBy || "",
+    cusCode: data.cusCode || "",
+    closeNo: data.closeNo ?? null
+  };
+  if (!isSavable(payload)) return;
+
+  if (!data.lineNo) {
+    await axios.post("/api/account/journal", payload);
+  } else {
+    await axios.put(`/api/account/journal/${data.jrnCode}/${data.lineNo}`, payload);
+  }
+
+  await loadList();
+  gvApi.applyTransaction({ add: [ newInputRow() ], addIndex: gvApi.getDisplayedRowCount() });
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const columnDefs = [
+    { headerName: "월", valueGetter: p => getMonthStr(p.data?.jrnDate), editable: false, flex: .5 },
+    { headerName: "일", valueGetter: p => getDayStr(p.data?.jrnDate),   editable: false, flex: .5 },
+    { headerName: "전표번호", field: "jrnNo", editable: false, flex: 1 },
+    {
+    	  headerName: "구분", field: "dcType", flex: .9, editable: true,
+    	  valueSetter: (params) => {
+    	    if (params.data?._isDiffRow) return false; // 차액행은 수정 불가
+    	    let v = (params.newValue || "").trim().toUpperCase();
+    	    if (v === "ㅇ" || v === "D" || v === "d") { params.data.dcType = "D"; return true; }
+    	    if (v === "C" || v === "ㅊ" || v === "c") { params.data.dcType = "C"; return true; }
+    	    return false;
+    	  },
+    	  cellRenderer: p => {
+    	    if (p.data?._isDiffRow) {
+    	      return `<span style="color:#b91c1c;font-weight:700">${p.value}</span>`;
+    	    }
+    	    const v = (p.value || "").toUpperCase();
+    	    if (v === "D") return `<span class="badge-debit">차변</span>`;
+    	    if (v === "C") return `<span class="badge-credit">대변</span>`;
+    	    return "";
+    	  },
+    	  cellClass: params => params.data?._isDiffRow ? "diff-row" : ""
+    	
+    },
+    { headerName: "계정코드", field: "acctCode", editable: true, flex: 1.1, onCellClicked: (params) => { selectedRowNode = params.node; 
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("accountModal")).show(); }},
+    { headerName: "계정", field: "acctName", editable: true, flex: 1.2, onCellClicked: (params) => { selectedRowNode = params.node; 
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("accountModal")).show(); }},
+    { headerName: "거래처코드", field: "cusCode", editable: true, flex: 1, onCellClicked: (params) => { selectedRowNode = params.node; 
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).show(); } },
+    { headerName: "거래처", field: "cusName", editable: true, flex: 1.2, onCellClicked: (params) => { selectedRowNode = params.node;  
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).show(); } },
+    { headerName: "적요", field: "remarks", editable: true, flex: 1.5 },
+    { headerName: "금액", field: "amount", flex: 1, editable: true,
+      valueParser: p => toNumber(p.newValue),
+      valueFormatter: p => p.value ? Number(p.value).toLocaleString() : ""
+    },
+    { headerName: "일자", field: "jrnDate", flex: 1.2, editable: true,
+      valueFormatter: p => p.value || "" },
+    { headerName: "상태", field: "status", editable: false, flex: .8,
+      cellRenderer: p => {
+        const v = (p.value || "").toLowerCase();
+        if (v === "open")  return `<span class="badge-status-open">OPEN</span>`;
+        if (v === "close") return `<span class="badge-status-close">CLOSE</span>`;
+        return v || "";
+      }}
+  ];
+
+  gvApi = agGrid.createGrid(document.querySelector("#generalVoucherGrid"), {
+	  columnDefs,
+	  rowData: [],
+	  pagination: true,
+	  paginationPageSize: 15,
+	  defaultColDef: { resizable: true, filter: true },
+	  editType: 'fullRow',
+	  singleClickEdit: true,
+	  stopEditingWhenCellsLoseFocus: true,
+
+	  // ✅ 차액행 전체 색상 처리
+	  getRowClass: (params) => params.data?._isDiffRow ? "row-diff" : null,
+
+	  onRowValueChanged: (ev) => { saveRow(ev.data); },
+	  onGridReady: async () => {
+	    await loadList();
+	    gvApi.applyTransaction({ add: [ newInputRow() ], addIndex: gvApi.getDisplayedRowCount() });
+	  }
+	});
+  document.getElementById("btnSearch").addEventListener("click", loadFilteredList);
+});
+// === 거래처 모달 ===
 let businessGridApi = null;
 
 async function loadBusinessData() {
@@ -281,18 +330,13 @@ function initBusinessGrid() {
     console.error("거래처 그리드 컨테이너(#myGrid)를 찾을 수 없습니다.");
     return;
   }
-
   const columnDefs = [
     { headerName: "거래처코드", field: "cusCode" },
     { headerName: "거래처명", field: "cusName" },
-    { headerName: "담당자명", field: "empName" },
-    { headerName: "사업자번호", field: "bizNo" },
-    { headerName: "대표명", field: "ceoName" },
     { headerName: "업태", field: "bizType" },
     { headerName: "종목", field: "bizCategory" },
     { headerName: "거래처주소", field: "addr" }
   ];
-
   const gridOptions = {
     columnDefs,
     rowSelection: "single",
@@ -305,56 +349,32 @@ function initBusinessGrid() {
       loadBusinessData();
     },
     onRowDoubleClicked: (e) => {
-      // 값 반영
-      document.getElementById("cusCodeInput").value = e.data.cusCode ?? "";
-      document.getElementById("cusNameInput").value = e.data.cusName ?? "";
+      if (selectedRowNode) {
+    	  selectedRowNode.setDataValue("cusCode", e.data.cusCode);
+    	  selectedRowNode.setDataValue("cusName", e.data.cusName); 
+      }
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
     }
   };
-
   new agGrid.Grid(gridDiv, gridOptions);
 }
 
-// DOM 렌더링시 
 document.addEventListener("DOMContentLoaded", () => {
-  const invoiceModalEl = document.getElementById("invoiceModal");
   const businessModalEl = document.getElementById("businessModal");
-
-  
-  if (!invoiceModalEl || !businessModalEl) {
-    console.error("invoiceModal 또는 businessModal 요소가 없습니다.");
+  if (!businessModalEl) {
+    console.error("businessModal 요소가 없습니다.");
     return;
   }
-
-  const invoiceModal = bootstrap.Modal.getOrCreateInstance(invoiceModalEl);
-  const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
-
-  
-  // 버튼 클릭 → 전표모달 닫고 → 닫힌 후 거래처 모달 열기 (연쇄)
-  document.getElementById("openBusinessModalBtn").addEventListener("click", () => {
-    const openBusinessAfterHide = () => {
-      // 한 번만 실행하고 핸들러 제거
-      invoiceModalEl.removeEventListener("hidden.bs.modal", openBusinessAfterHide);
-
-      // 거래처 모달 열기
-      businessModal.show();
-    };
-
-    // 전표 모달이 완전히 닫힌 뒤 실행
-    invoiceModalEl.addEventListener("hidden.bs.modal", openBusinessAfterHide);
-    invoiceModal.hide(); // 먼저 닫는다
-  });
-
-  // 거래처 모달이 보여질 때 그리드 준비/리사이즈/로딩
   businessModalEl.addEventListener("shown.bs.modal", () => {
     if (!businessGridApi) initBusinessGrid();
     else {
-      businessGridApi.sizeColumnsToFit();
+      businessGridApi.sizeColumnsToFit();	
       loadBusinessData();
     }
   });
 });
-</script>
 
+</script>
 	</th:block>
 </body>
 </html>

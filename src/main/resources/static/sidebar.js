@@ -8,8 +8,8 @@ const MENUS = {
         title: "사원관리",
         items: [
           ["사원 목록", "/emps"],
-          ["수당등록", "/hr/allow"],
-          ["공제등록", "/hr/deduct"],
+          ["수당등록", "/allowcode"],
+          ["공제등록", "/deductcode"],
         ],
       },
       { title: "부서관리", items: [["부서관리", "/dept"]] },

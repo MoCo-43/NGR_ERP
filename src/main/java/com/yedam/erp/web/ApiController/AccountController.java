@@ -2,7 +2,6 @@ package com.yedam.erp.web.ApiController;
 
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -67,27 +66,28 @@ public class AccountController {
     }
     
     
-    // 등록: body에 jrnDate, dcType, acctCode, amount 등 포함
-    // Mapper XML의 <selectKey> 로 FN_NEXT_JRN_NO 호출되어 jrnCode 자동 채움
-    @Transactional
+    // 전표번호 생성 API
+    @GetMapping("/nextJrnNo")
+    public String getNextJrnNo() {
+        return journalService.getNextJrnNo();
+    }
+    
+    // 신규 행 저장
     @PostMapping("/journal")
-    public ResponseEntity<JournalVO> registerJournal(@RequestBody JournalVO vo) {
-        int cnt = journalService.insertJournal(vo);
-        return (cnt > 0) ? ResponseEntity.ok(vo) : ResponseEntity.badRequest().build();
+    public void insertJournal(@RequestBody JournalVO vo) {
+        journalService.insertJournal(vo);
     }
     
     
-    // 수정(경로 변수로 키 받기) — 프론트에서 /{jrnNo}/{lineNo} 쓰는 패턴 대응
-    @Transactional
-    @PutMapping("/journal/{jrnNo}/{lineNo}")
-    public int modifyJournalByPath(@PathVariable String jrnNo,
-                                   @PathVariable Long lineNo,
-                                   @RequestBody JournalVO vo) {
-        vo.setJrnNo(jrnNo);
+
+    // 수정
+    @PutMapping("/journal/{jrnCode}/{lineNo}")
+    public int updateJournal(@RequestBody JournalVO vo, 
+                                @PathVariable String jrnCode,
+                                @PathVariable Long lineNo) {
+        vo.setJrnCode(jrnCode);
         vo.setLineNo(lineNo);
         return journalService.updateJournal(vo);
     }
-	
-	
 	
 }

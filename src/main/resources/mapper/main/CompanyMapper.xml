@@ -1,23 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.yedam.erp.mapper.main.CompanyMapper">
-    
-    <resultMap id="CompanyMap" type="com.yedam.erp.vo.main.CompanyVO">
-        </resultMap>
 
-    <insert id="insertCompany" parameterType="com.yedam.erp.vo.main.CompanyVO">
-        <selectKey keyProperty="matNo" resultType="long" order="BEFORE">
-            SELECT SEQ_COMPANY.NEXTVAL FROM DUAL
-        </selectKey>
-        
-        INSERT INTO company (
-            mat_no, ceo, comp_name, mat_name, mat_tel, mat_mail,
-            comp_addr, sub_date, zip_code, com_tel, comp_del_addr, com_code
-        ) VALUES (
-            <!-- <selectKey>에서 가져온 값을 #{matNo}로 참조하여 사용합니다. -->
-            #{matNo}, #{ceo}, #{compName}, #{matName}, #{matTel}, #{matMail},
-            #{compAddr}, SYSDATE, #{zipCode}, #{comTel}, #{compDelAddr}, #{comCode}
-        )
-    </insert>
+	<!-- 회사 등록 -->
+	<insert id="insertCompany"
+		parameterType="com.yedam.erp.vo.main.CompanyVO">
+		<selectKey keyProperty="matNo" resultType="long"
+			order="BEFORE">
+			SELECT SEQ_COMPANY_MAT_NO.NEXTVAL FROM DUAL
+		</selectKey>
 
+		INSERT INTO COMPANY (
+		MAT_NO, CEO, COMP_NAME, MAT_NAME, MAT_TEL, MAT_MAIL,
+		COMP_ADDR, SUB_DATE, ZIP_CODE, COM_TEL, COMP_DEL_ADDR, COM_CODE, JIBUN_ADDRESS
+		) VALUES (
+		#{matNo}, #{ceo}, #{compName}, #{matName}, #{matTel}, #{matMail},
+		#{compAddr}, SYSDATE, #{zipCode}, #{comTel}, #{compDelAddr}, NULL, #{jibunAddress}
+		)
+	</insert>
+
+	<!-- 관리자 계정 등록 -->
+	<insert id="insertCompanyAdmin"
+		parameterType="com.yedam.erp.vo.main.EmpLoginVO">
+		<selectKey keyProperty="empIdNo" resultType="long"
+			order="BEFORE">
+			SELECT SEQ_EMP_LOGIN_ID_NO.NEXTVAL FROM DUAL
+		</selectKey>
+
+		INSERT INTO EMP_LOGIN (
+		EMP_ID_NO, EMP_ID, EMP_PW, EMP_NO, MAT_NO, DEPT_CODE,
+		CREATE_AT, IS_USED, IS_LOCKED, FAILED_LOGIN_ATT
+		) VALUES (
+		#{empIdNo}, #{empId}, #{empPw}, #{empNo}, #{matNo}, #{deptCode},
+		SYSDATE, 'Y', 'N', 0
+		)
+	</insert>
+    <select id="findByComCode" parameterType="String" resultType="com.yedam.erp.vo.main.CompanyVO">
+        SELECT
+            mat_no,
+            ceo,
+            comp_name,
+            mat_mail,
+            com_code
+        FROM
+            company
+        WHERE
+            com_code = #{comCode}
+    </select>
+
+    <select id="findByMatNo" parameterType="long" resultType="com.yedam.erp.vo.main.CompanyVO">
+        SELECT
+            mat_no,
+            ceo,
+            comp_name,
+            mat_mail,
+            com_code
+        FROM
+            company
+        WHERE
+            mat_no = #{matNo}
+    </select>
 </mapper>

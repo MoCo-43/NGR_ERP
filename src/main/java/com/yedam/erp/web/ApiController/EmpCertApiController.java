@@ -3,7 +3,7 @@ package com.yedam.erp.web.ApiController;
 import java.util.*;
 import org.springframework.web.bind.annotation.*;
 
-import com.yedam.erp.service.EmpCertService;
+import com.yedam.erp.service.hr.EmpCertService;
 import com.yedam.erp.vo.hr.EmpCertVO;
 
 import lombok.RequiredArgsConstructor;
