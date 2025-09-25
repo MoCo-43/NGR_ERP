@@ -66,6 +66,17 @@
 
     /* ✅ 프린트에서도 색 유지 */
     @media print{
+     body * {
+    visibility: hidden;     /* 전체 숨김 */
+  }
+  #taxInvoiceModal, #taxInvoiceModal * {
+    visibility: visible;    /* 모달만 보이게 */
+  }
+  #taxInvoiceModal {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%;
+  }
       .ti-page, .ti-supplier, .ti-buyer, .ti-panel-head, .ti-k{
         -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;
       }
