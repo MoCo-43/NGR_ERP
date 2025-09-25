@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.yedam.erp.mapper.Biz.BizMapper;
 import com.yedam.erp.service.Biz.BizService;
+import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
@@ -44,5 +45,10 @@ public class BizServiceImpl implements BizService {
 	@Override
 	public List<ProductCodeVO> getProducts() {
 		return bizMapper.getProducts();
+	}
+	// 거래처 조회
+	@Override
+	public List<CustomerVO> getCustomers() {
+		return bizMapper.getCustomers();
 	}
 }

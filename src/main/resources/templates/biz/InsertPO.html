@@ -48,8 +48,12 @@
       </style>
     </th:block>
   </head>
-
   <body>
+    <form
+      th:action="@{/sales/order/new}"
+      th:object="${form}"
+      method="post"
+    ></form>
     <section layout:fragment="content">
       <!-- 상단 툴바 (8) -->
       <div class="card shadow mb-3">
@@ -106,14 +110,14 @@
               <div class="form-group col-md-5">
                 <label class="form-label">거래처</label>
                 <div class="input-group">
-                  <input id="cusNo" class="form-control" disabled />
+                  <input id="cusName" class="form-control" disabled />
                   <div class="input-group-append">
                     <button
                       id="btnFindCustomer"
                       type="button"
                       class="btn btn-outline-secondary"
                       data-bs-toggle="modal"
-                      data-bs-target="#businessModal"
+                      data-bs-target="#customermodal"
                     >
                       🔍
                     </button>
@@ -204,13 +208,6 @@
 
             <!-- 상태/비고(설계도 우측 설명영역은 주석 처리로 대체) -->
             <div class="form-row">
-              <div class="form-group col-md-3">
-                <label class="form-label">처리상태</label>
-                <select id="poStatus" class="form-control">
-                  <option value="WRITTEN">작성완료</option>
-                  <option value="DONE">처리완료</option>
-                </select>
-              </div>
               <div class="form-group col-md-9">
                 <label class="form-label">비고</label>
                 <input
@@ -253,7 +250,7 @@
       </div>
 
       <!-- 거래처 검색 모달 -->
-      <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
+      <div th:replace="~{biz/modals/PoCustomerModal :: customermodal}"></div>
 
       <!-- 품목코드 모달 -->
       <div
@@ -429,6 +426,8 @@
 
           const gridOptions = {
             columnDefs,
+            rowSelection: "multiple",
+            rowMultiSelectWithClick: true,
             rowData: [
               {
                 productCode: "A01",
@@ -477,56 +476,84 @@
           // ===== 등록 =====
           const submit = async () => {
             try {
-              const row =
-                gridApi.getDisplayedRowCount() > 0
-                  ? gridApi.getDisplayedRowAtIndex(0).data
-                  : null;
-              if (!row || !row.productCode)
-                return alert("첫 번째 행의 품목 정보를 입력하세요.");
+              // 1) 상세행 수집
+              const details = [];
+              gridApi.forEachNodeAfterFilterAndSort((n) => {
+                const r = n.data || {};
+                if (!r.productCode) return; // 공행 skip
+                const supAmt = calcSupply(r);
+                const vatAmt = calcVat(r);
+                details.push({
+                  productCode: r.productCode,
+                  orderQty: toNum(r.orderQty),
+                  unitPrice: toNum(r.unitPrice),
+                  dcPrice: toNum(r.dcPrice),
+                  supAmt,
+                  vatAmt,
+                  dPrdName: r.dPrdName,
+                });
+              });
+              if (!details.length)
+                return alert("상세 품목을 1건 이상 입력하세요.");
 
-              const supAmt = calcSupply(row);
-              const vatAmt = calcVat(row);
-              const totalPrice = supAmt + vatAmt;
+              // 2) 본문 계산 & 값 읽기
+              const totalSupply = details.reduce(
+                (s, d) => s + (d.supAmt || 0),
+                0
+              );
+              const totalVat = details.reduce((s, d) => s + (d.vatAmt || 0), 0);
 
-              const body = {
-                cusNo: getVal("cusNo"),
-                creater: getVal("creater"),
-                poStart: getVal("poStart"),
-                exDate: getVal("exDate"),
-                poDate: getVal("poStart"),
-                prdName: row.dPrdName,
-                totalPrice: totalPrice,
-                poStatus: getVal("poStatus"),
+              const cusName = getVal("cusName"); // 거래처 선택시 표시용 이름
+              if (!cusName) return alert("거래처를 선택해 주세요.");
+              const cusCode = getVal("cusCode"); // 거래처 모달 선택시 보여줌
+
+              // 날짜: poDate 입력이 없으므로 poStart를 그대로 사용(또는 omit)
+              const poStart = getVal("poStart") || undefined;
+              const exDate = getVal("exDate") || undefined;
+              const poDate = poStart; // 정책상 동일 사용
+
+              const payload = {
+                cusName,
+                cusCode,
+                creater: getVal("creater") || "세션유저이름",
+                poStart,
+                exDate,
+                poDate,
+                prdName: details[0].dPrdName,
+                totalPrice: totalSupply + totalVat,
                 payMethod: getVal("payMethod"),
-                notes: getVal("notes"),
-                vatType: getVal("vatDocType"),
-                poType: getVal("bizType"),
-                productCode: row.productCode,
-                orderQty: toNum(row.orderQty),
-                unitPrice: toNum(row.unitPrice),
-                dcPrice: toNum(row.dcPrice),
-                supAmt: supAmt,
-                vatAmt: vatAmt,
-                dPrdName: row.dPrdName,
+                notes: getVal("notes") || undefined,
+
+                // mapping: select#vatDocType → VO.vatType
+                vatType: getVal("vatDocType"), // TAX_INVOICE | STATEMENT
+                poType: getVal("bizType"), // VAT_INCLUDED | VAT_EXEMPT
+
+                poDetails: details,
               };
 
-              if (!body.cusNo) return alert("거래처를 지정해주세요.");
-              await axios.post("/api/biz/poinsert", body);
+              await axios.post("/api/biz/poinsert", payload, {
+                headers: { "Content-Type": "application/json" },
+              });
+
               alert("등록되었습니다.");
               resetAll();
             } catch (e) {
               console.error(e);
-              alert("등록 중 오류가 발생했습니다.");
+              const msg =
+                e?.response?.data?.message ||
+                e.message ||
+                "등록 중 오류가 발생했습니다.";
+              alert(msg);
             }
           };
           byId("btnSubmit").addEventListener("click", submit);
 
           // ===== 초기화 =====
+          // 임시로 거래유형, 부가세유형을 하드코딩
           function resetAll() {
             setVal("poStart", today);
             setVal("exDate", today);
             setVal("settleDue", today);
-            setVal("cusNo", "");
             setVal("cusName", "");
             setVal("creater", "");
             setVal("bizType", "VAT_INCLUDED");
@@ -548,7 +575,12 @@
           }
           byId("btnReset").addEventListener("click", resetAll);
 
-          // ===== 주문서조회 모달 =====
+          /*
+
+                ======================== 주문서조회 모달 ========================
+
+
+                */
           const poHistoryModalEl = document.getElementById("PoHistoryModal");
           let poHistoryGridApi;
           const poHistoryColumnDefs = [
@@ -643,7 +675,12 @@
               );
             }
           }
-          // ===== 품목코드 조회 모달 =====
+          /*
+
+                ======================== 품목코드 모달 ========================
+
+
+          */
           const productModalEl = document.getElementById("productcodeModal");
           let productGridApi;
           const productColumnDefs = [
@@ -688,7 +725,6 @@
             try {
               const { data } = await axios.get("/api/biz/productcode");
               productGridApi.setRowData(data || []);
-              productGridApi.sizeColumnsToFit?.();
             } catch (err) {
               console.error("품목 데이터 조회 실패:", err);
               alert("품목 데이터를 불러오는 데 실패했습니다.");
@@ -725,6 +761,106 @@
             );
           }
         });
+
+        /*
+
+                ======================== 거래처 모달 ========================
+
+
+        */
+        document.addEventListener("DOMContentLoaded", () => {
+          const customerCodeModalEl = document.getElementById("customermodal");
+          let customerCodeGridApi;
+          const customerCodeColumnDefs = [
+            { headerName: "", checkboxSelection: true, width: 50 },
+            { headerName: "거래처코드", field: "cusCode", width: 140 },
+            {
+              headerName: "거래처명",
+              field: "cusName",
+              flex: 1,
+              minWidth: 160,
+            },
+            { headerName: "신용등급", field: "creditGrade", width: 140 },
+            { headerName: "미수금", field: "leftPrice", width: 140 },
+          ];
+          async function fetchCustomerCodeData() {
+            if (!customerCodeGridApi) return;
+            try {
+              const { data } = await axios.get("/api/biz/customercode");
+              customerCodeGridApi.setRowData(data || []);
+              customerCodeGridApi.sizeColumnsToFit?.();
+            } catch (err) {
+              console.error("거래처조회 실패:", err);
+              alert("거래처 불러오는 데 실패했습니다.");
+            }
+          }
+          if (customerCodeModalEl) {
+            customerCodeModalEl.addEventListener("shown.bs.modal", () => {
+              const gridDiv = document.getElementById("customerGrid");
+              if (!customerCodeGridApi) {
+                if (window.agGrid?.createGrid) {
+                  customerCodeGridApi = agGrid.createGrid(
+                    gridDiv,
+                    customerCodeGridOptions
+                  );
+                } else {
+                  customerCodeGridApi = customerCodeGridOptions.api;
+                }
+              }
+              fetchCustomerCodeData();
+            });
+          }
+          const customerCodeGridOptions = {
+            columnDefs: customerCodeColumnDefs,
+            rowSelection: "single",
+            rowData: [],
+            defaultColDef: { sortable: true, resizable: true, filter: true },
+            onGridReady: (p) => {
+              customerCodeGridApi = p.api;
+            },
+          };
+          // 거래처 모달의 선택 버튼 클릭 이벤트
+          function assignCustomerToForm(row) {
+            const cusNameEl = document.getElementById("cusName");
+            const cusCodeEl = document.getElementById("cusCode");
+            if (cusNameEl) cusNameEl.value = row.cusName ?? "";
+            if (cusCodeEl) cusCodeEl.value = row.cusCode ?? "";
+          }
+
+          const importCustomerCodeBtn = document.getElementById("CstImportBtn");
+          if (importCustomerCodeBtn) {
+            importCustomerCodeBtn.addEventListener("click", () => {
+              if (!customerCodeGridApi) return alert("목록을 먼저 불러오세요.");
+              const selected = customerCodeGridApi.getSelectedRows?.() || [];
+              if (!selected.length) return alert("거래처를 선택하세요.");
+
+              assignCustomerToForm(selected[0]);
+
+              const modal = bootstrap.Modal.getInstance(customerCodeModalEl);
+              modal?.hide();
+            });
+          } else {
+            console.warn(
+              "가져오기 버튼(#CstImportBtn)을 modal HTML에 추가해주세요."
+            );
+          }
+        });
+
+        /*
+======= ======= ======= 
+======= 임시조치 ======= 
+======= ======= ======= 
+        */
+
+        // body에 강제 표시(z-index 문제 회피)
+        ["productcodeModal", "customermodal", "PoHistoryModal"].forEach(
+          (id) => {
+            const el = document.getElementById(id);
+            if (el && el.parentElement !== document.body) {
+              document.body.appendChild(el);
+            }
+          }
+        );
       </script>
     </th:block>
   </body>
