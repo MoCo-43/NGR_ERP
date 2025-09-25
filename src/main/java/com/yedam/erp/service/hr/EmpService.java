@@ -1,4 +1,4 @@
-package com.yedam.erp.service;
+package com.yedam.erp.service.hr;
 
 import java.util.List;
 

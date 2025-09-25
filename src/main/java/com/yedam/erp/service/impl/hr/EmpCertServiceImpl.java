@@ -1,11 +1,11 @@
-package com.yedam.erp.service.impl;
+package com.yedam.erp.service.impl.hr;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import com.yedam.erp.mapper.hr.EmpCertMapper;
-import com.yedam.erp.service.EmpCertService;
+import com.yedam.erp.service.hr.EmpCertService;
 import com.yedam.erp.vo.hr.EmpCertVO;
 
 import lombok.RequiredArgsConstructor;

@@ -116,16 +116,16 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		<dependency>
-		    <groupId>com.squareup.okhttp3</groupId>
-		    <artifactId>okhttp</artifactId>
-		    <version>4.10.0</version>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>4.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mybatis</groupId>
 			<artifactId>mybatis-typehandlers-jsr310</artifactId>
 			<version>1.0.2</version>
 		</dependency>
-		
+
 		<!-- jasper -->
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>

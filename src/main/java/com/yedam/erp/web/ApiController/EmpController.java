@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.yedam.erp.service.EmpService;
+import com.yedam.erp.service.hr.EmpService;
 import com.yedam.erp.vo.hr.EmpVO;
 
 import lombok.RequiredArgsConstructor;

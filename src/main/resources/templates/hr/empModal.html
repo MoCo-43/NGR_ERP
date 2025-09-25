@@ -10,7 +10,7 @@
 						등록 기본사항</h5>
 					<button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal" aria-label="닫기">
             <i class="fas fa-times"></i>
-          </button>
+            </button>
 				</div>
 
 				<!-- Body -->
@@ -105,6 +105,7 @@
 												id="f_phone" name="phone" class="form-control"
 												placeholder="010-0000-0000">
 										</div>
+
 										<div class="col-md-6">
 											<label for="f_email" class="form-label">이메일 <span
 												class="text-danger">*</span></label> <input id="f_email"
@@ -116,6 +117,7 @@
 												class="text-danger">*</span></label> <input id="f_joinDate"
 												name="joinDate" type="date" class="form-control" required>
 										</div>
+
 										<div class="col-md-6">
 											<label for="f_leaveDate" class="form-label">퇴사일자</label> <input
 												id="f_leaveDate" name="leaveDate" type="date"
@@ -127,7 +129,7 @@
 												id="f_leaveReason" name="leaveReason" class="form-control">
 										</div>
 
-										<!-- 은행: 화면에는 은행명만 표시, hidden으로 코드 보관 -->
+										<!-- 은행 -->
 										<div class="col-md-6">
 											<label for="f_bankName" class="form-label">은행</label>
 											<div class="input-group">
@@ -158,10 +160,12 @@
 													id="btnZipSearch">찾기</button>
 											</div>
 										</div>
+
 										<div class="col-md-8">
 											<label for="f_address" class="form-label">주소</label> <input
 												id="f_address" name="address" class="form-control">
 										</div>
+
 										<div class="col-12">
 											<input id="f_address_detail" name="addressDetail"
 												class="form-control mt-2" placeholder="상세주소(동/호)">
@@ -172,8 +176,9 @@
 						</div>
 
 						<!-- 급여지급사항 -->
+						
 						<div class="tab-pane fade" id="tab-pay"
-							th:insert="hr/payFix :: payFix" role="tabpanel"></div>
+							  th:insert="~{hr/payFix :: payFix}" role="tabpanel"></div>
 
 						<!-- 교육 -->
 						<div class="tab-pane fade" id="tab-edu" role="tabpanel">
@@ -205,7 +210,11 @@
 	gap: .5rem;
 	border-bottom: 1px solid #dee2e6;
 }
-#empModal .nav-tabs .nav-item { flex: 1 1 0; }
+
+#empModal .nav-tabs .nav-item {
+	flex: 1 1 0;
+}
+
 #empModal .nav-tabs .nav-link {
 	width: 100%;
 	display: flex;
@@ -214,20 +223,30 @@
 	font-weight: 600;
 	height: 40px;
 }
-@media (max-width:576px) {
-	#empModal .nav-tabs { flex-wrap: wrap; }
-	#empModal .nav-tabs .nav-item { flex: 1 1 50%; }
-}
-#empModal .form-label { font-weight: 600; margin-bottom: .25rem; }
-#empModal .title-highlight {
-	color: #0d6efd; font-weight: 800; font-size: 1.3rem; padding-bottom: 3px;
-}
-#empModal .modal-dialog { max-width: 1200px; }
 
-#empModal #tab-pay .tab-footer{
-  border-top: 1px solid #dee2e6; /* 밑줄 */
-  padding-top: .75rem;           /* 윗여백 */
-  margin-top: .25rem;            /* 위쪽 살짝 간격 */
+@media ( max-width :576px) {
+	#empModal .nav-tabs {
+		flex-wrap: wrap;
+	}
+	#empModal .nav-tabs .nav-item {
+		flex: 1 1 50%;
+	}
+}
+
+#empModal .form-label {
+	font-weight: 600;
+	margin-bottom: .25rem;
+}
+
+#empModal .title-highlight {
+	color: #0d6efd;
+	font-weight: 800;
+	font-size: 1.3rem;
+	padding-bottom: 3px;
+}
+
+#empModal .modal-dialog {
+	max-width: 1200px;
 }
 </style>
 
@@ -240,61 +259,34 @@
       const getEmpId = () =>
         $('f_emp_id')?.value || $('eduEmpId')?.value || $('certEmpId')?.value || '';
 
-      // ===== footer 토글 (급여 탭이면 숨김, 나머지 보임) =====
+      // footer 토글 (급여 탭이면 숨김)
       function toggleFooterByTab(activeTarget){
         const footer = $('empModalFooter');
         if(!footer) return;
-        const isPay = (activeTarget === '#tab-pay');
-        footer.classList.toggle('d-none', isPay);
+        footer.classList.toggle('d-none', activeTarget === '#tab-pay');
       }
 
-      // =======================
       // 공통코드 모달 연결
-      // =======================
       document.addEventListener('click', (e)=>{
         const el = e.target instanceof Element ? e.target.closest('button') : null;
         if(!el) return;
 
-        // 부서
         if (el.id === 'btnDeptLookup') {
-          CodeLookup.open({
-            source: 'dept',
-            title:  '부서 선택',
-            targetId: 'f_dept_code'
-          });
+          CodeLookup.open({ source: 'dept', title:'부서 선택', targetId: 'f_dept_code' });
         }
-        // 직급
-        if(el.id === 'btnPositionLookup'){
-          CodeLookup.open({
-            groupId: 'RK',
-            title: '직급 선택',
-            targetNameId: 'f_position',
-            targetId: 'f_position_code'
-          });
+        if (el.id === 'btnPositionLookup') {
+          CodeLookup.open({ groupId: 'RK', title:'직급 선택', targetNameId:'f_position', targetId:'f_position_code' });
         }
-        // 직책
-        if(el.id === 'btnTitleLookup'){
-          CodeLookup.open({
-            groupId: 'PO',
-            title: '직책 선택',
-            targetNameId: 'f_title',
-            targetId: 'f_title_code'
-          });
+        if (el.id === 'btnTitleLookup') {
+          CodeLookup.open({ groupId: 'PO', title:'직책 선택', targetNameId:'f_title', targetId:'f_title_code' });
         }
-        // 은행
-        if(el.id === 'btnBankLookup'){
-          CodeLookup.open({
-            groupId: 'BK',
-            title: '은행 선택',
-            targetId: 'f_bankCode',
-            targetNameId: 'f_bankName'
-          });
+        if (el.id === 'btnBankLookup') {
+          CodeLookup.open({ groupId: 'BK', title:'은행 선택', targetId:'f_bankCode', targetNameId:'f_bankName' });
         }
+        if (el.id === 'btnZipSearch') { openPostcodeApi(); }
       });
 
-      // =======================
-      // [교육] 리스트/삭제/저장
-      // =======================
+      // 교육
       const eduTbody  = $('eduTbody');
       const eduRowCnt = $('eduRowCount');
 
@@ -328,7 +320,6 @@
         if(!id) return renderEdu([]);
         renderEdu(await fetchEdu(id));
       }
-
       eduTbody?.addEventListener('click', async (e)=>{
         const btn = e.target;
         if(!(btn instanceof Element) || !btn.classList.contains('edu-del')) return;
@@ -339,12 +330,9 @@
         if(!res.ok) return alert('삭제 실패');
         refreshEdu();
       });
-
       document.addEventListener('click', async (e)=>{
         const el = e.target;
         if(!(el instanceof Element)) return;
-
-        // 교육 저장
         if(el.id==='btnEduSave'){
           const form = $('eduFormDetail');
           const payload = Object.fromEntries(new FormData(form).entries());
@@ -352,9 +340,7 @@
           if(!payload.eduName) return form.eduName.focus();
           el.setAttribute('disabled','true');
           try{
-            const res = await fetch('/api/hr/edu',{
-              method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-            });
+            const res = await fetch('/api/hr/edu',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
             if(!res.ok) throw new Error('저장 실패');
             (bootstrap.Modal.getInstance($('eduFormModal'))||new bootstrap.Modal($('eduFormModal'))).hide();
             await refreshEdu();
@@ -362,14 +348,9 @@
           }catch(err){ alert(err.message||'저장 실패'); }
           finally{ el.removeAttribute('disabled'); }
         }
-
-        // 우편번호
-        if(el.id==='btnZipSearch'){ openPostcodeApi(); }
       });
 
-      // =======================
-      // [자격증] 리스트/삭제/저장
-      // =======================
+      // 자격증
       const certTbody  = $('certTbody');
       const certRowCnt = $('certRowCount');
 
@@ -403,7 +384,6 @@
         if(!id) return renderCert([]);
         renderCert(await fetchCert(id));
       }
-
       certTbody?.addEventListener('click', async (e)=>{
         const btn = e.target;
         if(!(btn instanceof Element) || !btn.classList.contains('cert-del')) return;
@@ -414,12 +394,9 @@
         if(!res.ok) return alert('삭제 실패');
         refreshCert();
       });
-
       document.addEventListener('click', async (e)=>{
         const el = e.target;
         if(!(el instanceof Element)) return;
-
-        // 자격증 저장
         if(el.id==='btnCertSave'){
           const form = $('certFormDetail');
           const payload = Object.fromEntries(new FormData(form).entries());
@@ -427,9 +404,7 @@
           if(!payload.certName) return form.certName.focus();
           el.setAttribute('disabled','true');
           try{
-            const res = await fetch('/api/hr/cert',{
-              method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
-            });
+            const res = await fetch('/api/hr/cert',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
             if(!res.ok) throw new Error('저장 실패');
             (bootstrap.Modal.getInstance($('certFormModal'))||new bootstrap.Modal($('certFormModal'))).hide();
             await refreshCert();
@@ -439,25 +414,18 @@
         }
       });
 
-      // =======================
       // 모달 열릴 때: 사번 동기화 + footer 토글
-      // =======================
       $('empModal')?.addEventListener('shown.bs.modal', ()=>{
         const id = $('f_emp_id')?.value || '';
         if($('eduEmpId') && !$('eduEmpId').value)  $('eduEmpId').value  = id;
         if($('certEmpId') && !$('certEmpId').value) $('certEmpId').value = id;
-        // 급여 폼 hidden 사번도 보정
         if($('pf_emp_id') && !$('pf_emp_id').value) $('pf_emp_id').value = id;
 
-        const activeTarget = document
-          .querySelector('#empTabs .nav-link.active')
-          ?.getAttribute('data-bs-target');
+        const activeTarget = document.querySelector('#empTabs .nav-link.active')?.getAttribute('data-bs-target');
         toggleFooterByTab(activeTarget);
       });
 
-      // =======================
-      // 탭 전환 시 리스트 로드 + 급여 사번 보정 + footer 토글
-      // =======================
+      // 탭 전환
       empTabs?.addEventListener('shown.bs.tab', (e)=>{
         const target = e.target.getAttribute('data-bs-target');
         const id = getEmpId();
@@ -476,47 +444,26 @@
         toggleFooterByTab(target);
       });
 
-      // =======================
       // 공용 저장 버튼 라우팅 (급여 탭 -> payFix 저장)
-      // =======================
       $('btnSave')?.addEventListener('click', async ()=>{
-        const activeTarget = document
-          .querySelector('#empTabs .nav-link.active')
-          ?.getAttribute('data-bs-target');
+        const activeTarget = document.querySelector('#empTabs .nav-link.active')?.getAttribute('data-bs-target');
 
         if(activeTarget === '#tab-pay'){
-          // 저장 직전 사번 방어 보정
           if($('pf_emp_id') && !$('pf_emp_id').value) $('pf_emp_id').value = $('f_emp_id')?.value || '';
-          try{
-            // payFix에서 window.__payFix.save()가 정의돼 있어야 함
-            await window.__payFix?.save?.();
-          }catch(err){
-            console.error(err);
-            alert(err?.message || '저장 실패');
-          }
+          try{ await window.__payFix?.save?.(); }
+          catch(err){ console.error(err); alert(err?.message || '저장 실패'); }
           return;
         }
 
-        if(activeTarget === '#tab-basic'){
-          // TODO: 기본사항 저장 로직 연결
-          alert('기본사항 저장 로직을 연결하세요.');
-          return;
-        }
-
-        if(activeTarget === '#tab-edu'){
-          $('btnEduSave')?.click();
-          return;
-        }
-        if(activeTarget === '#tab-cert'){
-          $('btnCertSave')?.click();
-          return;
-        }
+       
+        
+        if(activeTarget === '#tab-edu'){ $('btnEduSave')?.click(); return; }
+        if(activeTarget === '#tab-cert'){ $('btnCertSave')?.click(); return; }
       });
 
       // 다음 우편번호 script 로드
       const SCRIPT_URL = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
-      const tag  = document.createElement('script');
-      tag.src    = SCRIPT_URL; document.head.appendChild(tag);
+      const tag  = document.createElement('script'); tag.src = SCRIPT_URL; document.head.appendChild(tag);
     })();
 
     // 주소 검색 (전역)

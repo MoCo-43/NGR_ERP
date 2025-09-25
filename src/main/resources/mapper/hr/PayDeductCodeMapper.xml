@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.PayDeductCodeMapper">
+
+	<!-- 공제 코드 목록 조회 -->
+	<select id="selectPayDeductList"
+		parameterType="com.yedam.erp.vo.hr.PayDeductCodeVO"
+		resultType="com.yedam.erp.vo.hr.PayDeductCodeVO">
+		SELECT
+		DEDUCT_CODE AS deductCode,
+		DEDUCT_NAME AS deductName,
+		FORMULA_TXT AS formulaTxt,
+		METHOD_DESC AS methodDesc,
+		USE_YN AS useYn
+		FROM PAY_DEDUCT_CODE
+		<where>
+			<if test="useYn != null and useYn != ''">
+				USE_YN = #{useYn}
+			</if>
+			<if test="deductName != null and deductName != ''">
+				<if test="useYn != null and useYn != ''">
+					AND
+				</if>
+				DEDUCT_NAME LIKE '%' || #{deductName} || '%'
+			</if>
+		</where>
+		ORDER BY DEDUCT_CODE
+	</select>
+
+	<!-- 단건 조회 -->
+	<select id="selectPayDeduct" parameterType="string"
+		resultType="com.yedam.erp.vo.hr.PayDeductCodeVO">
+		SELECT
+		DEDUCT_CODE AS deductCode,
+		DEDUCT_NAME AS deductName,
+		FORMULA_TXT AS formulaTxt,
+		METHOD_DESC AS methodDesc,
+		USE_YN AS useYn
+		FROM PAY_DEDUCT_CODE
+		WHERE DEDUCT_CODE = #{deductCode}
+	</select>
+
+	<!-- 등록 -->
+	<insert id="insertPayDeduct"
+		parameterType="com.yedam.erp.vo.hr.PayDeductCodeVO">
+		INSERT INTO PAY_DEDUCT_CODE (
+		DEDUCT_CODE, DEDUCT_NAME, FORMULA_TXT, METHOD_DESC, USE_YN
+		) VALUES (
+		#{deductCode}, #{deductName}, #{formulaTxt}, #{methodDesc}, #{useYn}
+		)
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updatePayDeduct"
+		parameterType="com.yedam.erp.vo.hr.PayDeductCodeVO">
+		UPDATE PAY_DEDUCT_CODE
+		SET
+		DEDUCT_NAME = #{deductName},
+		FORMULA_TXT = #{formulaTxt},
+		METHOD_DESC = #{methodDesc},
+		USE_YN = #{useYn}
+		WHERE DEDUCT_CODE = #{deductCode}
+	</update>
+
+	<!-- 사용여부만 변경 -->
+	<update id="updateUseYn"
+		parameterType="com.yedam.erp.vo.hr.PayDeductCodeVO">
+		UPDATE PAY_DEDUCT_CODE
+		SET USE_YN = #{useYn}
+		WHERE DEDUCT_CODE = #{deductCode}
+	</update>
+
+</mapper>
