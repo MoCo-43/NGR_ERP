@@ -4,8 +4,10 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
+import com.yedam.erp.vo.stock.OrderVO;
 import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
@@ -27,5 +29,11 @@ public interface StockMapper {
 	// 발주계획 조회
 	public List<OrderPlanVO> selectOrderPlans();
 	List<OrderPlanDetailVO> selectOrderPlanDetailsByXpCode(String xpCode);
+	
+	// 발주서에 조회될 발주 마스터
+	public OrderVO selectOrderByXpCode(String xpCode);
+	
+	// 발주서에 조회될 발주 디테일
+	List<OrderDetailVO>selectOrderDetailsByXpCode(String xpCode);
 	
 }
