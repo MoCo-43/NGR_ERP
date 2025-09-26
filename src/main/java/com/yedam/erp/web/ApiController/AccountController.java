@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.account.AccountService;
 import com.yedam.erp.service.account.JournalService;
 import com.yedam.erp.vo.account.JournalVO;
@@ -31,6 +32,8 @@ public class AccountController {
 	
 	@GetMapping("/list")
 	public List<accountVO> list(String category){
+		System.out.println(SessionUtil.companyId());
+		System.out.println(SessionUtil.empId());
 		return accountService.accountList(category);
 	}
 	
@@ -61,8 +64,9 @@ public class AccountController {
 	
 	 // =======================
     @GetMapping("/journal")
-    public List<JournalVO> getJournalLines() {
-        return journalService.selectJournalList();
+    public List<JournalVO> getJournalLines(Long companyCode) {
+    	companyCode = SessionUtil.companyId();
+        return journalService.selectJournalList(companyCode);
     }
     
     
@@ -75,6 +79,7 @@ public class AccountController {
     // 신규 행 저장
     @PostMapping("/journal")
     public void insertJournal(@RequestBody JournalVO vo) {
+    	vo.setCompanyCode(SessionUtil.companyId());
         journalService.insertJournal(vo);
     }
     

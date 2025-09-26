@@ -52,8 +52,8 @@ public class JournalServiceImpl implements JournalService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<JournalVO> selectJournalList() {
-        return journalMapper.selectJournalList();
+    public List<JournalVO> selectJournalList(Long companyCode) {
+        return journalMapper.selectJournalList(companyCode);
     }
 
     @Override
