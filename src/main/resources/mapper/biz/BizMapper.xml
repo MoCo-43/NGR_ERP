@@ -18,53 +18,62 @@ SELECT
     c.CUS_NAME,
     p.CREATER,
     CASE
-        WHEN pd_counts.cnt > 1 THEN p.PRD_NAME || ' 외 ' || (pd_counts.cnt - 1) || '건'
-        ELSE p.PRD_NAME
+        WHEN pd_counts.cnt > 1 THEN pod.D_PRD_NAME || ' 외 ' || (pd_counts.cnt - 1) || '건'
+        ELSE pod.D_PRD_NAME
     END AS PRD_NAME,
     c.BIZ_TYPE,
-    c.CEO_NAME,
     p.TOTAL_PRICE,
     p.PO_STATUS,
     p.NOTES
 FROM
     CUSTOMER c
 LEFT JOIN
-    PURCHASE_ORDER p ON c.CUS_NO = p.CUS_NO
+    PURCHASE_ORDER p ON c.CUS_CODE = p.CUS_CODE
+LEFT JOIN
+    PO_DETAIL pod ON p.PO_ID = pod.PO_ID
 LEFT JOIN
     (SELECT PO_ID, COUNT(*) as cnt FROM PO_DETAIL GROUP BY PO_ID) pd_counts
 ON
     p.PO_ID = pd_counts.PO_ID
+WHERE p.COMPANY_CODE = '1001'
 ORDER BY
     p.PO_START DESC
+    
+
 </select>
 
 
 <!-- 주문서 등록 -->
 <!-- 주문서 id 생성 -->
 <insert id="insertPO" parameterType="PoInsertVO">
-  <selectKey keyProperty="poId" resultType="long" order="BEFORE">
-    SELECT PO_ID_SEQ.NEXTVAL FROM DUAL
-  </selectKey>
   INSERT ALL
     INTO purchase_order (
       PO_ID, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
       PRD_NAME, TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
-    ) VALUES (
-      #{poId},
-      #{cusCode}, #{cusName}, #{creater}, #{poStart}, #{exDate}, #{poDate},
-      #{prdName}, #{totalPrice}, '작성완료', #{payMethod}, #{notes}, #{vatType}, #{poType}
     )
+    VALUES (
+      PO_ID_SEQ.NEXTVAL,
+      #{cusCode}, #{cusName}, #{creater}, #{poStart}, #{exDate}, #{poDate},
+      #{prdName}, #{totalPrice}, '작성완료',
+      #{payMethod}, #{notes}, #{vatType}, #{poType}
+    )
+    
     <foreach collection="poDetails" item="pod">
       INTO po_detail (
         POD_ID, PO_ID, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
         DC_PRICE, SUP_AMT, VAT_AMT, D_PRD_NAME
-      ) VALUES (
-        POD_ID_SEQ.NEXTVAL, #{poId}, #{pod.productCode}, #{pod.orderQty},
-        #{pod.unitPrice}, #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.dPrdName}
+      )
+      VALUES (
+        POD_ID_SEQ.NEXTVAL,
+        PO_ID_SEQ.CURRVAL,
+        #{pod.productCode}, #{pod.orderQty}, #{pod.unitPrice},
+        #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.dPrdName}
       )
     </foreach>
+    
   SELECT 1 FROM DUAL
 </insert>
+
 
 <!-- 주문서 이력 조회 -->
 <select id="getPOHistory" resultType="PoHistoryVO">
