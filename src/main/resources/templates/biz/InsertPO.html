@@ -486,6 +486,7 @@
                   vatAmt,
                   dPrdName: r.dPrdName,
                 });
+                console.log("상세행 dPrdName은 => ", r.details.dPrdName);
               });
               if (!details.length)
                 return alert("상세 품목을 1건 이상 입력하세요.");
@@ -513,7 +514,6 @@
                 poStart,
                 exDate,
                 poDate,
-                prdName: details[0].dPrdName,
                 totalPrice: totalSupply + totalVat,
                 payMethod: getVal("payMethod"),
                 notes: getVal("notes") || undefined,
@@ -528,7 +528,6 @@
               await axios.post("/api/biz/poinsert", payload, {
                 headers: { "Content-Type": "application/json" },
               });
-              console.log("prdName의 품목들은 => ", payload.prdName);
               console.log("poDetails의 품목들은 => ", payload.poDetails);
 
               alert("등록되었습니다.");
@@ -588,13 +587,9 @@
               flex: 1,
               minWidth: 150,
             },
+            { headerName: "제품코드", field: "prdCode", width: 120 },
+            { headerName: "제품명", field: "prdName", width: 150 },
             { headerName: "담당자", field: "creater", width: 100 },
-            {
-              headerName: "대표 품목명",
-              field: "prdName",
-              flex: 1,
-              minWidth: 180,
-            },
             { headerName: "납기일자", field: "exDate", width: 120 },
             {
               headerName: "총액",
@@ -651,13 +646,16 @@
                 }
 
                 const newItems = selectedRows.map((row) => ({
-                  productCode: "",
-                  dPrdName: row.prdName,
-                  unitPrice: null,
-                  orderQty: null,
-                  dcPrice: null,
+                  prdCode: row.prdCode || "",
+                  prdName: row.prdName || "",
+                  unitPrice: row.unitPrice || null,
+
                   notes: `${row.poStart} 주문 건에서 가져옴`,
                 }));
+                console.log(
+                  "주문서건의 품목이름인 productName은 ==> ",
+                  newItems.productName
+                );
 
                 gridApi.applyTransaction({ add: newItems });
                 updatePinned();
