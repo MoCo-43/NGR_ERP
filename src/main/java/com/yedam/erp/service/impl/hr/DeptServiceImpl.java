@@ -15,33 +15,33 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DeptServiceImpl implements DeptService {
 
-	private final DeptMapper deptMapper;
+    private final DeptMapper deptMapper;
 
-	@Override
-	public List<DeptVO> getDeptList(DeptVO param) {
-		return deptMapper.selectDeptList(param);
-	}
+    @Override
+    public List<DeptVO> getDeptList(Long companyCode) {
+        return deptMapper.selectDeptList(companyCode);
+    }
 
-	@Override
-	public DeptVO getDept(String dept_code) {
-		return deptMapper.selectDept(dept_code);
-	}
+    @Override
+    public DeptVO getDept(String dept_code) {
+        return deptMapper.selectDept(dept_code);
+    }
 
-	@Override
-	@Transactional
-	public int addDept(DeptVO vo) {
-		return deptMapper.insertDept(vo);
-	}
+    @Override
+    @Transactional
+    public int addDept(DeptVO vo) {
+        return deptMapper.insertDept(vo);
+    }
 
-	@Override
-	@Transactional
-	public int editDept(DeptVO vo) {
-		return deptMapper.updateDept(vo);
-	}
+    @Override
+    @Transactional
+    public int editDept(DeptVO vo) {
+        return deptMapper.updateDept(vo);
+    }
 
-	@Override
-	@Transactional
-	public int removeDept(String dept_code) {
-		return deptMapper.deleteDept(dept_code);
-	}
+    @Override
+    @Transactional
+    public int removeDept(String dept_code) {
+        return deptMapper.deleteDept(dept_code);
+    }
 }

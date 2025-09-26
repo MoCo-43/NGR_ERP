@@ -13,19 +13,22 @@
 	<style>
 /* 차액행 전체 배경 (연한 빨강) */
 .ag-theme-quartz .ag-row.row-diff {
-  background-color: #feecec !important;
-  font-weight: 600;
+	background-color: #feecec !important;
+	font-weight: 600;
 }
+
 #generalVoucherGrid.ag-theme-quartz {
 	height: 38rem;
 	width: 100%;
 	margin-top: 1rem;
 }
+
 .btn-bar {
 	display: flex;
 	gap: 0.5rem;
 	margin-bottom: 0.75rem;
 }
+
 .badge-debit {
 	background: #fee2e2;
 	color: #b91c1c;
@@ -33,6 +36,7 @@
 	border-radius: 8px;
 	padding: 2px 8px;
 }
+
 .badge-credit {
 	background: #dbeafe;
 	color: #1d4ed8;
@@ -46,20 +50,21 @@
 	font-weight: 500;
 	border-bottom: 1px solid #e5e7eb;
 }
+
 .badge-status-open {
-  background: #dcfce7;  /* 연한 초록 */
-  color: #15803d;       /* 진한 초록 */
-  font-weight: 600;
-  border-radius: 8px;
-  padding: 2px 8px;
+	background: #dcfce7; /* 연한 초록 */
+	color: #15803d; /* 진한 초록 */
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
 }
 
 .badge-status-close {
-  background: #fee2e2;  /* 차변과 동일 */
-  color: #b91c1c;
-  font-weight: 600;
-  border-radius: 8px;
-  padding: 2px 8px;
+	background: #fee2e2; /* 차변과 동일 */
+	color: #b91c1c;
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
 }
 </style>
 </th:block>
@@ -67,18 +72,19 @@
 <body>
 	<section layout:fragment="content">
 		<div class="card shadow mb-3">
-			<div class="card-header py-3 d-flex align-items-center justify-content-between">
+			<div
+				class="card-header py-3 d-flex align-items-center justify-content-between">
 				<h6 class="m-0 font-weight-bold text-primary">일반 전표</h6>
 			</div>
 			<div class="card-body">
 				<!-- 조회 영역 -->
 				<div class="btn-bar">
 					<input type="date" class="form-control form-control-sm"
-						id="fromDate" style="max-width: 180px" /> 
-					<span class="mx-1">~</span>
+						id="fromDate" style="max-width: 180px" /> <span class="mx-1">~</span>
 					<input type="date" class="form-control form-control-sm" id="toDate"
 						style="max-width: 180px" />
 					<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
+					<button class="btn btn-outline-danger btn-sm" id="btnToggleDiff">차액별</button>
 				</div>
 				<!-- 일반전표 목록 Grid -->
 				<div id="generalVoucherGrid" class="ag-theme-quartz"></div>
@@ -90,20 +96,23 @@
 	</section>
 
 	<th:block layout:fragment="body_extra">
-	<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
-<script th:inline="none">
+		<script
+			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+		<script
+			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+		<script th:inline="none">
 
 let gvApi;
 let selectedRowNode = null;
 let currentJrnNo = null; // 전역 전표번호 유지
-
+let showDiffRows = false; // 차액합계 토글
 // ===== 유틸 =====
 const toNumber = (v) => {
   if (v === null || v === undefined || v === "") return null;
   const n = Number(String(v).replaceAll(",", "").trim());
   return Number.isFinite(n) ? n : null;
 };
+// 오늘
 const todayStr = () => {
   const d = new Date();
   const mm = String(d.getMonth()+1).padStart(2,'0');
@@ -112,6 +121,7 @@ const todayStr = () => {
 };
 const getMonthStr = (dateStr) => (dateStr?.substring(5,7) ? Number(dateStr.substring(5,7)) : "");
 const getDayStr   = (dateStr) => (dateStr?.substring(8,10)? Number(dateStr.substring(8,10)) : "");
+
 
 // 입력 전용 고정행
 function newInputRow(){
@@ -136,8 +146,15 @@ function newInputRow(){
 
 // 목록 로드 + 차액행 처리
 async function loadList() {
+	const today = todayStr();
+    document.getElementById("fromDate").value = today;
+    document.getElementById("toDate").value = today;
+    
   const { data } = await axios.get("/api/account/journal");
   let rows = Array.isArray(data) ? data : [];
+
+  // 오늘 날짜만 필터
+  rows = rows.filter(r => r.jrnDate.substring(0,10) === today);
 
   // === 전표별 차변/대변 합계 계산 ===
   const grouped = {};
@@ -149,24 +166,26 @@ async function loadList() {
   });
 
   // === 전표별 마지막 뒤에 차액행 추가 ===
-  let finalRows = [];
+   let finalRows = [];
   Object.entries(grouped).forEach(([jrnNo, g]) => {
     finalRows = finalRows.concat(g.rows); // 원래 행들 넣고
-    const diff = g.debit - g.credit;
-    const seq = jrnNo.substring(jrnNo.lastIndexOf("-") + 1); // 전표번호 마지막 숫자
-    if (diff !== 0) {
-      finalRows.push({
-        jrnNo:"",
-        lineNo: null,
-        jrnDate: "",
-        acctCode: "",
-        acctName: "",
-        dcType:`소계(${seq})`, // 부족한 쪽 반대로
-        amount: Math.abs(diff),
-        remarks:  diff > 0 ? "차변차액합계" : "대변차액합계",
-        closeNo: null,
-        _isDiffRow: true
-      });
+    if (showDiffRows) {   // ✅ 버튼 상태에 따라 보이기/숨기기
+      const diff = g.debit - g.credit;
+      const seq = jrnNo.substring(jrnNo.lastIndexOf("-") + 1);
+      if (diff !== 0) {
+        finalRows.push({
+          jrnNo: "",
+          lineNo: null,
+          jrnDate: "",
+          acctCode: "",
+          acctName: "",
+          dcType: `소계(${seq})`,
+          amount: Math.abs(diff),
+          remarks: diff > 0 ? "차변차액합계" : "대변차액합계",
+          closeNo: null,
+          _isDiffRow: true
+        });
+      }
     }
   });
 
@@ -180,8 +199,14 @@ async function loadFilteredList() {
     const toDate   = document.getElementById("toDate").value;
     const { data } = await axios.get("/api/account/journal");
     let rows = Array.isArray(data) ? data : [];
-    if (fromDate) rows = rows.filter(r => r.jrnDate >= fromDate);
-    if (toDate)   rows = rows.filter(r => r.jrnDate <= toDate);
+    if (fromDate) {
+    	  const from = new Date(fromDate);
+    	  rows = rows.filter(r => new Date(r.jrnDate) >= from);
+    	}
+    	if (toDate) {
+    	  const to = new Date(toDate);
+    	  rows = rows.filter(r => new Date(r.jrnDate) <= to);
+    	}
     gvApi.setGridOption("rowData", rows);
     gvApi.refreshClientSideRowModel('sort');
   } catch(err) {
@@ -197,6 +222,8 @@ function isSavable(d){
 
 // 저장
 async function saveRow(data){
+  console.log("▶ saveRow 호출됨, 원본 data:", data);
+
   if (data._isDiffRow) {
     alert("차액 행은 저장할 수 없습니다.");
     return;
@@ -214,6 +241,7 @@ async function saveRow(data){
   data.jrnNo = currentJrnNo;
 
   const payload = {
+    jrnCode: data.jrnCode || null,   // ✅ jrnCode 추가
     jrnNo: data.jrnNo,
     lineNo: data.lineNo || null,
     jrnDate: data.jrnDate || todayStr(),
@@ -226,18 +254,33 @@ async function saveRow(data){
     cusCode: data.cusCode || "",
     closeNo: data.closeNo ?? null
   };
-  if (!isSavable(payload)) return;
 
-  if (!data.lineNo) {
-    await axios.post("/api/account/journal", payload);
-  } else {
-    await axios.put(`/api/account/journal/${data.jrnCode}/${data.lineNo}`, payload);
+  console.log("▶ payload 준비 완료:", payload);
+
+  if (!isSavable(payload)) {
+    console.log("▶ 저장 불가: isSavable check 실패");
+    return;
   }
+
+  try {
+    let res;
+    if (!data.lineNo) {
+      res = await axios.post("/api/account/journal", payload);
+    } else {
+      res = await axios.put(`/api/account/journal/${payload.jrnCode}/${payload.lineNo}`, payload);
+    }
+    console.log("▶ 서버 응답:", res.data);
+  } catch (err) {
+    console.error("▶ 저장 중 오류:", err);
+  }
+
+
 
   await loadList();
   gvApi.applyTransaction({ add: [ newInputRow() ], addIndex: gvApi.getDisplayedRowCount() });
 }
 
+// 
 document.addEventListener("DOMContentLoaded", async () => {
   const columnDefs = [
     { headerName: "월", valueGetter: p => getMonthStr(p.data?.jrnDate), editable: false, flex: .5 },
@@ -277,8 +320,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       valueParser: p => toNumber(p.newValue),
       valueFormatter: p => p.value ? Number(p.value).toLocaleString() : ""
     },
-    { headerName: "일자", field: "jrnDate", flex: 1.2, editable: true,
-      valueFormatter: p => p.value || "" },
+    
     { headerName: "상태", field: "status", editable: false, flex: .8,
       cellRenderer: p => {
         const v = (p.value || "").toLowerCase();
@@ -291,8 +333,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   gvApi = agGrid.createGrid(document.querySelector("#generalVoucherGrid"), {
 	  columnDefs,
 	  rowData: [],
-	  pagination: true,
-	  paginationPageSize: 15,
+	  pagination: false,
+	
 	  defaultColDef: { resizable: true, filter: true },
 	  editType: 'fullRow',
 	  singleClickEdit: true,
@@ -301,7 +343,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	  // ✅ 차액행 전체 색상 처리
 	  getRowClass: (params) => params.data?._isDiffRow ? "row-diff" : null,
 
-	  onRowValueChanged: (ev) => { saveRow(ev.data); },
+	onCellValueChanged: (ev) => { saveRow(ev.data); },
 	  onGridReady: async () => {
 	    await loadList();
 	    gvApi.applyTransaction({ add: [ newInputRow() ], addIndex: gvApi.getDisplayedRowCount() });
@@ -309,6 +351,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 	});
   document.getElementById("btnSearch").addEventListener("click", loadFilteredList);
 });
+
+
+// 차액 토글
+
+document.getElementById("btnToggleDiff").addEventListener("click", () => {
+  showDiffRows = !showDiffRows;
+  loadList();
+});
+
 // === 거래처 모달 ===
 let businessGridApi = null;
 

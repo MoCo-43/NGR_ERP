@@ -11,4 +11,6 @@ public class Documents {
 	private String filePath;
 	private Date createAt;
 	private Long matNo;
+	private String imgPath;
+	private Date signDate;
 }

@@ -1,4 +1,4 @@
-package com.yedam.erp.web.ApiController;
+package com.yedam.erp.web.ApiController.hr;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

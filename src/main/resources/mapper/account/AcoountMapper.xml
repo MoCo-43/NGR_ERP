@@ -14,14 +14,10 @@
 		acct_hang,
 		acct_mok
 		FROM ACCOUNT
-		<where>
-			<if test="category != null and category != ''">
-				AND category LIKE '%' || #{category} || '%'
-			</if>
-		</where>
+		WHERE COMPANY_CODE = #{companyCode}
 	</select>
 
-	<update id="updateYN" parameterType="String">
+	<update id="updateYN">
 		UPDATE account
 		SET use_yn =
 		CASE use_yn
@@ -29,6 +25,7 @@
 		ELSE 'Y'
 		END
 		WHERE acct_code = #{acctCode}
+		AND COMPANY_CODE = #{companyCode}
 
 	</update>
 
@@ -36,9 +33,9 @@
 	<insert id="bulkInsert" parameterType="java.util.List">
 		INSERT ALL
 		<foreach collection="list" item="item">
-			INTO account (acct_code, acct_name, std_acct_name, category, use_yn)
+			INTO account (acct_code, acct_name, std_acct_name, category, use_yn, company_code)
 			VALUES (#{item.acctCode}, #{item.acctName}, #{item.stdAcctName},
-			#{item.category}, #{item.useYn})
+			#{item.category}, #{item.useYn},#{item.compnacyCode})
 		</foreach>
 		SELECT 1 FROM dual
 	</insert>
@@ -49,8 +46,9 @@
 		    ORDER_CODE, DEPT_CODE, CUS_CODE, BIZ_NO, CUS_NAME, VAT_TYPE,
 		    DUE_DATE, SUBTOTAL_AMT, VAT_AMT, TOTAL_AMT,
 		    PAY_METHOD, MEMO, AR_AP_ACCT, CASH_ACCOUNT,
-		    STATUS, CREATED_AT, UPDATED_AT
+		    STATUS, CREATED_AT, UPDATED_AT,POSTED_FLAG
     FROM INVOICE_HEADER
+    WHERE COMPANY_CODE = #{companyCode}
 	</select>
 
 

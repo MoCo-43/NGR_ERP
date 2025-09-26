@@ -27,16 +27,16 @@ public class AccountServiceImpl implements AccountService {
 	
 	// 계정과목 리스트
 	@Override
-	public List<accountVO> accountList(String category) {
-		return accmapper.selectAll(category);
+	public List<accountVO> accountList(Long comapanyCode) {
+		return accmapper.selectAll(comapanyCode);
 	}
 
 	
 	// 계정과목 사용토클
 	@Override
 	@Transactional
-	public int updateYN(String acctCode) {
-		return accmapper.updateYN(acctCode);
+	public int updateYN(String acctCode,Long comapanyCode) {
+		return accmapper.updateYN(acctCode, comapanyCode);
 	}
 
 	
@@ -70,8 +70,8 @@ public class AccountServiceImpl implements AccountService {
 
 	// 매출 매입전표 출력
 	@Override
-	public List<invoiceVO> selectInvoice() {
-		return accmapper.selectInvoice();
+	public List<invoiceVO> selectInvoice(Long companyCode) {
+		return accmapper.selectInvoice(companyCode);
 	}
 
 }

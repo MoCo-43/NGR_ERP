@@ -2,6 +2,7 @@ package com.yedam.erp.web.ApiController;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,16 +32,16 @@ public class AccountController {
 	
 	
 	@GetMapping("/list")
-	public List<accountVO> list(String category){
-		System.out.println(SessionUtil.companyId());
-		System.out.println(SessionUtil.empId());
-		return accountService.accountList(category);
+	public List<accountVO> list(Long companyCode){
+		companyCode = SessionUtil.companyId();
+		return accountService.accountList(companyCode);
 	}
 	
 	@Transactional
 	@PutMapping("/{acctCode}/useYN")
-	public int toggleUseYn(@PathVariable("acctCode")String acctCode) {
-		return accountService.updateYN(acctCode);
+	public int toggleUseYn(@PathVariable("acctCode")String acctCode,Long companyCode) {
+		companyCode = SessionUtil.companyId();
+		return accountService.updateYN(acctCode,companyCode);
 	}
 	
 	
@@ -57,8 +58,9 @@ public class AccountController {
 	}
 	
 	@GetMapping("/invoice")
-	public List<invoiceVO> list(){
-		return accountService.selectInvoice();
+	public List<invoiceVO> invoiceList(Long companyCode){
+		companyCode = SessionUtil.companyId();
+		return accountService.selectInvoice(companyCode);
 	}
 	
 	
@@ -81,10 +83,16 @@ public class AccountController {
     public void insertJournal(@RequestBody JournalVO vo) {
     	vo.setCompanyCode(SessionUtil.companyId());
         journalService.insertJournal(vo);
+    } 
+    
+    // 여러건 저장 (매출전표 -> 일반전표)
+    @PostMapping("/journalList")
+    public void insertJournal(@RequestBody List<JournalVO> journalList) {
+    	 Long companyId = SessionUtil.companyId();
+    	 journalList.forEach(vo -> vo.setCompanyCode(companyId));
+        journalService.insertJournalList(journalList);
     }
     
-    
-
     // 수정
     @PutMapping("/journal/{jrnCode}/{lineNo}")
     public int updateJournal(@RequestBody JournalVO vo, 
@@ -92,7 +100,25 @@ public class AccountController {
                                 @PathVariable Long lineNo) {
         vo.setJrnCode(jrnCode);
         vo.setLineNo(lineNo);
+        vo.setCompanyCode(SessionUtil.companyId()); 
+        System.out.println("컴패니아이디 : "+ vo.getCompanyCode());
         return journalService.updateJournal(vo);
+    }
+    
+
+
+    // 마감용 전표 리스트
+    @GetMapping("/journalClose")
+    public List<JournalVO> getJournalListClose() {
+        Long companyCode = SessionUtil.companyId();
+        return journalService.selectJournalListClose(companyCode);
+    }
+
+    // 마감용 전표 상세
+    @GetMapping("/journalClose/{jrnNo}")
+    public List<JournalVO> getJournalDetailClose(@PathVariable String jrnNo) {
+        Long companyCode = SessionUtil.companyId();
+        return journalService.selectJournalDetailClose(jrnNo, companyCode);
     }
 	
 }

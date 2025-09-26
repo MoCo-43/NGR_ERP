@@ -28,4 +28,6 @@ public class invoiceVO {
 	    private String status;        // 상태 (OPEN/CLOSED 등)
 	    private Date createdAt;       // 생성일
 	    private Date updatedAt;       // 수정일
+	    private String postedFlag;
+	    private Long companyCode;
 }

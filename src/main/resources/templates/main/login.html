@@ -61,10 +61,10 @@
       <!-- Naver CAPTCHA -->
       <div id="naver-captcha-section" class="input-field" style="display:none;">
         <div style="display: flex; align-items: center; justify-content: space-between;">
-          <img id="captchaImage" th:src="'data:image/png;base64,' + ${captchaImage}" alt="CAPTCHA" class="captcha-img" style="width: 150px; height: 50px;">
+          <img id="captchaImage" alt="CAPTCHA" class="captcha-img" style="width: 150px; height: 50px;">
           <button type="button" onclick="refreshCaptcha()" style="margin-left: 10px; padding: 5px 10px; font-size: 12px;">새로고침</button>
         </div>
-        <input type="hidden" name="captchaKey" th:value="${captchaKey}" id="captchaKey">
+        <input type="hidden" name="captchaKey" id="captchaKey">
         <input type="text" name="captchaValue" placeholder="보안문자 입력" style="margin-top: 10px;">
       </div>
 
@@ -73,7 +73,7 @@
 
     <div class="link-small">
       <a th:href="@{/findpw}">비밀번호 찾기</a> | 
-      <a th:href="@{/register}">회원가입</a> <!-- 회원가입 링크 수정 -->
+      <a th:href="@{/register}">회원가입</a>
     </div>
   </div>
 </div>
@@ -103,7 +103,13 @@
         if (role === 'ADMIN') {
           recaptchaSection.style.display = 'none';
           naverCaptchaSection.style.display = 'block';
-          refreshCaptcha();
+
+          // 관리자 클릭 시 한 번만 CAPTCHA 생성
+          if (!naverCaptchaSection.dataset.loaded) {
+            refreshCaptcha();
+            naverCaptchaSection.dataset.loaded = true;
+          }
+
         } else {
           recaptchaSection.style.display = 'block';
           naverCaptchaSection.style.display = 'none';
@@ -116,22 +122,21 @@
   });
 
   // Naver CAPTCHA 새로고침
-function refreshCaptcha() {
-  $.ajax({
-    url: '/refreshCaptcha', // 캡차 전용 컨트롤러 URL
-    method: 'GET',
-    success: function(response) {
-      // response가 이미 JSON으로 반환되므로 JSON.parse 불필요
-      $('#captchaKey').val(response.key);
-      $('#captchaImage').attr('src', 'data:image/png;base64,' + response.image);
-      $('input[name="captchaValue"]').val(''); // 입력 초기화
-    },
-    error: function(error) {
-      console.error("CAPTCHA 새로고침 실패:", error);
-      alert("CAPTCHA 새로고침에 실패했습니다.");
-    }
-  });
-}
+  function refreshCaptcha() {
+    $.ajax({
+      url: '/refreshCaptcha', // 캡차 전용 컨트롤러 URL
+      method: 'GET',
+      success: function(response) {
+        $('#captchaKey').val(response.key);
+        $('#captchaImage').attr('src', 'data:image/png;base64,' + response.image);
+        $('input[name="captchaValue"]').val(''); // 입력 초기화
+      },
+      error: function(error) {
+        console.error("CAPTCHA 새로고침 실패:", error);
+        alert("CAPTCHA 새로고침에 실패했습니다.");
+      }
+    });
+  }
 </script>
 </th:block>
 </body>

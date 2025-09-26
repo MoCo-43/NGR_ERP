@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class CustomerVO {
+    private Long companyCode;
     private Long cusNo;
     private String cusCode;
     private Long empNo;

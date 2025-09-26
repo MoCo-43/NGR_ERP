@@ -17,6 +17,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/subDetail").setViewName("main/subdetail");
 		registry.addViewController("/eContract").setViewName("main/eContract");
 		registry.addViewController("/findpw").setViewName("main/forgotpasword");
+		registry.addViewController("/subpay").setViewName("main/subpay");
 		// 영업
 
 		registry.addViewController("/vouchers").setViewName("account/list");
@@ -39,6 +40,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/taxInvoice").setViewName("account/taxInvoice");
 		registry.addViewController("/journal").setViewName("account/journal");
 		registry.addViewController("/close").setViewName("account/close");
+		registry.addViewController("/payment").setViewName("account/payment");
 		
 		// 재고
 		registry.addViewController("/stock").setViewName("index");
@@ -52,7 +54,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		 registry.addViewController("/dept").setViewName("hr/deptList");
 		 registry.addViewController("/allowcode").setViewName("hr/PayAllowCode");
 		 registry.addViewController("/deductcode").setViewName("hr/PayDeductCode");
-
+		 registry.addViewController("/payroll").setViewName("hr/payrollList");
 	}
 
 }

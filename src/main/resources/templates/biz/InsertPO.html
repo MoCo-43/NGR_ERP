@@ -119,7 +119,7 @@
                       data-bs-toggle="modal"
                       data-bs-target="#customermodal"
                     >
-                      🔍
+                      조회
                     </button>
                   </div>
                 </div>
@@ -317,18 +317,17 @@
             const gross = price * qty;
             return Math.max(gross - dc, 0);
           }
+
+          // 부가가치세 계산
           function calcVat(r) {
             const applyVat = getVal("bizType") === "VAT_INCLUDED";
             return applyVat ? Math.round(calcSupply(r) * VAT_RATE) : 0;
           }
+
+          // 숫자에 천 단위마다 쉼표
           function numberParser(p) {
             const n = Number(String(p.newValue || "").replace(/[, ]/g, ""));
             return isNaN(n) ? null : n;
-          }
-          function moneyFmt(p) {
-            const n = toNum(p.value);
-            if (n === 0) return "0";
-            return n ? n.toLocaleString("ko-KR") : "";
           }
           function updatePinned() {
             if (!gridApi) return;
@@ -378,7 +377,6 @@
               width: 110,
               type: "rightAligned",
               valueParser: numberParser,
-              valueFormatter: moneyFmt,
             },
             {
               headerName: "수량",
@@ -394,7 +392,6 @@
               width: 120,
               type: "rightAligned",
               valueGetter: (p) => calcSupply(p.data),
-              valueFormatter: moneyFmt,
             },
             {
               headerName: "부가가치세",
@@ -402,7 +399,6 @@
               width: 120,
               type: "rightAligned",
               valueGetter: (p) => calcVat(p.data),
-              valueFormatter: moneyFmt,
             },
             {
               headerName: "할인금액",
@@ -411,7 +407,6 @@
               width: 120,
               type: "rightAligned",
               valueParser: numberParser,
-              valueFormatter: moneyFmt,
             },
             {
               headerName: "총액",
@@ -419,7 +414,6 @@
               editable: false,
               width: 160,
               valueGetter: (p) => calcSupply(p.data) + calcVat(p.data),
-              valueFormatter: moneyFmt,
             },
             { headerName: "비고", field: "notes", editable: true, width: 160 },
           ];
@@ -476,11 +470,11 @@
           // ===== 등록 =====
           const submit = async () => {
             try {
-              // 1) 상세행 수집
+              // 1) 품목의 상세행 수집
               const details = [];
               gridApi.forEachNodeAfterFilterAndSort((n) => {
                 const r = n.data || {};
-                if (!r.productCode) return; // 공행 skip
+                if (!r.productCode) return; // 품목코드 필수
                 const supAmt = calcSupply(r);
                 const vatAmt = calcVat(r);
                 details.push({
@@ -492,6 +486,7 @@
                   vatAmt,
                   dPrdName: r.dPrdName,
                 });
+                console.log("상세행 dPrdName은 => ", r.details.dPrdName);
               });
               if (!details.length)
                 return alert("상세 품목을 1건 이상 입력하세요.");
@@ -519,7 +514,6 @@
                 poStart,
                 exDate,
                 poDate,
-                prdName: details[0].dPrdName,
                 totalPrice: totalSupply + totalVat,
                 payMethod: getVal("payMethod"),
                 notes: getVal("notes") || undefined,
@@ -534,6 +528,7 @@
               await axios.post("/api/biz/poinsert", payload, {
                 headers: { "Content-Type": "application/json" },
               });
+              console.log("poDetails의 품목들은 => ", payload.poDetails);
 
               alert("등록되었습니다.");
               resetAll();
@@ -577,10 +572,10 @@
 
           /*
 
-                ======================== 주문서조회 모달 ========================
+                        ======================== 주문서조회 모달 ========================
 
 
-                */
+                        */
           const poHistoryModalEl = document.getElementById("PoHistoryModal");
           let poHistoryGridApi;
           const poHistoryColumnDefs = [
@@ -592,13 +587,9 @@
               flex: 1,
               minWidth: 150,
             },
+            { headerName: "제품코드", field: "prdCode", width: 120 },
+            { headerName: "제품명", field: "prdName", width: 150 },
             { headerName: "담당자", field: "creater", width: 100 },
-            {
-              headerName: "대표 품목명",
-              field: "prdName",
-              flex: 1,
-              minWidth: 180,
-            },
             { headerName: "납기일자", field: "exDate", width: 120 },
             {
               headerName: "총액",
@@ -655,13 +646,16 @@
                 }
 
                 const newItems = selectedRows.map((row) => ({
-                  productCode: "",
-                  dPrdName: row.prdName,
-                  unitPrice: null,
-                  orderQty: null,
-                  dcPrice: null,
+                  prdCode: row.prdCode || "",
+                  prdName: row.prdName || "",
+                  unitPrice: row.unitPrice || null,
+
                   notes: `${row.poStart} 주문 건에서 가져옴`,
                 }));
+                console.log(
+                  "주문서건의 품목이름인 productName은 ==> ",
+                  newItems.productName
+                );
 
                 gridApi.applyTransaction({ add: newItems });
                 updatePinned();
@@ -677,10 +671,10 @@
           }
           /*
 
-                ======================== 품목코드 모달 ========================
+                        ======================== 품목코드 모달 ========================
 
 
-          */
+                  */
           const productModalEl = document.getElementById("productcodeModal");
           let productGridApi;
           const productColumnDefs = [
@@ -764,10 +758,10 @@
 
         /*
 
-                ======================== 거래처 모달 ========================
+                        ======================== 거래처 모달 ========================
 
 
-        */
+                */
         document.addEventListener("DOMContentLoaded", () => {
           const customerCodeModalEl = document.getElementById("customermodal");
           let customerCodeGridApi;
@@ -819,7 +813,8 @@
               customerCodeGridApi = p.api;
             },
           };
-          // 거래처 모달의 선택 버튼 클릭 이벤트
+
+          // 1) 거래처 선택 시 코드/이름 모두 세팅
           function assignCustomerToForm(row) {
             const cusNameEl = document.getElementById("cusName");
             const cusCodeEl = document.getElementById("cusCode");
@@ -827,6 +822,7 @@
             if (cusCodeEl) cusCodeEl.value = row.cusCode ?? "";
           }
 
+          // 거래처 모달의 선택 버튼 클릭 이벤트
           const importCustomerCodeBtn = document.getElementById("CstImportBtn");
           if (importCustomerCodeBtn) {
             importCustomerCodeBtn.addEventListener("click", () => {
@@ -847,10 +843,10 @@
         });
 
         /*
-======= ======= ======= 
-======= 임시조치 ======= 
-======= ======= ======= 
-        */
+        ======= ======= =======
+        ======= 임시조치 =======
+        ======= ======= =======
+                */
 
         // body에 강제 표시(z-index 문제 회피)
         ["productcodeModal", "customermodal", "PoHistoryModal"].forEach(
