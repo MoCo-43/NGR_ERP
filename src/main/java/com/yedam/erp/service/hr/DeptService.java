@@ -4,8 +4,8 @@ import java.util.List;
 import com.yedam.erp.vo.hr.DeptVO;
 
 public interface DeptService {
-	// 목록(검색: dept_code / dept_name / use_yn)
-	List<DeptVO> getDeptList(DeptVO param);
+	// 목록
+	List<DeptVO> getDeptList(Long companyCode);
 
 	// 단건
 	DeptVO getDept(String dept_code);

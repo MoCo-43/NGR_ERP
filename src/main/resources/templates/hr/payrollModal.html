@@ -1,0 +1,228 @@
+<!-- templates/hr/payrollDetailModal.html -->
+<div th:fragment="payrollDetailModal">
+  <div class="modal fade" id="payrollDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+
+        <!-- Header -->
+        <div class="modal-header">
+          <h5 class="modal-title title-highlight">
+            급여대장 상세
+            <small class="text-muted ms-2" id="pd-title-suffix"></small>
+          </h5>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success btn-sm" id="pd-btn-confirm">확정</button>
+            <button type="button" class="btn btn-danger btn-sm"  id="pd-btn-unconfirm">확정취소</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="pd-btn-pdf">PDF</button>
+            <button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal" aria-label="닫기">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+          <!-- 상단 기본정보 -->
+          <div class="card shadow-sm mb-3">
+            <div class="card-body py-3">
+              <div class="row g-3 small">
+                <div class="col-6 col-md-3"><b>귀속연월</b> : <span id="pd-yearMonth"></span></div>
+                <div class="col-6 col-md-3"><b>부서</b> : <span id="pd-deptName"></span></div>
+                <div class="col-6 col-md-3"><b>지급일</b> : <span id="pd-payDate"></span></div>
+                <div class="col-6 col-md-3"><b>상태</b> :
+                  <span id="pd-status-badge" class="fw-bold"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 사원별 상세 리스트 -->
+          <div class="card shadow-sm mb-3">
+            <div class="card-header py-2">
+              <h6 class="m-0 font-weight-bold text-primary">사원별 급여내역</h6>
+            </div>
+            <div class="card-body pt-2">
+              <div id="pd-grid" class="ag-theme-quartz" style="height: 28rem; width: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- 부서별 합계 -->
+          <div class="card shadow-sm">
+            <div class="card-header py-2">
+              <h6 class="m-0 font-weight-bold text-primary">부서 합계</h6>
+            </div>
+            <div class="card-body small">
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width:120px">구분</th>
+                      <th class="text-end">기본급합계</th>
+                      <th class="text-end">부양가족</th>
+                      <th class="text-end">식대</th>
+                      <th class="text-end">연차수당</th>
+                      <th class="text-end">소득세</th>
+                      <th class="text-end">주민세</th>
+                      <th class="text-end">국민연금</th>
+                      <th class="text-end">건강보험</th>
+                      <th class="text-end">고용보험</th>
+                      <th class="text-end">공제총액</th>
+                      <th class="text-end">실지급액</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th>총합계</th>
+                      <td class="text-end" id="sum-basePay">0</td>
+                      <td class="text-end" id="sum-familyAllow">0</td>
+                      <td class="text-end" id="sum-mealAllow">0</td>
+                      <td class="text-end" id="sum-annualAllow">0</td>
+                      <td class="text-end" id="sum-incomeTax">0</td>
+                      <td class="text-end" id="sum-localTax">0</td>
+                      <td class="text-end" id="sum-pension">0</td>
+                      <td class="text-end" id="sum-health">0</td>
+                      <td class="text-end" id="sum-employ">0</td>
+                      <td class="text-end" id="sum-totalDeduct">0</td>
+                      <td class="text-end" id="sum-netPay">0</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="text-muted mt-2">* 합계는 서버에서 전달된 값을 그대로 표기합니다.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Styles -->
+  <style>
+    #payrollDetailModal .title-highlight { color:#0d6efd; font-weight:800; }
+    #pd-status-badge.badge-draft   { color:#dc3545; }
+    #pd-status-badge.badge-confirm { color:#0d6efd; }
+    .ag-theme-quartz { --ag-row-height:42px; --ag-font-size:13px; }
+  </style>
+
+  <!-- Scripts -->
+  <script defer src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+  <script>
+  (function(){
+    const $ = (id)=>document.getElementById(id);
+    let gridApi = null;
+    let currentPayrollNo = null;
+
+    // grid
+    const columnDefs = [
+      { headerName:'사번',     field:'empId',      width:120 },
+      { headerName:'성명',     field:'empName',    width:120 },
+      { headerName:'직급',     field:'position',   width:110 },
+      { headerName:'기본급',   field:'basePay',    width:120, valueFormatter: nf },
+      { headerName:'부양가족', field:'familyAllow',width:110, valueFormatter: nf },
+      { headerName:'식대',     field:'mealAllow',  width:110, valueFormatter: nf },
+      { headerName:'연차수당', field:'annualAllow',width:110, valueFormatter: nf },
+      { headerName:'지급총액', field:'totalAllow', width:120, valueFormatter: nf },
+      { headerName:'소득세',   field:'incomeTax',  width:110, valueFormatter: nf },
+      { headerName:'주민세',   field:'localTax',   width:110, valueFormatter: nf },
+      { headerName:'국민연금', field:'pension',    width:110, valueFormatter: nf },
+      { headerName:'건강보험', field:'health',     width:110, valueFormatter: nf },
+      { headerName:'고용보험', field:'employ',     width:110, valueFormatter: nf },
+      { headerName:'공제총액', field:'totalDeduct',width:120, valueFormatter: nf },
+      { headerName:'실지급액', field:'netPay',     width:130, valueFormatter: nf }
+    ];
+    const gridOptions = {
+      columnDefs,
+      rowData: [],
+      pagination:true, paginationPageSize:10,
+      defaultColDef:{ sortable:true, resizable:true, suppressMenu:true }
+    };
+
+    function ensureGrid(){
+      if(gridApi) return;
+      const gridDiv = $('pd-grid');
+      if(window.agGrid?.createGrid){
+        gridApi = agGrid.createGrid(gridDiv, gridOptions);
+      }else{
+        new agGrid.Grid(gridDiv, gridOptions); gridApi = gridOptions.api;
+      }
+    }
+
+    function nf(p){ const v = Number(p.value||0); return v.toLocaleString(); }
+    function fmtDate(s){ return s ? String(s).slice(0,10) : ''; }
+
+    async function loadAll(payrollNo){
+      currentPayrollNo = payrollNo;
+      // 마스터
+      const { data: master } = await axios.get(`/api/hr/payroll/${payrollNo}`);
+      $('pd-title-suffix').textContent = `#${master.payrollNo}`;
+      $('pd-yearMonth').textContent = master.yearMonth || '';
+      $('pd-deptName').textContent  = master.deptName  || master.deptCode || '';
+      $('pd-payDate').textContent   = fmtDate(master.payDate);
+      setStatus(master.status);
+
+      // 사원별 상세
+      const { data: rows } = await axios.get(`/api/hr/payroll/${payrollNo}/summary`);
+      ensureGrid();
+      if(gridApi?.setGridOption) gridApi.setGridOption('rowData', rows||[]);
+      else gridApi?.setRowData(rows||[]);
+
+      // 부서 합계
+      const { data: sum } = await axios.get(`/api/hr/payroll/${payrollNo}/dept-sum`);
+      // 아래 키는 프로젝트 실제 컬럼명에 맞춰 자유롭게 바꿔도 됨(예시는 일단 기본/대표 항목)
+      setSum('sum-basePay',     sum?.totalBasePay);
+      setSum('sum-familyAllow', sum?.sumFamilyAllow);
+      setSum('sum-mealAllow',   sum?.sumMealAllow);
+      setSum('sum-annualAllow', sum?.sumAnnualAllow);
+      setSum('sum-incomeTax',   sum?.sumIncomeTax);
+      setSum('sum-localTax',    sum?.sumLocalTax);
+      setSum('sum-pension',     sum?.sumPension);
+      setSum('sum-health',      sum?.sumHealth);
+      setSum('sum-employ',      sum?.sumEmploy);
+      setSum('sum-totalDeduct', sum?.sumDeduct || sum?.totalDeduct);
+      setSum('sum-netPay',      sum?.totalNetPay);
+    }
+
+    function setSum(id, v){ const el=$(id); if(el) el.textContent = Number(v||0).toLocaleString(); }
+
+    function setStatus(status){
+      const el = $('pd-status-badge');
+      el.textContent = status==='CONFIRMED' ? '확정' : '대기';
+      el.className = status==='CONFIRMED' ? 'badge-confirm' : 'badge-draft';
+      $('pd-btn-confirm').disabled  = (status==='CONFIRMED');
+      $('pd-btn-unconfirm').disabled= (status!=='CONFIRMED');
+    }
+
+    async function confirmStatus(next){ // next: 'CONFIRMED' | 'DRAFT'
+      if(!currentPayrollNo) return;
+      await axios.patch(`/api/hr/payroll/${currentPayrollNo}/status`, { status: next });
+      // 재조회
+      const { data: master } = await axios.get(`/api/hr/payroll/${currentPayrollNo}`);
+      setStatus(master.status);
+      alert('상태가 변경되었습니다.');
+    }
+
+    // 버튼
+    document.addEventListener('click', (e)=>{
+      const t = e.target.closest('button');
+      if(!t) return;
+      if(t.id==='pd-btn-confirm'){ confirmStatus('CONFIRMED'); }
+      if(t.id==='pd-btn-unconfirm'){ confirmStatus('DRAFT'); }
+      if(t.id==='pd-btn-pdf'){ alert('PDF 출력은 이후에 연결할게요!'); }
+    });
+
+    // 공개 API
+    window.PayrollDetail = {
+      open: async (payrollNo) => {
+        await loadAll(payrollNo);
+        (bootstrap.Modal.getInstance($('#payrollDetailModal')) || new bootstrap.Modal($('#payrollDetailModal'))).show();
+      }
+    };
+  })();
+  </script>
+</div>

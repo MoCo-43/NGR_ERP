@@ -13,39 +13,35 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class PayAllowCodeServiceImpl implements PayAllowCodeService {
 
     private final PayAllowCodeMapper mapper;
 
     @Override
-    public List<PayAllowCodeVO> getList(PayAllowCodeVO param) {
-        return mapper.selectPayAllowList(param);
+    public List<PayAllowCodeVO> getAllowList(Long companyCode) {
+        return mapper.selectAllowList(companyCode);
     }
 
     @Override
-    public PayAllowCodeVO get(String allowCode) {
-        return mapper.selectPayAllow(allowCode);
-    }
-
-    @Override
-    @Transactional
-    public boolean insert(PayAllowCodeVO vo) {
-        return mapper.insertPayAllow(vo) == 1;
+    public PayAllowCodeVO getAllow(PayAllowCodeVO vo) {
+        return mapper.selectAllow(vo);
     }
 
     @Override
     @Transactional
-    public boolean update(PayAllowCodeVO vo) {
-        return mapper.updatePayAllow(vo) == 1;
+    public int addAllow(PayAllowCodeVO vo) {
+        return mapper.insertAllow(vo);
     }
 
     @Override
     @Transactional
-    public boolean changeUseYn(String allowCode, String useYn) {
-        PayAllowCodeVO vo = new PayAllowCodeVO();
-        vo.setAllowCode(allowCode);
-        vo.setUseYn(useYn);
-        return mapper.updateUseYn(vo) == 1;
+    public int editAllow(PayAllowCodeVO vo) {
+        return mapper.updateAllow(vo);
     }
+
+	@Override
+	@Transactional
+	public int changeUseYn(PayAllowCodeVO vo) {
+	    return mapper.updateUseYn(vo);
+	}
 }
