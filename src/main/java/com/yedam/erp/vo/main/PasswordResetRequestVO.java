@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class PasswordResetRequestVO {
     private String empId;
-    private Long matNo; // loginId -> empId
+    private String comCode; // loginId -> empId
 }

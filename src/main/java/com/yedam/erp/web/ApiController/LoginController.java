@@ -67,13 +67,13 @@ public class LoginController {
      */
     @PostMapping("/findpw")
     public String handleForgotPassword(
-        @RequestParam("matNo") Long matNo, // 파라미터를 Long 타입의 matNo로 받습니다.
+        @RequestParam("comCode") String comCode, // 파라미터를 Long 타입의 matNo로 받습니다.
         @RequestParam("empId") String empId,
         RedirectAttributes redirectAttributes) {
 
         // 1. DTO 객체 생성 및 데이터 설정
         PasswordResetRequestVO requestDto = new PasswordResetRequestVO();
-        requestDto.setMatNo(matNo);
+        requestDto.setComCode(comCode);
         requestDto.setEmpId(empId);
         
         // 2. UserService 호출하여 SMS 발송 로직 실행

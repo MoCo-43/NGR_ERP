@@ -50,17 +50,4 @@
         WHERE
             com_code = #{comCode}
     </select>
-
-    <select id="findByMatNo" parameterType="long" resultType="com.yedam.erp.vo.main.CompanyVO">
-        SELECT
-            mat_no,
-            ceo,
-            comp_name,
-            mat_mail,
-            com_code
-        FROM
-            company
-        WHERE
-            mat_no = #{matNo}
-    </select>
 </mapper>
