@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.stock.StockMapper;
 import com.yedam.erp.service.stock.StockService;
+import com.yedam.erp.vo.Biz.CustomerVO;
+import com.yedam.erp.vo.main.CompanyVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
@@ -76,6 +78,20 @@ public class StockImpl implements StockService{
 	public OrderVO selectOrderByXpCode(String str) {
 		// TODO Auto-generated method stub
 		return mapper.selectOrderByXpCode(str);
+	}
+
+
+	@Override
+	public CompanyVO selectComp(Long compId) {
+		// TODO Auto-generated method stub
+		return mapper.selectComp(compId);
+	}
+
+
+	@Override
+	public CustomerVO selectCutomer(String cusCode) {
+		// TODO Auto-generated method stub
+		return mapper.selectCutomer(cusCode);
 	}
 
 }

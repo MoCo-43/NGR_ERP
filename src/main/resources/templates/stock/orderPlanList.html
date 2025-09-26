@@ -218,6 +218,7 @@ const orderPlansGrid = initGrid({
         { headerName: "세율유형", field: "taxType" },
         {  field: "orderSheetLink",
             cellRenderer: (params) => {
+            	const businessCode = params.data.businessCode;
                 const xpCode = params.data.xpCode;
                 const hasOrderSheet = params.data.orderSheetLink;
                 const button = document.createElement('button');
@@ -228,10 +229,11 @@ const orderPlansGrid = initGrid({
                     button.classList.add('btn-primary');
                     //button.disabled = false;
                     button.addEventListener('click', async () => {
+                    	console.log(businessCode);
                         try {
                         	 // 서버에서 PDF URL 확인 (또는 바로 xpCode 기반 URL 생성)
                             // 여기서는 바로 PDF URL 생성 예제
-                            const pdfUrl = `/api/v1/stock/orderSheet/${xpCode}`;
+                            const pdfUrl = `/api/v1/stock/orderSheet/${xpCode}/${businessCode}`;
 
                             // iframe src에 PDF 로드
                             const iframe = document.querySelector('#orderModal iframe#pdfFrame');
