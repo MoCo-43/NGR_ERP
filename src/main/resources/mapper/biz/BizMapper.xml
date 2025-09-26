@@ -38,6 +38,15 @@ ORDER BY
     p.PO_START DESC
 </select>
 
+
+<!-- 주문서 등록 -->
+<!-- 주문서 id 생성 -->
+<!-- <insert id="insertPO" parameterType="PoInsertVO">
+  <selectKey keyProperty="poId" resultType="long" order="BEFORE">
+    SELECT PO_ID_SEQ.NEXTVAL FROM DUAL
+  </selectKey> -->
+
+
 <insert id="insertPO" parameterType="PoInsertVO">
   INSERT ALL
     INTO purchase_order (
