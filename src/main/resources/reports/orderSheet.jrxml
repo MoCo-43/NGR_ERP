@@ -377,7 +377,7 @@ ORDER BY od.OD_NO]]></query>
 			<element kind="textField" uuid="6f22b9dd-b594-4d9a-a24d-33a1968504b5" x="366" y="1" width="80" height="19" fontSize="7.0" bold="true" hTextAlign="Left" vTextAlign="Middle" style="hangle">
 				<expression><![CDATA[$F{taxType}]]></expression>
 			</element>
-			<element kind="textField" uuid="b56366a6-f3ef-4dfe-ba32-bf1fc413d50e" x="53" y="1" width="195" height="19" fontSize="7.0" hTextAlign="Center" vTextAlign="Middle">
+			<element kind="textField" uuid="b56366a6-f3ef-4dfe-ba32-bf1fc413d50e" x="53" y="1" width="197" height="19" fontSize="10.0" hTextAlign="Left" evaluationTime="Report" vTextAlign="Middle" style="hangle">
 				<expression><![CDATA[com.yedam.erp.service.JasperService.convertToKorean($V{totalSumAmt})]]></expression>
 			</element>
 			<box>
