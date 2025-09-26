@@ -23,28 +23,32 @@
         WHERE
             emp_id = #{empId}
 	</select>
- <select id="findByEmpIdAndMatNo" resultType="com.yedam.erp.vo.main.EmpLoginVO">
+ 
+    <select id="findByEmpIdAndComCode" resultType="com.yedam.erp.vo.main.EmpLoginVO">
         SELECT
-            emp_id_no,
-            emp_pw,
-            emp_id,
-            emp_no,
-            create_at,
-            is_used,
-            mat_no,
-            is_locked,
-            lock_until,
-            failed_login_att,
-            dept_code,
-            code_id,
-            two_step_method,
-            token,
-            emp_mobile
+            T1.emp_id_no,
+            T1.emp_pw,
+            T1.emp_id,
+            T1.emp_no,
+            T1.create_at,
+            T1.is_used,
+            T1.mat_no,
+            T1.is_locked,
+            T1.lock_until,
+            T1.failed_login_att,
+            T1.dept_code,
+            T1.code_id,
+            T1.two_step_method,
+            T1.token,
+            T1.emp_mobile
         FROM
-            emp_login
-        WHERE
-            emp_id = #{empId} AND mat_no = #{matNo}
-    </select>
+            emp_login T1
+        INNER JOIN
+            company T2 ON T1.mat_no = T2.mat_no  WHERE
+            T1.emp_id = #{empId} 
+        AND 
+            T2.com_code = #{comCode}  </select>
+    
     <insert id="insertVO">
     
     </insert>

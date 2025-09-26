@@ -16,7 +16,7 @@ import com.yedam.erp.mapper.main.EmpLoginMapper;
 import com.yedam.erp.vo.main.EmpLoginVO;
 import jakarta.servlet.http.HttpServletRequest;
 
-/**
+/**w
  * CustomAuthenticationProvider
  * - 사용자 인증 처리 (회사ID + 직원ID + 비밀번호 검증)
  */
@@ -37,15 +37,20 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         String empId = authentication.getName();
         String empPw = (String) authentication.getCredentials();
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-        String matNoStr = request.getParameter("matNo");
+        
+        // 요청 파라미터 이름을 "comCode"로 가져와 변수명을 comCodeStr로 사용 (변경)
+        String comCodeStr = request.getParameter("comCode"); 
 
-        if (matNoStr == null || matNoStr.isEmpty()) {
+        if (comCodeStr == null || comCodeStr.isEmpty()) {
             throw new BadCredentialsException("회사 아이디를 입력해주세요.");
         }
-        Long matNo = Long.parseLong(matNoStr);
+        
+        // String.parseLong(matNoStr) 대신, String 타입 변수 comCode에 대입 (문법 오류 수정 및 변수명 변경)
+        String comCode = comCodeStr; 
 
         // 2. DB 조회
-        EmpLoginVO userVO = empLoginMapper.findByEmpIdAndMatNo(empId, matNo);
+        // Mapper 메서드 이름도 comCode에 맞게 변경해야 합니다. (findByEmpIdAndMatNo -> findByEmpIdAndComCode) (변경)
+        EmpLoginVO userVO = empLoginMapper.findByEmpIdAndComCode(empId, comCode);
 
         // 3. 계정 검증
         if (userVO == null || !passwordEncoder.matches(empPw, userVO.getEmpPw())) {
@@ -56,14 +61,13 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         UserDetails userDetails = new CustomUserDetails(userVO);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
- //어떤 타입이든 허용
+
+    // 어떤 타입이든 허용
     @Override
     public boolean supports(Class<?> authentication) {
         return authentication.equals(UsernamePasswordAuthenticationToken.class);
     }
 }
-
-
 //
 //import java.util.ArrayList;
 //import java.util.List;
