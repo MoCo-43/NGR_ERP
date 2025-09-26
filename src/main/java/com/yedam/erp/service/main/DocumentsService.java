@@ -1,5 +1,5 @@
 package com.yedam.erp.service.main;
 
-public class RedisUtil {
+public class DocumentsService {
 
 }

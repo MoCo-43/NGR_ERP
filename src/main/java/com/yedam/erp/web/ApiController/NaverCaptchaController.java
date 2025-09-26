@@ -39,7 +39,7 @@ public class NaverCaptchaController {
                                   @RequestParam("captchaValue") String value,
                                   Model model) throws IOException {
         boolean isValid = naverCaptchaService.validateCaptcha(key, value);
-        model.addAttribute("captchaResult", isValid ? "CAPTCHA 검증 성공! ✅" : "CAPTCHA 검증 실패! ❌");
+        model.addAttribute("captchaResult", isValid ? "CAPTCHA 검증 성공! " : "CAPTCHA 검증 실패! ");
 
         // 새로운 CAPTCHA 생성
         String newCaptchaKey = naverCaptchaService.getCaptchaKey();

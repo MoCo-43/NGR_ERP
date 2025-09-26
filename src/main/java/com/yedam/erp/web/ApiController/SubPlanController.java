@@ -19,4 +19,4 @@ public class SubPlanController {
 	public List<SubPlanVO> subscribe(){
 		return service.selectSubPlan();//json반환
 	}
-}
+	}
