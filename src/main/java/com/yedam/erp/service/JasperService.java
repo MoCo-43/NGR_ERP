@@ -1,5 +1,6 @@
 package com.yedam.erp.service;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,15 +41,19 @@ public class JasperService {
 	        }
 	    }
 	 
-	 private String convertToKorean(long num) {
+	 public static String convertToKorean(BigDecimal num) {
 		    String[] han1 = {"", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"};
 		    String[] han2 = {"", "십", "백", "천"};
 		    String[] han3 = {"", "만", "억", "조"};
 
+		    System.out.println(num);
+		    
+		    
 		    StringBuilder result = new StringBuilder();
 		    String numStr = String.valueOf(num);
+		    System.out.println(numStr);
 		    int len = numStr.length();
-
+		    //System.out.println(len);
 		    int groupCount = 0;
 
 		    while (len > 0) {
