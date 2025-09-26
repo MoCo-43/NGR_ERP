@@ -10,10 +10,10 @@ import com.yedam.erp.vo.account.invoiceVO;
 public interface AccountService {
 	
 	// 계정과목 리스트
-	List<accountVO> accountList(String category);
+	List<accountVO> accountList(Long companyCode);
 	
 	//상태 변경
-	int updateYN(String acctCode);
+	int updateYN(String acctCode,Long comapanyCode);
 	
 	//엑셀 업로드
 	List<accountVO> parseExcel(MultipartFile file) throws Exception;
@@ -22,6 +22,6 @@ public interface AccountService {
 	public int bulkInsert(List<accountVO> accounts);
 	
 	//매입 매출전표 
-	List<invoiceVO> selectInvoice();
+	List<invoiceVO> selectInvoice(Long companyCode);
 	
 }

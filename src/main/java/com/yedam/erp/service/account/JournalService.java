@@ -24,4 +24,11 @@ public interface JournalService {
 
     // 전체 조회
     List<JournalVO> selectJournalList(Long companyCode);
+    
+
+    // 마감용 전표 리스트
+    List<JournalVO> selectJournalListClose(Long companyCode);
+
+    // 마감용 전표 상세
+    List<JournalVO> selectJournalDetailClose(String jrnNo, Long companyCode);
 }

@@ -41,80 +41,180 @@
 		C.CUS_NAME, -- 거래처명
 		J.CLOSE_NO
 		FROM JOURNAL J
-		LEFT JOIN ACCOUNT A
+		LEFT JOIN
+		ACCOUNT A
 		ON J.ACCT_CODE = A.ACCT_CODE
 		LEFT JOIN CUSTOMER C
-		ON J.CUS_CODE = C.CUS_CODE
-		WHERE COMPANY_CODE = #{companyCode}
+		ON J.CUS_CODE
+		= C.CUS_CODE
+		WHERE J.COMPANY_CODE = #{companyCode}
 		ORDER BY CREATED_AT ASC, LINE_NO ASC
 	</select>
 
 	<!-- 전표번호 생성 (DB 함수 호출) -->
 	<select id="selectNextJrnNo" resultType="string">
-		SELECT FN_NEXT_JRN_NO(SYSDATE) FROM dual
+		SELECT
+		FN_NEXT_JRN_NO(SYSDATE) FROM dual
 	</select>
-	
-<insert id="insertJournal" parameterType="com.yedam.erp.vo.account.JournalVO">
-    
-    <!-- ✅ 시퀀스로 JRN_CODE 먼저 채워줌 -->
-    <selectKey keyProperty="jrnCode" order="BEFORE" resultType="string">
-        SELECT 'J-' || TO_CHAR(SYSDATE, 'YYYYMMDD') || '-' ||
-               LPAD(SEQ_JRN_CODE.NEXTVAL, 3, '0')
-        FROM dual
-    </selectKey>
 
-    INSERT INTO JOURNAL (
-        JRN_CODE,    -- ✅ 시퀀스로 생성된 값
-        JRN_NO,
-        LINE_NO,
-        JRN_DATE,
-        ACCT_CODE,
-        DC_TYPE,
-        AMOUNT,
-        REMARKS,
-        STATUS,
-        CREATED_AT,
-        CREATED_BY,
-        CUS_CODE,
-        CLOSE_NO,
-        COMPANY_CODE
-        
-    )
-    VALUES (
-        #{jrnCode},  -- ✅ selectKey로 먼저 채워진 값
-        #{jrnNo},  
-        NVL((SELECT MAX(LINE_NO) FROM JOURNAL WHERE JRN_NO = #{jrnNo}), 0) + 1,
-        #{jrnDate},
-        #{acctCode},
-        #{dcType},
-        #{amount},
-        #{remarks},
-        'open',
-        SYSDATE,
-        #{createdBy},
-        #{cusCode},
-        #{closeNo},
-        #{companyCode}
-    )
-</insert>
+	<insert id="insertJournal"
+		parameterType="com.yedam.erp.vo.account.JournalVO">
+
+		<!-- ✅ 시퀀스로 JRN_CODE 먼저 채워줌 -->
+		<selectKey keyProperty="jrnCode" order="BEFORE"
+			resultType="string">
+			SELECT 'J-' || TO_CHAR(SYSDATE, 'YYYYMMDD') || '-' ||
+			LPAD(SEQ_JRN_CODE.NEXTVAL, 3, '0')
+			FROM dual
+		</selectKey>
+
+		INSERT INTO JOURNAL (
+		JRN_CODE, -- ✅ 시퀀스로 생성된 값
+		JRN_NO,
+		LINE_NO,
+		JRN_DATE,
+		ACCT_CODE,
+		DC_TYPE,
+		AMOUNT,
+		REMARKS,
+		STATUS,
+		CREATED_AT,
+		CREATED_BY,
+		CUS_CODE,
+		CLOSE_NO,
+		COMPANY_CODE
+		)
+		VALUES (
+		#{jrnCode}, -- ✅ selectKey로 먼저 채워진 값
+		#{jrnNo},
+		NVL((SELECT MAX(LINE_NO) FROM JOURNAL WHERE JRN_NO = #{jrnNo}), 0) + 1,
+		#{jrnDate},
+		#{acctCode},
+		#{dcType},
+		#{amount},
+		#{remarks},
+		'open',
+		SYSDATE,
+		#{createdBy},
+		#{cusCode},
+		#{closeNo},
+		#{companyCode}
+		)
+	</insert>
 
 
 	<!-- 일반 전표 UPDATE -->
 	<update id="updateJournal"
 		parameterType="com.yedam.erp.vo.account.JournalVO">
 		UPDATE JOURNAL
-		SET 
-		  ACCT_CODE = #{acctCode}
+		SET
+		ACCT_CODE = #{acctCode}
 		, DC_TYPE = #{dcType}
 		, AMOUNT = #{amount}
 		, REMARKS = #{remarks}
 		, STATUS = #{status}
 		, CUS_CODE = #{cusCode}
-		, CLOSE_NO = #{closeNo}
+		, CLOSE_NO =
+		#{closeNo}
 		, CREATED_BY = #{createdBy}  <!-- 필요하다면 유지 -->
-		 WHERE JRN_CODE = #{jrnCode}
-    	AND LINE_NO = #{lineNo}
+		WHERE JRN_CODE = #{jrnCode}
+		AND LINE_NO = #{lineNo}
+		AND COMPANY_CODE = #{companyCode}
 	</update>
 
+
+<insert id="insertJournalList"
+		parameterType="com.yedam.erp.vo.account.JournalVO">
+
+		<!-- ✅ 시퀀스로 JRN_CODE 먼저 채워줌 -->
+		<selectKey keyProperty="jrnCode" order="BEFORE"
+			resultType="string">
+			SELECT 'J-' || TO_CHAR(SYSDATE, 'YYYYMMDD') || '-' ||
+			LPAD(SEQ_JRN_CODE.NEXTVAL, 3, '0')
+			FROM dual
+		</selectKey>
+
+		INSERT INTO JOURNAL (
+		JRN_CODE, -- ✅ 시퀀스로 생성된 값
+		JRN_NO,
+		LINE_NO,
+		JRN_DATE,
+		ACCT_CODE,
+		DC_TYPE,
+		AMOUNT,
+		REMARKS,
+		STATUS,
+		CREATED_AT,
+		CREATED_BY,
+		CUS_CODE,
+		CLOSE_NO,
+		COMPANY_CODE
+
+		)
+		VALUES (
+		#{jrnCode}, -- ✅ selectKey로 먼저 채워진 값
+		#{jrnNo},
+		NVL((SELECT MAX(LINE_NO) FROM JOURNAL WHERE JRN_NO = #{jrnNo}), 0) + 1,
+		#{jrnDate},
+		#{acctCode},
+		#{dcType},
+		#{amount},
+		#{remarks},
+		'open',
+		SYSDATE,
+		#{createdBy},
+		#{cusCode},
+		#{closeNo},
+		#{companyCode}
+		)
+	</insert>
+	
+	<!-- 전표 마감 리스트 -->
+  <select id="selectJournalListClose" parameterType="long" resultType="com.yedam.erp.vo.account.JournalNamesVO">
+    SELECT 
+        j.jrn_no,
+        c.CUS_NAME,
+        j.dc_type,
+        MIN(j.jrn_date)   AS jrn_date,   -- 전표일자 (가장 빠른 날짜 기준)
+        MIN(j.remarks)    AS remarks,    -- 대표 적요 (첫 행 기준)
+        MIN(j.created_by) AS writer,     -- 작성자
+        MIN(j.status)     AS status,     -- 전표 상태
+        COUNT(*)        AS line_count, -- 라인 수
+        SUM(CASE WHEN j.dc_type = 'D' THEN j.amount ELSE 0 END) AS total_debit,
+        SUM(CASE WHEN j.dc_type = 'C' THEN j.amount ELSE 0 END) AS total_credit
+    FROM journal j LEFT JOIN CUSTOMER C
+		ON J.CUS_CODE
+		= C.CUS_CODE
+    WHERE j.company_code = #{companyCode}
+    GROUP BY j.jrn_no, c.CUS_NAME,j.dc_type
+    ORDER BY j.jrn_no DESC
+  </select>
+
+
+   <!-- 전표 상세 (라인 역할) -->
+  <select id="selectJournalDetailClose" parameterType="map" resultType="com.yedam.erp.vo.account.JournalNamesVO">
+    SELECT 
+        j.jrn_no,
+        j.line_no,
+        j.jrn_date,
+        j.acct_code,
+        a.acct_name,
+        j.dc_type,
+  		CASE WHEN j.dc_type = 'D' THEN j.amount END AS debit,
+     	CASE WHEN j.dc_type = 'C' THEN j.amount END AS credit,
+        j.remarks,
+        j.cus_code,
+        c.cus_name,
+        j.status
+    FROM journal j LEFT JOIN CUSTOMER c
+		ON j.CUS_CODE
+		= c.CUS_CODE
+		LEFT JOIN
+		ACCOUNT A
+		ON j.ACCT_CODE = a.ACCT_CODE
+    WHERE j.jrn_no = #{jrnNo}
+    AND j.company_code = #{companyCode}
+    ORDER BY j.line_no
+  </select>
 
 </mapper>
