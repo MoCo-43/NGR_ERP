@@ -6,8 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.yedam.erp.mapper.Biz.BizMapper;
+import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.Biz.BizService;
 import com.yedam.erp.vo.Biz.CustomerVO;
+import com.yedam.erp.vo.Biz.JoinPoVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
@@ -20,14 +22,14 @@ public class BizServiceImpl implements BizService {
 
 	// 테스트 전체조회
 	@Override
-	public List<PurchaseOrderVO> getAllPO() {
-		return bizMapper.getAllPO();
+	public List<PurchaseOrderVO> getAllPO(Long companyCode) {
+		return bizMapper.getAllPO(companyCode);
 	}
 
 	// 주문서 전체조회
 	@Override
-	public List<PurchaseOrderVO> selectPO() {
-		return bizMapper.selectPO();
+	public List<JoinPoVO> selectPO(Long companyCode) {
+		return bizMapper.selectPO(companyCode);
 	}
 
 	// 주문서 입력
@@ -38,17 +40,17 @@ public class BizServiceImpl implements BizService {
 
 	// 주문서 이력 조회
 	@Override
-	public List<PurchaseOrderVO> getPOHistory() {
-		return bizMapper.getPOHistory();
+	public List<PurchaseOrderVO> getPOHistory(Long companyCode) {
+		return bizMapper.getPOHistory(companyCode);
 	}
 	// 품목 조회
 	@Override
-	public List<ProductCodeVO> getProducts() {
-		return bizMapper.getProducts();
+	public List<ProductCodeVO> getProducts(Long companyCode) {
+		return bizMapper.getProducts(companyCode);
 	}
 	// 거래처 조회
 	@Override
-	public List<CustomerVO> getCustomers() {
-		return bizMapper.getCustomers();
+	public List<CustomerVO> getCustomers(Long companyCode) {
+		return bizMapper.getCustomers(companyCode);
 	}
 }

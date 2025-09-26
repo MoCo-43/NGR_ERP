@@ -12,7 +12,7 @@
 </select>
 
 <!-- 주문서 조회 -->
-<select id="selectPO" resultType="PurchaseOrderVO">
+<select id="selectPO" resultType="JoinPoVO" parameterType="long">
 SELECT
     p.PO_START,
     c.CUS_NAME,
@@ -20,7 +20,7 @@ SELECT
     CASE
         WHEN pd_counts.cnt > 1 THEN pod.D_PRD_NAME || ' 외 ' || (pd_counts.cnt - 1) || '건'
         ELSE pod.D_PRD_NAME
-    END AS PRD_NAME,
+    END AS D_PRD_NAME,
     c.BIZ_TYPE,
     p.TOTAL_PRICE,
     p.PO_STATUS,
@@ -35,57 +35,56 @@ LEFT JOIN
     (SELECT PO_ID, COUNT(*) as cnt FROM PO_DETAIL GROUP BY PO_ID) pd_counts
 ON
     p.PO_ID = pd_counts.PO_ID
-WHERE p.COMPANY_CODE = '1001'
+WHERE p.COMPANY_CODE = #{companyCode}
 ORDER BY
     p.PO_START DESC
-    
-
 </select>
 
 
 <!-- 주문서 등록 -->
-<!-- 주문서 id 생성 -->
 <insert id="insertPO" parameterType="PoInsertVO">
   INSERT ALL
     INTO purchase_order (
-      PO_ID, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
-      PRD_NAME, TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
+      PO_ID, COMPANY_CODE, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
+      TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
     )
     VALUES (
-      PO_ID_SEQ.NEXTVAL,
+      PO_ID_SEQ.NEXTVAL, #{companyCode},
       #{cusCode}, #{cusName}, #{creater}, #{poStart}, #{exDate}, #{poDate},
-      #{prdName}, #{totalPrice}, '작성완료',
+      #{totalPrice}, '작성완료',
       #{payMethod}, #{notes}, #{vatType}, #{poType}
     )
     
     <foreach collection="poDetails" item="pod">
       INTO po_detail (
-        POD_ID, PO_ID, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
+        POD_ID, PO_ID, COMPANY_CODE, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
         DC_PRICE, SUP_AMT, VAT_AMT, D_PRD_NAME
       )
       VALUES (
         POD_ID_SEQ.NEXTVAL,
         PO_ID_SEQ.CURRVAL,
+        #{companyCode},
         #{pod.productCode}, #{pod.orderQty}, #{pod.unitPrice},
         #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.dPrdName}
       )
     </foreach>
-    
   SELECT 1 FROM DUAL
 </insert>
 
 
 <!-- 주문서 이력 조회 -->
 <select id="getPOHistory" resultType="PoHistoryVO">
-SELECT po.PO_START, po.CUS_NAME, po.creater, po.PRD_NAME, po.EX_DATE, pd.UNIT_PRICE
+SELECT po.PO_START, po.CUS_NAME, po.creater, po.EX_DATE, pd.UNIT_PRICE, pd.D_PRD_NAME
 FROM PURCHASE_ORDER po
 LEFT JOIN PO_DETAIL pd ON pd.PO_ID = po.PO_ID
+WHERE po.COMPANY_CODE = #{companyCode}
 </select>
 
 <!-- 품목조회 -->
 <select id="getProducts" resultType="ProductCodeVO">
   SELECT PRODUCT_CODE, PRODUCT_NAME
   FROM PRODUCT
+  WHERE COMPANY_CODE = #{companyCode}
 </select>
 
 <!-- 거래처 조회 -->
@@ -93,5 +92,14 @@ LEFT JOIN PO_DETAIL pd ON pd.PO_ID = po.PO_ID
   SELECT c.CUS_CODE, c.CUS_NAME, cm.CREDIT_GRADE, cm.LEFT_PRICE
   FROM CUSTOMER c
   LEFT JOIN CREDIT_MASTER cm ON c.CUS_NO = cm.CUS_NO
+  WHERE c.COMPANY_CODE = #{companyCode}
   </select>
+
+  <!-- 출하지시서 조회 -->
+  <select id="selectDo" resultType="DoDetailVO" parameterType="Long">
+SELECT do.DO_NO, do.DO_CODE, do.CUS_CODE, ddo.PRODUCT_CODE, do.TOTAL_QTY, do.EX_DATE, do.DO_CRATED, do.DO_STATUS
+FROM DELIVERY_ORDER do
+JOIN DO_DETAIL ddo ON ddo.DO_NO = do.DO_NO
+WHERE do.COMPANY_CODE = #{companyCode} AND ddo.COMPANY_CODE = #{companyCode}
+</select>
 </mapper>

@@ -22,8 +22,7 @@ public class PoInsertVO{
     private LocalDate exDate;
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate poDate;
-
-    private String prdName;
+    
     private Long totalPrice;
     private String payMethod; // 현금/어음
     private String notes;

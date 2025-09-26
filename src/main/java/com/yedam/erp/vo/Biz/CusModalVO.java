@@ -4,6 +4,7 @@ import lombok.Data;
 @Data
 public class CusModalVO {
 
+  private Long companyCode;
   /** 고객 코드 */
   private String cusCode;
   /** 고객명 */
