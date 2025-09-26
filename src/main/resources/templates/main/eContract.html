@@ -70,11 +70,18 @@
             font-size: 16px;
             font-weight: 500;
             transition: background-color 0.2s;
+            margin: 5px;
         }
         .btn-primary { background-color: #4d341e; color: white; }
-        .btn-primary:hover { background-color: #3c2a1a; }
+        .btn-primary:hover:not(:disabled) { background-color: #3c2a1a; }
         .btn-reset { background: #e74c3c; color: white; }
         .btn-save { background: #2ecc71; color: white; }
+        
+        /* 서명 완료 상태 버튼 스타일 */
+        .btn-signed { background-color: #3498db; color: white; cursor: default; }
+        .btn-signed:hover { background-color: #3498db; }
+        .btn-primary:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
         .btn-container { margin-top: 15px; }
 
 
@@ -124,17 +131,35 @@
             height: 200px;
             cursor: crosshair;
         }
-        .signed-info {
-            margin-top: 10px;
-            font-size: 0.9em;
-            color: #333;
+        /* 서명 정보 표시 및 삽입될 이미지 스타일 */
+        #signature-display-area {
+            margin: 20px 0;
+            min-height: 50px; /* 서명이 없을 때도 공간 확보 */
+            border: 1px dashed #ccc;
+            padding: 10px;
+            text-align: left;
+            position: relative;
+            background-color: #f9f9f9;
+        }
+        #signature-display-area img {
+            max-height: 50px;
+            vertical-align: middle;
+            margin-right: 15px;
+        }
+        .signed-status {
+            font-size: 1em;
+            color: #27ae60;
             font-weight: bold;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .placeholder {
+            color: #7f8c8d;
         }
     </style>
 </head>
 <body>
   <div>
-  <!-- 이미지 만들고 싶은 계약서 -->
     <div class="card" id="contract-document">
         <main>
             <h1>NGR_ERP 서비스 이용계약서</h1>
@@ -233,7 +258,10 @@
         
         <div class="signature-section">
             <p>상기 계약 내용을 모두 확인하였으며, 이에 동의합니다.</p>
-            <button id="open-modal-btn" class="btn btn-primary">계약 내용에 동의하고 서명하기</button>
+
+            <div class="btn-container">
+                <button id="open-modal-btn" class="btn btn-primary">계약 내용에 동의하고 서명하기</button>
+            </div>
         </div>
     </div>
   </div>
@@ -244,22 +272,22 @@
         <h2>전자서명</h2>
         <p>계약 내용을 확인하였으며, 아래 영역에 서명해주세요.</p>
         <div class="signature-container">
-            <canvas id="signature-pad"></canvas>
+            <canvas id="signature-pad"></canvas> 
             <div class="btn-container">
                 <button id="clear-signature" class="btn btn-reset">다시 서명</button>
                 <button id="save-signature" class="btn btn-save">서명 완료</button>
             </div>
-            <div class="signed-info" id="signed-info"></div>
         </div>
     </div>
   </div>
 
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.0/dist/signature_pad.umd.min.js"></script>
-<!-- html pdf변환 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
+    // 문서 번호를 고정값으로 설정 (실제로는 서버의 템플릿 엔진을 통해 전달받아야 합니다.)
+    const DOC_NO = 1234; 
+    
     // 모달 관련 요소
     const modal = document.getElementById('signature-modal');
     const openModalBtn = document.getElementById('open-modal-btn');
@@ -268,11 +296,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 서명패드 관련 요소
     const canvas = document.getElementById('signature-pad');
     const signaturePad = new SignaturePad(canvas, {
-        backgroundColor: 'rgb(255, 255, 255)'
+        backgroundColor: 'rgb(255, 255, 255)',
+        penColor: 'rgb(0, 0, 0)'
     });
     const clearBtn = document.getElementById('clear-signature');
     const saveBtn = document.getElementById('save-signature');
-    const signedInfo = document.getElementById('signed-info');
+    
+    // 서명 완료 상태 표시 영역
+    const signatureDisplayArea = document.getElementById('signature-display-area');
 
     // 캔버스 크기 조정 함수
     function resizeCanvas() {
@@ -280,29 +311,25 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.width = canvas.offsetWidth * ratio;
         canvas.height = canvas.offsetHeight * ratio;
         canvas.getContext("2d").scale(ratio, ratio);
-        signaturePad.clear(); // 리사이즈 후 패드 초기화
+        signaturePad.clear();
     }
-
-    // 창 크기가 변경될 때마다 캔버스 크기 조정
     window.addEventListener("resize", resizeCanvas);
 
 
     // 모달 열기
     openModalBtn.addEventListener('click', () => {
+        if (openModalBtn.disabled) return; // 이미 서명 완료되었으면 열지 않음
         modal.style.display = 'flex';
-        // 모달이 표시된 후 캔버스 크기를 재조정해야 정확한 크기를 계산할 수 있습니다.
         resizeCanvas(); 
     });
 
     // 모달 닫기
     function closeModal() {
         modal.style.display = 'none';
-        signaturePad.clear(); // 모달 닫을 때 서명 초기화
-        signedInfo.innerHTML = '';
+        // 서명 패드는 닫을 때 초기화하지 않아, 다시 열었을 때 이전 서명을 수정할 수 있도록 합니다.
     }
     closeModalBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', (event) => {
-        // 모달 바깥(회색 영역)을 클릭하면 닫히도록 설정
         if (event.target === modal) {
             closeModal();
         }
@@ -311,7 +338,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 서명 초기화 버튼
     clearBtn.addEventListener('click', () => {
         signaturePad.clear();
-        signedInfo.innerHTML = '';
     });
 
     // 서명 저장 버튼
@@ -321,45 +347,53 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // 서명 데이터를 Base64 형식의 이미지 URL로 변환
+        // 1. 서명 데이터를 Base64 형식의 이미지 URL로 변환
         const dataURL = signaturePad.toDataURL("image/png");
         
-        // 서명 완료 정보 표시 (실제로는 로그인된 사용자 정보 사용)
+        // 실제 서명자 정보 (로그인 정보 사용)
         const username = "예담 서강중"; 
         const date = new Date().toISOString().split('T')[0];
-        signedInfo.innerHTML = `✔ ${username}님 ${date}에 서명 완료`;
 
-        console.log("서명 이미지 (Base64 데이터):", dataURL);
-        
-        // TODO: 여기서 fetch 또는 ajax를 사용하여 dataURL을 서버로 전송합니다.
-        // 예시:
-        /*
-        fetch('/api/contract/sign', {
+        // 2. Base64 데이터를 서버로 전송하여 파일로 저장하고 DB에 경로를 업데이트 (핵심 백엔드 로직 필요)
+        fetch(`/api/document/sign/${DOC_NO}`, { 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                signatureImage: dataURL,
-                userId: 'someUserId' // 실제 사용자 ID
+                signatureImageBase64: dataURL,
+                docNo: DOC_NO,
+                signer: username
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.message || '서버 응답 오류'); });
+            }
+            return response.json();
+        })
         .then(data => {
             console.log('서버 응답:', data);
-            alert('서명이 성공적으로 저장되었습니다.');
+            alert('서명이 성공적으로 저장되었습니다. 이제 다른 페이지에서 PDF 다운로드가 가능합니다.');
+            
+            // 3. UX 업데이트: 서명 완료 상태 표시
+            signatureDisplayArea.innerHTML = `
+                <img src="${dataURL}" alt="전자서명 이미지" />
+                <span class="signed-status">서명 완료</span>
+                <span style="font-size:0.9em; color:#7f8c8d;">(${username}, ${date} 서명. 문서번호: ${DOC_NO})</span>
+            `;
+
+            // 4. UX 업데이트: 서명 버튼 상태 변경
+            openModalBtn.className = 'btn btn-signed';
+            openModalBtn.textContent = '✔ 서명 완료됨';
+            openModalBtn.disabled = true; // 서명 완료 후 재서명 방지
+            
             closeModal();
-            // 필요하다면 다른 페이지로 이동
-            // window.location.href = '/main'; 
         })
         .catch(error => {
             console.error('서명 저장 오류:', error);
-            alert('서명 저장 중 오류가 발생했습니다.');
+            alert(`서명 저장 중 오류가 발생했습니다: ${error.message}`);
         });
-        */
-       
-       // 임시로 1초 후 모달 닫기
-       setTimeout(closeModal, 1000);
     });
 
 });

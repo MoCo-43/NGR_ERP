@@ -15,10 +15,10 @@
 
 		INSERT INTO COMPANY (
 		MAT_NO, CEO, COMP_NAME, MAT_NAME, MAT_TEL, MAT_MAIL,
-		COMP_ADDR, SUB_DATE, ZIP_CODE, COM_TEL, COMP_DEL_ADDR, COM_CODE, JIBUN_ADDRESS
+		COMP_ADDR, SUB_DATE, ZIP_CODE, COM_TEL, COMP_DEL_ADDR, COM_CODE, JIBUN_ADDRESS,brm
 		) VALUES (
 		#{matNo}, #{ceo}, #{compName}, #{matName}, #{matTel}, #{matMail},
-		#{compAddr}, SYSDATE, #{zipCode}, #{comTel}, #{compDelAddr}, NULL, #{jibunAddress}
+		#{compAddr}, SYSDATE, #{zipCode}, #{comTel}, #{compDelAddr}, NULL, #{jibunAddress},#{brm}
 		)
 	</insert>
 

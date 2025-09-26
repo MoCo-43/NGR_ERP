@@ -78,7 +78,7 @@ public class UserService {
 
             // 5. 인증번호 생성 및 SMS 발송
             String verificationCode = validationUtil.createCode();
-            String messageText = "[테스트] 비밀번호 찾기 인증번호는 [" + verificationCode + "] 입니다.";
+            String messageText = "[개발테스트중] 비밀번호 찾기 인증번호는 [" + verificationCode + "] 입니다.";
 
             boolean isSuccess = smsService.sendSms(phone, messageText);
             if (!isSuccess) {
