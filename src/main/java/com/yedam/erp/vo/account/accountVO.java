@@ -13,4 +13,6 @@ public class accountVO {
 	int acctKwan;	
 	int acctHang;	
 	int acctMok; 
+	Long companyCode;
+	
 }

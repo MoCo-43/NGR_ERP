@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+  <meta charset="UTF-8"/>
+  <title layout:fragment="title">자동 전표 처리</title>
+
+  <th:block layout:fragment="head_extra">
+    <!-- AG Grid -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
+    <style>
+      .btn-bar { display:flex; gap:.5rem; margin-bottom:1rem; }
+      .section-title { margin:.75rem 0; font-weight:700; }
+      .grid-sm { height:200px; width:100%; }
+      .grid-full { height:260px; width:100%; margin-top:1rem; }
+    </style>
+  </th:block>
+</head>
+
+<body>
+<section layout:fragment="content">
+  <div class="card shadow mb-3">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">자동 전표 처리</h6>
+    </div>
+    <div class="card-body">
+
+      <!-- 조회조건 -->
+      <div class="btn-bar">
+        <input type="date" class="form-control form-control-sm" style="max-width:180px" placeholder="기간(from)">
+        <input type="date" class="form-control form-control-sm" style="max-width:180px" placeholder="기간(to)">
+        <button class="btn btn-dark btn-sm">조회</button>
+        <button class="btn btn-success btn-sm">미리보기</button>
+        <button class="btn btn-primary btn-sm">등록</button>
+      </div>
+
+      <!-- 상단 3단 Grid -->
+      <div class="row">
+        <div class="col-md-4">
+          <div class="section-title">기본정보</div>
+          <div id="baseGrid" class="ag-theme-quartz grid-sm"></div>
+        </div>
+        <div class="col-md-4">
+          <div class="section-title">지급항목(차변)</div>
+          <div id="debitGrid" class="ag-theme-quartz grid-sm"></div>
+        </div>
+        <div class="col-md-4">
+          <div class="section-title">공제항목(대변)</div>
+          <div id="creditGrid" class="ag-theme-quartz grid-sm"></div>
+        </div>
+      </div>
+
+      <!-- 하단 결과 -->
+      <div class="section-title">전표결과</div>
+      <div id="journalGrid" class="ag-theme-quartz grid-full"></div>
+    </div>
+  </div>
+</section>
+
+<th:block layout:fragment="body_extra">
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // 기본정보 Grid
+      const baseOptions = {
+        columnDefs: [
+          { headerName:'귀속연월', field:'period', flex:1 },
+          { headerName:'지급일', field:'payDate', flex:1 },
+          { headerName:'부서', field:'dept', flex:1 },
+          { headerName:'전표발생일', field:'jrnDate', flex:1 }
+        ],
+        rowData: [
+          { period:'2025-05', payDate:'2025-09-25', dept:'인사', jrnDate:'2025-08-25' },
+          { period:'2025-05', payDate:'2025-08-25', dept:'영업', jrnDate:'2025-08-25' },
+          { period:'2025-05', payDate:'2025-07-25', dept:'물류', jrnDate:'2025-07-25' }
+        ],
+        defaultColDef:{resizable:true}
+      };
+      new agGrid.Grid(document.getElementById("baseGrid"), baseOptions);
+
+      // 지급항목(차변)
+      const debitOptions = {
+        columnDefs: [
+          { headerName:'지급항목', field:'item', flex:1 },
+          { headerName:'코드', field:'code', width:100 },
+          { headerName:'계정과목명', field:'acct', flex:1 },
+          { headerName:'금액', field:'amt', type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString(), width:120 }
+        ],
+        rowData: [
+          { item:'기본급', code:'12', acct:'직원급여', amt:10000000 },
+          { item:'보육수당', code:'12', acct:'제수당', amt:1000000 },
+          { item:'연차수당', code:'12', acct:'제수당', amt:1000000 }
+        ],
+        defaultColDef:{resizable:true}
+      };
+      new agGrid.Grid(document.getElementById("debitGrid"), debitOptions);
+
+      // 공제항목(대변)
+      const creditOptions = {
+        columnDefs: [
+          { headerName:'공제항목', field:'item', flex:1 },
+          { headerName:'코드', field:'code', width:100 },
+          { headerName:'계정과목명', field:'acct', flex:1 },
+          { headerName:'금액', field:'amt', type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString(), width:120 }
+        ],
+        rowData: [
+          { item:'원천세', code:'12', acct:'예수금', amt:2000000 },
+          { item:'건강보험', code:'12', acct:'예수금', amt:1500000 },
+          { item:'차인지급액', code:'12', acct:'미지급비용', amt:6500000 }
+        ],
+        defaultColDef:{resizable:true}
+      };
+      new agGrid.Grid(document.getElementById("creditGrid"), creditOptions);
+
+      // 하단 전표결과
+      const journalOptions = {
+        columnDefs: [
+          { headerName:'구분', field:'gbn', width:90 },
+          { headerName:'코드', field:'code', width:100 },
+          { headerName:'계정과목', field:'acct', flex:1 },
+          { headerName:'거래처코드', field:'partnerCode', width:120 },
+          { headerName:'거래처', field:'partner', flex:1 },
+          { headerName:'차변(출금)', field:'debit', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() },
+          { headerName:'대변(입금)', field:'credit', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() },
+          { headerName:'적요', field:'note', flex:1 }
+        ],
+        rowData: [
+          { gbn:'차변', code:'12', acct:'직원급여', partnerCode:'', partner:'', debit:110000, credit:null, note:'급여' },
+          { gbn:'대변', code:'401', acct:'매출', partnerCode:'', partner:'', debit:null, credit:100000, note:'매출' },
+          { gbn:'대변', code:'255', acct:'부가세예수금', partnerCode:'', partner:'', debit:null, credit:10000, note:'부가세' }
+        ],
+        defaultColDef:{resizable:true}
+      };
+      new agGrid.Grid(document.getElementById("journalGrid"), journalOptions);
+    });
+  </script>
+</th:block>
+</body>
+</html>

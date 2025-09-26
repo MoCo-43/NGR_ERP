@@ -159,6 +159,7 @@
       // ❌ 행 전체 강조 없음
 
       onRowClicked: e => {
+    	selectedInvoice = e.data;  
         const details = createDetailsFromInvoice(e.data);
         detailApi.setGridOption("rowData", details);
         document.getElementById("detailGrid").style.display = "block";
@@ -231,9 +232,65 @@ document.getElementById("resetInvoiceBtn")?.addEventListener("click", () => {
  }
 });
 
+// 오늘 날짜
+const todayStr = () => {
+	  const d = new Date();
+	  const mm = String(d.getMonth()+1).padStart(2,'0');
+	  const dd = String(d.getDate()).padStart(2,'0');
+	  return `${d.getFullYear()}-${mm}-${dd}`;
+	};
+
+// 디테일 그리드 등록 버튼 -> 일반 전표
+
+ 
+document.getElementById("btnRegisterDetail").addEventListener("click", async (data) => {
+	 if (selectedInvoice?.postedFlag === 'Y') {
+		    alert("이미 등록된 전표입니다.");
+		    return;
+		  }
+  // detailGrid 데이터 수집
+  const details = [];
+  detailApi.forEachNode(node => {
+    details.push(node.data);
+  });
+
+  if (details.length === 0) {
+    alert("분개 데이터가 없습니다.");
+    return;
+  }
+  
+	const { data: newNo } = await axios.get("/api/account/nextJrnNo"); 
+    data.jrnNo = newNo;
+
+  // payload 구성
+  const payload = details.map((d, idx) => ({
+  	
+	jrnNo:data.jrnNo,
+	lineNo:data.lineNo || null,
+	jrnDate: data.jrnDate || todayStr(),
+    acctCode: d.code,
+    acctName: d.acctName,
+    dcType: d.gbn === "차변" ? "D" : "C",
+    amount: d.debit ? d.debit : d.credit,
+    remarks: d.note,
+    cusCode: d.partnerCode,
+    cusName: d.cusName,
+    status: "open"
+    
+  }));
+  try {
+	    await axios.post("/api/account/journalList", payload);
+	    alert("저장 완료!");
+	  } catch (err) {
+	    console.error(err);
+	    alert("저장 실패");
+	  }
+
+});
+
+
 </script>
-<!--  invoice 모달안에서  모달 -->
-		
+
 	<!-- 부서 모달 -->
 <script th:inline="none">
 document.addEventListener('DOMContentLoaded', () => {

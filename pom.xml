@@ -125,7 +125,6 @@
 			<artifactId>mybatis-typehandlers-jsr310</artifactId>
 			<version>1.0.2</version>
 		</dependency>
-
 		<!-- jasper -->
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>
@@ -143,18 +142,23 @@
 			<artifactId>sdk</artifactId>
 			<version>1.0.3</version>
 		</dependency>
+		<!--email-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
 	</dependencies>
-<dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>com.fasterxml.jackson</groupId>
-      <artifactId>jackson-bom</artifactId>
-      <version>2.17.2</version> <!-- Spring Boot 3.5.5 기준 호환 Jackson -->
-      <type>pom</type>
-      <scope>import</scope>
-    </dependency>
-  </dependencies>
-</dependencyManagement>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.fasterxml.jackson</groupId>
+				<artifactId>jackson-bom</artifactId>
+				<version>2.17.2</version> <!-- Spring Boot 3.5.5 기준 호환 Jackson -->
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<build>
 		<plugins>
 			<plugin>
