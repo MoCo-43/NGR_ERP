@@ -116,6 +116,8 @@
           <div id="orderGrid" class="ag-theme-quartz"></div>
         </div>
       </div>
+      <!-- 거래처 모달 -->
+      <div th:replace="~{biz/modals/PoCustomerModal :: customermodal}"></div>
     </section>
 
     <th:block layout:fragment="body_extra">
@@ -260,6 +262,91 @@
               if (e.key === "Enter") search();
             });
           });
+        });
+        /*
+
+                        ======================== 거래처 모달 ========================
+
+
+                */
+        document.addEventListener("DOMContentLoaded", () => {
+          const customerCodeModalEl = document.getElementById("customermodal");
+          let customerCodeGridApi;
+          const customerCodeColumnDefs = [
+            { headerName: "", checkboxSelection: true, width: 50 },
+            { headerName: "거래처코드", field: "cusCode", width: 140 },
+            {
+              headerName: "거래처명",
+              field: "cusName",
+              flex: 1,
+              minWidth: 160,
+            },
+            { headerName: "신용등급", field: "creditGrade", width: 140 },
+            { headerName: "미수금", field: "leftPrice", width: 140 },
+          ];
+          async function fetchCustomerCodeData() {
+            if (!customerCodeGridApi) return;
+            try {
+              const { data } = await axios.get("/api/biz/customercode");
+              customerCodeGridApi.setRowData(data || []);
+              customerCodeGridApi.sizeColumnsToFit?.();
+            } catch (err) {
+              console.error("거래처조회 실패:", err);
+              alert("거래처 불러오는 데 실패했습니다.");
+            }
+          }
+          if (customerCodeModalEl) {
+            customerCodeModalEl.addEventListener("shown.bs.modal", () => {
+              const gridDiv = document.getElementById("customerGrid");
+              if (!customerCodeGridApi) {
+                if (window.agGrid?.createGrid) {
+                  customerCodeGridApi = agGrid.createGrid(
+                    gridDiv,
+                    customerCodeGridOptions
+                  );
+                } else {
+                  customerCodeGridApi = customerCodeGridOptions.api;
+                }
+              }
+              fetchCustomerCodeData();
+            });
+          }
+          const customerCodeGridOptions = {
+            columnDefs: customerCodeColumnDefs,
+            rowSelection: "single",
+            rowData: [],
+            defaultColDef: { sortable: true, resizable: true, filter: true },
+            onGridReady: (p) => {
+              customerCodeGridApi = p.api;
+            },
+          };
+
+          // 1) 거래처 선택 시 코드/이름 모두 세팅
+          function assignCustomerToForm(row) {
+            const cusNameEl = document.getElementById("cusName");
+            const cusCodeEl = document.getElementById("cusCode");
+            if (cusNameEl) cusNameEl.value = row.cusName ?? "";
+            if (cusCodeEl) cusCodeEl.value = row.cusCode ?? "";
+          }
+
+          // 거래처 모달의 선택 버튼 클릭 이벤트
+          const importCustomerCodeBtn = document.getElementById("CstImportBtn");
+          if (importCustomerCodeBtn) {
+            importCustomerCodeBtn.addEventListener("click", () => {
+              if (!customerCodeGridApi) return alert("목록을 먼저 불러오세요.");
+              const selected = customerCodeGridApi.getSelectedRows?.() || [];
+              if (!selected.length) return alert("거래처를 선택하세요.");
+
+              assignCustomerToForm(selected[0]);
+
+              const modal = bootstrap.Modal.getInstance(customerCodeModalEl);
+              modal?.hide();
+            });
+          } else {
+            console.warn(
+              "가져오기 버튼(#CstImportBtn)을 modal HTML에 추가해주세요."
+            );
+          }
         });
       </script>
     </th:block>

@@ -6,18 +6,17 @@ import com.yedam.erp.vo.hr.PayAllowCodeVO;
 
 public interface PayAllowCodeService {
 
-    // 리스트 
-    List<PayAllowCodeVO> getList(PayAllowCodeVO param);
+    // 전체조회 
+    List<PayAllowCodeVO> getAllowList(Long companyCode);
 
-    // 단건
-    PayAllowCodeVO get(String allowCode);
+    // 단건 조회 
+    PayAllowCodeVO getAllow(PayAllowCodeVO vo);
 
-    // 등록
-    boolean insert(PayAllowCodeVO vo);
+    // 등록 
+    int addAllow(PayAllowCodeVO vo);
 
-    // 수정
-    boolean update(PayAllowCodeVO vo);
-
-    // 사용여부 변경 
-    boolean changeUseYn(String allowCode, String useYn);
+    // 수정 
+    int editAllow(PayAllowCodeVO vo);
+    //사용여부
+    int changeUseYn(PayAllowCodeVO vo);
 }

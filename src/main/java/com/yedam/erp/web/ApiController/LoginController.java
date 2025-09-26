@@ -37,14 +37,8 @@ public class LoginController {
     private UserService userService;
     //보안문자 이미지 + 정답 확인 필요한 고유 키 -> 생성된 이미지와 키 model담아 main/login.html페이지로 전달-> 화면 보안문자 포함된 로그인 화면 확인
     @GetMapping("/login")
-    public String showLoginPage(Model model) throws IOException {
-        String captchaKey = naverCaptchaService.getCaptchaKey();
-        System.out.println(""+captchaKey);
-        byte[] imageBytes = naverCaptchaService.getCaptchaImage(captchaKey);
-        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-
-        model.addAttribute("captchaKey", captchaKey);
-        model.addAttribute("captchaImage", base64Image);
+    public String showLoginPage() {
+        // 관리자 버튼 클릭 시만 CAPTCHA 생성되므로 초기 로드 시 생성하지 않음
         return "main/login";
     }
 
@@ -67,13 +61,13 @@ public class LoginController {
      */
     @PostMapping("/findpw")
     public String handleForgotPassword(
-        @RequestParam("matNo") Long matNo, // 파라미터를 Long 타입의 matNo로 받습니다.
+        @RequestParam("comCode") String comCode, // 파라미터를 Long 타입의 matNo로 받습니다.
         @RequestParam("empId") String empId,
         RedirectAttributes redirectAttributes) {
 
         // 1. DTO 객체 생성 및 데이터 설정
         PasswordResetRequestVO requestDto = new PasswordResetRequestVO();
-        requestDto.setMatNo(matNo);
+        requestDto.setComCode(comCode);
         requestDto.setEmpId(empId);
         
         // 2. UserService 호출하여 SMS 발송 로직 실행
@@ -89,5 +83,34 @@ public class LoginController {
         }
     }
 
-    // 이전에 있던 @PostMapping("/login") 메서드는 시큐리티가 DB조회 후 비밀번호 비교를 진행해주는데 중복되서 로그인 흐름 꼬이는 문제로 인해 제거
+    // Step 1: SMS 발송
+    @PostMapping("/sendSms")
+    @ResponseBody
+    public ResponseEntity<String> sendSms(@RequestParam String comCode,
+                                          @RequestParam String empId) {
+        PasswordResetRequestVO requestDto = new PasswordResetRequestVO();
+        requestDto.setComCode(comCode);
+        requestDto.setEmpId(empId);
+
+        // SMS 발송 + userKey 반환
+        return userService.sendSmsForPasswordReset(requestDto);
+    }
+
+    // Step 2: 인증번호 검증
+//    @PostMapping("/findpw/verify-token")
+//    @ResponseBody
+//    public ResponseEntity<String> verifyToken(@RequestParam String userKey,
+//                                              @RequestParam String smsCode) {
+//        boolean valid = userService.verifySmsCode(userKey, smsCode);
+//
+//        if(valid) {
+//            userService.sendPasswordResetEmail(userKey);
+//            return ResponseEntity.ok("비밀번호 재설정 링크가 이메일로 전송되었습니다.");
+//        } else {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+//                                 .body("인증번호가 올바르지 않습니다.");
+//        }
+//    }
 }
+    
+    // 이전에 있던 @PostMapping("/login") 메서드는 시큐리티가 DB조회 후 비밀번호 비교를 진행해주는데 중복되서 로그인 흐름 꼬이는 문제로 인해 제거

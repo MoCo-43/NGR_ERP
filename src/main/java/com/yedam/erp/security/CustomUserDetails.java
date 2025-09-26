@@ -19,7 +19,7 @@ import java.util.Collections;
 @Data
 public class CustomUserDetails implements UserDetails {
 
-    // 인증된 사용자의 핵심 정보를 담는 VO 객체입니다.
+    // 인증된 사용자의 핵심 정보를 담는 VO 객체
     private final EmpLoginVO empLoginVO;
 
     /**
@@ -39,10 +39,7 @@ public class CustomUserDetails implements UserDetails {
         return empLoginVO;
     }
 
-    // =====================================================================================
     // UserDetails 인터페이스의 핵심 메소드 구현
-    // =====================================================================================
-
     /**
      * 사용자가 가진 권한(Role) 목록을 반환합니다.
      * Spring Security는 이 정보를 기반으로 접근 제어(Authorization)를 수행합니다.
@@ -60,8 +57,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * 사용자의 비밀번호를 반환합니다.
-     * 이 값은 Spring Security의 AuthenticationProvider가 사용자가 제출한 비밀번호와 일치하는지 비교하는 데 사용됩니다.
+     * 사용자의 비밀번호를 반환
+     * 이 값은 Spring Security의 AuthenticationProvider가 사용자가 제출한 비밀번호와 일치하는지 비교하는 데 사용
      * @return 암호화된 사용자 비밀번호
      */
     @Override
@@ -70,8 +67,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
     /**
-     * 사용자의 고유 식별자(ID)를 반환합니다.
-     * Spring Security에서 'username'은 일반적으로 로그인 시 사용하는 ID를 의미하며, 중복되지 않는 값이어야 합니다.
+     * 사용자의 고유 식별자(ID)를 반환
+     * Spring Security에서 'username'은 일반적으로 로그인 시 사용하는 ID를 의미하며, 중복되지 않는 값
      * @return 사용자 ID
      */
     @Override
@@ -80,11 +77,8 @@ public class CustomUserDetails implements UserDetails {
     }
 
 
-    // =====================================================================================
     // 계정의 상태를 관리하는 메소드들
-    // 이 메소드들이 false를 반환하면, 해당 사유에 맞는 AuthenticationException이 발생하여 로그인이 거부됩니다.
-    // =====================================================================================
-
+    // 이 메소드들이 false를 반환하면, 해당 사유에 맞는 AuthenticationException이 발생하여 로그인이 거부됩니다
     /**
      * 계정이 만료되지 않았는지 여부를 반환합니다.
      * @return true: 계정 만료되지 않음

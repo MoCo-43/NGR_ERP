@@ -41,7 +41,6 @@ public class SmsService {
         message.setText(text);
 
         try {
-            // 수정된 부분: sendOne() 대신 send() 메소드를 사용합니다.
             this.messageService.send(message);
             System.out.println("SMS 발송 성공: " + to);
             return true;

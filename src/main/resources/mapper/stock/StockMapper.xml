@@ -147,6 +147,62 @@ FROM explain_detail
 WHERE xp_code = #{xpCode}
 </select>
 
+<!-- 발주서 마스터 조회 -->
+<select id="selectOrderByXpCode" resultType="OrderVO" parameterType="String">
+    SELECT 
+        om.XP_CODE AS xpCode,
+        om.CUS_CODE AS cusCode,
+        c.CUS_NAME AS cusName,
+        om.due_DATE AS dueDate
+    FROM order_req om
+    JOIN customer c ON om.CUS_CODE = c.CUS_CODE
+    WHERE om.XP_CODE = #{xpCode}
+</select>
+
+<!-- 발주서 상세 조회 -->
+<select id="selectOrderDetailsByXpCode" resultType="OrderDetailVO" parameterType="String">
+SELECT 
+    od.PRODUCT_CODE AS PRODUCT_CODE,
+    od.PRODUCT_NAME AS PRODUCT_NAME,
+    od.QTY AS QTY,
+    od.ORDER_PRICE AS ORDER_PRICE,
+    od.SUP_AMT AS SUP_AMT,
+    od.VAT_AMT AS VAT_AMT,
+    om.due_date AS DUE_DATE
+    ,CASE WHEN SUBSTR(ex.VAT_TYPE,1,1) = '부' THEN 'VAT 포함'
+          WHEN SUBSTR(ex.VAT_TYPE,1,1) = '영' THEN '영세율 적용'
+          ELSE '면세'
+     END AS "taxType"
+FROM order_req om
+JOIN order_detail od ON om.ORDER_CODE = od.ORDER_CODE
+JOIN customer c ON om.CUS_CODE = c.CUS_CODE
+JOIN explain ex ON ex.xp_code = om.xp_code
+WHERE om.xp_code = #{xpCode}
+ORDER BY od.OD_NO
+</select>
+
+<!-- 발주서 세션의 회사정보 조회 -->
+<select id="selectComp" resultType="com.yedam.erp.vo.main.CompanyVO" parameterType="Long">
+SELECT 
+      BRM,
+      COMP_NAME,
+      CEO,
+      COMP_ADDR,
+      MAT_NAME,
+      MAT_TEL
+FROM COMPANY
+WHERE MAT_NO = #{compId}
+</select>
+
+<!-- 발주서 거래처 정보 조회 -->
+<select id="selectCutomer" resultType="com.yedam.erp.vo.Biz.CustomerVO" parameterType="String">
+SELECT 
+       CUS_NAME, 
+       TEL, 
+       EMAIL 
+FROM CUSTOMER 
+WHERE CUS_CODE = #{cusCode}
+</select>
 
 
 </mapper>

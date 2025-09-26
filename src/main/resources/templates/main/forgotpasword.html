@@ -14,9 +14,15 @@
       .auth-forms .btn-primary { width: 100%; padding: 12px; background: #4d341e; color: #fff; border: none; cursor: pointer; margin-top: 10px; }
       .link-small { font-size: 0.9rem; text-align: center; margin-top: 1rem; }
       .link-small a { color: #4d341e; }
-      /* 메시지 스타일 추가 */
       .message { padding: 10px; margin-bottom: 1rem; border-radius: 4px; text-align: center; }
       .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+      .success-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+      /* 인증번호 관련 필드 그룹 */
+      .verification-group { display: flex; align-items: center; }
+      .verification-group input { flex-grow: 1; margin-right: 10px; }
+      .verification-group button { flex-shrink: 0; padding: 10px; }
+      /* 단계별 폼 숨기기 */
+      #step2-form { display: none; }
     </style>
   </th:block>
 </head>
@@ -26,22 +32,40 @@
   <div>
     <h2>비밀번호 찾기</h2>
 
-    <!-- 오류 메시지 표시 영역 -->
-    <div th:if="${errorMessage}" class="message error-message" th:text="${errorMessage}"></div>
-    
-    <!-- 참고: HTML의 이메일 필드는 현재 백엔드(UserService) 로직에서 사용되지 않습니다. -->
-    <form th:action="@{/findpw}" method="post">
+    <div th:if="${message}" th:class="'message ' + (${isError} ? 'error-message' : 'success-message')" th:text="${message}"></div>
+
+    <!-- STEP1: 회사코드, 아이디 입력 -->
+    <form id="step1-form" th:action="@{/sendSms}" method="post">
+      <input type="hidden" name="userKey" th:value="${userKey}"> 
+
       <div class="input-field">
-          <input type="text" name="matNo" placeholder="회사코드" required>
+          <input type="text" name="comCode" placeholder="회사코드" required th:value="${comCode}">
       </div>
       <div class="input-field">
-          <input type="text" name="empId" placeholder="아이디" required>
+          <input type="text" name="empId" placeholder="아이디" required th:value="${empId}">
       </div>
+      <!-- 이메일은 선택사항 -->
       <div class="input-field">
-          <input type="email" name="email" placeholder="이메일 (참고용)">
+          <input type="email" name="email" placeholder="이메일 (선택)">
       </div>
-      <button type="submit" class="btn-primary">인증번호 SMS 받기</button>
+
+      <button type="submit" class="btn-primary" id="sendSmsBtn">인증번호 SMS 받기</button>
     </form>
+    
+    <!-- STEP2: 인증번호 입력 -->
+    <form id="step2-form" th:action="@{/findpw/verify-token}" method="post">
+      <input type="hidden" name="comCode" id="hiddenComCode">
+      <input type="hidden" name="empId" id="hiddenEmpId">
+      <input type="hidden" name="userKey" id="hiddenUserKey"> 
+      
+      <div class="input-field verification-group">
+          <input type="text" name="smsCode" id="smsCode" placeholder="인증번호 6자리" maxlength="6" required>
+          <button type="button" id="resendBtn" class="btn-secondary" disabled>재전송 (60s)</button>
+      </div>
+      
+      <button type="submit" class="btn-primary" id="verifyBtn">인증 완료 및 비밀번호 재설정 이메일 받기</button>
+    </form>
+
     <div class="link-small">
       <a th:href="@{/login}">로그인으로 돌아가기</a>
     </div>
@@ -50,7 +74,67 @@
 </th:block>
 
 <th:block layout:fragment="body_extra">
-  </th:block>
+  <script th:inline="javascript">
+    /* <![CDATA[ */
+    const currentStep = '[[${currentStep}]]' || 'STEP1'; 
+
+    const step1Form = document.getElementById('step1-form');
+    const step2Form = document.getElementById('step2-form');
+    
+    const comCodeInput = step1Form.querySelector('input[name="comCode"]');
+    const empIdInput = step1Form.querySelector('input[name="empId"]');
+    const userKeyInput = step1Form.querySelector('input[name="userKey"]');
+
+    const hiddenComCode = document.getElementById('hiddenComCode');
+    const hiddenEmpId = document.getElementById('hiddenEmpId');
+    const hiddenUserKey = document.getElementById('hiddenUserKey');
+
+    // STEP 표시 및 STEP2 초기화
+    function showStep(step) {
+      if (step === 'STEP2') {
+        step1Form.style.display = 'none';
+        step2Form.style.display = 'block';
+        hiddenComCode.value = comCodeInput.value;
+        hiddenEmpId.value = empIdInput.value;
+        hiddenUserKey.value = userKeyInput.value;
+        startTimer(60); 
+      } else {
+        step1Form.style.display = 'block';
+        step2Form.style.display = 'none';
+      }
+    }
+
+    if (currentStep === 'STEP2') {
+        showStep('STEP2');
+    } else {
+        showStep('STEP1');
+    }
+
+    // 인증번호 재전송 타이머
+    const resendBtn = document.getElementById('resendBtn');
+    let timerInterval;
+
+    function startTimer(duration) {
+      let timer = duration;
+      resendBtn.disabled = true;
+      clearInterval(timerInterval); 
+      
+      timerInterval = setInterval(function () {
+        let seconds = timer < 10 ? '0' + timer : timer;
+        resendBtn.textContent = `재전송 (${seconds}s)`;
+        if (--timer < 0) {
+          clearInterval(timerInterval);
+          resendBtn.textContent = '인증번호 재전송';
+          resendBtn.disabled = false; 
+        }
+      }, 1000);
+    }
+
+    resendBtn.addEventListener('click', function() {
+        step1Form.submit(); 
+    });
+    /* ]]> */
+  </script>
+</th:block>
 </body>
 </html>
-

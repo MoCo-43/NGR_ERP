@@ -15,10 +15,10 @@
 
 		INSERT INTO COMPANY (
 		MAT_NO, CEO, COMP_NAME, MAT_NAME, MAT_TEL, MAT_MAIL,
-		COMP_ADDR, SUB_DATE, ZIP_CODE, COM_TEL, COMP_DEL_ADDR, COM_CODE, JIBUN_ADDRESS
+		COMP_ADDR, SUB_DATE, ZIP_CODE, COM_TEL, COMP_DEL_ADDR, COM_CODE, JIBUN_ADDRESS,brm
 		) VALUES (
 		#{matNo}, #{ceo}, #{compName}, #{matName}, #{matTel}, #{matMail},
-		#{compAddr}, SYSDATE, #{zipCode}, #{comTel}, #{compDelAddr}, NULL, #{jibunAddress}
+		#{compAddr}, SYSDATE, #{zipCode}, #{comTel}, #{compDelAddr}, NULL, #{jibunAddress},#{brm}
 		)
 	</insert>
 
@@ -49,18 +49,5 @@
             company
         WHERE
             com_code = #{comCode}
-    </select>
-
-    <select id="findByMatNo" parameterType="long" resultType="com.yedam.erp.vo.main.CompanyVO">
-        SELECT
-            mat_no,
-            ceo,
-            comp_name,
-            mat_mail,
-            com_code
-        FROM
-            company
-        WHERE
-            mat_no = #{matNo}
     </select>
 </mapper>

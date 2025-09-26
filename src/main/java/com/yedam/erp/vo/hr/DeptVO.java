@@ -10,4 +10,5 @@ public class DeptVO {
     private int member_cnt;        // 부서 인원수
     private String manager_emp_id; // 부서장 사번
     private String manager_name;
+    private Long companyCode; // 회사코드
 }

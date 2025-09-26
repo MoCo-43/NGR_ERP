@@ -44,25 +44,25 @@ public class UserService {
      * @return SMS 전송 결과
      */
     public ResponseEntity<String> sendSmsForPasswordReset(PasswordResetRequestVO requestDto) {
-        Long matNo = requestDto.getMatNo();
+        String comCode = requestDto.getComCode();
         String empId = requestDto.getEmpId();
         
         try {
             // 1. 회사 정보 조회
-            Optional<CompanyVO> companyOptional = companyMapper.findByMatNo(matNo);
+            Optional<CompanyVO> companyOptional = companyMapper.findByComCode(comCode);
             CompanyVO company = companyOptional
                     .orElseThrow(() -> new NoSuchElementException("유효하지 않은 회사코드입니다."));
-            logger.info("회사 정보 조회 성공: matNo={}", matNo);
+            logger.info("회사 정보 조회 성공: comCode={}", comCode);
 
             // 2. 사용자 조회
-            EmpLoginVO foundUser = empLoginMapper.findByEmpIdAndMatNo(empId, company.getMatNo());
+            EmpLoginVO foundUser = empLoginMapper.findByEmpIdAndComCode(empId, company.getComCode());
             if (foundUser == null) {
                 throw new NoSuchElementException("아이디가 존재하지 않거나 회사 정보와 일치하지 않습니다.");
             }
             logger.info("사용자 정보 조회 성공: empId={}", empId);
 
             // 3. 휴대폰 번호 조회 
-            // 🔴 수정된 부분: emp_mobile 필드에서 휴대폰 번호를 가져옵니다.
+            // emp_mobile 필드에서 휴대폰 번호를 가져옵니다.
             String phoneNum = foundUser.getEmpMobile(); 
             
             if (!StringUtils.hasText(phoneNum)) {
@@ -78,7 +78,7 @@ public class UserService {
 
             // 5. 인증번호 생성 및 SMS 발송
             String verificationCode = validationUtil.createCode();
-            String messageText = "[테스트] 비밀번호 찾기 인증번호는 [" + verificationCode + "] 입니다.";
+            String messageText = "[개발테스트중] 비밀번호 찾기 인증번호는 [" + verificationCode + "] 입니다.";
 
             boolean isSuccess = smsService.sendSms(phone, messageText);
             if (!isSuccess) {
@@ -89,10 +89,10 @@ public class UserService {
             return ResponseEntity.ok("등록된 휴대폰 번호로 인증번호를 발송했습니다.");
 
         } catch (NoSuchElementException e) {
-            logger.warn("사용자 검증 실패: matNo={}, empId={}, error={}", matNo, empId, e.getMessage());
+            logger.warn("사용자 검증 실패: comCode={}, empId={}, error={}",comCode , empId, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            logger.error("비밀번호 재설정 SMS 발송 중 오류 발생: matNo={}, empId={}", matNo, empId, e);
+            logger.error("비밀번호 재설정 SMS 발송 중 오류 발생: comCode={}, empId={}", comCode, empId, e);
             return ResponseEntity.status(500).body("서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
         }
     }

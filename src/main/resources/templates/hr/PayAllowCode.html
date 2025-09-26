@@ -59,9 +59,9 @@
     return res?.data?.success === true;
   }
   async function patchUseYn(code, yn){
-    const res = await axios.patch(`/api/hr/allow-codes/${encodeURIComponent(code)}/use-yn`, null, { params:{ useYn: yn }});
-    return res?.data?.success === true;
-  }
+	  const res = await axios.patch(`/api/hr/allow-codes/${encodeURIComponent(code)}/use-yn`, null, { params:{ useYn: yn }});
+	  return (res?.data === 1) || (res?.data?.success === true);
+	}
 
   // 사용/중지 버튼 렌더러(입력행에는 버튼 X)
   function useToggleRenderer(p){

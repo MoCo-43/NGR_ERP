@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 public class CompanyVO {
-	private Long matNo;
+	private Long matNo;//회사등록 순번
 	private String ceo;
 	private String compName;
 	private String matName;
@@ -17,6 +17,8 @@ public class CompanyVO {
 	private String zipCode;
 	private String comTel;
 	private String compDelAddr;
-	private String comCode;
+	private String comCode; //회사코드
 	private String jibunAddress;
+	private String brm;
+	private Long brm; // 사업자번호
 }

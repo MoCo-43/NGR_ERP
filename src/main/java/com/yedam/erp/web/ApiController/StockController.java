@@ -2,12 +2,14 @@ package com.yedam.erp.web.ApiController;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -24,13 +26,26 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.JasperService;
 import com.yedam.erp.service.stock.StockService;
+import com.yedam.erp.vo.Biz.CustomerVO;
+import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import net.sf.jasperreports.engine.JRDataSource;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,7 +54,8 @@ public class StockController {
 
 	final private StockService service;
 	final private JasperService jasper;
-	
+	@Autowired
+	DataSource datasource;
 	
 	@PostMapping("/requestOrderInsert")
 	public ResponseEntity<String> insertOrder(@RequestBody OrderPlanVO plan) {
@@ -50,33 +66,49 @@ public class StockController {
     }
 	
 	
-	@GetMapping("/orderSheet/{xpCode}")
-	public ResponseEntity<?> getOrderSheet(@PathVariable String xpCode) {
-	    try {
-	        Path pdfPath = Paths.get("C:/pdfs/order_" + xpCode + ".pdf");
-
-	        if (!Files.exists(pdfPath)) {
-	            return ResponseEntity.notFound().build();
-	        }
-
-	        org.springframework.core.io.Resource resource =
-	                new org.springframework.core.io.FileSystemResource(pdfPath.toFile());
-
-	        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-	        headers.add(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
-	                "inline; filename=\"order_" + xpCode + ".pdf\"");
-
-	        return ResponseEntity.ok()
-	                .headers(headers)
-	                .contentLength(Files.size(pdfPath))
-	                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
-	                .body(resource);
-
-	    } catch (IOException e) {
-	        e.printStackTrace();
-	        return ResponseEntity.internalServerError().build();
-	    }
+	@GetMapping("/orderSheet/{xpCode}/{businessCode}")
+	public void report(@PathVariable String xpCode ,@PathVariable String businessCode, HttpServletRequest request, HttpServletResponse response) throws Exception { 
+	 //Connection conn = datasource.getConnection();
+	 // 소스 컴파일 jrxml -> jasper
+	 InputStream stream = getClass().getResourceAsStream("/reports/orderSheet.jrxml"); 
+	 JasperReport jasperReport = JasperCompileManager.compileReport(stream); // jrxml 용
+	 //JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream); // jasper 용
+	 
+	 // 상세 조회
+	 List<OrderDetailVO> detailList = service.selectOrderDetailsByXpCode(xpCode);
+	 
+	 //데이터 조회
+	 JRDataSource jRdataSource = new JRBeanCollectionDataSource(detailList);
+	 
+	 // 세션 회사 정보 조회
+	 CompanyVO comp = service.selectComp(SessionUtil.companyId());
+	 
+	 // 발주서 발주넣을 거래처 정보 조회
+	 CustomerVO cust = service.selectCutomer(businessCode);
+	 
+	 //파라미터 맵
+	 HashMap<String,Object> map = new HashMap<>(); 
+	 map.put("xpCodeParam", xpCode); // 발주계획코드
+	 //map.put("companyId", SessionUtil.companyId()); // 세션 회사 ID
+	 map.put("brmParam",comp.getBrm()); // 회사 사업자번호
+	 map.put("compNameCeoParam", comp.getCompName()+"/"+comp.getCeo()); // 회사명 / 대표명
+	 map.put("compAddrParam",comp.getCompAddr()); // 회사 주소
+	 map.put("compMatParam",comp.getMatName()+"/"+comp.getMatTel()); // 회사담당자 / 담당자회선번호
+	 
+	 map.put("cusNameParam",cust.getCusName()); // 발주넣을 구매처 회사명
+	 map.put("telParam",cust.getTel()); // 발주넣을 구매처 전화번호
+	 map.put("emailParam",cust.getEmail()); // 발주넣을 구매처 이메일
+     
+     // 조회건 반환
+	 response.setContentType("application/pdf");
+	 response.setHeader("Content-Disposition", "inline; filename=orderSheet.pdf");
+     JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, map, jRdataSource);
+     //JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, map, conn);
+	 JasperExportManager.exportReportToPdfStream( jasperPrint, response.getOutputStream());
 	}
+	
+
+
 	
 	@GetMapping("/orderPlans")
 	public List<OrderPlanVO> getOrderPlans() {

@@ -3,7 +3,8 @@ package com.yedam.erp.vo.Biz;
 import lombok.Data;
 
 @Data
-public class PoDetailVO {
+public class PoDetailVO{
+  private Long companyCode;
   private int podId;
   private int poId;
   private String productCode;
