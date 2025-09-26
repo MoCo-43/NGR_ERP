@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.PayrollMapper">
+
+	<!-- ===================== ResultMap ===================== -->
+	<resultMap id="PayrollMap"
+		type="com.yedam.erp.vo.hr.PayrollVO">
+		<id property="payrollNo" column="PAYROLL_NO" />
+		<result property="yearMonth" column="YEAR_MONTH" />
+		<result property="deptCode" column="DEPT_CODE" />
+		<result property="title" column="TITLE" />
+		<result property="payDate" column="PAY_DATE" />
+		<result property="status" column="STATUS" />
+		<result property="companyCode" column="COMPANY_CODE" />
+		<!-- 표시용 추가 -->
+		<result property="deptName" column="DEPT_NAME" />
+		<result property="empCount" column="EMP_COUNT" />
+	</resultMap>
+
+	<resultMap id="PayrollSummaryMap"
+		type="com.yedam.erp.vo.hr.PayrollSummaryVO">
+		<id property="summaryNo" column="SUMMARY_NO" />
+		<result property="payrollNo" column="PAYROLL_NO" />
+		<result property="empId" column="EMP_ID" />
+		<result property="empName" column="EMP_NAME" />
+		<result property="position" column="POSITION" />
+		<result property="basePay" column="BASE_PAY" />
+		<result property="familyAllow" column="FAMILY_ALLOW" />
+		<result property="mealAllow" column="MEAL_ALLOW" />
+		<result property="totalAllow" column="TOTAL_ALLOW" />
+		<result property="totalDeduct" column="TOTAL_DEDUCT" />
+		<result property="netPay" column="NET_PAY" />
+	</resultMap>
+
+	<resultMap id="DeptSumMap"
+		type="com.yedam.erp.vo.hr.PayrollDeptSumVO">
+		<result property="payrollNo" column="PAYROLL_NO" />
+		<result property="deptCode" column="DEPT_CODE" />
+		<result property="empCount" column="EMP_COUNT" />
+		<result property="totalBasePay" column="SUM_BASE_PAY" />
+		<result property="totalAllow" column="SUM_ALLOW" />
+		<result property="totalDeduct" column="SUM_DEDUCT" />
+		<result property="totalNetPay" column="SUM_NET_PAY" />
+	</resultMap>
+
+	<!-- ===================== 급여대장 마스터 ===================== -->
+
+	<!-- 회사별 전체 조회 -->
+	<select id="selectPayrollList" parameterType="long"
+		resultMap="PayrollMap">
+		SELECT
+		p.PAYROLL_NO,
+		p.YEAR_MONTH,
+		p.DEPT_CODE,
+		p.TITLE,
+		p.PAY_DATE,
+		p.STATUS,
+		p.COMPANY_CODE,
+		d.DEPT_NAME,
+		(
+		SELECT COUNT(1)
+		FROM EMP e
+		WHERE e.DEPT_CODE = p.DEPT_CODE
+		AND e.COMPANY_CODE = p.COMPANY_CODE
+		AND (e.LEAVE_DATE IS NULL OR e.LEAVE_DATE > SYSDATE)
+		) AS EMP_COUNT
+		FROM PAYROLL p
+		LEFT JOIN DEPT d
+		ON d.DEPT_CODE = p.DEPT_CODE
+		AND d.COMPANY_CODE = p.COMPANY_CODE
+		WHERE p.COMPANY_CODE = #{companyCode}
+		ORDER BY p.YEAR_MONTH DESC, p.DEPT_CODE ASC, p.PAYROLL_NO DESC
+	</select>
+
+	<!-- 단건 조회 -->
+	<select id="selectPayroll" parameterType="long"
+		resultMap="PayrollMap">
+		SELECT
+		p.PAYROLL_NO,
+		p.YEAR_MONTH,
+		p.DEPT_CODE,
+		p.TITLE,
+		p.PAY_DATE,
+		p.STATUS,
+		p.COMPANY_CODE,
+		d.DEPT_NAME,
+		(
+		SELECT COUNT(1)
+		FROM EMP e
+		WHERE e.DEPT_CODE = p.DEPT_CODE
+		AND e.COMPANY_CODE = p.COMPANY_CODE
+		AND (e.LEAVE_DATE IS NULL OR e.LEAVE_DATE > SYSDATE)
+		) AS EMP_COUNT
+		FROM PAYROLL p
+		LEFT JOIN DEPT d
+		ON d.DEPT_CODE = p.DEPT_CODE
+		AND d.COMPANY_CODE = p.COMPANY_CODE
+		WHERE p.PAYROLL_NO = #{payrollNo}
+	</select>
+
+	<!-- 등록 -->
+	<insert id="insertPayroll"
+		parameterType="com.yedam.erp.vo.hr.PayrollVO">
+		INSERT INTO PAYROLL (
+		YEAR_MONTH, DEPT_CODE, TITLE, PAY_DATE, STATUS, COMPANY_CODE
+		) VALUES (
+		#{yearMonth}, #{deptCode}, #{title}, #{payDate}, #{status}, #{companyCode}
+		)
+	</insert>
+
+	<!-- 수정 -->
+	<update id="updatePayroll"
+		parameterType="com.yedam.erp.vo.hr.PayrollVO">
+		UPDATE PAYROLL
+		SET YEAR_MONTH = #{yearMonth},
+		DEPT_CODE = #{deptCode},
+		TITLE = #{title},
+		PAY_DATE = #{payDate},
+		STATUS = #{status},
+		COMPANY_CODE = #{companyCode}
+		WHERE PAYROLL_NO = #{payrollNo}
+	</update>
+
+	<!-- 상태 변경 (확정/취소) -->
+	<update id="updatePayrollStatus"
+		parameterType="com.yedam.erp.vo.hr.PayrollVO">
+		UPDATE PAYROLL
+		SET STATUS = #{status}
+		WHERE PAYROLL_NO = #{payrollNo}
+	</update>
+
+	<!-- 월·부서별 조회 -->
+	<select id="selectPayrollListByCond"
+		parameterType="com.yedam.erp.vo.hr.PayrollVO" resultMap="PayrollMap">
+		SELECT
+		p.PAYROLL_NO,
+		p.YEAR_MONTH,
+		p.DEPT_CODE,
+		p.TITLE,
+		p.PAY_DATE,
+		p.STATUS,
+		p.COMPANY_CODE,
+		d.DEPT_NAME,
+		(
+		SELECT COUNT(1)
+		FROM EMP e
+		WHERE e.DEPT_CODE = p.DEPT_CODE
+		AND e.COMPANY_CODE = p.COMPANY_CODE
+		AND (e.LEAVE_DATE IS NULL OR e.LEAVE_DATE > SYSDATE)
+		) AS EMP_COUNT
+		FROM PAYROLL p
+		LEFT JOIN DEPT d
+		ON d.DEPT_CODE = p.DEPT_CODE
+		AND d.COMPANY_CODE = p.COMPANY_CODE
+		<where>
+			<if test="companyCode != null"> p.COMPANY_CODE = #{companyCode} </if>
+			<if test="yearMonth   != null and yearMonth != ''"> AND p.YEAR_MONTH = #{yearMonth} </if>
+			<if test="deptCode    != null and deptCode  != ''"> AND p.DEPT_CODE = #{deptCode}  </if>
+			<if test="status      != null and status    != ''"> AND p.STATUS = #{status}    </if>
+		</where>
+		ORDER BY p.YEAR_MONTH DESC, p.DEPT_CODE ASC, p.PAYROLL_NO DESC
+	</select>
+
+	<!-- ===================== 급여대장 상세 ===================== -->
+
+	<!-- 사원별 상세 리스트 -->
+	<select id="selectPayrollSummary" parameterType="long"
+		resultMap="PayrollSummaryMap">
+		SELECT
+		ps.SUMMARY_NO,
+		ps.PAYROLL_NO,
+		ps.EMP_ID,
+		NVL(ps.EMP_NAME, e.NAME) AS EMP_NAME,
+		NVL(ps.POSITION, e.POSITION) AS POSITION,
+		ps.BASE_PAY,
+		ps.FAMILY_ALLOW,
+		ps.MEAL_ALLOW,
+		ps.TOTAL_ALLOW,
+		ps.TOTAL_DEDUCT,
+		ps.NET_PAY
+		FROM PAYROLL_SUMMARY ps
+		LEFT JOIN EMP e ON e.EMP_ID = ps.EMP_ID
+		WHERE ps.PAYROLL_NO = #{payrollNo}
+		ORDER BY EMP_NAME ASC, EMP_ID ASC
+	</select>
+
+	<!-- 부서별 합계 -->
+	<select id="selectDeptSum" parameterType="long"
+		resultMap="DeptSumMap">
+		SELECT
+		p.PAYROLL_NO AS PAYROLL_NO,
+		p.DEPT_CODE AS DEPT_CODE,
+		COUNT(ps.SUMMARY_NO) AS EMP_COUNT,
+		NVL(SUM(ps.BASE_PAY), 0) AS SUM_BASE_PAY,
+		NVL(SUM(ps.TOTAL_ALLOW), 0) AS SUM_ALLOW,
+		NVL(SUM(ps.TOTAL_DEDUCT), 0) AS SUM_DEDUCT,
+		NVL(SUM(ps.NET_PAY), 0) AS SUM_NET_PAY
+		FROM PAYROLL p
+		LEFT JOIN PAYROLL_SUMMARY ps
+		ON ps.PAYROLL_NO = p.PAYROLL_NO
+		WHERE p.PAYROLL_NO = #{payrollNo}
+		GROUP BY p.PAYROLL_NO, p.DEPT_CODE
+	</select>
+
+</mapper>

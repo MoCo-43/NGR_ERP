@@ -1,48 +1,40 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/base}">
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}">
 <head>
-<title layout:fragment="title">공제 등록</title>
-<th:block layout:fragment="head_extra">
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
-	<style>
-#deductGrid.ag-theme-quartz {
-	height: 44rem;
-	width: 100%;
-	margin-top: .5rem;
-}
-
-.btn-use {
-	padding: .2rem .6rem;
-	font-size: 12px;
-}
-</style>
-</th:block>
+  <title layout:fragment="title">공제 등록</title>
+  <th:block layout:fragment="head_extra">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+    <style>
+      #deductGrid.ag-theme-quartz { height: 44rem; width: 100%; margin-top: .5rem; }
+      .btn-use { padding: .2rem .6rem; font-size: 12px; }
+    </style>
+  </th:block>
 </head>
 <body>
-	<section layout:fragment="content">
-		<div class="card shadow mb-3">
-			<div
-				class="card-header py-3 d-flex align-items-center justify-content-between">
-				<h6 class="m-0 font-weight-bold text-primary">공제 등록</h6>
-			</div>
-			<div class="card-body">
-				<div id="deductGrid" class="ag-theme-quartz"></div>
-			</div>
-		</div>
-	</section>
+<section layout:fragment="content">
+  <div class="card shadow mb-3">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">공제 등록</h6>
+    </div>
+    <div class="card-body">
+      <div id="deductGrid" class="ag-theme-quartz"></div>
+    </div>
+  </div>
+</section>
 
-	<th:block layout:fragment="body_extra">
-		<script
-			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-		<script
-			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
-		<script th:inline="none">
+<th:block layout:fragment="body_extra">
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+<script th:inline="none">
   let gridApi;
+
+  const API_BASE = '/api/hr/deduct-codes';
+
+  // 응답 성공 처리
+  const isOk = (res) => res?.data?.success === true || res?.data === 1 || res?.data === true;
 
   // 유틸
   const isBlank = (v) => v === null || v === undefined || String(v).trim() === '';
@@ -55,7 +47,7 @@
   // ===== API =====
   async function fetchList(){
     try{
-      const res = await axios.get('/api/hr/deduct-code', { params: {} });
+      const res = await axios.get(API_BASE);
       const data = Array.isArray(res.data) ? res.data : [];
       return data;
     }catch(err){
@@ -65,18 +57,24 @@
     }
   }
   async function insertRow(r){
-    const payload = { deductCode:r.deductCode, deductName:r.deductName, formulaTxt:r.formulaTxt, methodDesc:r.methodDesc, useYn:r.useYn };
-    const res = await axios.post('/api/hr/deduct-code', payload);
-    return res?.data?.success === true;
+    const payload = {
+      deductCode:r.deductCode, deductName:r.deductName,
+      formulaTxt:r.formulaTxt, methodDesc:r.methodDesc, useYn:r.useYn
+    };
+    const res = await axios.post(API_BASE, payload);
+    return isOk(res);
   }
   async function updateRow(r){
-    const payload = { deductName:r.deductName, formulaTxt:r.formulaTxt, methodDesc:r.methodDesc, useYn:r.useYn };
-    const res = await axios.put(`/api/hr/deduct-code/${encodeURIComponent(r.deductCode)}`, payload);
-    return res?.data?.success === true;
+    const payload = {
+      deductName:r.deductName, formulaTxt:r.formulaTxt,
+      methodDesc:r.methodDesc, useYn:r.useYn
+    };
+    const res = await axios.put(`${API_BASE}/${encodeURIComponent(r.deductCode)}`, payload);
+    return isOk(res);
   }
   async function patchUseYn(code, yn){
-    const res = await axios.patch(`/api/hr/deduct-code/${encodeURIComponent(code)}/use`, null, { params:{ useYn: yn }});
-    return res?.data?.success === true;
+    const res = await axios.patch(`${API_BASE}/${encodeURIComponent(code)}/use-yn`, null, { params:{ useYn: yn }});
+    return isOk(res);
   }
 
   // 사용/중지 버튼 렌더러
@@ -137,7 +135,6 @@
         editable:(p)=> p.data?._isInput === true,
         cellEditor:'agSelectCellEditor', cellEditorParams:{ values:['Y','N'] },
         cellRenderer: useToggleRenderer },
-     	
     ];
 
     gridApi = agGrid.createGrid(document.querySelector('#deductGrid'), {
@@ -178,6 +175,6 @@
     });
   });
 </script>
-	</th:block>
+</th:block>
 </body>
 </html>

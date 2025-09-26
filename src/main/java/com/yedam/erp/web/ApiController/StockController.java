@@ -26,8 +26,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.JasperService;
 import com.yedam.erp.service.stock.StockService;
+import com.yedam.erp.vo.Biz.CustomerVO;
+import com.yedam.erp.vo.main.CompanyVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.PartnerVO;
@@ -63,8 +66,8 @@ public class StockController {
     }
 	
 	
-	@GetMapping("/orderSheet/{xpCode}")
-	public void report(@PathVariable String xpCode , HttpServletRequest request, HttpServletResponse response) throws Exception { 
+	@GetMapping("/orderSheet/{xpCode}/{businessCode}")
+	public void report(@PathVariable String xpCode ,@PathVariable String businessCode, HttpServletRequest request, HttpServletResponse response) throws Exception { 
 	 //Connection conn = datasource.getConnection();
 	 // 소스 컴파일 jrxml -> jasper
 	 InputStream stream = getClass().getResourceAsStream("/reports/orderSheet.jrxml"); 
@@ -77,9 +80,24 @@ public class StockController {
 	 //데이터 조회
 	 JRDataSource jRdataSource = new JRBeanCollectionDataSource(detailList);
 	 
+	 // 세션 회사 정보 조회
+	 CompanyVO comp = service.selectComp(SessionUtil.companyId());
+	 
+	 // 발주서 발주넣을 거래처 정보 조회
+	 CustomerVO cust = service.selectCutomer(businessCode);
+	 
 	 //파라미터 맵
 	 HashMap<String,Object> map = new HashMap<>(); 
-	 map.put("xpCodeParam", xpCode);
+	 map.put("xpCodeParam", xpCode); // 발주계획코드
+	 //map.put("companyId", SessionUtil.companyId()); // 세션 회사 ID
+	 map.put("brmParam",comp.getBrm()); // 회사 사업자번호
+	 map.put("compNameCeoParam", comp.getCompName()+"/"+comp.getCeo()); // 회사명 / 대표명
+	 map.put("compAddrParam",comp.getCompAddr()); // 회사 주소
+	 map.put("compMatParam",comp.getMatName()+"/"+comp.getMatTel()); // 회사담당자 / 담당자회선번호
+	 
+	 map.put("cusNameParam",cust.getCusName()); // 발주넣을 구매처 회사명
+	 map.put("telParam",cust.getTel()); // 발주넣을 구매처 전화번호
+	 map.put("emailParam",cust.getEmail()); // 발주넣을 구매처 이메일
      
      // 조회건 반환
 	 response.setContentType("application/pdf");

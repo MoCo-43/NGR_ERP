@@ -5,69 +5,77 @@
 
 <mapper namespace="com.yedam.erp.mapper.hr.PayAllowCodeMapper">
 
-	<!-- 목록 조회 -->
-	<select id="selectPayAllowList"
-		resultType="com.yedam.erp.vo.hr.PayAllowCodeVO">
-		SELECT
-		ALLOW_CODE AS allowCode,
-		ALLOW_NAME AS allowName,
-		TAX_TYPE AS taxType,
-		PAY_TYPE AS payType,
-		METHOD_DESC AS methodDesc,
-		USE_YN AS useYn
-		FROM PAY_ALLOW_CODE
-		<where>
-			<if test="allowName != null and allowName != ''">
-				ALLOW_NAME LIKE '%' || #{allowName} || '%'
-			</if>
-			<if test="useYn != null and useYn != ''">
-				AND USE_YN = #{useYn}
-			</if>
-		</where>
-		ORDER BY ALLOW_CODE
-	</select>
+  <resultMap id="AllowMap" type="com.yedam.erp.vo.hr.PayAllowCodeVO">
+    <id     property="allowCode"   column="allow_code"/>
+    <result property="allowName"   column="allow_name"/>
+    <result property="taxType"     column="tax_type"/>
+    <result property="payType"     column="pay_type"/>
+    <result property="methodDesc"  column="method_desc"/>
+    <result property="useYn"       column="use_yn"/>
+    <result property="companyCode" column="companyCode"/>
+  </resultMap>
 
-	<!-- 단건 조회 -->
-	<select id="selectPayAllow" parameterType="string"
-		resultType="com.yedam.erp.vo.hr.PayAllowCodeVO">
-		SELECT
-		ALLOW_CODE AS allowCode,
-		ALLOW_NAME AS allowName,
-		TAX_TYPE AS taxType,
-		PAY_TYPE AS payType,
-		METHOD_DESC AS methodDesc,
-		USE_YN AS useYn
-		FROM PAY_ALLOW_CODE
-		WHERE ALLOW_CODE = #{allowCode}
-	</select>
+  <!-- 전체조회: 단일 파라미터(Long companyCode) -> #{value} -->
+  <select id="selectAllowList" resultMap="AllowMap">
+    SELECT
+      ALLOW_CODE   AS allow_code,
+      ALLOW_NAME   AS allow_name,
+      TAX_TYPE     AS tax_type,
+      PAY_TYPE     AS pay_type,
+      METHOD_DESC  AS method_desc,
+      USE_YN       AS use_yn,
+      COMPANY_CODE AS companyCode
+    FROM PAY_ALLOW_CODE
+    WHERE COMPANY_CODE = #{value}
+    ORDER BY ALLOW_CODE
+  </select>
 
-	<!-- 등록 -->
-	<insert id="insertPayAllow"
-		parameterType="com.yedam.erp.vo.hr.PayAllowCodeVO">
-		INSERT INTO PAY_ALLOW_CODE
-		(ALLOW_CODE, ALLOW_NAME, TAX_TYPE, PAY_TYPE, METHOD_DESC, USE_YN)
-		VALUES
-		(#{allowCode}, #{allowName}, #{taxType}, #{payType}, #{methodDesc}, #{useYn})
-	</insert>
+  <!-- 단건 조회 -->
+  <select id="selectAllow"
+          parameterType="com.yedam.erp.vo.hr.PayAllowCodeVO"
+          resultMap="AllowMap">
+    SELECT
+      ALLOW_CODE   AS allow_code,
+      ALLOW_NAME   AS allow_name,
+      TAX_TYPE     AS tax_type,
+      PAY_TYPE     AS pay_type,
+      METHOD_DESC  AS method_desc,
+      USE_YN       AS use_yn,
+      COMPANY_CODE AS companyCode
+    FROM PAY_ALLOW_CODE
+    WHERE ALLOW_CODE = #{allowCode}
+      AND COMPANY_CODE = #{companyCode}
+  </select>
 
-	<!-- 수정 -->
-	<update id="updatePayAllow"
-		parameterType="com.yedam.erp.vo.hr.PayAllowCodeVO">
-		UPDATE PAY_ALLOW_CODE
-		SET ALLOW_NAME = #{allowName},
-		TAX_TYPE = #{taxType},
-		PAY_TYPE = #{payType},
-		METHOD_DESC = #{methodDesc},
-		USE_YN = #{useYn}
-		WHERE ALLOW_CODE = #{allowCode}
-	</update>
+  <!-- 등록 -->
+  <insert id="insertAllow" parameterType="com.yedam.erp.vo.hr.PayAllowCodeVO">
+    INSERT INTO PAY_ALLOW_CODE (
+      ALLOW_CODE, ALLOW_NAME, TAX_TYPE, PAY_TYPE, METHOD_DESC, USE_YN, COMPANY_CODE
+    ) VALUES (
+      #{allowCode}, #{allowName}, #{taxType}, #{payType}, #{methodDesc}, NVL(#{useYn}, 'Y'), #{companyCode}
+    )
+  </insert>
 
-	<!-- 사용여부만 변경 -->
-	<update id="updateUseYn"
-		parameterType="com.yedam.erp.vo.hr.PayAllowCodeVO">
-		UPDATE PAY_ALLOW_CODE
-		SET USE_YN = #{useYn}
-		WHERE ALLOW_CODE = #{allowCode}
-	</update>
+  <!-- 수정 -->
+  <update id="updateAllow" parameterType="com.yedam.erp.vo.hr.PayAllowCodeVO">
+    UPDATE PAY_ALLOW_CODE
+    <set>
+      <if test="allowName  != null"> ALLOW_NAME  = #{allowName},</if>
+      <if test="taxType    != null"> TAX_TYPE    = #{taxType},</if>
+      <if test="payType    != null"> PAY_TYPE    = #{payType},</if>
+      <if test="methodDesc != null"> METHOD_DESC = #{methodDesc},</if>
+      <if test="useYn      != null"> USE_YN      = #{useYn},</if>
+    </set>
+    WHERE ALLOW_CODE   = #{allowCode}
+      AND COMPANY_CODE = #{companyCode}
+  </update>
+
+  <!-- 사용여부 변경 -->
+  <update id="updateUseYn" parameterType="com.yedam.erp.vo.hr.PayAllowCodeVO">
+    UPDATE PAY_ALLOW_CODE
+       SET USE_YN = #{useYn}
+     WHERE ALLOW_CODE   = #{allowCode}
+       AND COMPANY_CODE = #{companyCode}
+  </update>
 
 </mapper>

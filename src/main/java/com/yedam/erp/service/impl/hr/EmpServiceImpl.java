@@ -18,8 +18,8 @@ public class EmpServiceImpl implements EmpService {
 	private final EmpMapper empMapper;
 
 	@Override
-	public List<EmpVO> getEmpList(EmpVO empVO) {
-		return empMapper.selectEmpList(empVO);
+	public List<EmpVO> getEmpList(Long companyCode) {
+		return empMapper.selectEmpList(companyCode);
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class EmpServiceImpl implements EmpService {
 	}
 
 	@Override
-	public List<EmpVO> getManagers(EmpVO empVO) {
-		return empMapper.selectManagers(empVO);
+	public List<EmpVO> getManagers(Long companyCode) {
+		return empMapper.selectManagers(companyCode);
 	}
 }
