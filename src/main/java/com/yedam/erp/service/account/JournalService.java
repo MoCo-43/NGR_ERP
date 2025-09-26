@@ -23,5 +23,5 @@ public interface JournalService {
     JournalVO selectJournal(Long jrnNo);
 
     // 전체 조회
-    List<JournalVO> selectJournalList();
+    List<JournalVO> selectJournalList(Long companyCode);
 }

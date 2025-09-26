@@ -1,6 +1,9 @@
 package com.yedam.erp.security;
 
 import com.yedam.erp.vo.main.EmpLoginVO;
+
+import lombok.Data;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +16,7 @@ import java.util.Collections;
  * 이 클래스는 애플리케이션의 사용자 정보(EmpLoginVO)를 Spring Security가 이해할 수 있는 형태로 변환하는
  * 어댑터 역할을 수행합니다. 인증 및 인가 과정에서 Spring Security는 이 객체의 정보를 사용합니다.
  */
+@Data
 public class CustomUserDetails implements UserDetails {
 
     // 인증된 사용자의 핵심 정보를 담는 VO 객체입니다.
@@ -120,4 +124,11 @@ public class CustomUserDetails implements UserDetails {
         // empLoginVO의 isUsed 필드가 'Y'일 때(사용 중일 때) true를 반환합니다.
         return "Y".equals(empLoginVO.getIsUsed());
     }
+
+	@Override
+	public String toString() {
+		return "CustomUserDetails [empLoginVO=" + empLoginVO + "]";
+	}
+    
+    
 }

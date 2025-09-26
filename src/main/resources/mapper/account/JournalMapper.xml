@@ -45,6 +45,7 @@
 		ON J.ACCT_CODE = A.ACCT_CODE
 		LEFT JOIN CUSTOMER C
 		ON J.CUS_CODE = C.CUS_CODE
+		WHERE COMPANY_CODE = #{companyCode}
 		ORDER BY CREATED_AT ASC, LINE_NO ASC
 	</select>
 
@@ -75,7 +76,9 @@
         CREATED_AT,
         CREATED_BY,
         CUS_CODE,
-        CLOSE_NO
+        CLOSE_NO,
+        COMPANY_CODE
+        
     )
     VALUES (
         #{jrnCode},  -- ✅ selectKey로 먼저 채워진 값
@@ -90,7 +93,8 @@
         SYSDATE,
         #{createdBy},
         #{cusCode},
-        #{closeNo}
+        #{closeNo},
+        #{companyCode}
     )
 </insert>
 
