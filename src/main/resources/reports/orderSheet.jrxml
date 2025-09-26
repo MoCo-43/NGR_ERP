@@ -97,7 +97,7 @@ ORDER BY od.OD_NO]]></query>
 			<property name="local_mesure_unitheight" value="pixel"/>
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
 		</element>
-		<element kind="staticText" uuid="e622555d-198b-4ccd-a4a1-c59c53304058" x="230" y="0" width="79" height="25" fontSize="19.0" bold="true">
+		<element kind="staticText" uuid="e622555d-198b-4ccd-a4a1-c59c53304058" x="230" y="0" width="79" height="25" fontSize="19.0" bold="true" style="hangle">
 			<text><![CDATA[발주서]]></text>
 			<property name="local_mesure_unitheight" value="pixel"/>
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
@@ -109,10 +109,10 @@ ORDER BY od.OD_NO]]></query>
 			<element kind="staticText" uuid="88a960b9-cc39-4839-a771-8b1e0ef3d3b7" mode="Opaque" x="-1" y="-1" width="80" height="20" backcolor="#CACED0" fontSize="12.0" hTextAlign="Center" style="hangle">
 				<text><![CDATA[발주코드]]></text>
 			</element>
-			<element kind="staticText" uuid="4502f21b-5a10-4123-bed3-1bdb6626df8e" mode="Opaque" x="-1" y="19" width="80" height="20" backcolor="#CACED0" fontSize="12.0" hTextAlign="Center">
+			<element kind="staticText" uuid="4502f21b-5a10-4123-bed3-1bdb6626df8e" mode="Opaque" x="-1" y="19" width="80" height="20" backcolor="#CACED0" fontSize="12.0" hTextAlign="Center" style="hangle">
 				<text><![CDATA[발주코드]]></text>
 			</element>
-			<element kind="staticText" uuid="9437f281-ec5c-49f9-8317-992ed1ec348f" mode="Opaque" x="-1" y="39" width="80" height="20" backcolor="#CACED0" fontSize="12.0" hTextAlign="Center">
+			<element kind="staticText" uuid="9437f281-ec5c-49f9-8317-992ed1ec348f" mode="Opaque" x="-1" y="39" width="80" height="20" backcolor="#CACED0" fontSize="12.0" hTextAlign="Center" style="hangle">
 				<text><![CDATA[발주코드]]></text>
 			</element>
 		</element>
@@ -120,7 +120,7 @@ ORDER BY od.OD_NO]]></query>
 			<element kind="textField" uuid="118b804d-6b85-4eec-8a49-67a80efa8f67" x="79" y="0" width="100" height="30">
 				<expression><![CDATA[$P{xpCodeParam}]]></expression>
 			</element>
-			<element kind="staticText" uuid="f6f7b9f4-156d-4664-b1f1-2ba588ef97b2" mode="Opaque" x="0" y="0" width="78" height="28" backcolor="#CACED0">
+			<element kind="staticText" uuid="f6f7b9f4-156d-4664-b1f1-2ba588ef97b2" mode="Opaque" x="0" y="0" width="78" height="28" backcolor="#CACED0" style="hangle">
 				<text><![CDATA[발주코드]]></text>
 				<property name="com.jaspersoft.studio.unit.width" value="px"/>
 			</element>
