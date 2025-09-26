@@ -16,7 +16,7 @@ const MENUS = {
       {
         title: "급여관리",
         items: [
-          ["급여대장", "/hr/payroll"],
+          ["급여대장", "/payroll"],
           ["급여이체현황", "/hr/transfer"],
         ],
       },
