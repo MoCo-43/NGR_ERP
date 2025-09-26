@@ -9,7 +9,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import lombok.Data;
 
 @Data
-public class PoInsertVO {
+public class PoInsertVO{
+    private Long companyCode;
+    private Long poId;
     private String cusCode;
     private String cusName;
     private String creater;
@@ -20,8 +22,7 @@ public class PoInsertVO {
     private LocalDate exDate;
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate poDate;
-
-    private String prdName;
+    
     private Long totalPrice;
     private String payMethod; // 현금/어음
     private String notes;

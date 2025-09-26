@@ -53,7 +53,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		 registry.addViewController("/dept").setViewName("hr/deptList");
 		 registry.addViewController("/allowcode").setViewName("hr/PayAllowCode");
 		 registry.addViewController("/deductcode").setViewName("hr/PayDeductCode");
-
+		 registry.addViewController("/payroll").setViewName("hr/payrollList");
 	}
 
 }

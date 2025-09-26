@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class PurchaseOrderVO {
+   private Long companyCode; // 회사코드
    private Long poId;         // 주문번호 (PK)
    private Long cusNo;        // 거래처 번호 (FK)
    private String poCode;     // 주문 코드

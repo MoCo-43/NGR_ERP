@@ -1,12 +1,15 @@
 package com.yedam.erp.mapper.hr;
 
 import java.util.List;
-import com.yedam.erp.vo.hr.DeptVO;
 
+import org.apache.ibatis.annotations.Mapper;
+
+import com.yedam.erp.vo.hr.DeptVO;
+@Mapper
 public interface DeptMapper {
 
     // 목록 
-    List<DeptVO> selectDeptList(DeptVO param);
+	List<DeptVO> selectDeptList(Long companyCode);
 
     // 단건
     DeptVO selectDept(String dept_code);
