@@ -1,6 +1,7 @@
 package com.yedam.erp.vo.stock;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 import lombok.Data;
 
@@ -16,6 +17,8 @@ public class OrderDetailVO {
 	private BigDecimal vatAmt;
 	private String note;
 	private String orderCode;
+	private Date dueDate;
+	private String taxType;
 	
 	private String xpCode;
 }

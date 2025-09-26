@@ -2,6 +2,8 @@ package com.yedam.erp.service.stock;
 
 import java.util.List;
 
+import com.yedam.erp.vo.Biz.CustomerVO;
+import com.yedam.erp.vo.main.CompanyVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.OrderVO;
@@ -29,6 +31,12 @@ public interface StockService {
 	
 	// 발주서에 조회될 발주 디테일
 	List<OrderDetailVO>selectOrderDetailsByXpCode(String xpCode);
+	
+	// 세션 회사 정보 조회
+	public CompanyVO selectComp(Long compId);
+	
+	// 발주서 거래처 정ㅂ 조회
+	public CustomerVO selectCutomer(String cusCode);
 		
 	
 	
