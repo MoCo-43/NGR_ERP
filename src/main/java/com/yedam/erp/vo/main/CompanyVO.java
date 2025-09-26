@@ -19,6 +19,6 @@ public class CompanyVO {
 	private String compDelAddr;
 	private String comCode; //회사코드
 	private String jibunAddress;
-	private String brm;
+
 	private Long brm; // 사업자번호
 }
