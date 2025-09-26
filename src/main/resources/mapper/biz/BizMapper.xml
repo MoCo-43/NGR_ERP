@@ -41,19 +41,16 @@ ORDER BY
 
 <!-- 주문서 등록 -->
 <!-- 주문서 id 생성 -->
-<!-- <insert id="insertPO" parameterType="PoInsertVO">
+<insert id="insertPO" parameterType="PoInsertVO">
   <selectKey keyProperty="poId" resultType="long" order="BEFORE">
     SELECT PO_ID_SEQ.NEXTVAL FROM DUAL
-  </selectKey> -->
-
-
-<insert id="insertPO" parameterType="PoInsertVO">
+  </selectKey>
   INSERT ALL
     INTO purchase_order (
       PO_ID, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
       PRD_NAME, TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
     ) VALUES (
-      PO_ID_SEQ.NEXTVAL,
+      #{poId},
       #{cusCode}, #{cusName}, #{creater}, #{poStart}, #{exDate}, #{poDate},
       #{prdName}, #{totalPrice}, '작성완료', #{payMethod}, #{notes}, #{vatType}, #{poType}
     )
@@ -62,7 +59,7 @@ ORDER BY
         POD_ID, PO_ID, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
         DC_PRICE, SUP_AMT, VAT_AMT, D_PRD_NAME
       ) VALUES (
-        POD_ID_SEQ.NEXTVAL, PO_ID_SEQ.CURRVAL, #{pod.productCode}, #{pod.orderQty},
+        POD_ID_SEQ.NEXTVAL, #{poId}, #{pod.productCode}, #{pod.orderQty},
         #{pod.unitPrice}, #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.dPrdName}
       )
     </foreach>
