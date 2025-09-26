@@ -125,7 +125,6 @@
 			<artifactId>mybatis-typehandlers-jsr310</artifactId>
 			<version>1.0.2</version>
 		</dependency>
-
 		<!-- jasper -->
 		<dependency>
 			<groupId>net.sf.jasperreports</groupId>

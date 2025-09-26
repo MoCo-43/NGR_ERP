@@ -1,6 +1,8 @@
 package com.yedam.erp.service.impl.account;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,13 +27,17 @@ public class JournalServiceImpl implements JournalService {
         return journalMapper.insertJournal(vo);
     }
 
+    // 매출매입 전표 detailGrid 등록 (다중행)
     @Override
     @Transactional
     public int insertJournalList(List<JournalVO> list) {
-        // foreach batch가 Mapper XML에 구현되어 있어야 함
-        return journalMapper.insertJournalList(list);
+    	int count = 0;
+        for (JournalVO vo : list) {
+          count += journalMapper.insertJournal(vo);
+        }
+        return count;
     }
-
+    
     @Override
     @Transactional
     public int updateJournal(JournalVO vo) {
@@ -59,5 +65,21 @@ public class JournalServiceImpl implements JournalService {
     @Override
     public String getNextJrnNo() {
         return journalMapper.selectNextJrnNo();
+        
+        
     }
+
+    @Override
+    public List<JournalVO> selectJournalListClose(Long companyCode) {
+        return journalMapper.selectJournalListClose(companyCode);
+    }
+
+    @Override
+    public List<JournalVO> selectJournalDetailClose(String jrnNo, Long companyCode) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("jrnNo", jrnNo);
+        params.put("companyCode", companyCode);
+        return journalMapper.selectJournalDetailClose(params);
+    }
+    
 }

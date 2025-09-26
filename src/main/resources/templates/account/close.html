@@ -6,136 +6,224 @@
   <meta charset="UTF-8"/>
   <title layout:fragment="title">일반 전표 마감</title>
 
-  <!-- ✅ 베이스 레이아웃의 head 영역에 주입 -->
   <th:block layout:fragment="head_extra">
-    <!-- Bootstrap -->
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
-    <!-- AG Grid CSS -->
+    <!-- AG Grid -->
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
     <style>
-      h3 { margin-bottom: 1rem; font-weight: 700; }
-      .btn { font-weight: 600; }
-      .section-title { margin-top: 1.5rem; margin-bottom: .5rem; font-weight: 700; }
-      .ag-theme-quartz { height: 220px; width: 100%; }
+      .btn-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+      .section-title {
+        margin-top: 0.5rem;
+        margin-bottom: .5rem;
+        color: black;
+        font-weight: bold;
+      }
+      .grid-sm { height: 220px; width: 100%; }
+      .grid-md { height: 100%; width: 100%; }
+      .voucher-section {
+        display: flex;
+        gap: 1rem;
+        align-items: stretch;
+      }
+      .voucher-left,
+      .voucher-right {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .voucher-left .ag-theme-quartz {
+        flex: 1;
+      }
+      .voucher-right .detail-form {
+        margin-bottom: 0.5rem;
+      }
+      .voucher-right .ag-theme-quartz {
+        flex: 1;
+      }
     </style>
   </th:block>
 </head>
 
 <body>
-  <!-- ✅ 베이스 레이아웃이 삽입할 본문 영역 (조각 이름은 base의 기대값과 일치해야 함) -->
-  <section layout:fragment="content">
-    <h3>일반 전표 마감</h3>
-
-    <!-- 상단 영역 -->
-    <div class="d-flex align-items-center gap-2 mb-3">
-      <label class="form-label mb-0">조회일자</label>
-      <input type="date" class="form-control form-control-sm" style="width:150px" value="2025-09-10"/>
-      <button class="btn btn-dark btn-sm">조회</button>
-      <button class="btn btn-success btn-sm">제출</button>
-      <button class="btn btn-warning btn-sm">승인</button>
-      <button class="btn btn-danger btn-sm">역분개</button>
+<section layout:fragment="content">
+  <div class="card shadow mb-3">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">일반 전표 마감</h6>
     </div>
+    <div class="card-body">
 
-    <!-- 전표 리스트 -->
-    <div class="section-title">전표 리스트</div>
-    <div id="voucherGrid" class="ag-theme-quartz"></div>
+      <!-- 버튼바 -->
+      <div class="btn-bar">
+        <input type="date" id="searchDate" class="form-control form-control-sm" style="width:150px"/>
+        <button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
+        <button class="btn btn-success btn-sm">제출</button>
+        <button class="btn btn-warning btn-sm">승인</button>
+        <button class="btn btn-danger btn-sm">역분개</button>
+      </div>
 
-    <!-- 전표 상세 -->
-    <div class="section-title">전표 상세</div>
-    <div class="row mb-2">
-      <div class="col-md-3">
-        <label class="form-label">전표번호</label>
-        <input class="form-control form-control-sm" value="20250915-001"/>
+      <!-- 전표 리스트 + 전표 상세 -->
+      <div class="voucher-section" style="min-height: 400px;">
+        <!-- 좌측: 전표 리스트 -->
+        <div class="voucher-left">
+          <div class="section-title">전표 리스트</div>
+          <div id="voucherGrid" class="ag-theme-quartz grid-md"></div>
+        </div>
+
+        <!-- 우측: 전표 상세 -->
+        <div class="voucher-right">
+          <div class="section-title">전표 상세</div>
+          <div class="row mb-2 detail-form">
+            <div class="col-md-6">
+              <label class="form-label">전표번호</label>
+              <input id="detailNo" class="form-control form-control-sm" readonly/>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">작성자</label>
+              <input id="detailWriter" class="form-control form-control-sm" readonly/>
+            </div>
+            <div class="col-md-6 mt-2">
+              <label class="form-label">전표일자</label>
+              <input id="detailDate" class="form-control form-control-sm" readonly/>
+            </div>
+            <div class="col-md-6 mt-2">
+              <label class="form-label">적요</label>
+              <input id="detailDesc" class="form-control form-control-sm" readonly/>
+            </div>
+          </div>
+          <div id="detailGrid" class="ag-theme-quartz grid-md"></div>
+        </div>
       </div>
-      <div class="col-md-3">
-        <label class="form-label">작성자</label>
-        <input class="form-control form-control-sm" value="홍길동"/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">전표일자</label>
-        <input class="form-control form-control-sm" value="2025-09-10"/>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">적요</label>
-        <input class="form-control form-control-sm" value="상품 매출 분개"/>
+
+      <!-- 마감 로그 -->
+      <div class="section-title">마감 로그</div>
+      <div id="logGrid" class="ag-theme-quartz grid-sm"></div>
+
+      <!-- 액션 버튼 -->
+      <div class="mt-3 text-end">
+        <button class="btn btn-danger btn-sm">Close</button>
       </div>
     </div>
+  </div>
 
-    <div id="detailGrid" class="ag-theme-quartz"></div>
+  <!-- Script -->
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    let voucherApi, detailApi, logApi;
 
-    <!-- 마감 로그 -->
-    <div class="section-title">마감 로그</div>
-    <div id="logGrid" class="ag-theme-quartz"></div>
+    function todayStr() {
+      const d = new Date();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${d.getFullYear()}-${mm}-${dd}`;
+    }
 
-    <div class="mt-3 text-end">
-      <button class="btn btn-danger">close</button>
-    </div>
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('searchDate').value = todayStr();
 
-    <!-- ✅ 스크립트는 content 내부 맨 아래에서 DOM 이후 실행 -->
-    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
-    <script>
-      window.addEventListener('DOMContentLoaded', () => {
-        // 전표 리스트 Grid
-        const voucherGridOptions = {
-          columnDefs: [
-            { headerName: '선택', checkboxSelection: true, headerCheckboxSelection: true, width: 70 },
-            { headerName: '전표번호', field: 'no', width: 120 },
-            { headerName: '전표일자', field: 'date', width: 120 },
-            { headerName: '적요', field: 'desc', flex: 1 },
-            { headerName: '상태', field: 'status', width: 120 }
-          ],
-          rowData: [
-            { no: '001', date: '2025-09-10', desc: '상품 매출', status: '승인' },
-            { no: '002', date: '2025-09-10', desc: '반품 조정', status: '제출' },
-            { no: 'R001', date: '2025-09-11', desc: '역분개 건', status: '역분개' }
-          ],
-          rowSelection: 'multiple',
-          defaultColDef: { sortable: true, filter: true, resizable: true }
-        };
-        new agGrid.Grid(document.getElementById('voucherGrid'), voucherGridOptions);
-
-        // 전표 상세 Grid
-        const detailGridOptions = {
-          columnDefs: [
-            { headerName: '코드', field: 'code', width: 100 },
-            { headerName: '계정과목', field: 'acct', width: 150 },
-            { headerName: '적요', field: 'desc', flex: 1 },
-            { headerName: '차변', field: 'debit', width: 120, type: 'numericColumn', valueFormatter: p=>p.value?.toLocaleString() },
-            { headerName: '대변', field: 'credit', width: 120, type: 'numericColumn', valueFormatter: p=>p.value?.toLocaleString() }
-          ],
-          rowData: [
-            { code:'4100', acct:'매출', desc:'상품 매출', debit:110000, credit:null },
-            { code:'1120', acct:'외상매출금', desc:'거래처 A', debit:null, credit:110000 }
-          ],
-          defaultColDef: { resizable:true },
-          pinnedBottomRowData: [
-            { acct:'합계:', debit:110000, credit:110000 }
-          ]
-        };
-        new agGrid.Grid(document.getElementById('detailGrid'), detailGridOptions);
-
-        // 마감 로그 Grid
-        const logGridOptions = {
-          columnDefs: [
-            { headerName: '마감일자', field: 'date', width: 150 },
-            { headerName: '전표범위', field: 'range', width: 150 },
-            { headerName: '건수', field: 'count', width: 100 },
-            { headerName: '차변', field: 'debit', width: 120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() },
-            { headerName: '대변', field: 'credit', width: 120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() },
-            { headerName: '상태', field: 'status', flex: 1 }
-          ],
-          rowData: [
-            { date:'2025-09-10', range:'001 - 012', count:12, debit:110000, credit:110000, status:'완료' }
-          ],
-          defaultColDef: { resizable:true }
-        };
-        new agGrid.Grid(document.getElementById('logGrid'), logGridOptions);
+      // 전표 리스트
+      voucherApi = agGrid.createGrid(document.getElementById('voucherGrid'), {
+        columnDefs: [
+          { checkboxSelection: true, headerCheckboxSelection: true, flex:0.3 },
+          { headerName: '전표번호', field: 'jrnNo', flex: 1 },
+          { headerName: '전표일자', field: 'jrnDate', flex: 1 },
+          { headerName: '거래처', field: 'cusName', flex: 1 },
+          { headerName: '상태', field: 'status', flex: 1 }
+        ],
+        rowData: [],
+        rowSelection: 'multiple',
+        defaultColDef: { sortable: true, filter: true, resizable: true },
+        onRowClicked: e =>loadDetail(e.data.jrnNo),  //console.log(e.data)
+        onGridReady: loadVoucherList // ✅ 초기 로드
       });
-    </script>
-  </section>
+
+      // 전표 상세
+      detailApi = agGrid.createGrid(document.getElementById('detailGrid'), {
+        columnDefs: [
+          { headerName: '코드', field: 'acctCode', flex: 1 },
+          { headerName: '계정과목', field: 'acctName', flex: 1 },
+          { headerName: '적요', field: 'remarks', flex: 1 },
+          { 
+              headerName: '차변', 
+              valueGetter: p => p.data.dcType === 'D' ? p.data.amount : null, 
+              flex: 1, 
+              valueFormatter: p => p.value ? Number(p.value).toLocaleString() : "" 
+            },
+            { 
+              headerName: '대변', 
+              valueGetter: p => p.data.dcType === 'C' ? p.data.amount : null, 
+              flex: 1, 
+              valueFormatter: p => p.value ? Number(p.value).toLocaleString() : "" 
+            }
+        ],
+        rowData: [],
+        defaultColDef: { resizable:true }
+      });
+
+      // 마감 로그
+      logApi = agGrid.createGrid(document.getElementById('logGrid'), {
+        columnDefs: [
+          { headerName: '마감일자', field: 'closeDate', flex: 1 },
+          { headerName: '전표범위', field: 'jrnRange', flex: 1 },
+          { headerName: '건수', field: 'count', flex: 1 },
+          { 
+              headerName: '차변', 
+              valueGetter: p => p.data.dcType === 'D' ? p.data.amount : null, 
+              flex: 1, 
+              valueFormatter: p => p.value ? Number(p.value).toLocaleString() : "" 
+            },
+            { 
+              headerName: '대변', 
+              valueGetter: p => p.data.dcType === 'C' ? p.data.amount : null, 
+              flex: 1, 
+              valueFormatter: p => p.value ? Number(p.value).toLocaleString() : "" 
+            },
+          { headerName: '작성자', field: 'writer', flex: 1 },
+          { headerName: '상태', field: 'status', flex: 1 }
+        ],
+        rowData: [],
+        defaultColDef: { resizable:true }
+      });
+
+      // 조회 버튼
+      document.getElementById('btnSearch').addEventListener('click', loadVoucherList);
+    });
+
+    // 전표 리스트 조회 (마감용 API)
+    async function loadVoucherList() {
+      try {
+        const { data } = await axios.get('/api/account/journalClose');
+        voucherApi.setGridOption("rowData", Array.isArray(data) ? data : []);
+        // 로그도 같이 조회하고 싶으면 별도 API 연결
+        logApi.setGridOption("rowData", []);
+      } catch (err) {
+        console.error(err);
+        alert('전표 리스트 조회 실패');
+      }
+    }
+
+    // 전표 상세 조회 (마감용 API)
+    async function loadDetail(jrnNo) {
+      try {
+        const { data } = await axios.get(`/api/account/journalClose/${jrnNo}`);
+        document.getElementById('detailNo').value = data?.[0]?.jrnNo || '';
+        document.getElementById('detailWriter').value = data?.[0]?.writer || '';
+        document.getElementById('detailDate').value = data?.[0]?.jrnDate || '';
+        document.getElementById('detailDesc').value = data?.[0]?.remarks || '';
+        detailApi.setGridOption('rowData', data || []);
+        console.log(data);
+      } catch (err) {
+        console.error(err);
+        alert('전표 상세 조회 실패');
+      }
+    }
+  </script>
+</section>
 </body>
 </html>
