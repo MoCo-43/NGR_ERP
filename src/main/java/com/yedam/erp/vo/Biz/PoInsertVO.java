@@ -10,6 +10,7 @@ import lombok.Data;
 
 @Data
 public class PoInsertVO {
+    private Long poId;
     private String cusCode;
     private String cusName;
     private String creater;
