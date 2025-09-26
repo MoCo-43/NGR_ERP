@@ -470,11 +470,11 @@
           // ===== 등록 =====
           const submit = async () => {
             try {
-              // 1) 상세행 수집
+              // 1) 품목의 상세행 수집
               const details = [];
               gridApi.forEachNodeAfterFilterAndSort((n) => {
                 const r = n.data || {};
-                if (!r.productCode) return; // 공행 skip
+                if (!r.productCode) return; // 품목코드 필수
                 const supAmt = calcSupply(r);
                 const vatAmt = calcVat(r);
                 details.push({
@@ -528,6 +528,8 @@
               await axios.post("/api/biz/poinsert", payload, {
                 headers: { "Content-Type": "application/json" },
               });
+              console.log("prdName의 품목들은 => ", payload.prdName);
+              console.log("poDetails의 품목들은 => ", payload.poDetails);
 
               alert("등록되었습니다.");
               resetAll();
@@ -571,10 +573,10 @@
 
           /*
 
-                ======================== 주문서조회 모달 ========================
+                        ======================== 주문서조회 모달 ========================
 
 
-                */
+                        */
           const poHistoryModalEl = document.getElementById("PoHistoryModal");
           let poHistoryGridApi;
           const poHistoryColumnDefs = [
@@ -671,10 +673,10 @@
           }
           /*
 
-                ======================== 품목코드 모달 ========================
+                        ======================== 품목코드 모달 ========================
 
 
-          */
+                  */
           const productModalEl = document.getElementById("productcodeModal");
           let productGridApi;
           const productColumnDefs = [
@@ -758,10 +760,10 @@
 
         /*
 
-                ======================== 거래처 모달 ========================
+                        ======================== 거래처 모달 ========================
 
 
-        */
+                */
         document.addEventListener("DOMContentLoaded", () => {
           const customerCodeModalEl = document.getElementById("customermodal");
           let customerCodeGridApi;
@@ -843,10 +845,10 @@
         });
 
         /*
-======= ======= ======= 
-======= 임시조치 ======= 
-======= ======= ======= 
-        */
+        ======= ======= =======
+        ======= 임시조치 =======
+        ======= ======= =======
+                */
 
         // body에 강제 표시(z-index 문제 회피)
         ["productcodeModal", "customermodal", "PoHistoryModal"].forEach(

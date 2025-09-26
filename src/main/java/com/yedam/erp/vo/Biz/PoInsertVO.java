@@ -9,7 +9,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import lombok.Data;
 
 @Data
-public class PoInsertVO {
+public class PoInsertVO{
+    private Long companyCode;
     private Long poId;
     private String cusCode;
     private String cusName;
