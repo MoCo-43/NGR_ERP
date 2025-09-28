@@ -2,156 +2,80 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>구독 정보</title>
+    <title>구독 프로세스</title>
     <style>
         /* 기본 스타일 */
-        body {
-            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-            margin: 0;
-        }
+        body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background-color: #f8f9fa; color: #333; margin: 0; }
+        main { display: flex; justify-content: center; padding: 30px 20px; width: 100%; box-sizing: border-box; }
+        .content-wrapper { width: 1400px; background-color: #fff; border: 1px solid #dee2e6; padding: 24px; }
+        .page-title { text-align: center; font-size: 28px; font-weight: bold; margin-bottom: 20px; }
         
-        main {
-            display: flex;
-            justify-content: center;
-            padding: 30px 20px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* 메인 콘텐츠 래퍼 (더 크게 수정) */
-        .content-wrapper {
-            width: 1400px; 
-            background-color: #fff;
-            border: 1px solid #dee2e6;
-            padding: 24px;
-        }
-
-        /* 페이지 상단 제목 */
-        .page-title {
-            text-align: center;
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
         /* 스텝 네비게이션 */
-        .steps {
-            display: flex;
-            list-style: none;
-            padding: 0 0 20px 0;
-            margin: 0 0 24px 0;
-            justify-content: space-evenly;
-            border-bottom: 1px solid #e9ecef;
-        }
+        .steps { display: flex; list-style: none; padding: 0 0 20px 0; margin: 0 0 24px 0; justify-content: space-evenly; border-bottom: 1px solid #e9ecef; }
         .steps .step { display: flex; align-items: center; color: #888; }
-        .steps .step .number {
-            width: 28px; height: 28px; border-radius: 50%; background-color: #adb5bd;
-            color: white; display: flex; justify-content: center; align-items: center;
-            margin-right: 8px; font-weight: bold; font-size: 14px;
-        }
+        .steps .step .number { width: 28px; height: 28px; border-radius: 50%; background-color: #adb5bd; color: white; display: flex; justify-content: center; align-items: center; margin-right: 8px; font-weight: bold; font-size: 14px; }
         .steps .step.active .number { background-color: #e53935; }
+        .steps .step.completed .number { background-color: #3498db; }
         .steps .step.active span { color: #e53935; font-weight: bold; }
+        .steps .step.completed span { color: #3498db; }
 
-        /* 내부 콘텐츠 레이아웃 (폼 | 사이드바) */
-        .inner-layout {
-            display: flex;
-            gap: 32px; /* 폼과 사이드바 간격 */
-        }
+        /* 내부 콘텐츠 레이아웃 */
+        .inner-layout { display: flex; gap: 32px; }
+        .main-form, .subscription-form { flex: 2; }
+        .sidebar { flex: 1; padding: 24px; background-color: #f8f9fa; border-radius: 4px; }
+        .sidebar h3 { font-size: 18px; margin-top: 0; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e9ecef; }
+        .sidebar ul { padding-left: 20px; margin: 10px 0; line-height: 1.8; color: #495057; }
+        .sidebar p { line-height: 1.8; color: #495057; }
 
-        .subscription-form { 
-            flex: 2; /* 폼 영역 비율 (2:1) */
-        }
+        /* 폼 관련 스타일 */
+        .form-section-label { font-size: 14px; font-weight: bold; color: #495057; margin-bottom: 8px; display: block; }
+        .form-group { margin-bottom: 24px; }
+        .input-field { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
+        .address-group { display: flex; gap: 10px; }
+        .address-group .input-field { flex: 1; }
+        .address-group .search-btn { padding: 12px 20px; border: 1px solid #ced4da; background-color: #e9ecef; cursor: pointer; border-radius: 4px; }
 
-        /* 폼 섹션 제목 */
-        .form-section-label {
-            font-size: 14px;
-            font-weight: bold;
-            color: #495057;
-            margin-bottom: 8px;
-            display: block;
-        }
-        
-        .form-group {
-            margin-bottom: 24px;
-        }
-        
+        /* 요약 정보 박스 */
+        .summary-box { border: 1px solid #e9ecef; border-radius: 4px; }
+        .summary-box .summary-item { display: flex; justify-content: space-between; padding: 16px; border-bottom: 1px solid #e9ecef; }
+        .summary-box .summary-item:last-child { border-bottom: none; }
+        .summary-box .item-label { color: #495057; }
+        .summary-box .item-value { font-weight: bold; }
+        .summary-box .total { background-color: #f8f9fa; font-size: 18px; }
+        .summary-box .total .item-value { color: #e53935; }
+
+        /* 옵션 버튼 */
         .options-group { display: flex; gap: 12px; margin-bottom: 20px; }
-
-        /* --- CSS 수정: 클릭 안되는 서비스 표시 상자 --- */
-        .service-display-box {
-            flex: 1; padding: 16px; border: 1px solid #ced4da; background-color: #f8f9fa;
-            text-align: center; border-radius: 4px; color: #495057;
-        }
-
-        /* 구독 기간 옵션 (클릭 가능) */
-        .option-button {
-            flex: 1; padding: 16px; border: 1px solid #ced4da; background-color: #fff;
-            text-align: center; cursor: pointer; transition: all 0.2s; border-radius: 4px;
-        }
+        .service-display-box { flex: 1; padding: 16px; border: 1px solid #ced4da; background-color: #f8f9fa; text-align: center; border-radius: 4px; color: #495057; }
+        .option-button, .payment-option { flex: 1; padding: 16px; border: 1px solid #ced4da; background-color: #fff; text-align: center; cursor: pointer; transition: all 0.2s; border-radius: 4px; }
         .option-button .icon { font-size: 24px; margin-bottom: 8px; }
-        .option-button:hover { border-color: #495057; }
-        .option-button.selected { border-color: #e53935; background-color: #fff3f2; color: #e53935; font-weight: bold; }
+        .option-button:hover, .payment-option:hover { border-color: #495057; }
+        .option-button.selected, .payment-option.selected { border-color: #e53935; background-color: #fff3f2; color: #e53935; font-weight: bold; }
         
-        /* 사용자 수 선택 (셀렉트 박스) 스타일 */
-        .custom-select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 16px;
-            background-color: #fff;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 16px 12px;
-        }
-
-        /* 프리미엄 섹션 */
-        .premium-section {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px; border: 1px solid #dee2e6; margin-top: 24px;
-        }
+        .custom-select { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 16px; background-color: #fff; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 16px 12px; }
+        .premium-section { display: flex; justify-content: space-between; align-items: center; padding: 16px; border: 1px solid #dee2e6; margin-top: 24px; }
         .premium-section .label { font-weight: bold; }
         .premium-section .price { font-size: 18px; font-weight: bold; color: #e53935; }
-        
+
         /* 하단 네비게이션 버튼 */
         .form-navigation { display: flex; justify-content: space-between; margin-top: 32px; }
         .nav-btn { padding: 12px 24px; border: none; cursor: pointer; font-size: 16px; border-radius: 4px; }
         .prev-btn { background-color: #6c757d; color: white; }
         .next-btn { background-color: #e53935; color: white; }
 
-        /* 오른쪽 사이드바 (제품 설명) 스타일 */
-        .sidebar {
-            flex: 1; /* 사이드바 영역 비율 (2:1) */
-            padding: 24px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-        }
-        .sidebar h3 {
-            font-size: 18px;
-            margin-top: 0;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .sidebar ul {
-            padding-left: 20px;
-            margin: 10px 0;
-            line-height: 1.8;
-            color: #495057;
-        }
-        .sidebar p {
-            line-height: 1.8;
-            color: #495057;
-        }
+        /* 결제 완료 페이지 */
+        .completion-container { text-align: center; padding: 60px 20px; }
+        .completion-container h2 { font-size: 24px; margin-bottom: 16px; color: #e53935; }
+        .completion-container p { font-size: 16px; color: #495057; margin-bottom: 32px; }
+        .completion-container .home-btn { background-color: #e53935; color: white; padding: 14px 40px; font-size: 18px; text-decoration: none; border-radius: 4px; }
+
+        /* JS로 컨트롤할 섹션 숨김 처리 */
+        .step-section { display: none; }
+        .step-section.active { display: block; }
     </style>
 </head>
 <body>
+
     <div th:replace="~{layout/main_header :: headerFragment}"></div>
     
     <main>
@@ -159,102 +83,281 @@
             <h1 class="page-title">구독제품이름</h1>
 
             <ol class="steps">
-                <li class="step active"><div class="number">1</div><span>구독정보</span></li>
-                <li class="step"><div class="number">2</div><span>사용자정보</span></li>
-                <li class="step"><div class="number">3</div><span>전자 계약서</span></li>
-                <li class="step"><div class="number">4</div><span>결제 및 결제완료</span></li>
+                <li id="step-ui-1" class="step active"><div class="number">1</div><span>구독정보</span></li>
+                <li id="step-ui-2" class="step"><div class="number">2</div><span>사용자정보</span></li>
+                <li id="step-ui-3" class="step"><div class="number">3</div><span>전자 계약서</span></li>
+                <li id="step-ui-4" class="step"><div class="number">4</div><span>결제 및 결제완료</span></li>
             </ol>
-            
-            <div class="inner-layout">
-                <div class="subscription-form">
-                    <div class="form-group">
-                        <label class="form-section-label">제공 서비스</label>
-                        <div class="options-group">
-                            <div class="service-display-box">
-                                <div>인사</div>
-                            </div>
-                            <div class="service-display-box">
-                                <div>회계</div>
+
+            <div id="step-1" class="step-section active">
+                <div class="inner-layout">
+                    <div class="subscription-form">
+                        <div class="form-group">
+                            <label class="form-section-label">제공 서비스</label>
+                            <div class="options-group">
+                                <div class="service-display-box"><div>인사</div></div>
+                                <div class="service-display-box"><div>회계</div></div>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-section-label">구독기간</label>
-                        <div class="options-group" id="duration-options">
-                            <div class="option-button">
-                                <div class="icon">📅</div>
-                                <div>3개월</div>
-                            </div>
-                            <div class="option-button selected">
-                                <div class="icon">📅</div>
-                                <div>6개월</div>
-                            </div>
-                            <div class="option-button">
-                                <div class="icon">📅</div>
-                                <div>12개월</div>
+                        <div class="form-group">
+                            <label class="form-section-label">구독기간</label>
+                            <div class="options-group" id="duration-options">
+                                <div class="option-button"><div class="icon">📅</div><div>3개월</div></div>
+                                <div class="option-button selected"><div class="icon">📅</div><div>6개월</div></div>
+                                <div class="option-button"><div class="icon">📅</div><div>12개월</div></div>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <label for="user-count-select" class="form-section-label">사용자 수(규모)</label>
+                            <select id="user-count-select" class="custom-select">
+                                <option value="10">10명</option>
+                                <option value="50" selected>50명</option>
+                                <option value="100">100명</option>
+                            </select>
+                        </div>
+                        <div class="premium-section">
+                            <span class="label">프리미엄 12개월 구독 금액</span>
+                            <span class="price">금액</span>
+                        </div>
+                        <div class="form-navigation">
+                            <button type="button" class="nav-btn prev-btn" disabled>이전단계</button>
+                            <button type="button" class="nav-btn next-btn" onclick="goToStep(2)">다음단계</button>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="user-count-select" class="form-section-label">사용자 수(규모)</label>
-                        <select id="user-count-select" class="custom-select">
-                            <option value="10">10명</option>
-                            <option value="50" selected>50명</option>
-                            <option value="100">100명</option>
-                        </select>
-                    </div>
-
-                    <div class="premium-section">
-                        <span class="label">프리미엄 12개월 구독 금액</span>
-                        <span class="price">금액</span>
-                    </div>
-
-                    <div class="form-navigation">
-                        <button type="button" class="nav-btn prev-btn" onclick="location.href='/subscribe'">이전단계</button>
-                        <button type="button" class="nav-btn next-btn" onclick="location.href='/eContract'">다음단계</button>
-                    </div>
+                    <aside class="sidebar">
+                        <h3>제품에 대한 설명</h3>
+                        <p><strong>구독 안내</strong></p>
+                        <ul>
+                            <li>원하는 구독 기간과 회사 규모(사용자 수)에 맞는 플랜을 선택하세요.</li>
+                            <li><strong>12개월</strong> 구독 시 <strong>10% 할인</strong>이 적용됩니다.</li>
+                        </ul>
+                        <p><strong>초과 요금 정책</strong></p>
+                        <ul><li>선택한 플랜의 최대 인원을 초과하여 사용자를 추가할 경우, 인당 추가 요금이 발생합니다.</li></ul>
+                        <p><strong>다음 단계</strong></p>
+                        <ul><li>선택 완료 후 '다음단계'를 누르면 전자 계약 페이지로 이동합니다.</li></ul>
+                    </aside>
                 </div>
-                
-                <aside class="sidebar">
-                    <h3>제품에 대한 설명</h3>
-                    <p><strong>구독 안내</strong></p>
-                    <ul>
-                        <li>원하는 구독 기간과 회사 규모(사용자 수)에 맞는 플랜을 선택하세요.</li>
-                        <li><strong>12개월</strong> 구독 시 <strong>10% 할인</strong>이 적용됩니다.</li>
-                    </ul>
-                    <p><strong>초과 요금 정책</strong></p>
-                    <ul>
-                        <li>선택한 플랜의 최대 인원을 초과하여 사용자를 추가할 경우, 인당 추가 요금이 발생합니다.</li>
-                    </ul>
-                    <p><strong>다음 단계</strong></p>
-                    <ul>
-                        <li>선택 완료 후 '다음단계'를 누르면 전자 계약 페이지로 이동합니다.</li>
-                    </ul>
-                </aside>
+            </div>
+
+            <div id="step-2" class="step-section">
+                <div class="inner-layout">
+                    <div class="main-form">
+                        <div class="form-group">
+                            <label for="company-name" class="form-section-label">회사명</label>
+                            <input type="text" id="company-name" class="input-field" placeholder="회사명을 입력하세요">
+                        </div>
+                        <div class="form-group">
+                            <label for="biz-reg-number" class="form-section-label">사업자 등록번호</label>
+                            <input type="text" id="biz-reg-number" class="input-field" placeholder="'-'를 포함하여 입력하세요">
+                        </div>
+                        <div class="form-group">
+                            <label for="ceo-name" class="form-section-label">대표자명</label>
+                            <input type="text" id="ceo-name" class="input-field" placeholder="대표자명을 입력하세요">
+                        </div>
+                        <div class="form-group">
+                            <label for="company-address" class="form-section-label">회사 주소</label>
+                            <div class="address-group">
+                                 <input type="text" id="company-address" class="input-field" placeholder="주소 검색" readonly>
+                                 <button type="button" class="search-btn">검색</button>
+                            </div>
+                             <input type="text" class="input-field" placeholder="상세 주소를 입력하세요" style="margin-top: 10px;">
+                        </div>
+                        <hr style="margin: 32px 0; border: 1px solid #f1f3f5;">
+                         <div class="form-group">
+                            <label for="admin-name" class="form-section-label">관리자 이름</label>
+                            <input type="text" id="admin-name" class="input-field" placeholder="관리자 이름을 입력하세요">
+                        </div>
+                        <div class="form-group">
+                            <label for="admin-email" class="form-section-label">관리자 이메일 (ID)</label>
+                            <input type="email" id="admin-email" class="input-field" placeholder="로그인 ID로 사용할 이메일을 입력하세요">
+                        </div>
+                        <div class="form-navigation">
+                            <button type="button" class="nav-btn prev-btn" onclick="goToStep(1)">이전단계</button>
+                            <button type="button" class="nav-btn next-btn" onclick="goToStep(3)">다음단계</button>
+                        </div>
+                    </div>
+                    <aside class="sidebar">
+                        <h3>선택한 구독 정보</h3>
+                        <div class="summary-box">
+                            <div class="summary-item">
+                                <span class="item-label">구독 기간</span>
+                                <span class="item-value">6개월</span>
+                            </div>
+                             <div class="summary-item">
+                                <span class="item-label">사용자 수</span>
+                                <span class="item-value">50명</span>
+                            </div>
+                             <div class="summary-item total">
+                                <span class="item-label">예상 결제금액</span>
+                                <span class="item-value">금액</span>
+                            </div>
+                        </div>
+                        <h3 style="margin-top: 24px;">안내</h3>
+                        <ul>
+                            <li>입력하신 정보는 안전하게 관리됩니다.</li>
+                            <li>관리자 정보는 서비스 로그인 및 주요 알림 수신에 사용되므로 정확하게 입력해 주세요.</li>
+                        </ul>
+                    </aside>
+                </div>
+            </div>
+
+            <div id="step-3" class="step-section">
+                <div style="border: 1px solid #dee2e6; padding: 20px; height: 400px; overflow-y: auto; margin-bottom: 20px;">
+                    <h3 style="text-align: center;">전자 계약서</h3>
+                    <p><strong>제 1조 (목적)</strong> 본 계약은 ...</p>
+                    <p><strong>제 2조 (서비스의 내용)</strong> ...</p>
+                    <p>...</p>
+                </div>
+                <div class="form-navigation">
+                    <button type="button" class="nav-btn prev-btn" onclick="goToStep(2)">이전단계</button>
+                    <button type="button" class="nav-btn next-btn" onclick="goToStep(4)">계약에 동의 및 다음단계</button>
+                </div>
+            </div>
+
+            <div id="step-4" class="step-section">
+                <div class="inner-layout">
+                    <div class="main-form">
+                        <div class="form-group">
+                            <label class="form-section-label">최종 결제 정보</label>
+                            <div class="summary-box">
+                                 <div class="summary-item">
+                                    <span class="item-label">구독 기간</span>
+                                    <span class="item-value">6개월</span>
+                                </div>
+                                 <div class="summary-item">
+                                    <span class="item-label">사용자 수</span>
+                                    <span class="item-value">50명</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="item-label">기본 금액</span>
+                                    <span class="item-value">1,000,000원</span>
+                                </div>
+                                 <div class="summary-item">
+                                    <span class="item-label">할인 금액</span>
+                                    <span class="item-value">- 0원</span>
+                                </div>
+                                 <div class="summary-item total">
+                                    <span class="item-label">총 결제 금액</span>
+                                    <span class="item-value">1,000,000원</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-section-label">결제 수단 선택</label>
+                            <div class="options-group" id="payment-options">
+                                <div class="payment-option selected">신용카드</div>
+                                <div class="payment-option">계좌이체</div>
+                                <div class="payment-option">가상계좌</div>
+                            </div>
+                        </div>
+                        <div class="form-navigation">
+                            <button type="button" class="nav-btn prev-btn" onclick="goToStep(3)">이전단계</button>
+                            <button type="button" class="nav-btn next-btn" onclick="goToStep(5)">1,000,000원 결제하기</button>
+                        </div>
+                    </div>
+                    <aside class="sidebar">
+                         <h3>결제 안내</h3>
+                        <ul>
+                            <li>결제는 안전한 PG사를 통해 진행됩니다.</li>
+                            <li>결제 완료 후 즉시 서비스를 이용할 수 있습니다.</li>
+                            <li>결제 관련 문의는 고객센터(1234-5678)로 연락주시기 바랍니다.</li>
+                        </ul>
+                    </aside>
+                </div>
+            </div>
+
+            <div id="step-5" class="step-section">
+                <div class="completion-container">
+                    <h2>결제가 성공적으로 완료되었습니다!</h2>
+                    <p>이제 모든 서비스를 정상적으로 이용하실 수 있습니다.<br>관리자 계정으로 로그인하여 서비스를 시작해 보세요.</p>
+                    <div class="summary-box" style="width: 500px; margin: 0 auto 40px auto; text-align: left;">
+                         <div class="summary-item">
+                            <span class="item-label">구독 플랜</span>
+                            <span class="item-value">프리미엄</span>
+                        </div>
+                         <div class="summary-item">
+                            <span class="item-label">구독 기간</span>
+                            <span class="item-value">2025-09-28 ~ 2026-03-27</span>
+                        </div>
+                    </div>
+                    <a href="/dashboard" class="home-btn">서비스 시작하기</a>
+                </div>
             </div>
         </div>
     </main>
-    
+
     <div th:replace="~{layout/main_footer :: footerFragment}"></div>
 
     <script>
-        // 문서의 모든 콘텐츠가 로드된 후에 스크립트를 실행합니다.
-        document.addEventListener('DOMContentLoaded', function() {
-            // '구독 기간' 옵션 버튼들을 모두 선택합니다.
-            const durationButtons = document.querySelectorAll('#duration-options .option-button');
+        // 현재 활성화된 스텝 번호를 저장하는 변수
+        let currentStep = 1;
 
-            // 각 버튼에 대해 클릭 이벤트를 추가합니다.
+        function goToStep(stepNumber) {
+            // 현재 스텝 숨기기
+            const currentStepElement = document.getElementById(`step-${currentStep}`);
+            if (currentStepElement) {
+                currentStepElement.classList.remove('active');
+            }
+            
+            // 이동할 스텝 보이기
+            const nextStepElement = document.getElementById(`step-${stepNumber}`);
+            if (nextStepElement) {
+                nextStepElement.classList.add('active');
+            }
+
+            // 상단 스텝 UI 업데이트
+            updateStepUI(stepNumber);
+
+            // 현재 스텝 번호 업데이트
+            currentStep = stepNumber;
+        }
+
+        function updateStepUI(targetStep) {
+            const steps = document.querySelectorAll('.steps .step');
+            
+            // 결제 완료(5) 단계는 UI상 4단계로 처리
+            const uiTargetStep = targetStep > 4 ? 4 : targetStep;
+
+            steps.forEach((step, index) => {
+                const stepIndex = index + 1;
+                step.classList.remove('active', 'completed');
+
+                if (stepIndex < uiTargetStep) {
+                    step.classList.add('completed');
+                } else if (stepIndex === uiTargetStep) {
+                    step.classList.add('active');
+                }
+            });
+            
+            // 실제 결제가 완료되면(5단계) 4단계 UI를 completed로 변경
+            if (targetStep === 5) {
+                const step4UI = document.getElementById('step-ui-4');
+                if (step4UI) {
+                    step4UI.classList.remove('active');
+                    step4UI.classList.add('completed');
+                }
+            }
+        }
+
+        // --- 옵션 선택 버튼들 이벤트 리스너 ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // 구독 기간 선택
+            const durationButtons = document.querySelectorAll('#duration-options .option-button');
             durationButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    // 먼저 모든 버튼에서 'selected' 클래스를 제거합니다.
                     durationButtons.forEach(btn => btn.classList.remove('selected'));
-                    // 그 다음, 방금 클릭한 버튼에만 'selected' 클래스를 추가합니다.
                     button.classList.add('selected');
+                });
+            });
+
+            // 결제 수단 선택
+            const paymentOptions = document.querySelectorAll('#payment-options .payment-option');
+            paymentOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    paymentOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
                 });
             });
         });
     </script>
 </body>
-</html>
