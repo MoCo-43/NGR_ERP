@@ -38,4 +38,9 @@ public interface PayrollMapper {
 
     // 부서별 합계
     PayrollDeptSumVO selectDeptSum(Long payrollNo);
+    
+    //  사원 공제 저장 
+    int upsertDeduct(PayrollSummaryVO vo);
+    //  부서별 확정 
+    int insertDeptPayrollSum(PayrollDeptSumVO vo);
 }
