@@ -7,7 +7,7 @@
 >
   <head>
     <meta charset="UTF-8" />
-    <title layout:fragment="title">주문지시서 입력</title>
+    <title layout:fragment="title">출하지시서 조회</title>
 
     <th:block layout:fragment="head_extra">
       <!-- Bootstrap (base와 버전 충돌 시 강제 주입) -->
@@ -35,29 +35,37 @@
       <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css"
-        integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g=="
         crossorigin="anonymous"
         referrerpolicy="no-referrer"
       />
 
       <style>
-        .ag-theme-quartz .ag-cell {
-          padding-left: 8px;
-          padding-right: 8px;
+        .filter-card {
+          border: 1px solid #e5e7eb;
         }
-        .form-section-title {
+        .seg-title {
           font-weight: 700;
-          font-size: 1rem;
+          font-size: 0.95rem;
         }
-        .required::after {
-          content: " *";
-          color: #dc3545;
+        .status-tabs .btn {
+          min-width: 96px;
         }
-        #itemsTable tbody tr td {
-          vertical-align: middle;
+        .status-tabs .btn.active {
+          pointer-events: none;
         }
-        .btn-bar {
-          gap: 0.5rem;
+        .form-inline .form-control {
+          min-width: 170px;
+        }
+        .btn-reset {
+          min-width: 92px;
+        }
+        .ag-theme-quartz {
+          height: 520px;
+          width: 100%;
+        }
+        .muted {
+          font-size: 12px;
+          color: #6b7280;
         }
       </style>
     </th:block>
@@ -66,238 +74,101 @@
   <body>
     <section layout:fragment="content">
       <div class="card shadow">
+        <!-- 헤더 -->
         <div
-          class="card-header py-3 d-flex align-items-center justify-content-between"
+          class="card-header d-flex align-items-center justify-content-between"
         >
-          <h5 class="mb-0">주문지시서 입력</h5>
-          <div class="d-flex btn-bar">
+          <h5 class="mb-0">출하지시서 조회</h5>
+          <div class="d-flex gap-2">
             <button
               type="button"
-              class="btn btn-outline-secondary"
-              id="btnInit"
+              class="btn btn-outline-secondary btn-reset"
+              id="btnReset"
             >
               <i class="bi bi-arrow-counterclockwise me-1"></i>초기화
             </button>
-            <button type="button" class="btn btn-primary" id="btnSubmit">
-              <i class="bi bi-check2-circle me-1"></i>등록
+            <button type="button" class="btn btn-primary" id="btnSearch">
+              <i class="bi bi-search me-1"></i>검색
             </button>
           </div>
         </div>
 
         <div class="card-body">
-          <!-- 마스터 영역 -->
-          <form
-            id="orderForm"
-            th:object="${orderPlan}"
-            class="row g-3"
-            enctype="application/x-www-form-urlencoded"
-            autocomplete="off"
-          >
-            <div class="col-md-3">
-              <label for="insDate" class="form-label required">작성일자</label>
-              <input
-                type="date"
-                class="form-control"
-                id="insDate"
-                th:field="*{insDate}"
-                name="insDate"
-              />
-            </div>
-
-            <div class="col-md-3">
-              <label for="empName" class="form-label required">담당자</label>
-              <div class="input-group">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="empName"
-                  th:field="*{empName}"
-                  name="empName"
-                  placeholder="담당자명"
-                />
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  id="btnFindEmp"
-                  title="담당자 조회"
-                >
-                  <i class="bi bi-search"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="col-md-3">
-              <label for="dueDate" class="form-label">출하예정일</label>
-              <input
-                type="date"
-                class="form-control"
-                id="dueDate"
-                th:field="*{dueDate}"
-                name="dueDate"
-              />
-            </div>
-
-            <div class="col-md-3">
-              <label for="taxType" class="form-label required">세율유형</label>
-              <select
-                class="form-select"
-                id="taxType"
-                th:field="*{taxType}"
-                name="taxType"
+          <!-- 1) 상태 탭 -->
+          <div class="status-tabs mb-3">
+            <div class="btn-group" role="group" aria-label="status">
+              <button
+                type="button"
+                class="btn btn-primary active"
+                data-status=""
               >
-                <option value="">선택안함</option>
-                <option value="부가세율">부가세율 적용</option>
-                <option value="영세율">영세율 적용</option>
-                <option value="면세">면세 적용</option>
-              </select>
+                전체
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                data-status="작성완료"
+              >
+                작성완료
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                data-status="처리중"
+              >
+                처리중
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                data-status="출하완료"
+              >
+                출하완료
+              </button>
             </div>
-
-            <div class="col-md-4">
-              <label class="form-label required">거래처</label>
-              <div class="input-group">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="cusCode"
-                  th:field="*{cusCode}"
-                  name="cusCode"
-                  placeholder="거래처코드"
-                  readonly
-                />
-                <input
-                  type="text"
-                  class="form-control"
-                  id="cusName"
-                  th:field="*{cusName}"
-                  name="cusName"
-                  placeholder="거래처명"
-                />
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  id="btnFindCus"
-                  title="거래처 조회"
-                >
-                  <i class="bi bi-search"></i>
-                </button>
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <label for="contact" class="form-label">연락처</label>
-              <input
-                type="text"
-                class="form-control"
-                id="contact"
-                th:field="*{contact}"
-                name="contact"
-                placeholder="예) 010-1234-5678"
-              />
-            </div>
-
-            <div class="col-md-4">
-              <label for="zip" class="form-label">우편번호</label>
-              <div class="input-group">
-                <input
-                  type="text"
-                  class="form-control"
-                  id="zip"
-                  th:field="*{zip}"
-                  name="zip"
-                />
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  id="btnFindZip"
-                >
-                  찾기
-                </button>
-              </div>
-            </div>
-
-            <div class="col-12">
-              <label for="addr" class="form-label">주소</label>
-              <input
-                type="text"
-                class="form-control"
-                id="addr"
-                th:field="*{addr}"
-                name="addr"
-              />
-            </div>
-          </form>
-
-          <!-- 중간 버튼들 -->
-          <div class="d-flex gap-2 mt-3">
-            <button type="button" class="btn btn-outline-dark" id="btnOpenItem">
-              <i class="bi bi-upc-scan me-1"></i>품목코드
-            </button>
-            <button
-              type="button"
-              class="btn btn-outline-dark"
-              id="btnFindOrders"
-            >
-              <i class="bi bi-file-earmark-text me-1"></i>주문서조회
-            </button>
-            <button type="button" class="btn btn-outline-dark" id="btnHistory">
-              <i class="bi bi-clock-history me-1"></i>거래내역조회
-            </button>
           </div>
 
-          <!-- 상세(그리드/테이블) -->
-          <div class="card shadow-sm mt-4">
-            <div
-              class="card-header bg-secondary text-white d-flex justify-content-between align-items-center"
-            >
-              <h6 class="mb-0">주문 상세</h6>
-              <div class="d-flex gap-2">
-                <button
-                  type="button"
-                  class="btn btn-light btn-sm"
-                  id="btnAddRow"
-                >
-                  <i class="bi bi-plus-lg me-1"></i>행 추가
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-outline-light btn-sm"
-                  id="btnClearRows"
-                >
-                  <i class="bi bi-trash3 me-1"></i>행 비우기
-                </button>
+          <!-- 2) 검색 영역 -->
+          <div class="card filter-card p-3 mb-2">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label seg-title">작성일자</label>
+                <div class="d-flex gap-2">
+                  <input type="date" class="form-control" id="writeDateStart" />
+                  <input type="date" class="form-control" id="writeDateEnd" />
+                </div>
               </div>
-            </div>
-            <div class="card-body p-0">
-              <div class="table-responsive">
-                <table class="table table-bordered mb-0" id="itemsTable">
-                  <thead class="table-light text-center align-middle">
-                    <tr>
-                      <th style="width: 60px">No.</th>
-                      <th style="min-width: 120px">제품코드</th>
-                      <th style="min-width: 160px">제품명</th>
-                      <th style="min-width: 120px">규격</th>
-                      <th style="min-width: 120px">거래처코드</th>
-                      <th style="min-width: 160px">거래처명</th>
-                      <th style="width: 110px">수량</th>
-                      <th style="width: 130px">구매단가</th>
-                      <th style="width: 140px">공급가액</th>
-                      <th style="width: 120px">세액</th>
-                      <th style="width: 80px">삭제</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <!-- JS로 행 추가 -->
-                  </tbody>
-                </table>
+
+              <div class="col-md-3">
+                <label class="form-label seg-title">납기일자</label>
+                <div class="d-flex gap-2">
+                  <input type="date" class="form-control" id="exDateStart" />
+                  <input type="date" class="form-control" id="exDateEnd" />
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label seg-title">거래처</label>
+                <div class="input-group">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="customer"
+                    placeholder="거래처명 또는 코드"
+                  />
+                  <span class="input-group-text"
+                    ><i class="bi bi-search"></i
+                  ></span>
+                </div>
               </div>
             </div>
           </div>
+          <!-- 3) 목록 그리드 -->
+          <div id="grid" class="ag-theme-quartz"></div>
         </div>
-        <!-- /card-body -->
       </div>
-      <!-- /card -->
 
-      <!-- Toast -->
+      <!-- Toast 알람 -->
       <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
         <div
           id="successToast"
@@ -309,14 +180,9 @@
           <div class="toast-body" id="toastMessage">처리가 완료되었습니다.</div>
         </div>
       </div>
-
-      <!-- 모달 include -->
-      <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
-      <div th:replace="~{stock/modals/productModal  :: productModal}"></div>
     </section>
 
     <th:block layout:fragment="body_extra">
-      <!-- libs -->
       <script
         src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"
       ></script>
@@ -324,265 +190,126 @@
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
       ></script>
       <script
-        src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/dist/ag-grid-community.min.noStyle.js"
+        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"
       ></script>
       <script
         src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"
-        integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw=="
         crossorigin="anonymous"
         referrerpolicy="no-referrer"
       ></script>
 
-      <!-- 페이지 스크립트 -->
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
-          const form = document.getElementById("orderForm");
-          const tbody = document.querySelector("#itemsTable tbody");
-          const btnAdd = document.getElementById("btnAddRow");
-          const btnInit = document.getElementById("btnInit");
-          const btnClear = document.getElementById("btnClearRows");
-          const btnSubmit = document.getElementById("btnSubmit");
-          const taxSelect = document.getElementById("taxType");
+          // === DOM ===
+          const btnSearch = document.getElementById("btnSearch"); // 검색 버튼
+          const btnReset = document.getElementById("btnReset"); // 초기화 버튼
+          const statusBtns = document.querySelectorAll(".status-tabs .btn"); // 처리상태 버튼
+          const writeDateStart = document.getElementById("writeDateStart"); // 작성일자 시작
+          const writeDateEnd = document.getElementById("writeDateEnd"); // 작성일자 종료
+          const exDateStart = document.getElementById("exDateStart"); // 납기일자 시작
+          const exDateEnd = document.getElementById("exDateEnd"); // 납기일자 종료
+          const customer = document.getElementById("customer"); // 거래처
 
-          const toast = new bootstrap.Toast(
-            document.getElementById("successToast")
-          );
+          // === 전체 상태값 초기화 ===
+          let currentStatus = "";
 
-          let rowNo = 1;
-          let cusGridApi = null,
-            prodGridApi = null;
-          const businessModal = bootstrap.Modal.getOrCreateInstance(
-            document.getElementById("businessModal")
-          );
-          const productModal = bootstrap.Modal.getOrCreateInstance(
-            document.getElementById("productModal")
-          );
-          let selectedRowForProduct = null;
-          let selectedRowForCustomer = null;
+          // === Grid 설정 ===
+          const columnDefs = [
+            {
+              headerName: "지시서코드",
+              field: "orderCode",
+              width: 120,
+              cellRenderer: (p) =>
+                `<a href="/biz/ship/dispatch/${p.value}" class="link-primary">${p.value}</a>`,
+            },
+            { headerName: "작성일자", field: "insertDate", width: 120 },
+            { headerName: "거래처명", field: "customerName", minWidth: 140 },
+            { headerName: "품목명", field: "productName", minWidth: 180 },
+            {
+              headerName: "수량합계",
+              field: "totalQty",
+              width: 110,
+              valueFormatter: (p) => p.value?.toLocaleString() ?? "",
+            },
+            { headerName: "납기일자", field: "exDate", width: 120 },
+            { headerName: "진행상태", field: "status", width: 110 },
+          ];
 
-          // 금액 계산
-          function recalcRow(tr) {
-            const qty = parseFloat(tr.querySelector(".qty")?.value) || 0;
-            const price =
-              parseFloat(tr.querySelector(".purchasePrice")?.value) || 0;
-            let supAmt = qty * price;
-            let rate = 0;
-            if (taxSelect.value === "부가세율") rate = 0.1;
-            else rate = 0;
+          const gridOptions = {
+            columnDefs,
+            rowData: [],
+            rowSelection: "single",
+            animateRows: true,
+            defaultColDef: { sortable: true, resizable: true },
+            onRowDoubleClicked: (e) => {
+              if (!e.data?.orderCode) return;
+              window.location.href = `/biz/ship/dispatch/${e.data.orderCode}`;
+            },
+          };
 
-            tr.querySelector(".supAmt").value = Math.floor(supAmt);
-            tr.querySelector(".vatAmt").value = Math.floor(supAmt * rate);
-          }
+          new agGrid.Grid(document.getElementById("grid"), gridOptions);
 
-          function addRow() {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-          <td class="text-center">${rowNo++}</td>
-          <td>
-            <div class="input-group">
-              <input type="text" class="form-control productCode" name="details[#idx].productCode" placeholder="더블클릭으로 선택" readonly>
-              <button class="btn btn-outline-secondary btn-sm btnFindProduct" type="button"><i class="bi bi-search"></i></button>
-            </div>
-          </td>
-          <td><input type="text" class="form-control productName" name="details[#idx].productName" readonly></td>
-          <td><input type="text" class="form-control specification" name="details[#idx].specification" readonly></td>
-          <td><input type="text" class="form-control partnerCode" name="details[#idx].partnerCode" readonly></td>
-          <td><input type="text" class="form-control partnerName" name="details[#idx].partnerName" readonly></td>
-          <td><input type="number" class="form-control qty" name="details[#idx].qty" value="1" min="1"></td>
-          <td><input type="number" class="form-control purchasePrice" name="details[#idx].purchasePrice" value="0" min="0"></td>
-          <td><input type="number" class="form-control supAmt" name="details[#idx].supAmt" value="0" readonly></td>
-          <td><input type="number" class="form-control vatAmt" name="details[#idx].vatAmt" value="0" readonly></td>
-          <td class="text-center"><button type="button" class="btn btn-sm btn-danger btnDelRow">삭제</button></td>
-        `;
-            // 이벤트 바인딩
-            tr.querySelectorAll(".qty,.purchasePrice").forEach((i) =>
-              i.addEventListener("input", () => recalcRow(tr))
-            );
-            tr.querySelector(".btnDelRow").addEventListener("click", () =>
-              tr.remove()
-            );
-
-            tr.querySelector(".btnFindProduct").addEventListener(
-              "click",
-              async () => {
-                selectedRowForProduct = tr;
-                productModal.show();
-                if (!prodGridApi) initProductGrid();
-                await loadProductData();
-                setTimeout(
-                  () => prodGridApi && prodGridApi.sizeColumnsToFit(),
-                  50
-                );
-              }
-            );
-
-            tr.querySelector(".partnerCode").addEventListener(
-              "click",
-              async () => {
-                selectedRowForCustomer = tr;
-                businessModal.show();
-                if (!cusGridApi) initBusinessGrid();
-                await loadCustomerData();
-                setTimeout(
-                  () => cusGridApi && cusGridApi.sizeColumnsToFit(),
-                  50
-                );
-              }
-            );
-
-            tbody.appendChild(tr);
-          }
-
-          btnAdd.addEventListener("click", addRow);
-          btnClear.addEventListener("click", () => (tbody.innerHTML = ""));
-          btnInit.addEventListener("click", () => {
-            form.reset();
-            tbody.innerHTML = "";
-            rowNo = 1;
-          });
-
-          taxSelect.addEventListener("change", () => {
-            tbody.querySelectorAll("tr").forEach((tr) => recalcRow(tr));
-          });
-
-          // --- 거래처 Grid (AG Grid in modal) ---
-          function initBusinessGrid() {
-            const columnDefs = [
-              { headerName: "거래처코드", field: "cusCode" },
-              { headerName: "거래처명", field: "cusName" },
-              { headerName: "담당자명", field: "empName" },
-              { headerName: "사업자번호", field: "bizNo" },
-              { headerName: "업태", field: "bizType" },
-              { headerName: "종목", field: "bizCategory" },
-              { headerName: "주소", field: "addr" },
-            ];
-            const gridOptions = {
-              columnDefs,
-              rowData: [],
-              rowSelection: "single",
-              pagination: true,
-              onGridReady: (e) => {
-                cusGridApi = e.api;
-                e.api.sizeColumnsToFit();
-              },
-              onRowDoubleClicked: (e) => {
-                if (!selectedRowForCustomer) return;
-                selectedRowForCustomer.querySelector(".partnerCode").value =
-                  e.data.cusCode;
-                selectedRowForCustomer.querySelector(".partnerName").value =
-                  e.data.cusName;
-                bootstrap.Modal.getOrCreateInstance(
-                  document.getElementById("businessModal")
-                ).hide();
-              },
-              defaultColDef: { sortable: true, resizable: true, minWidth: 110 },
-            };
-            new agGrid.Grid(document.getElementById("myGrid"), gridOptions);
-          }
-          async function loadCustomerData() {
-            try {
-              const res = await axios.get("/api/v1/stock/cusList");
-              cusGridApi && cusGridApi.setRowData(res.data);
-            } catch (e) {
-              console.error(e);
-            }
-          }
-
-          // --- 제품 Grid (AG Grid in modal) ---
-          function initProductGrid() {
-            const colDefs = [
-              { headerName: "제품코드", field: "productCode" },
-              { headerName: "제품명", field: "productName" },
-              { headerName: "규격", field: "specification" },
-            ];
-            const gridOptions = {
-              columnDefs: colDefs,
-              rowData: [],
-              rowSelection: "single",
-              onGridReady: (e) => {
-                prodGridApi = e.api;
-                e.api.sizeColumnsToFit();
-              },
-              onRowDoubleClicked: (e) => {
-                if (!selectedRowForProduct) return;
-                selectedRowForProduct.querySelector(".productCode").value =
-                  e.data.productCode;
-                selectedRowForProduct.querySelector(".productName").value =
-                  e.data.productName;
-                selectedRowForProduct.querySelector(".specification").value =
-                  e.data.specification;
-                productModal.hide();
-              },
-            };
-            new agGrid.Grid(
-              document.getElementById("productGrid"),
-              gridOptions
-            );
-          }
-          async function loadProductData() {
-            try {
-              const res = await axios.get("/api/v1/stock/productList");
-              prodGridApi && prodGridApi.setRowData(res.data);
-            } catch (e) {
-              console.error(e);
-            }
-          }
-
-          // --- 제출 ---
-          btnSubmit.addEventListener("click", async (evt) => {
-            evt.preventDefault();
-            const rows = tbody.querySelectorAll("tr");
-            if (!rows.length) {
-              toastr.error("상세 행을 1개 이상 추가해주세요.");
-              return;
-            }
-            // 상세 수집
-            const details = [];
-            rows.forEach((tr) => {
-              details.push({
-                productCode: tr.querySelector(".productCode").value,
-                productName: tr.querySelector(".productName").value,
-                specification: tr.querySelector(".specification").value,
-                partnerCode: tr.querySelector(".partnerCode").value,
-                partnerName: tr.querySelector(".partnerName").value,
-                qty: tr.querySelector(".qty").value,
-                purchasePrice: tr.querySelector(".purchasePrice").value,
-                supAmt: tr.querySelector(".supAmt").value,
-                vatAmt: tr.querySelector(".vatAmt").value,
-              });
+          // === 이벤트 ===
+          statusBtns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+              statusBtns.forEach((b) =>
+                b.classList.replace("btn-primary", "btn-outline-primary")
+              );
+              statusBtns.forEach((b) => b.classList.remove("active"));
+              btn.classList.add("active");
+              btn.classList.replace("btn-outline-primary", "btn-primary");
+              currentStatus = btn.dataset.status ?? "";
+              fetchList();
             });
-
-            // 마스터 + 상세 payload
-            const payload = {
-              empName: document.getElementById("empName").value,
-              insDate: document.getElementById("insDate").value,
-              dueDate: document.getElementById("dueDate").value,
-              taxType: document.getElementById("taxType").value,
-              cusCode: document.getElementById("cusCode").value,
-              cusName: document.getElementById("cusName").value,
-              contact: document.getElementById("contact").value,
-              zip: document.getElementById("zip").value,
-              addr: document.getElementById("addr").value,
-              details,
-            };
-
-            try {
-              await axios.post("/api/v1/stock/orderPlanInsert", payload, {
-                headers: { "Content-Type": "application/json" },
-              });
-              toastr.success("등록 성공");
-              toast.show();
-              form.reset();
-              tbody.innerHTML = "";
-              rowNo = 1;
-            } catch (err) {
-              console.error(err);
-              toastr.error("등록 실패: " + (err?.message || "알 수 없는 오류"));
-            }
           });
 
-          // 초기 1행
-          addRow();
+          btnSearch.addEventListener("click", fetchList);
+
+          btnReset.addEventListener("click", () => {
+            currentStatus = "";
+            statusBtns.forEach((b, i) => {
+              b.classList.remove("active");
+              b.classList.replace("btn-primary", "btn-outline-primary");
+              if (i === 0) {
+                b.classList.add("active");
+                b.classList.replace("btn-outline-primary", "btn-primary");
+              }
+            });
+            insFrom.value = "";
+            insTo.value = "";
+            dueFrom.value = "";
+            dueTo.value = "";
+            customer.value = "";
+            fetchList();
+          });
+
+          // === 데이터 로드 ===
+          async function fetchList() {
+            try {
+              const res = await axios.get("/api/biz/dolist");
+              const mapped = res.data.map((d) => ({
+                // 컬럼명 : 실 db 컬럼명
+                orderCode: d.doCode,
+                insertDate: d.doCreated,
+                customerName: d.cusCode,
+                productName: d.productCode,
+                totalQty: d.totalQty,
+                exDate: d.exDate,
+                status: d.doStatus,
+              }));
+              gridOptions.api.setRowData(mapped);
+
+              console.log("db에서가져온 데이터는 => ", res.data);
+              // 응답 키가 columnDefs와 일치한다면 이 한 줄로 끝
+              gridOptions.api.sizeColumnsToFit();
+            } catch (e) {
+              console.error(e);
+              toastr.error("목록 조회 실패");
+            }
+          }
+
+          // 초기 로드
+          fetchList();
         });
       </script>
     </th:block>
