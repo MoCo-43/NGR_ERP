@@ -1,5 +1,7 @@
 package com.yedam.erp.service.main;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,4 +34,11 @@ public class CompanyService {
         admin.setMatNo(company.getMatNo());
         companyMapper.insertCompanyAdmin(admin);
     }
+    // comCode로 단일 회사 조회
+    public CompanyVO getCompanyByComCode(String comCode) {
+        Optional<CompanyVO> companyOpt = companyMapper.findByComCode(comCode);
+        return companyOpt.orElse(null);
+    }
+    
 }
+
