@@ -105,13 +105,13 @@ const MENUS = {
     ],
   },
   mains:{
-	title:"mypage",
+	title:"마이페이지",
 	content:"마이페이지대시보드",
 	groups:[
-		{title:"관리",items:[["마이페이지","/mypage"]]}
-	]
-  }
-  
+		{title:"구독관리",items:[["구독관리","/mypage/sub"]]},
+	    {title: "계정관리", items:[["계정관리", "/acc/acct"]] },
+	],
+  },
 };
 
 /** DOM 참조 */
