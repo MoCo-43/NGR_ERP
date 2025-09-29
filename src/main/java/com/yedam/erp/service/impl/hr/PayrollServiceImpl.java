@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.hr.PayrollMapper;
 import com.yedam.erp.service.hr.PayrollService;
@@ -17,7 +18,7 @@ public class PayrollServiceImpl implements PayrollService {
     @Autowired
     private PayrollMapper payrollMapper;
 
-    // 급여대장 마스터 
+    // ==================== 급여대장 마스터 ====================
 
     @Override
     public List<PayrollVO> getPayrollList(Long companyCode) {
@@ -30,16 +31,19 @@ public class PayrollServiceImpl implements PayrollService {
     }
 
     @Override
+    @Transactional
     public int addPayroll(PayrollVO vo) {
         return payrollMapper.insertPayroll(vo);
     }
 
     @Override
+    @Transactional
     public int editPayroll(PayrollVO vo) {
         return payrollMapper.updatePayroll(vo);
     }
 
     @Override
+    @Transactional
     public int changePayrollStatus(PayrollVO vo) {
         return payrollMapper.updatePayrollStatus(vo);
     }
@@ -49,7 +53,7 @@ public class PayrollServiceImpl implements PayrollService {
         return payrollMapper.selectPayrollListByCond(vo);
     }
 
-    // 급여대장 상세 
+    // ==================== 급여대장 상세 ====================
 
     @Override
     public List<PayrollSummaryVO> getPayrollSummary(Long payrollNo) {
@@ -59,5 +63,20 @@ public class PayrollServiceImpl implements PayrollService {
     @Override
     public PayrollDeptSumVO getDeptSum(Long payrollNo) {
         return payrollMapper.selectDeptSum(payrollNo);
+    }
+
+    // ==================== 저장(업서트/확정) ====================
+
+    @Override
+    @Transactional
+    public int upsertDeduct(PayrollSummaryVO vo) {
+        return payrollMapper.upsertDeduct(vo);
+    }
+
+    @Override
+    @Transactional
+    public int insertDeptPayrollSum(PayrollDeptSumVO vo) {
+        // mapper.xml에서 payrollNo, deptCode 기반으로 집계 수행
+        return payrollMapper.insertDeptPayrollSum(vo);
     }
 }
