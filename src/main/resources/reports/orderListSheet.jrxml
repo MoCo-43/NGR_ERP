@@ -54,7 +54,7 @@
 	<dataset name="tableDataset" uuid="f13e6d36-5148-4ecc-bbe3-3035def80980">
 		<query language="sql"><![CDATA[]]></query>
 	</dataset>
-	<parameter name="xpCodeParam" class="java.lang.String"/>
+	<parameter name="orderCodeParam" class="java.lang.String"/>
 	<parameter name="brnParam" class="java.lang.Long"/>
 	<parameter name="compNameCeoParam" class="java.lang.String"/>
 	<parameter name="compAddrParam" class="java.lang.String"/>
@@ -63,23 +63,22 @@
 	<parameter name="telParam" class="java.lang.String"/>
 	<parameter name="emailParam" class="java.lang.String"/>
 	<query language="SQL"><![CDATA[SELECT 
-    od.PRODUCT_CODE AS "productCode",
-    od.PRODUCT_NAME AS "productName",
-    od.QTY AS "qty",
-    od.ORDER_PRICE AS "orderPrice",
-    od.SUP_AMT AS "supAmt",
-    od.VAT_AMT AS "vatAmt",
-    om.due_date AS "dueDate"
-    ,CASE WHEN SUBSTR(ex.VAT_TYPE,1,1) = '부' THEN 'VAT 포함'
-          WHEN SUBSTR(ex.VAT_TYPE,1,1) = '영' THEN '영세율 적용'
+       ord.product_code AS product_code,
+       ord.product_name AS product_name,
+       ord.qty AS qty, 
+       ord.order_price AS order_price, 
+       ord.sup_amt AS sup_amt,
+       ord.vat_amt AS vat_amt,
+       orr.due_date AS due_date, 
+       CASE WHEN SUBSTR(orr.VAT_TYPE,1,1) = '부' THEN 'VAT 포함'
+          WHEN SUBSTR(orr.VAT_TYPE,1,1) = '영' THEN '영세율 적용'
           ELSE '면세'
-        END AS "taxType"
-FROM order_req om
-JOIN order_detail od ON om.ORDER_CODE = od.ORDER_CODE
-JOIN customer c ON om.CUS_CODE = c.CUS_CODE
-JOIN explain ex ON ex.xp_code = om.xp_code
-WHERE om.xp_code =  $P{xpCodeParam} 
-ORDER BY od.OD_NO]]></query>
+       END AS "taxType" 
+FROM order_detail ord 
+JOIN order_req orr 
+ON orr.order_code = ord.order_code 
+WHERE orr.order_code =  $P{orderCodeParam} 
+ORDER BY ord.OD_NO]]></query>
 	<field name="productCode" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="productCode"/>
 		<property name="com.jaspersoft.studio.field.label" value="productCode"/>
@@ -133,15 +132,6 @@ ORDER BY od.OD_NO]]></query>
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
 		</element>
 		<element kind="frame" uuid="90ff199c-5b23-4dcc-a23a-07cc752f497c" x="39" y="29" width="180" height="54">
-			<element kind="textField" uuid="1b457553-34cb-46a0-a3cb-bc28d66ef55f" x="81" y="1" width="98" height="10" fontSize="7.0" bold="false" hTextAlign="Center">
-				<expression><![CDATA[$P{xpCodeParam}]]></expression>
-				<box>
-					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
-					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
-					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
-					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
-				</box>
-			</element>
 			<element kind="staticText" uuid="88a960b9-cc39-4839-a771-8b1e0ef3d3b7" mode="Opaque" x="1" y="1" width="80" height="10" backcolor="#CACED0" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
 				<text><![CDATA[발주코드]]></text>
 				<box style="hangle">
@@ -183,7 +173,7 @@ ORDER BY od.OD_NO]]></query>
 				</box>
 			</element>
 			<element kind="staticText" uuid="9a4a16d3-a392-42c3-ad81-be45ff14b290" mode="Opaque" x="33" y="42" width="48" height="11" backcolor="#FFFFFF" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
-				<text><![CDATA[납기일자 :]]></text>
+				<text><![CDATA[납기예정일자 :  ]]></text>
 				<box style="hangle">
 					<pen lineWidth="0.0" lineStyle="Solid"/>
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -219,8 +209,17 @@ ORDER BY od.OD_NO]]></query>
 					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
 				</box>
 			</element>
-			<element kind="textField" uuid="baf5ec06-3f80-4878-8f55-64c91d679e7d" x="81" y="42" width="98" height="11" fontSize="5.0" pattern="yyyy-MM-dd" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<element kind="textField" uuid="baf5ec06-3f80-4878-8f55-64c91d679e7d" x="81" y="42" width="98" height="11" fontSize="6.0" pattern="yyyy-MM-dd" bold="false" hTextAlign="Center" vTextAlign="Middle">
 				<expression><![CDATA[$F{dueDate}]]></expression>
+			</element>
+			<element kind="textField" uuid="90193f82-a259-42a2-a567-5615a1f92e01" x="81" y="1" width="98" height="10" fontSize="7.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$P{orderCodeParam}]]></expression>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
 			</element>
 			<box>
 				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>

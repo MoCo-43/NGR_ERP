@@ -16,6 +16,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -33,6 +34,7 @@ import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
+import com.yedam.erp.vo.stock.OrderVO;
 import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
@@ -57,6 +59,20 @@ public class StockController {
 	@Autowired
 	DataSource datasource;
 	
+	
+	@GetMapping("/getCompId")
+	public Long getCompId(Model model) {
+		 Long compId = SessionUtil.companyId();
+	        return compId != null ? compId : 0L; // null 방지
+	}
+	
+	@GetMapping("/getEmpName")
+	public String getEmpName(Model model) {
+		 String empName = SessionUtil.empId();
+	        return empName;
+	}
+	
+	
 	@PostMapping("/requestOrderInsert")
 	public ResponseEntity<String> insertOrder(@RequestBody OrderPlanVO plan) {
         
@@ -66,7 +82,49 @@ public class StockController {
     }
 	
 	
-	@GetMapping("/orderSheet/{xpCode}/{businessCode}")
+	@GetMapping("/orderListSheet/{orderCode}/{businessCode}") // 발주 조회시 발주서 상세 조회()
+	public void orderListReport(@PathVariable String orderCode , @PathVariable String businessCode , HttpServletRequest request, HttpServletResponse response) throws Exception { 
+	 //Connection conn = datasource.getConnection();
+	 // 소스 컴파일 jrxml -> jasper
+	 InputStream stream = getClass().getResourceAsStream("/reports/orderListSheet.jrxml"); 
+	 JasperReport jasperReport = JasperCompileManager.compileReport(stream); // jrxml 용
+	 //JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream); // jasper 용
+	 
+	 // 상세 조회
+	 List<OrderDetailVO> detailList = service.getOrderDetailByOrderCode(orderCode);
+	 
+	 //데이터 조회
+	 JRDataSource jRdataSource = new JRBeanCollectionDataSource(detailList);
+	 
+	 // 세션 회사 정보 조회
+	 CompanyVO comp = service.selectComp(SessionUtil.companyId());
+	 
+	 // 발주서 발주넣을 거래처 정보 조회
+	 CustomerVO cust = service.selectCutomer(businessCode);
+	 
+	 //파라미터 맵
+	 HashMap<String,Object> map = new HashMap<>(); 
+	 map.put("orderCodeParam", orderCode); // 발주코드
+	 //map.put("companyId", SessionUtil.companyId()); // 세션 회사 ID
+	 map.put("brmParam",comp.getBrm()); // 회사 사업자번호
+	 map.put("compNameCeoParam", comp.getCompName()+"/"+comp.getCeo()); // 회사명 / 대표명
+	 map.put("compAddrParam",comp.getCompAddr()); // 회사 주소
+	 map.put("compMatParam",comp.getMatName()+"/"+comp.getMatTel()); // 회사담당자 / 담당자회선번호
+	 
+	 map.put("cusNameParam",cust.getCusName()); // 발주넣을 구매처 회사명
+	 map.put("telParam",cust.getTel()); // 발주넣을 구매처 전화번호
+	 map.put("emailParam",cust.getEmail()); // 발주넣을 구매처 이메일
+     
+     // 조회건 반환
+	 response.setContentType("application/pdf");
+	 response.setHeader("Content-Disposition", "inline; filename=orderListSheet.pdf");
+     JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, map, jRdataSource);
+     //JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, map, conn);
+	 JasperExportManager.exportReportToPdfStream( jasperPrint, response.getOutputStream());
+	}
+	
+	
+	@GetMapping("/orderSheet/{xpCode}/{businessCode}") // 발주 계획 조회시 발주서 조회(발주계획기준 등록시)
 	public void report(@PathVariable String xpCode ,@PathVariable String businessCode, HttpServletRequest request, HttpServletResponse response) throws Exception { 
 	 //Connection conn = datasource.getConnection();
 	 // 소스 컴파일 jrxml -> jasper
@@ -107,35 +165,39 @@ public class StockController {
 	 JasperExportManager.exportReportToPdfStream( jasperPrint, response.getOutputStream());
 	}
 	
-
+	@GetMapping("/orderList") // 발주 조회
+	public List<OrderVO> getOrderList(){
+		Long compId = SessionUtil.companyId();
+		return service.getOrderList(compId);
+	}
 
 	
-	@GetMapping("/orderPlans")
+	@GetMapping("/orderPlans") // 발주 계획 조회
 	public List<OrderPlanVO> getOrderPlans() {
         return service.getOrderPlans();
     }
 	
-	@PostMapping("/orderPlanInsert")
+	@PostMapping("/orderPlanInsert") // 발주 계획 등록
 	public ResponseEntity<String> insertOrderPlan(@RequestBody OrderPlanVO plan) {
 		 service.insertOrderPlan(plan);
 		 return ResponseEntity.ok("등록 성공");
 	}
 	
-	@GetMapping("/productList")
-	public List<ProductVO> productList(){
-		return service.productAll();
+	@GetMapping("/productList/{compCode}") // 제품리스트 모달
+	public List<ProductVO> productList(@PathVariable Long compCode){
+		return service.productAll(compCode);
 	}
 	
-	 @GetMapping("/cusList")
-	 public List<PartnerVO> cutList(){
-		 return service.customerAll();
+	 @GetMapping("/cusList/{compCode}") // 거래처리스트 모달
+	 public List<PartnerVO> cutList(@PathVariable Long compCode){
+		 return service.customerAll(compCode);
 	 }
 	
 	 @Value("${file.upload.dir}")
 	    private String uploadDir;   // application.properties 경로 읽기
 	
 	
-	 @PostMapping("/productInsert")
+	 @PostMapping("/productInsert") // 제품등록
 	    public int insertProduct(@ModelAttribute ProductVO product) throws IOException {
 	        MultipartFile file = product.getProductImage();
 	        if (file != null && !file.isEmpty()) {

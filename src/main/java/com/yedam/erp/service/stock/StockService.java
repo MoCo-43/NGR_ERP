@@ -15,10 +15,10 @@ public interface StockService {
 	// 제품등록
 	public int insertProduct(ProductVO product); 
 	// 제품리스트
-	public List<ProductVO> productAll();
+	public List<ProductVO> productAll(Long CompCode);
 		
 	// 거래처 조회
-	public List<PartnerVO> customerAll();
+	public List<PartnerVO> customerAll(Long CompCode);
 	
 	// 발주계획 등록
 	public void insertOrderPlan(OrderPlanVO orderPlan); // 마스터
@@ -35,9 +35,11 @@ public interface StockService {
 	// 세션 회사 정보 조회
 	public CompanyVO selectComp(Long compId);
 	
-	// 발주서 거래처 정ㅂ 조회
+	// 발주서 거래처 정보 조회
 	public CustomerVO selectCutomer(String cusCode);
 		
-	
+	// 발주 조회
+	public List<OrderVO> getOrderList(Long compId);
+	public List<OrderDetailVO> getOrderDetailByOrderCode(String orderCode);
 	
 }

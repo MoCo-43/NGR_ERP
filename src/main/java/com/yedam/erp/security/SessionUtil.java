@@ -28,5 +28,6 @@ public class SessionUtil {
 		
 		return principal.getUsername();
 	}
+	
 
 }

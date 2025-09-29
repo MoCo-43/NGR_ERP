@@ -12,15 +12,18 @@ public class OrderVO {
 
 	private String orderCode;
 	private String businessPartner;
+	private String productName;
 	private String cusCode;
+	private Long amount;
+	private Long supAmt;
 	private String empId;
 	private String vatType;
-	@DateTimeFormat(pattern = "yyyy-MM-dd")
+	
 	private Date dueDate;
 	private String xpCode;
 	
 	
-	private List<OrderDetailVO> orderDetails;
+	private List<OrderDetailVO> details;
 	
 	
 }

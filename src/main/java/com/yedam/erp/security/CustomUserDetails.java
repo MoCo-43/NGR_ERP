@@ -21,13 +21,14 @@ public class CustomUserDetails implements UserDetails {
 
     // 인증된 사용자의 핵심 정보를 담는 VO 객체
     private final EmpLoginVO empLoginVO;
-
+    //private final String empName; // 이름 필드 추가
     /**
      * 생성자를 통해 DB 등에서 조회한 사용자 정보 객체(EmpLoginVO)를 주입받습니다.
      * @param empLoginVO 인증할 사용자의 정보
      */
     public CustomUserDetails(EmpLoginVO empLoginVO) {
         this.empLoginVO = empLoginVO;
+        //this.empName = empLoginVO.getEmpNameFromJoin(); // join 해서 들고오기 
     }
 
     /**

@@ -16,6 +16,7 @@ public class OrderPlanVO {
 	private String specification;
 	private String businessCode;
 	private String businessPartner;
+	private Long companyCode;
 	
 	private String empId;
 	@JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "yyyy-MM-dd")
@@ -27,5 +28,8 @@ public class OrderPlanVO {
 	private String taxType;
 	
 	private List<OrderPlanDetailVO> details; // <- 여기에 디테일 담기
+	
+	// 발주 존재 여부
+    private String hasOrderSheet;
 	
 }
