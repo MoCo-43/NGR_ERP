@@ -1,0 +1,153 @@
+<!-- 승인/역분개 서명 모달 -->
+<div th:fragment="signModal">
+  <div class="modal fade" id="signModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header py-2">
+          <h6 class="modal-title">전자결재 서명</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2 small text-muted">마우스(또는 터치)로 박스 안에 서명해 주세요.</div>
+          <div class="border rounded position-relative" style="height:280px;">
+            <canvas id="signCanvas" style="width:100%;height:100%;display:block;"></canvas>
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSignClear">지우기</button>
+          <div class="flex-grow-1"></div>
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnSignSave">저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    let signCanvas, signCtx;
+    let signDrawing = false;
+    let lastX = 0, lastY = 0;
+    let signMode = null;   // "approve" | "reverse"
+    let pendingIds = [];
+
+    // ===== 캔버스 리사이즈 =====
+    function resizeSignCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = signCanvas.getBoundingClientRect();
+      signCanvas.width  = Math.floor(rect.width * dpr);
+      signCanvas.height = Math.floor(rect.height * dpr);
+      signCtx.scale(dpr, dpr);
+
+      signCtx.fillStyle = "#fff";
+      signCtx.fillRect(0, 0, rect.width, rect.height);
+
+      signCtx.lineCap = "round";
+      signCtx.lineJoin = "round";
+      signCtx.lineWidth = 2.5;
+      signCtx.strokeStyle = "#111";
+    }
+
+    // ===== 드로잉 =====
+    function signStart(x, y) { signDrawing = true; [lastX, lastY] = [x, y]; }
+    function signMove(x, y) {
+      if (!signDrawing) return;
+      signCtx.beginPath();
+      signCtx.moveTo(lastX, lastY);
+      signCtx.lineTo(x, y);
+      signCtx.stroke();
+      [lastX, lastY] = [x, y];
+    }
+    function signEnd() { signDrawing = false; }
+
+    function bindSignCanvasEvents() {
+      const toXY = (e) => {
+        const rect = signCanvas.getBoundingClientRect();
+        if (e.touches && e.touches[0]) {
+          return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+        } else {
+          return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
+      };
+      signCanvas.addEventListener('mousedown', e => { const {x,y}=toXY(e); signStart(x,y); });
+      signCanvas.addEventListener('mousemove', e => { const {x,y}=toXY(e); signMove(x,y); });
+      window.addEventListener('mouseup', signEnd);
+
+      signCanvas.addEventListener('touchstart', e => { e.preventDefault(); const {x,y}=toXY(e); signStart(x,y); }, {passive:false});
+      signCanvas.addEventListener('touchmove', e => { e.preventDefault(); const {x,y}=toXY(e); signMove(x,y); }, {passive:false});
+      window.addEventListener('touchend', signEnd);
+    }
+
+    function clearSignCanvas() {
+      const rect = signCanvas.getBoundingClientRect();
+      signCtx.clearRect(0, 0, rect.width, rect.height);
+      signCtx.fillStyle = "#fff";
+      signCtx.fillRect(0, 0, rect.width, rect.height);
+    }
+
+    // ===== 모달 열기 =====
+    function openSignModal(mode, idList) {
+      signMode = mode;
+      pendingIds = idList.slice();
+
+      if (!signCanvas) {
+        signCanvas = document.getElementById('signCanvas');
+        signCtx = signCanvas.getContext('2d');
+        bindSignCanvasEvents();
+      }
+
+      const modalEl = document.getElementById('signModal');
+      modalEl.addEventListener('shown.bs.modal', () => {
+        resizeSignCanvas();
+        clearSignCanvas();
+      }, { once: true });
+
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+
+    // ===== 저장 (승인/역분개 공통) =====
+    async function saveSignature() {
+      if (!pendingIds.length) {
+        alert(signMode === "approve" ? "승인 대상이 없습니다." : "역분개 대상이 없습니다.");
+        return;
+      }
+
+      const blob = await new Promise(res => signCanvas.toBlob(res, 'image/png', 1.0));
+      const form = new FormData();
+      form.append("file", blob, `signature_${Date.now()}.png`);
+
+      let signPath = null;
+      try {
+        const uploadRes = await axios.post('/api/approval/signature', form, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        signPath = uploadRes?.data?.path || null;
+      } catch (e) {
+        console.error(e);
+        alert('서명 업로드 실패');
+        return;
+      }
+
+      try {
+        if (signMode === "approve") {
+          await axios.put('/api/approval/journal/approve', { ids: pendingIds, signPath });
+          alert('승인 완료');
+        } else if (signMode === "reverse") {
+          await axios.post('/api/account/journal/reverse', { jrnNos: pendingIds, signPath });
+          alert('역분개 완료');
+        }
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('signModal')).hide();
+        loadVoucherList();
+      } catch (e) {
+        console.error(e);
+        alert('처리 실패');
+      }
+    }
+
+    // ===== 버튼 이벤트 =====
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("btnSignClear")?.addEventListener("click", clearSignCanvas);
+      document.getElementById("btnSignSave")?.addEventListener("click", saveSignature);
+    });
+  </script>
+</div>

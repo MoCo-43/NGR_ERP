@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.yedam.erp.mapper.account.JournalCloseLogMapper">
+
+  <!-- 로그 저장 -->
+  <insert id="insertJournalCloseLog" parameterType="com.yedam.erp.vo.account.JournalCloseLogVO">
+    INSERT INTO journal_close_log (
+        log_id,
+        company_code,
+        jrn_range,
+        action_type,
+        debit_sum,
+        credit_sum,
+        created_by,
+        remarks
+    ) VALUES (
+        seq_journal_close_log.NEXTVAL,
+        #{companyCode},
+        #{jrnRange},
+        #{actionType},
+        #{debitSum},
+        #{creditSum},
+        #{createdBy},
+        #{remarks}
+    )
+  </insert>
+
+  <!-- 선택된 전표들의 합계 -->
+  <select id="sumAmountByJrnNos" parameterType="map" resultType="com.yedam.erp.vo.account.JournalAmountSumVO">
+    SELECT 
+      SUM(CASE WHEN dc_type = 'D' THEN amount ELSE 0 END) AS debit,
+      SUM(CASE WHEN dc_type = 'C' THEN amount ELSE 0 END) AS credit
+    FROM journal
+    WHERE company_code = #{companyCode}
+      AND jrn_no IN
+      <foreach item="no" collection="jrnNos" open="(" separator="," close=")">
+        #{no}
+      </foreach>
+  </select>
+
+  <select id="selectJournalCloseLogByJrn" resultType="com.yedam.erp.vo.account.JournalCloseLogVO">
+    SELECT 
+        log_id,
+        company_code,
+        jrn_range,
+        action_type,
+        debit_sum,
+        credit_sum,
+        action_date,
+        status,
+        created_by,
+        remarks
+    FROM journal_close_log
+    WHERE company_code = #{companyCode}
+      AND jrn_range LIKE '%' || SUBSTR(#{jrnNo}, -3) || '%'
+    ORDER BY log_id DESC
+  </select>
+
+</mapper>

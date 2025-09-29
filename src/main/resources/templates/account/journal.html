@@ -59,9 +59,33 @@
 	padding: 2px 8px;
 }
 
-.badge-status-close {
+.badge-status-closed {
 	background: #fee2e2; /* 차변과 동일 */
 	color: #b91c1c;
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+
+.badge-status-submit {
+	background: #fef9c3; /* 연노랑 */
+	color: #ca8a04; /* 진한 노랑/주황 */
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+
+.badge-status-approved {
+	background: #dbeafe; /* 연한 파랑 */
+	color: #1d4ed8; /* 진한 파랑 */
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+
+.badge-status-reverse {
+	background: #dbeafe; /* 연한 파랑 */
+	color: #1d4ed8; /* 진한 파랑 */
 	font-weight: 600;
 	border-radius: 8px;
 	padding: 2px 8px;
@@ -191,6 +215,11 @@ async function loadList() {
 
   gvApi.setGridOption("rowData", finalRows);
   gvApi.refreshClientSideRowModel('sort');
+  // ✅ 입력행 추가 보장
+  gvApi.applyTransaction({ 
+    add: [ newInputRow() ], 
+    addIndex: gvApi.getDisplayedRowCount() 
+  });
 }
 // 기간 필터링
 async function loadFilteredList() {
@@ -229,8 +258,8 @@ async function saveRow(data){
     return;
   }
 
-  if (data.status && data.status.toLowerCase() === "close") {
-    alert("마감(CLOSE)된 전표는 수정할 수 없습니다.");
+  if  (data.status.toLowerCase() === "closed" || data.status.toLowerCase() === "reverse") {
+    alert("마감(CLOSE/REVERSE)된 전표는 수정할 수 없습니다.");
     return;
   }
 
@@ -273,11 +302,8 @@ async function saveRow(data){
   } catch (err) {
     console.error("▶ 저장 중 오류:", err);
   }
-
-
-
   await loadList();
-  gvApi.applyTransaction({ add: [ newInputRow() ], addIndex: gvApi.getDisplayedRowCount() });
+ 
 }
 
 // 
@@ -307,14 +333,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     	  cellClass: params => params.data?._isDiffRow ? "diff-row" : ""
     	
     },
-    { headerName: "계정코드", field: "acctCode", editable: true, flex: 1.1, onCellClicked: (params) => { selectedRowNode = params.node; 
+    { headerName: "계정코드", field: "acctCode", editable: true, flex: 1.1, onCellClicked: (params) => { 
+    	 const status = (params.data?.status || "").toLowerCase();
+ 	    if (status === "closed" || status === "reverse") {
+ 	      alert("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
+ 	      return;
+ 	    }selectedRowNode = params.node; 
     bootstrap.Modal.getOrCreateInstance(document.getElementById("accountModal")).show(); }},
-    { headerName: "계정", field: "acctName", editable: true, flex: 1.2, onCellClicked: (params) => { selectedRowNode = params.node; 
+    { headerName: "계정", field: "acctName", editable: true, flex: 1.2, onCellClicked: (params) => { 
+    	 const status = (params.data?.status || "").toLowerCase();
+ 	    if (status === "closed" || status === "reverse") {
+ 	      alert("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
+ 	      return;
+ 	    }selectedRowNode = params.node; 
     bootstrap.Modal.getOrCreateInstance(document.getElementById("accountModal")).show(); }},
-    { headerName: "거래처코드", field: "cusCode", editable: true, flex: 1, onCellClicked: (params) => { selectedRowNode = params.node; 
-    bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).show(); } },
-    { headerName: "거래처", field: "cusName", editable: true, flex: 1.2, onCellClicked: (params) => { selectedRowNode = params.node;  
-    bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).show(); } },
+    { 
+    	  headerName: "거래처코드", field: "cusCode", editable: true, flex: 1,
+    	  onCellClicked: (params) => { 
+    	    const status = (params.data?.status || "").toLowerCase();
+    	    if (status === "closed" || status === "reverse") {
+    	      alert("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
+    	      return;
+    	    }
+    	    selectedRowNode = params.node; 
+    	    bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).show();
+    	  } 
+    	},
+    	{ 
+      	  headerName: "거래처", field: "cusName", editable: true, flex: 1,
+      	  onCellClicked: (params) => { 
+      	    const status = (params.data?.status || "").toLowerCase();
+      	    if (status === "closed" || status === "reverse") {
+      	      alert("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
+      	      return;
+      	    }
+      	    selectedRowNode = params.node; 
+      	    bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).show();
+      	  } 
+      	},
     { headerName: "적요", field: "remarks", editable: true, flex: 1.5 },
     { headerName: "금액", field: "amount", flex: 1, editable: true,
       valueParser: p => toNumber(p.newValue),
@@ -324,8 +380,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     { headerName: "상태", field: "status", editable: false, flex: .8,
       cellRenderer: p => {
         const v = (p.value || "").toLowerCase();
-        if (v === "open")  return `<span class="badge-status-open">OPEN</span>`;
-        if (v === "close") return `<span class="badge-status-close">CLOSE</span>`;
+        if (v === "open")     return `<span class="badge-status-open">OPEN</span>`;
+        if (v === "closed")    return `<span class="badge-status-closed">CLOSED</span>`;
+        if (v === "submit")   return `<span class="badge-status-submit">SUBMIT</span>`;
+        if (v === "reverse") return `<span class="badge-status-reverse">RESERVE</span>`;
         return v || "";
       }}
   ];
@@ -343,10 +401,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 	  // ✅ 차액행 전체 색상 처리
 	  getRowClass: (params) => params.data?._isDiffRow ? "row-diff" : null,
 
-	onCellValueChanged: (ev) => { saveRow(ev.data); },
+	onRowValueChanged: (ev) => { saveRow(ev.data); },
 	  onGridReady: async () => {
 	    await loadList();
-	    gvApi.applyTransaction({ add: [ newInputRow() ], addIndex: gvApi.getDisplayedRowCount() });
 	  }
 	});
   document.getElementById("btnSearch").addEventListener("click", loadFilteredList);
@@ -400,12 +457,22 @@ function initBusinessGrid() {
       loadBusinessData();
     },
     onRowDoubleClicked: (e) => {
-      if (selectedRowNode) {
-    	  selectedRowNode.setDataValue("cusCode", e.data.cusCode);
-    	  selectedRowNode.setDataValue("cusName", e.data.cusName); 
-      }
-      bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
-    }
+    	  if (selectedRowNode) {
+    	    const newData = {
+    	      ...selectedRowNode.data,
+    	      cusCode: e.data.cusCode,
+    	      cusName: e.data.cusName
+    	    };
+    	    // 행 갱신
+    	    gvApi.applyTransaction({ update: [newData] });
+
+    	    // 바로 저장 로직 호출 (선택사항)
+    	    saveRow(newData);
+    	  }
+    	  bootstrap.Modal.getOrCreateInstance(
+    	    document.getElementById("businessModal")
+    	  ).hide();
+    	}
   };
   new agGrid.Grid(gridDiv, gridOptions);
 }
@@ -424,6 +491,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
 
 </script>
 	</th:block>

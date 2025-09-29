@@ -18,4 +18,5 @@ public interface accountMapper {
 	 
 	 // 매입 매출 전표
 	 List<invoiceVO> selectInvoice(Long companyCode);
+	 
 }
