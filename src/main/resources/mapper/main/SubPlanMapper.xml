@@ -4,5 +4,9 @@
 	<select id="selectSubPlan" resultType="com.yedam.erp.vo.main.SubPlanVO">
 		select * from sub_plan
 	</select>
-
+<select id="selectSubPlanById" parameterType="long" resultType="SubPlanVO">
+    SELECT sub_plan_no, plan_name, avai_modules, min_users, base_salary
+    FROM sub_plan
+    WHERE sub_plan_no = #{subPlanNo}
+</select>
 </mapper>

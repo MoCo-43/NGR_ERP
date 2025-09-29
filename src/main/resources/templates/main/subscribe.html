@@ -111,7 +111,7 @@
 
   <script>
     // /subscribes API 호출 후 동적 렌더링
-    fetch('/subscribes')
+    fetch('/api/subscribes')
       .then(res => res.json())
       .then(data => {
         const container = document.querySelector('.plan-container');
@@ -126,7 +126,7 @@
             <p class="plan-features">${plan.avaiModules}</p>
             <div class="plan-price">${plan.baseSalary}</div>
             <div class="button-wrapper">
-              <button class="plan-button" onclick="location.href='/subDetail?planId=${plan.subPlanNo}'">시작</button>
+              <button class="plan-button" onclick="location.href='/subDetails?planId=${plan.subPlanNo}'">시작</button>
             </div>
           `;
           container.appendChild(card);

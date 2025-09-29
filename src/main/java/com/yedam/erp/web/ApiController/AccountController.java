@@ -1,6 +1,7 @@
 package com.yedam.erp.web.ApiController;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.account.AccountService;
+import com.yedam.erp.service.account.JournalCloseLogService;
 import com.yedam.erp.service.account.JournalService;
+import com.yedam.erp.vo.account.JournalCloseLogVO;
 import com.yedam.erp.vo.account.JournalVO;
 import com.yedam.erp.vo.account.accountVO;
 import com.yedam.erp.vo.account.invoiceVO;
@@ -29,7 +32,7 @@ public class AccountController {
 	
 	private final AccountService accountService;
 	private final JournalService journalService;  
-	
+	private final JournalCloseLogService logService;
 	
 	@GetMapping("/list")
 	public List<accountVO> list(Long companyCode){
@@ -93,7 +96,7 @@ public class AccountController {
         journalService.insertJournalList(journalList);
     }
     
-    // 수정
+    // 일반전표 수정
     @PutMapping("/journal/{jrnCode}/{lineNo}")
     public int updateJournal(@RequestBody JournalVO vo, 
                                 @PathVariable String jrnCode,
@@ -120,5 +123,37 @@ public class AccountController {
         Long companyCode = SessionUtil.companyId();
         return journalService.selectJournalDetailClose(jrnNo, companyCode);
     }
+    
+ // 제출 버튼 → 상태를 submit 으로 변경
+    @PutMapping("/journal/status")
+    public ResponseEntity<?> updateStatusBatch(@RequestBody Map<String, Object> req) {
+        @SuppressWarnings("unchecked")
+        List<String> jrnNoList = (List<String>) req.get("jrnNoList");
+        String status = (String) req.get("status");
+
+        if (jrnNoList == null || jrnNoList.isEmpty()) {
+            return ResponseEntity.badRequest().body("전표번호가 없습니다.");
+        }
+
+        int updated = journalService.updateStatusBatch(jrnNoList, status);
+        return ResponseEntity.ok(updated + "건 상태 변경 완료");
+    }
+ // ✅ 역분개 전용 엔드포인트
+    @PostMapping("/journal/reverse")
+    public ResponseEntity<?> reverseJournal(@RequestBody Map<String, Object> body) {
+        Long companyCode = SessionUtil.companyId();
+        String originJrnNos = (String) body.get("originJrnNos"); // "JRN001,JRN002"
+        String createdBy = SessionUtil.empId();
+
+        journalService.reverseJournalCsv(companyCode, originJrnNos, createdBy);
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+    // 마감로그
+
+@GetMapping("/journalClose/logs/{jrnNo}")
+public List<JournalCloseLogVO> getLogsByJrn(@PathVariable String jrnNo) {
+    Long companyCode = SessionUtil.companyId();
+    return logService.getLogByJrn(companyCode, jrnNo);
+}
 	
 }

@@ -55,13 +55,14 @@ public class WebSecurityConfig {
             .rememberMe(remember -> remember
                 .tokenRepository(tokenRepository(dataSource))
                 .tokenValiditySeconds(60 * 60 * 24 * 3) // 3일
-                .key("uniqueAndSecretKey")
+//                .key("uniqueAndSecretKey")
                 .userDetailsService(customUserDetailsService)
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout")
-                .deleteCookies("JSESSIONID", "remember-me")// 로그아웃 시 쿠키 삭제
+                .deleteCookies("JSESSIONID")
+//              .deleteCookies("JSESSIONID", "remember-me")// 로그아웃 시 쿠키 삭제
             ).headers(headers -> headers
                 .frameOptions(frame -> frame.sameOrigin()) // PDF 시큐리티 허가(모달로 띄우려면 무조건 필요)
             );

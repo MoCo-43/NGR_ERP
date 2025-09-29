@@ -14,10 +14,11 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/login").setViewName("main/login");
 		registry.addViewController("/register").setViewName("main/register");
 		registry.addViewController("/subscribe").setViewName("main/subscribe");
-		registry.addViewController("/subDetail").setViewName("main/subdetail");
 		registry.addViewController("/eContract").setViewName("main/eContract");
 		registry.addViewController("/findpw").setViewName("main/forgotpasword");
 		registry.addViewController("/subpay").setViewName("main/subpay");
+		registry.addViewController("/dashboard").setViewName("main/dashboard");
+
 		// 영업
 
 		registry.addViewController("/vouchers").setViewName("account/list");
@@ -31,6 +32,10 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/biz/productcode").setViewName("biz/modals/ProductCodeModal");
 		// 영업-거래처조회
 		registry.addViewController("/biz/customercode").setViewName("biz/modals/PoCustomerModal");
+		// 영업-출하지시서 조회
+		registry.addViewController("/biz/dolist").setViewName("biz/ViewAllDO");
+		// 영업-출하지시서 입력페이지
+		registry.addViewController("/biz/doinsert").setViewName("biz/InsertDO");
 
 		// 회계
 		registry.addViewController("/vouchers").setViewName("account/list");
@@ -38,7 +43,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/invoice").setViewName("account/invoice");
 		registry.addViewController("/invoiceModal").setViewName("account/invoiceModal");
 		registry.addViewController("/taxInvoice").setViewName("account/taxInvoice");
-		registry.addViewController("/journal").setViewName("account/journal");
+		//registry.addViewController("/journal").setViewName("account/journal");
 		registry.addViewController("/close").setViewName("account/close");
 		registry.addViewController("/payment").setViewName("account/payment");
 		

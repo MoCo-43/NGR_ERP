@@ -18,9 +18,9 @@ SELECT
     c.CUS_NAME,
     p.CREATER,
     CASE
-        WHEN pd_counts.cnt > 1 THEN pod.D_PRD_NAME || ' 외 ' || (pd_counts.cnt - 1) || '건'
-        ELSE pod.D_PRD_NAME
-    END AS D_PRD_NAME,
+        WHEN pd_counts.cnt > 1 THEN pod.PRODUCT_NAME || ' 외 ' || (pd_counts.cnt - 1) || '건'
+        ELSE pod.PRODUCT_NAME
+    END AS PRODUCT_NAME,
     c.BIZ_TYPE,
     p.TOTAL_PRICE,
     p.PO_STATUS,
@@ -58,14 +58,14 @@ ORDER BY
     <foreach collection="poDetails" item="pod">
       INTO po_detail (
         POD_ID, PO_ID, COMPANY_CODE, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
-        DC_PRICE, SUP_AMT, VAT_AMT, D_PRD_NAME
+        DC_PRICE, SUP_AMT, VAT_AMT, PRODUCT_NAME
       )
       VALUES (
         POD_ID_SEQ.NEXTVAL,
         PO_ID_SEQ.CURRVAL,
         #{companyCode},
         #{pod.productCode}, #{pod.orderQty}, #{pod.unitPrice},
-        #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.dPrdName}
+        #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.productName}
       )
     </foreach>
   SELECT 1 FROM DUAL
@@ -74,7 +74,7 @@ ORDER BY
 
 <!-- 주문서 이력 조회 -->
 <select id="getPOHistory" resultType="PoHistoryVO">
-SELECT po.PO_START, po.CUS_NAME, po.creater, po.EX_DATE, pd.UNIT_PRICE, pd.D_PRD_NAME
+SELECT po.PO_START, po.CUS_NAME, po.creater, po.EX_DATE, pd.UNIT_PRICE, pd.PRODUCT_NAME
 FROM PURCHASE_ORDER po
 LEFT JOIN PO_DETAIL pd ON pd.PO_ID = po.PO_ID
 WHERE po.COMPANY_CODE = #{companyCode}
@@ -96,10 +96,30 @@ WHERE po.COMPANY_CODE = #{companyCode}
   </select>
 
   <!-- 출하지시서 조회 -->
-  <select id="selectDo" resultType="DoDetailVO" parameterType="Long">
-SELECT do.DO_NO, do.DO_CODE, do.CUS_CODE, ddo.PRODUCT_CODE, do.TOTAL_QTY, do.EX_DATE, do.DO_CRATED, do.DO_STATUS
-FROM DELIVERY_ORDER do
-JOIN DO_DETAIL ddo ON ddo.DO_NO = do.DO_NO
-WHERE do.COMPANY_CODE = #{companyCode} AND ddo.COMPANY_CODE = #{companyCode}
+  <select id="selectDo" resultType="DeliveryOrderVO" parameterType="Long">
+SELECT
+    d.DO_CODE,
+    d.DO_CREATED,
+    c.CUS_NAME AS CUS_CODE,
+    CASE
+        WHEN COUNT(p.PRODUCT_NAME) > 1
+            THEN MIN(p.PRODUCT_NAME) || ' 외 ' || (COUNT(p.PRODUCT_NAME) - 1) || '건'
+        ELSE MIN(p.PRODUCT_NAME)
+    END AS PRODUCT_CODE,
+    d.TOTAL_QTY,
+    d.EX_DATE,
+    d.DO_STATUS
+FROM DELIVERY_ORDER d
+JOIN CUSTOMER c
+  ON d.CUS_CODE = c.CUS_CODE
+JOIN DO_DETAIL dd
+  ON d.DO_NO = dd.DO_NO
+JOIN PRODUCT p
+  ON dd.PRODUCT_CODE = p.PRODUCT_CODE
+WHERE d.COMPANY_CODE = #{companyCode} AND dd.COMPANY_CODE = #{companyCode} AND p.COMPANY_CODE = #{companyCode} AND c.COMPANY_CODE = #{companyCode}
+GROUP BY
+    d.DO_CODE, d.DO_CREATED, c.CUS_CODE, c.CUS_NAME,
+    d.TOTAL_QTY, d.EX_DATE, d.DO_STATUS
+ORDER BY d.DO_CREATED DESC
 </select>
 </mapper>

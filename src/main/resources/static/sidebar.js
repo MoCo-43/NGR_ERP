@@ -26,7 +26,6 @@ const MENUS = {
     title: "재고",
     content: "재고 대시보드",
     groups: [
-
       { title: "입고관리", items: [
         ["입고조회","/inv/in/list"],
         ["입고등록","/inv/in/new"],
@@ -64,8 +63,8 @@ const MENUS = {
       {
         title: "출하지시서",
         items: [
-          ["출하지시서조회", "/sales/shipping/list"],
-          ["출하지시서입력", "/sales/shipping/new"],
+          ["출하지시서조회", "/biz/dolist"],
+          ["출하지시서입력", "/biz/doinsert"],
         ],
       },
       {
@@ -105,6 +104,14 @@ const MENUS = {
       { title: "재무상태표", items: [["재무상태표", "/acc/bs"]] },
     ],
   },
+  mains:{
+	title:"mypage",
+	content:"마이페이지대시보드",
+	groups:[
+		{title:"관리",items:[["마이페이지","/mypage"]]}
+	]
+  }
+  
 };
 
 /** DOM 참조 */

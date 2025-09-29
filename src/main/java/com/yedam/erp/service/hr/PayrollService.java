@@ -35,4 +35,10 @@ public interface PayrollService {
 
 	// 부서별 합계
 	PayrollDeptSumVO getDeptSum(Long payrollNo);
+	
+	//사원 공제 등록
+	 int upsertDeduct(PayrollSummaryVO vo);
+	
+	//부서 합계 저장
+	int insertDeptPayrollSum(PayrollDeptSumVO vo);
 }

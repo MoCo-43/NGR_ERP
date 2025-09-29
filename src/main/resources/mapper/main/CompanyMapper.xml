@@ -43,11 +43,25 @@
             mat_no,
             ceo,
             comp_name,
+            mat_name,
             mat_mail,
             com_code
         FROM
             company
         WHERE
             com_code = #{comCode}
+    </select>
+    
+     <select id="selectCompanyByUsername" parameterType="string" resultType="com.yedam.erp.vo.main.CompanyVO">
+        SELECT
+            COMP_NAME,
+            biz_reg_number,
+            ceo,
+            address,
+            address_detail AS addressDetail,
+            admin_name AS adminName,
+            admin_email AS adminEmail
+        FROM company
+        WHERE username = #{username}
     </select>
 </mapper>

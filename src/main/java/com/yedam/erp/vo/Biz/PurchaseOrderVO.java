@@ -18,5 +18,5 @@ public class PurchaseOrderVO {
    private String notes;      // 비고
    private Date exDate;       // 예상 납기일
    private String cusName;    // 거래처명
-   private String prdName;    // 제품명
+   private String productName;    // 제품명
 }

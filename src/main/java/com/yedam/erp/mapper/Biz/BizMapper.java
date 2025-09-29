@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 
 import com.yedam.erp.vo.Biz.CustomerVO;
+import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
@@ -25,4 +26,6 @@ public interface BizMapper {
   List<ProductCodeVO> getProducts(Long companyCode);
   // 거래처 조회
   List<CustomerVO> getCustomers(Long companyCode);
+  // 출하지시서 조회
+  List<DeliveryOrderVO> selectDo(Long companyCode);
 }

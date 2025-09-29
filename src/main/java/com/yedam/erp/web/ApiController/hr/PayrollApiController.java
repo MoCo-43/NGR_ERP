@@ -28,6 +28,8 @@ public class PayrollApiController {
 
     private final PayrollService service;
 
+    // ===================== 목록/단건/등록/수정/상태 =====================
+
     // 목록 (연월/부서 조건 + 회사코드 자동 주입)
     @GetMapping
     public List<PayrollVO> list(@RequestParam(required = false) String yearMonth,
@@ -50,7 +52,6 @@ public class PayrollApiController {
     @PostMapping
     public Map<String, Object> create(@RequestBody PayrollVO vo) {
         vo.setCompanyCode(SessionUtil.companyId());
-        // 기본값 가드 (원하면 제거 가능)
         if (vo.getStatus() == null || vo.getStatus().isBlank()) {
             vo.setStatus("DRAFT");
         }
@@ -74,19 +75,53 @@ public class PayrollApiController {
                                             @RequestBody PayrollVO vo) {
         vo.setPayrollNo(payrollNo);
         vo.setCompanyCode(SessionUtil.companyId());
-        int ok = service.changePayrollStatus(vo); // ← 메서드명 수정
+        int ok = service.changePayrollStatus(vo);
         return Map.of("success", ok > 0);
     }
 
-    // 상세: 사원별 리스트
+    // ===================== 상세/합계 조회 =====================
+
+    // 사원별 상세 리스트
     @GetMapping("/{payrollNo}/summary")
     public List<PayrollSummaryVO> summary(@PathVariable("payrollNo") Long payrollNo) {
         return service.getPayrollSummary(payrollNo);
     }
 
-    // 상세: 부서 합계
+    // 부서 합계 (화면 하단)
     @GetMapping("/{payrollNo}/dept-sum")
     public PayrollDeptSumVO deptSum(@PathVariable("payrollNo") Long payrollNo) {
         return service.getDeptSum(payrollNo);
+    }
+
+    // ===================== 저장 (셀 입력/확정 적재) =====================
+
+    // 사원 공제 저장(업서트): 셀 편집 시 자동 저장 호출
+    // Body: empId, incomeTax, residentTax, nationalPension, healthIns, employIns
+    @PostMapping("/{payrollNo}/deduct")
+    public Map<String, Object> upsertDeduct(@PathVariable Long payrollNo,
+                                            @RequestBody PayrollSummaryVO body) {
+        body.setPayrollNo(payrollNo);
+        int ok = service.upsertDeduct(body);
+        return Map.of("success", ok > 0);
+    }
+
+    // 부서 확정 합계 적재: 확정 시 회계팀용 합계 테이블에 INSERT
+    // Body: { "deptCode": "D001" } (없으면 payrollNo로부터 보완)
+    @PostMapping("/{payrollNo}/dept-sum")
+    public Map<String, Object> insertDeptSum(@PathVariable Long payrollNo,
+                                             @RequestBody(required = false) PayrollDeptSumVO vo) {
+        if (vo == null) vo = new PayrollDeptSumVO();
+        vo.setPayrollNo(payrollNo);
+
+        // deptCode가 없으면 급여대장에서 가져옴
+        if (vo.getDeptCode() == null || vo.getDeptCode().isBlank()) {
+            PayrollVO p = service.getPayroll(payrollNo);
+            if (p != null) {
+                vo.setDeptCode(p.getDeptCode());
+            }
+        }
+
+        int ok = service.insertDeptPayrollSum(vo);
+        return Map.of("success", ok > 0);
     }
 }
