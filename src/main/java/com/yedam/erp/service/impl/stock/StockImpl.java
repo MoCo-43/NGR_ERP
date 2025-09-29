@@ -34,9 +34,9 @@ public class StockImpl implements StockService{
 
 
 	@Override
-	public List<PartnerVO> customerAll() {
+	public List<PartnerVO> customerAll(Long compCode) {
 		// TODO Auto-generated method stub
-		return mapper.customerAll();
+		return mapper.customerAll(compCode);
 	}
 
 	@Transactional
@@ -54,44 +54,51 @@ public class StockImpl implements StockService{
 
 
 	@Override
-	public List<ProductVO> productAll() {
+	public List<ProductVO> productAll(Long CompCode) {
 		
-		return mapper.productAll();
+		return mapper.productAll(CompCode);
 	}
 
 
 	@Override
 	public List<OrderPlanVO> getOrderPlans() {
-		// TODO Auto-generated method stub
 		return mapper.selectOrderPlans();
 	}
 
 
 	@Override
 	public List<OrderDetailVO> selectOrderDetailsByXpCode(String str) {
-		// TODO Auto-generated method stub
 		return mapper.selectOrderDetailsByXpCode(str);
 	}
 
 
 	@Override
 	public OrderVO selectOrderByXpCode(String str) {
-		// TODO Auto-generated method stub
 		return mapper.selectOrderByXpCode(str);
 	}
 
 
 	@Override
 	public CompanyVO selectComp(Long compId) {
-		// TODO Auto-generated method stub
 		return mapper.selectComp(compId);
 	}
 
 
 	@Override
 	public CustomerVO selectCutomer(String cusCode) {
-		// TODO Auto-generated method stub
 		return mapper.selectCutomer(cusCode);
+	}
+
+
+	@Override
+	public List<OrderVO> getOrderList(Long compId) {
+		return mapper.getOrderList(compId);
+	}
+
+
+	@Override
+	public List<OrderDetailVO> getOrderDetailByOrderCode(String orderCode) {
+		return mapper.getOrderDetailByOrderCode(orderCode);
 	}
 
 }

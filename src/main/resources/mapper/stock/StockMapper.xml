@@ -12,6 +12,7 @@ INSERT INTO product(
 		,SALES_PRICE
 		,NOTE
 		,INSERT_DATE
+		,COMPANY_CODE
 )
 VALUES(CONCAT('P',LPAD(seq_product.nextval,5,'0')),
        #{productName},
@@ -21,12 +22,13 @@ VALUES(CONCAT('P',LPAD(seq_product.nextval,5,'0')),
        #{purchasePrice},
        #{salesPrice},
        #{note},
-       #{insertDate}
+       #{insertDate},
+       #{companyCode}
 )
 
 </insert>
 
-<select id="customerAll" resultType="PartnerVO">
+<select id="customerAll" resultType="PartnerVO" parameterType="Long">
 SELECT 
        emp_name, 
        cus_name,
@@ -38,14 +40,15 @@ SELECT
        addr 
 FROM customer
 WHERE gbn = '구매처'
+AND company_code = #{compCode}
 </select>
 
-<select id="productAll" resultType="ProductVO">
+<select id="productAll" resultType="ProductVO" parameterType="Long">
 SELECT PRODUCT_CODE
        ,PRODUCT_NAME
        ,SPECIFICATION
 FROM PRODUCT
-
+WHERE COMPANY_CODE = #{companyCode}
 
 </select>
 
@@ -58,8 +61,9 @@ INSERT INTO EXPLAIN(
          ,EMP_ID
          ,INS_DATE
          ,VAT_TYPE
+         ,COMPANY_CODE
 )
-VALUES (#{xpCode}, #{empId}, #{insDate}, #{taxType})
+VALUES (#{xpCode}, #{empId}, #{insDate}, #{taxType}, #{companyCode})
 
 
 </insert>
@@ -107,7 +111,15 @@ SELECT
         else min(d.product_name) 
     end as "product_name",
     sum(d.amount) as "amount",
-    sum(d.sup_amt) as "sup_amt" 
+    sum(d.sup_amt) as "sup_amt",
+     case 
+        when exists (
+            select 1 from order_req o 
+            where o.xp_code = m.xp_code
+        ) then 'Y'
+        else 'N'
+    end as "has_order_sheet"
+   
 FROM explain m 
 JOIN explain_detail d 
     ON m.xp_code = d.xp_code 
@@ -116,6 +128,7 @@ GROUP BY
     m.emp_id, 
     m.vat_type,
     m.ins_date
+    
 </select>
 
 <!-- ResultMap -->
@@ -124,6 +137,7 @@ GROUP BY
     <result property="empId" column="emp_id"/>
     <result property="insDate" column="ins_date"/>
     <result property="taxType" column="vat_type"/>
+    <result property="hasOrderSheet" column="has_order_sheet"/> <!-- 추가 -->
     
     <!-- 디테일 매핑 -->
     <collection property="details" ofType="OrderPlanDetailVO" 
@@ -131,7 +145,7 @@ GROUP BY
 </resultMap>
 
 <!-- 발주 계획 상세 조회 -->
-<select id="selectOrderPlanDetailsByXpCode" parameterType="string" resultType="OrderPlanDetailVO">
+<select id="selectOrderPlanDetailsByXpCode" parameterType="String" resultType="OrderPlanDetailVO">
 SELECT 
     xd_no       as xd_no,
     product_code as product_code,
@@ -202,6 +216,70 @@ SELECT
        EMAIL 
 FROM CUSTOMER 
 WHERE CUS_CODE = #{cusCode}
+</select>
+
+<!-- 발주 조회 -->
+<select id="getOrderList" resultMap="orderListResultMap">
+SELECT
+       orr.order_code AS order_code,
+       orr.business_partner AS business_partner,
+       orr.cus_code AS cus_code,
+       orr.emp_id AS emp_id, 
+       CASE
+         WHEN COUNT(ord.od_no) > 1 
+             THEN MIN(ord.product_name) || ' 외 ' || (COUNT(ord.od_no) - 1) || '건' 
+         ELSE MIN(ord.product_name) 
+       END as "product_name",
+       SUM(ord.qty) AS qty,
+       orr.due_date AS due_date,
+       orr.vat_type AS vat_type,
+       sum(ord.sup_amt) AS sup_amt  
+FROM order_req orr
+JOIN order_detail ord
+ON orr.order_code = ord.order_code
+GROUP BY 
+    orr.order_code,
+    orr.business_partner,
+    orr.cus_code,
+    orr.emp_id,
+    orr.due_date,
+    orr.vat_type
+
+</select>
+<resultMap id="orderListResultMap" type="OrderVO">
+    <id property="orderCode" column="order_code"/>
+    <result property="businessPartner" column="business_partner"/>
+    <result property="cusCode" column="cus_code"/>
+    <result property="productName" column="product_name"/>
+    <result property="empId" column="emp_id"/>
+    <result property="amount" column="qty"/>
+    <result property="supAmt" column="sup_amt"/>
+   	<result property="vatType" column="vat_type"/>
+   	<result property="dueDate" column="due_date"/>
+    
+    <!-- 디테일 매핑 -->
+    <collection property="details" ofType="OrderDetailVO" 
+        select="getOrderDetailByOrderCode" column="order_code"/>
+</resultMap>
+
+<select id="getOrderDetailByOrderCode" resultType="OrderDetailVO">
+SELECT 
+       ord.product_code AS product_code,
+       ord.product_name AS product_name,
+       ord.qty AS qty, 
+       ord.order_price AS order_price, 
+       ord.sup_amt AS sup_amt,
+       ord.vat_amt AS vat_amt,
+       orr.due_date AS due_date, 
+       CASE WHEN SUBSTR(orr.VAT_TYPE,1,1) = '부' THEN 'VAT 포함'
+          WHEN SUBSTR(orr.VAT_TYPE,1,1) = '영' THEN '영세율 적용'
+          ELSE '면세'
+       END AS "taxType" 
+FROM order_detail ord 
+JOIN order_req orr 
+ON orr.order_code = ord.order_code 
+WHERE orr.order_code = #{orderCode}
+ORDER BY ord.od_no 
 </select>
 
 

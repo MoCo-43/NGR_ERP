@@ -38,8 +38,8 @@ const MENUS = {
       { title: "발주관리", items: [
         ["발주계획조회","/stock/plan/list"],
         ["발주계획등록","/stock/plan/insert"],
-        ["발주서 조회","/inv/po/list"],
-        ["발주서 등록","/inv/po/new"],
+        ["발주서 조회","/stock/order/list"],
+        ["발주서 등록","/stock/order/insert"],
       ]},
       { title: "재고결산", items: [
         ["재고결산","/inv/closing"]

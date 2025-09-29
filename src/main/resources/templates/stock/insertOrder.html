@@ -40,7 +40,7 @@
   <!-- 마스터 카드 -->
   <!-- <div class="card shadow-sm mb-4"> -->
     <div class="card-header py-3 d-flex align-items-center justify-content-between">
-      <h6 class="mb-0 font-weight-bold text-primary">발주 계획 등록 페이지</h5>
+      <h6 class="mb-0 font-weight-bold text-primary">발주 등록 페이지</h5>
     </div>
   <!-- </div>  -->
 
@@ -50,25 +50,31 @@
     <div class="btn-bar">
     	 <!-- 버튼 영역 (폼 전체 최상단 오른쪽) -->
       <div class="d-flex justify-content-end mb-3">
+      	<button type="button" class="btn btn-dark me-2" id="searchBtn">계획조회</button>
 	    <button type="submit" class="btn btn-primary me-2" id="submitBtn">등록</button>
-	    <button type="reset" class="btn btn-danger" form="insertOrderPlan">초기화</button>
+	    <button type="reset" class="btn btn-danger" form="insertOrder">초기화</button>
        </div>
     </div>
     
-      <form class="row g-3" id="insertOrderPlan" enctype="application/x-www-form-urlencoded">
-        <div class="col-md-3">
+      <form class="row g-3" id="insertOrder" enctype="application/x-www-form-urlencoded">
+        <div class="col-md-4">
          <label for="insDate" class="form-label">등록일자</label>
           <input type="date" class="form-control" id="insDate" name="insDate">
         </div>
-        <div class="col-md-3">
-          <label for="compCode" class="form-label">회사코드</label>
-          <input type="text" class="form-control" id="compCode" name="compCode">
+        <div class="col-md-4">
+          <label for="cusName" class="form-label">거래처명</label>
+          <input type="text" class="form-control" id="cusName" name="cusName">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
+          <label for="cusCode" class="form-label">거래처코드</label>
+          <input type="text" class="form-control" id="cusCode" name="cusCode">
+        </div>
+        
+        <div class="col-md-4">
           <label for="empId" class="form-label">담당자명</label>
           <input type="text" class="form-control" id="empId" name="empId">
         </div>
-      	<div class="col-3">
+      	<div class="col-md-4">
          <label for="taxType" class="form-label">세율유형</label>
          <select class="form-select"aria-label="Default select example" id="taxType" name="taxType">
           <option value="" selected>선택안함</option>
@@ -76,6 +82,15 @@
 			<option value="영세율">영세율 적용</option>
 			<option value="면세">면세 적용</option>
 			</select>
+        </div>
+        <div class="col-md-4">
+          <label for="dueDate" class="form-label">납기일자</label>
+          <input type="date" class="form-control" id="dueDate" name="dueDate">
+        </div>
+        
+        <div class="col-md-4">
+          <label for="xpCode" class="form-label">계획코드</label>
+          <input type="text" class="form-control" id="xpCode" name="xpCode">
         </div>
         <!-- 
         <div class="col-md-4">
@@ -142,6 +157,8 @@
   <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
    <!-- 모달 include              경로             ::  div id 부분  -->   
   <div th:replace="~{stock/modals/productModal :: productModal}"></div>
+   <!-- 모달 include              경로             ::  div id 부분  -->   
+  <div th:replace="~{stock/modals/orderListModal :: orderListModal}"></div>
   
 </section>
   
@@ -161,16 +178,60 @@ document.addEventListener("DOMContentLoaded", () => {
 	const addRowBtn = document.getElementById('addRowBtn');
 	const tableBody = document.querySelector('#orderItemsTable tbody');
 	const taxSelect = document.getElementById('taxType'); // 상단 세율 select
+	const searchBtn = document.getElementById('searchBtn'); // 발주계획 조회 버튼
 	let realRowCnt = tableBody.rows.length; // 실제 테이블 행 개수
 	let rowCount = tableBody.rows.length + 1; // 현재 행 개수 + 1
  	let gridApi = null;
  	let gridOptions = null;
  	
+ 	
+ // 공통 모달 호출 함수
+ 	function initGrid(config) {
+ 	    const eGridDiv = document.getElementById(config.el);
+ 	    if (!eGridDiv) {
+ 	        console.error(`${config.el} div를 찾을 수 없습니다!`);
+ 	        return null;
+ 	    }
+ 		let gridApi = null;
+ 	    const gridOptions = {
+ 	        columnDefs: config.columnDefs || [],
+ 	        rowSelection: config.rowSelection || "single",
+ 	        pagination: true,
+ 	        paginationPageSize: config.paginationPageSize || 12,
+ 	        domLayout: config.domLayout || "normal",
+ 	        rowData: [],
+ 	        defaultColDef: {
+ 	            resizable: true,
+ 	            sortable: true,
+ 	            minWidth: 100,
+ 	        },
+ 	        onRowDoubleClicked: (event) => {
+ 	            if (typeof config.onRowDoubleClicked === "function") {
+ 	                config.onRowDoubleClicked(event);
+ 	            }
+ 	        },
+ 	       onRowClicked: (event) => {
+	            if (typeof config.onRowClicked === "function") {
+	                config.onRowClicked(event);
+	            }
+	        },
+ 	        onGridReady: (event) => {
+ 	            if (typeof config.onGridReady === "function") {
+ 	                config.onGridReady(event);
+ 	            }
+ 	            event.api.sizeColumnsToFit();
+ 	        },
+ 	    };
+
+ 	    new agGrid.Grid(eGridDiv, gridOptions);
+ 	    return { gridApi: gridOptions.api, gridOptions };
+	}// END OF FUNCTION
+ 	
  	//let gridCreated = false;
  	// withCredentials: true를 추가해야 쿠키 기반 세션을 함께 보내서 로그인 상태를 유지
- 	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+ 	axios.get("/api/v1/stock/getEmpName", { withCredentials: true })
 		  .then(res => {
-    			document.getElementById("compCode").value = res.data;
+    			document.getElementById("empId").value = res.data;
   			})
   		  .catch(err => console.error(err));
  	
@@ -198,6 +259,138 @@ document.addEventListener("DOMContentLoaded", () => {
 	taxSelect.addEventListener('change', () => {
 	  tableBody.querySelectorAll('tr').forEach(row => calculateRow(row));
 	});
+	
+	// 발주 조회 버튼 클릭시 모달 호출
+	let orderListGridApi = null;
+	let orderDetailGridApi = null;
+	searchBtn.addEventListener('click', async () => {
+	    const orderListModalEl = document.getElementById('orderListModal');
+	    const orderListModal = bootstrap.Modal.getOrCreateInstance(orderListModalEl);
+	    orderListModal.show();
+	    
+	 //   setTimeout(() => {
+	   //     const eGridDiv = document.getElementById('orderListGrid');
+	     //   if (!eGridDiv) return console.error("orderListGrid div가 없습니다!");
+	      //  new agGrid.Grid(eGridDiv, gridOptions);
+	   // }, 100); // 100ms 정도 대기
+
+	    // Grid 초기화 (한 번만)
+	    if (!orderListGridApi) {
+	        const eGridDiv = document.getElementById('orderListGrid');
+	        const columnDefs = [
+	            { headerName: "발주계획코드", field: "xpCode" },
+	            { headerName: "거래처코드", field: "businessCode" },
+	            { headerName: "거래처명", field: "businessPartner" },
+	            { headerName: "담당자", field: "empId" },
+	            { headerName: "제품명", field: "productName" },
+	            { headerName: "수량", field: "amount" },
+	            { headerName: "공급가액", field: "supAmt" },
+	            { headerName: "세율유형", field: "taxType" }
+	        ];
+
+	        const gridOptions = {
+	            columnDefs,
+	            rowSelection: "single",
+	            pagination: true,
+	            paginationPageSize: 10,
+	            defaultColDef: {
+	                resizable: true,
+	                sortable: true,
+	                minWidth: 100
+	            },
+	            onGridReady: async (event) => {
+	                orderListGridApi = event.api;
+	                orderListGridApi.sizeColumnsToFit();
+	                await loadOrderPlanData();
+	            },
+	            onRowDoubleClicked: async (event) => {
+	                console.log("선택된 발주 계획:", event.data);
+	                // 필요하면 선택한 데이터를 상단 input에 반영
+	                document.getElementById('xpCode').value = event.data.xpCode;
+	                document.getElementById('cusCode').value = event.data.businessCode;
+	                document.getElementById('cusName').value = event.data.businessPartner;
+	                document.getElementById('taxType').value = event.data.taxType;
+	                await appendDetailRow(event.data); // 디테일 테이블에 새 row 추가;
+	                
+
+	                orderListModal.hide();
+	            }
+	        };
+	        new agGrid.Grid(eGridDiv, gridOptions);
+	    } else {
+	        orderListGridApi.sizeColumnsToFit();
+	        await loadOrderPlanData();
+	    }
+	    // 상세 그리드 초기화 (한 번만)
+	    if (!orderDetailGridApi) {
+	        const eDetailGridDiv = document.getElementById('orderDetailGrid');
+	        const detailColumnDefs = [
+	            { headerName: "제품명", field: "productName" },
+	            { headerName: "수량", field: "amount" },
+	            { headerName: "공급가액", field: "supAmt" }
+	        ];
+	        const detailGridOptions = {
+	            columnDefs: detailColumnDefs,
+	            defaultColDef: { resizable: true, sortable: true, minWidth: 100 }
+	        };
+	        orderDetailGridApi = new agGrid.Grid(eDetailGridDiv, detailGridOptions).gridOptions.api;
+	    }
+	});
+
+	// 서버에서 발주 계획 데이터 가져오기
+	async function loadOrderPlanData() {
+	    try {
+	        const res = await axios.get('/api/v1/stock/orderPlans', { withCredentials: true });
+	        if (orderListGridApi) {
+	            orderListGridApi.setRowData(res.data);
+	        }
+	    } catch (err) {
+	        console.error(err);
+	        toastr.error('발주 계획 조회 실패');
+	    }
+	}
+
+	function appendDetailRow(data) {
+	    const detailTbody = document.querySelector('#detailTable tbody'); // 디테일 테이블 tbody
+	    const tableBody = document.querySelector('#orderItemsTable tbody');
+	    if (!tableBody) {
+	        console.error('#orderItemsTable tbody를 찾을 수 없습니다!');
+	        return;
+	    }
+	    data.details.forEach(detail => {
+	    	
+	    const row = document.createElement('tr');
+	    row.innerHTML = `
+	        <td class="text-center">${rowCount}</td>
+	        <td><input type="text" class="form-control productCode" name="productCode" value="${detail.productCode || ''}"></td>
+	        <td><input type="text" class="form-control productName" name="productName" value="${detail.productName || ''}"></td>
+	        <td><input type="text" class="form-control specification" name="specification" value="${detail.specification || ''}"></td>
+	        <td><input type="text" class="form-control partnerCode" name="partnerCode" value="${detail.businessCode || ''}" readonly></td>
+	        <td><input type="text" class="form-control partnerName" name="partnerName" value="${detail.businessPartner || ''}"></td>
+	        <td><input type="number" class="form-control qty" name="qty" value="${detail.amount || 1}" min="1"></td>
+	        <td><input type="number" class="form-control purchasePrice" name="purchasePrice" value="${detail.supAmt || 0}" min="0"></td>
+	        <td><input type="number" class="form-control supAmt" name="supAmt" value="${detail.supAmt || 0}" readonly></td>
+	        <td><input type="number" class="form-control vatAmt" name="vatAmt" value="0" readonly></td>
+	        <td><button type="button" class="btn btn-sm btn-danger deleteRowBtn">삭제</button></td>
+	    `;
+		rowCount++;
+	   tableBody.appendChild(row);
+
+	    // 삭제 버튼 이벤트
+	    row.querySelector('.deleteRowBtn').addEventListener('click', () => {
+	        row.remove();
+	        updateRowNumbers(detailTbody); // row 번호 갱신
+	    });
+	    
+		});
+	}
+
+	// row 번호 갱신 함수
+	function updateRowNumbers(tbody) {
+	    Array.from(tbody.children).forEach((tr, idx) => {
+	        tr.querySelector('td:first-child').textContent = idx + 1;
+	    });
+	}
 	
 	
 	// ------------------ 변수 초기화 ------------------
@@ -424,9 +617,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	}// end of loadModalData
 	
 
+	
+	
 
   // Axios 등록 + Toast
-	const form = document.getElementById('insertOrderPlan');
+	const form = document.getElementById('insertOrder');
 	const submitBtn = document.getElementById('submitBtn');
 	const toastEl = document.getElementById('successToast');
 	const toast = new bootstrap.Toast(toastEl);
