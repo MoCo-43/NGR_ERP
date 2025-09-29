@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.common.ApprovalMapper">
+ <update id="updateJournalStatus" parameterType="map">
+    UPDATE journal
+       SET status = #{status},
+           sign_path = COALESCE(#{signPath}, sign_path),
+           approver = COALESCE(#{approver}, approver),
+           approved_at = CASE WHEN #{status} = 'approved' THEN SYSDATE ELSE approved_at END
+     WHERE jrn_no IN
+       <foreach collection="ids" item="id" open="(" separator="," close=")">
+         #{id}
+       </foreach>
+       AND company_code = #{companyCode}
+  </update>
+
+
+</mapper>

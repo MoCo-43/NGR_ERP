@@ -469,7 +469,7 @@
             updatePinned();
           });
 
-          // ===== 등록 =====
+          // ===== 등록버튼 =====
           const submit = async () => {
             try {
               // 1) 품목의 상세행 수집
@@ -526,7 +526,7 @@
 
                 poDetails: details,
               };
-
+              console.log("cusCode은? ===>", payload.data.cusCode);
               await axios.post("/api/biz/poinsert", payload, {
                 headers: { "Content-Type": "application/json" },
               });

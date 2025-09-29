@@ -1,0 +1,50 @@
+<!-- templates/hr/eduForm.html -->
+<div class="modal fade" id="eduFormModal" tabindex="-1" aria-hidden="true" th:fragment="eduFormModal">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+      <h5 class="modal-title fw-bold" style="color: #000000;">사원 교육 등록</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body">
+        <form id="eduFormDetail" onsubmit="return false;">
+          <input type="hidden" name="empId" id="eduEmpId"/>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">교육명 <span class="text-danger">*</span></label>
+              <input type="text" name="eduName" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">종류</label>
+              <input type="text" name="eduType" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">결과</label>
+              <input type="text" name="result" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">점수</label>
+              <input type="number" name="score" class="form-control" min="0" max="100" step="1">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">수료일</label>
+              <input type="date" name="completeAt" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">유효기간</label>
+              <input type="date" name="expiresAt" class="form-control">
+            </div>
+            <div class="col-12">
+              <label class="form-label">비고</label>
+              <input type="text" name="remarks" class="form-control">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnEduSave" class="btn btn-primary">저장</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>

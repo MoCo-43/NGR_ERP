@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.DeptMapper">
+
+	<!-- ===================== ResultMap ===================== -->
+	<resultMap id="DeptMap" type="com.yedam.erp.vo.hr.DeptVO">
+		<id property="dept_code" column="DEPT_CODE" />
+		<result property="dept_name" column="DEPT_NAME" />
+		<result property="use_yn" column="USE_YN" />
+		<result property="member_cnt" column="MEMBER_CNT" />
+		<result property="manager_emp_id" column="MANAGER_EMP_ID" />
+		<result property="manager_name" column="MANAGER_NAME" />
+		<!-- 필요하면 companyCode도 매핑 <result property="companyCode" column="COMPANY_CODE" 
+			/> -->
+	</resultMap>
+
+	<!-- ===================== 목록 (companyCode 단일파라미터) ===================== -->
+	<!-- 단일 파라미터는 @Param 없이 #{value} 로 바인딩 -->
+	<select id="selectDeptList" resultMap="DeptMap">
+		SELECT
+		d.DEPT_CODE,
+		d.DEPT_NAME,
+		d.USE_YN,
+		d.MANAGER_EMP_ID,
+		m.NAME AS MANAGER_NAME,
+		COUNT(e.EMP_ID) AS MEMBER_CNT
+		FROM DEPT d
+		LEFT JOIN EMP e
+		ON d.DEPT_CODE = e.DEPT_CODE
+		AND (e.LEAVE_DATE IS NULL OR e.LEAVE_DATE > SYSDATE)
+		AND e.COMPANY_CODE = d.COMPANY_CODE
+		LEFT JOIN EMP m
+		ON d.MANAGER_EMP_ID = m.EMP_ID
+		AND m.COMPANY_CODE = d.COMPANY_CODE
+		WHERE d.COMPANY_CODE = #{value}
+		GROUP BY d.DEPT_CODE, d.DEPT_NAME, d.USE_YN, d.MANAGER_EMP_ID, m.NAME
+		ORDER BY d.DEPT_CODE
+	</select>
+
+	<!-- ===================== 단건 ===================== -->
+	<!-- 인터페이스가 String dept_code 이므로 parameterType="string" -->
+	<select id="selectDept" parameterType="string"
+		resultMap="DeptMap">
+		SELECT
+		d.DEPT_CODE,
+		d.DEPT_NAME,
+		d.USE_YN,
+		d.MANAGER_EMP_ID,
+		m.NAME AS MANAGER_NAME,
+		NVL( (SELECT COUNT(1)
+		FROM EMP e
+		WHERE e.DEPT_CODE = d.DEPT_CODE
+		AND (e.LEAVE_DATE IS NULL OR e.LEAVE_DATE > SYSDATE)), 0 ) AS MEMBER_CNT
+		FROM DEPT d
+		LEFT JOIN EMP m
+		ON d.MANAGER_EMP_ID = m.EMP_ID
+		WHERE d.DEPT_CODE = #{dept_code}
+		-- 회사 경계까지 제한하려면 서비스/매퍼를 VO로 바꾸고 아래 조건 추가
+		-- AND d.COMPANY_CODE = #{companyCode}
+	</select>
+
+	<!-- ===================== 등록 ===================== -->
+	<!-- 프론트에서 DEPT_CODE를 안 보낼 경우 자동발번을 원하면 selectKey 추가 (Oracle 예시) -->
+	<!-- <selectKey keyProperty="dept_code" order="BEFORE" resultType="string"> 
+		SELECT 'D' || LPAD(SEQ_DEPT_CODE.NEXTVAL, 4, '0') FROM dual </selectKey> -->
+	<insert id="insertDept"
+		parameterType="com.yedam.erp.vo.hr.DeptVO">
+		INSERT INTO DEPT (
+		DEPT_CODE,
+		DEPT_NAME,
+		USE_YN,
+		MEMBER_CNT,
+		MANAGER_EMP_ID,
+		COMPANY_CODE
+		) VALUES (
+		#{dept_code},
+		#{dept_name},
+		#{use_yn},
+		NVL(#{member_cnt}, 0),
+		#{manager_emp_id},
+		#{companyCode}
+		)
+	</insert>
+
+	<!-- ===================== 수정 ===================== -->
+	<!-- 멀티회사 안전을 위해 COMPANY_CODE도 WHERE에 포함 -->
+	<update id="updateDept"
+		parameterType="com.yedam.erp.vo.hr.DeptVO">
+		UPDATE DEPT
+		<set>
+			<if test="dept_name != null"> DEPT_NAME = #{dept_name},</if>
+			<if test="use_yn != null"> USE_YN = #{use_yn},</if>
+			<if test="member_cnt != null"> MEMBER_CNT = #{member_cnt},</if>
+			<if test="manager_emp_id != null"> MANAGER_EMP_ID = #{manager_emp_id},</if>
+		</set>
+		WHERE DEPT_CODE = #{dept_code}
+		AND COMPANY_CODE = #{companyCode}
+	</update>
+
+	<!-- ===================== 삭제 ===================== -->
+	<!-- 현재 인터페이스가 String dept_code 이므로 회사코드 조건은 없음 -->
+	<!-- 멀티회사 안전이 필요하면 인터페이스를 VO로 바꾸고 WHERE에 COMPANY_CODE 추가 -->
+	<delete id="deleteDept" parameterType="string">
+		DELETE FROM DEPT
+		WHERE DEPT_CODE = #{dept_code}
+	</delete>
+
+</mapper>

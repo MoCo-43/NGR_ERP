@@ -1,16 +1,62 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.yedam.erp.mapper.TestMapper">
-<select id="selectAll" resultType="BookVO">
-SELECT 
-       BOOK_NO
-       ,BOOK_NAME
-       ,BOOK_DESC
-       ,ISBN
-       ,AUTHOR
-       ,PUB
-FROM BOOK
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-</select>
+<!-- 공통코드 Mapper -->
+<mapper namespace="com.yedam.erp.mapper.common.CommonCodeMapper">
+
+  <!-- 공통 resultMap (선택 사항: alias로 카멜케이스 맞춰둠) -->
+  <resultMap id="CommonCodeMap" type="com.yedam.erp.vo.common.CommonCodeVO">
+    <result property="codeId"    column="code_id"/>
+    <result property="codeName"  column="code_name"/>
+    <result property="groupId"   column="group_id"/>
+    <result property="sortOrder" column="sort_order"/>
+    <result property="useYn"     column="use_yn"/>
+    <result property="codeNote"  column="code_note"/>
+  </resultMap>
+
+ 
+  <select id="selectCommonCodes"
+          parameterType="map"
+          resultMap="CommonCodeMap">
+    SELECT
+      CODE_ID    AS code_id,
+      CODE_NAME  AS code_name,
+      GROUP_ID   AS group_id,
+      SORT_ORDER AS sort_order,
+      USE_YN     AS use_yn,
+      CODE_NOTE  AS code_note
+    FROM COMMONCODE
+    <where>
+      GROUP_ID = #{groupId}
+      <if test="useYn != null and useYn != ''">
+        AND USE_YN = #{useYn}
+      </if>
+      <if test="keyword != null and keyword != ''">
+        AND (
+              CODE_NAME LIKE '%' || #{keyword} || '%'
+           OR CODE_ID   LIKE '%' || #{keyword} || '%'
+        )
+      </if>
+    </where>
+    ORDER BY SORT_ORDER, CODE_ID
+  </select>
+
+  <!-- 단건 조회 (필요 시) -->
+  <select id="selectCommonCode"
+          parameterType="map"
+          resultMap="CommonCodeMap">
+    SELECT
+      CODE_ID    AS code_id,
+      CODE_NAME  AS code_name,
+      GROUP_ID   AS group_id,
+      SORT_ORDER AS sort_order,
+      USE_YN     AS use_yn,
+      CODE_NOTE  AS code_note
+    FROM COMMONCODE
+    WHERE GROUP_ID = #{groupId}
+      AND CODE_ID  = #{codeId}
+  </select>
 
 </mapper>

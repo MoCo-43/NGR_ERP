@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko" 
+      xmlns:th="http://www.thymeleaf.org" 
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+  <div th:fragment="headerFragment">
+    <style>
+      header {
+        background: #2C3E50;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+      }
+      nav a {
+        text-decoration: none;
+        color: white;
+        margin-left: 20px;
+        font-weight: 500;
+        transition: color 0.3s;
+      }
+      nav a:hover {
+        /* CSS 변수를 사용할 수 없으므로 실제 색상 코드로 대체 */
+        color: #3f51b5;
+      }
+      .settings-icon {
+        margin-left: 15px;
+        cursor: pointer;
+        font-size: 24px;
+        vertical-align: middle;
+        color: white; /* 아이콘 색상 추가 */
+      }
+
+      /* 반응형: 헤더 */
+      @media (max-width: 768px) {
+        header {
+          flex-direction: column;
+          text-align: center;
+        }
+        nav {
+          margin-top: 15px;
+        }
+        nav a {
+          margin: 0 10px;
+        }
+      }
+    </style>
+
+    <header>
+      <div class="logo">NGR_ERP</div>
+      <nav>
+        <span sec:authorize="isAnonymous()">
+          <a href="#" th:href="@{/login}">로그인</a>
+          <a href="#" th:href="@{/register}">회원가입</a>
+        </span>
+        
+        <span sec:authorize="isAuthenticated()">
+          <form th:action="@{/logout}" method="post" style="display:inline;">
+            <a href="javascript:void(0);" onclick="this.closest('form').submit();" style="color:white; text-decoration: none;">로그아웃</a>
+          </form>
+        </span>
+        
+        <a href="#" th:href="@{/subscribe}">구독</a>
+        <span class="material-icons settings-icon">settings</span>
+      </nav>
+    </header>
+  </div>
+</body>
+</html>

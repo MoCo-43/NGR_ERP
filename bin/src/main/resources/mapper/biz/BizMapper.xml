@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 인터페이스 FQN과 100% 일치 -->
+<mapper namespace="com.yedam.erp.mapper.Biz.BizMapper">
+
+<!-- 테스트용 전체 주문서 목록 조회 -->
+<select id="getAllPO" resultType="PurchaseOrderVO">
+  SELECT * 
+  FROM PURCHASE_ORDER
+</select>
+
+<!-- 주문서 조회 -->
+<select id="selectPO" resultType="JoinPoVO" parameterType="long">
+SELECT
+    p.PO_START,
+    c.CUS_NAME,
+    p.CREATER,
+    CASE
+        WHEN pd_counts.cnt > 1 THEN pod.PRODUCT_NAME || ' 외 ' || (pd_counts.cnt - 1) || '건'
+        ELSE pod.PRODUCT_NAME
+    END AS PRODUCT_NAME,
+    c.BIZ_TYPE,
+    p.TOTAL_PRICE,
+    p.PO_STATUS,
+    p.NOTES
+FROM
+    CUSTOMER c
+LEFT JOIN
+    PURCHASE_ORDER p ON c.CUS_CODE = p.CUS_CODE
+LEFT JOIN
+    PO_DETAIL pod ON p.PO_ID = pod.PO_ID
+LEFT JOIN
+    (SELECT PO_ID, COUNT(*) as cnt FROM PO_DETAIL GROUP BY PO_ID) pd_counts
+ON
+    p.PO_ID = pd_counts.PO_ID
+WHERE p.COMPANY_CODE = #{companyCode}
+ORDER BY
+    p.PO_START DESC
+</select>
+
+
+<!-- 주문서 등록 -->
+<insert id="insertPO" parameterType="PoInsertVO">
+  INSERT ALL
+    INTO purchase_order (
+      PO_ID, COMPANY_CODE, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
+      TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
+    )
+    VALUES (
+      PO_ID_SEQ.NEXTVAL, #{companyCode},
+      #{cusCode}, #{cusName}, #{creater}, #{poStart}, #{exDate}, #{poDate},
+      #{totalPrice}, '작성완료',
+      #{payMethod}, #{notes}, #{vatType}, #{poType}
+    )
+    
+    <foreach collection="poDetails" item="pod">
+      INTO po_detail (
+        POD_ID, PO_ID, COMPANY_CODE, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
+        DC_PRICE, SUP_AMT, VAT_AMT, PRODUCT_NAME
+      )
+      VALUES (
+        POD_ID_SEQ.NEXTVAL,
+        PO_ID_SEQ.CURRVAL,
+        #{companyCode},
+        #{pod.productCode}, #{pod.orderQty}, #{pod.unitPrice},
+        #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.productName}
+      )
+    </foreach>
+  SELECT 1 FROM DUAL
+</insert>
+
+
+<!-- 주문서 이력 조회 -->
+<select id="getPOHistory" resultType="PoHistoryVO">
+SELECT po.PO_START, po.CUS_NAME, po.creater, po.EX_DATE, pd.UNIT_PRICE, pd.PRODUCT_NAME
+FROM PURCHASE_ORDER po
+LEFT JOIN PO_DETAIL pd ON pd.PO_ID = po.PO_ID
+WHERE po.COMPANY_CODE = #{companyCode}
+</select>
+
+<!-- 품목조회 -->
+<select id="getProducts" resultType="ProductCodeVO">
+  SELECT PRODUCT_CODE, PRODUCT_NAME
+  FROM PRODUCT
+  WHERE COMPANY_CODE = #{companyCode}
+</select>
+
+<!-- 거래처 조회 -->
+<select id="getCustomers" resultType="CusModalVO">
+  SELECT c.CUS_CODE, c.CUS_NAME, cm.CREDIT_GRADE, cm.LEFT_PRICE
+  FROM CUSTOMER c
+  LEFT JOIN CREDIT_MASTER cm ON c.CUS_NO = cm.CUS_NO
+  WHERE c.COMPANY_CODE = #{companyCode}
+  </select>
+
+  <!-- 출하지시서 조회 -->
+  <select id="selectDo" resultType="DeliveryOrderVO" parameterType="Long">
+SELECT
+    d.DO_CODE,
+    d.DO_CREATED,
+    c.CUS_NAME AS CUS_CODE,
+    CASE
+        WHEN COUNT(p.PRODUCT_NAME) > 1
+            THEN MIN(p.PRODUCT_NAME) || ' 외 ' || (COUNT(p.PRODUCT_NAME) - 1) || '건'
+        ELSE MIN(p.PRODUCT_NAME)
+    END AS PRODUCT_CODE,
+    d.TOTAL_QTY,
+    d.EX_DATE,
+    d.DO_STATUS
+FROM DELIVERY_ORDER d
+JOIN CUSTOMER c
+  ON d.CUS_CODE = c.CUS_CODE
+JOIN DO_DETAIL dd
+  ON d.DO_NO = dd.DO_NO
+JOIN PRODUCT p
+  ON dd.PRODUCT_CODE = p.PRODUCT_CODE
+WHERE d.COMPANY_CODE = #{companyCode} AND dd.COMPANY_CODE = #{companyCode} AND p.COMPANY_CODE = #{companyCode} AND c.COMPANY_CODE = #{companyCode}
+GROUP BY
+    d.DO_CODE, d.DO_CREATED, c.CUS_CODE, c.CUS_NAME,
+    d.TOTAL_QTY, d.EX_DATE, d.DO_STATUS
+ORDER BY d.DO_CREATED DESC
+</select>
+</mapper>

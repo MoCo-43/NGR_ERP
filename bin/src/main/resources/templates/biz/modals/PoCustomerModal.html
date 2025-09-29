@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/styles/ag-theme-quartz.css"
+    />
+  </head>
+  <body>
+    <!-- fragment 이름을 customermodal 로 지정 -->
+    <div th:fragment="customermodal">
+      <div
+        class="modal fade"
+        id="customermodal"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">검색 모달</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+
+            <!-- 모달 바디 시작 -->
+            <div class="modal-body">
+              <!-- 버튼 영역: 카드 밖, 오른쪽 상단 고정 -->
+              <div class="d-flex justify-content-end mb-2 gap-2">
+                <button type="reset" form="searchForm" class="btn btn-danger">
+                  초기화
+                </button>
+              </div>
+
+              <!-- 검색폼 카드 -->
+              <form
+                th:action="@{/list}"
+                method="get"
+                id="searchForm"
+                class="card p-3 mb-3"
+              >
+                <div class="d-flex align-items-end gap-3">
+                  <!-- 거래처명 -->
+                  <div>
+                    <label for="keyword" class="form-label">거래처명</label>
+                    <input
+                      type="text"
+                      id="keyword"
+                      name="keyword"
+                      class="form-control"
+                      placeholder="검색어 입력"
+                    />
+                  </div>
+                </div>
+              </form>
+              <!-- 검색 결과 ag-Grid -->
+              <div
+                id="customerGrid"
+                class="ag-theme-quartz"
+                style="height: 400px; width: 100%"
+              ></div>
+            <div>
+              <div>
+                <button
+                  id="CstImportBtn"
+                  type="button"
+                  class="btn btn-primary"
+                >
+                  선택
+                </button> 
+            </div>
+            <!-- 모달 바디 종료 -->
+
+            <!-- 모달 푸터 -->
+            <div class="modal-footer">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

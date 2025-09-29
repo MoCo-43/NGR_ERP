@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.erp.mapper.main.EmpLoginMapper">
+
+    <select id="findByIdentityAndComCode" resultType="com.yedam.erp.vo.main.EmpLoginVO">
+    SELECT
+        T1.emp_id_no,
+        T1.emp_pw,
+        T1.login_id,
+        T1.emp_no,
+        T1.create_at,
+        T1.is_used,
+        T1.mat_no,
+        T1.is_locked,
+        T1.lock_until,
+        T1.failed_login_att,
+        T1.emp_id,
+        T1.code_id,
+        T1.two_step_method,
+        T1.token,
+        T1.emp_img,
+        T1.dept_code,
+        T1.emp_mobile
+    FROM
+        emp_login T1
+    INNER JOIN
+        company T2 ON T1.mat_no = T2.mat_no  -- 두 테이블을 mat_no 기준으로 연결
+    WHERE
+        (T1.login_id = #{identity} OR T1.emp_no = #{identity}) -- ID 또는 사원번호로 검색
+    AND 
+        T2.com_code = #{comCode}  -- company 테이블의 com_code로 필터링
+    </select>
+    
+    <update id="updatePasswordByEmpIdNo">
+        UPDATE
+            emp_login   
+        SET
+            emp_pw = #{newPassword}
+        WHERE
+            emp_id_no = #{empIdNo}
+    </update>
+
+	<select id="findByEmpId" parameterType="String" resultType="com.yedam.erp.vo.main.EmpLoginVO">
+        SELECT
+            emp_id_no,
+            emp_pw,
+            emp_id,
+            emp_no,
+            create_at,
+            is_used,
+            mat_no,
+            is_locked,
+            lock_until,
+            failed_login_att,
+            dept_code,
+            code_id,
+            two_step_method,
+            token
+        FROM
+            emp_login
+        WHERE
+            emp_id = #{empId}
+	</select>
+ 
+    <select id="findByEmpIdAndComCode" resultType="com.yedam.erp.vo.main.EmpLoginVO">
+        SELECT
+            T1.emp_id_no,
+            T1.emp_pw,
+            T1.emp_id,
+            T1.emp_no,
+            T1.create_at,
+            T1.is_used,
+            T1.mat_no,
+            T1.is_locked,
+            T1.lock_until,
+            T1.failed_login_att,
+            T1.dept_code,
+            T1.code_id,
+            T1.two_step_method,
+            T1.token,
+            T1.emp_mobile
+        FROM
+            emp_login T1
+        INNER JOIN
+            company T2 ON T1.mat_no = T2.mat_no  WHERE
+            T1.emp_id = #{empId} 
+        AND 
+            T2.com_code = #{comCode}  </select>
+    
+    <insert id="insertVO">
+    
+    </insert>
+</mapper>
