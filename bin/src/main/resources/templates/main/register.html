@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main_auth_base}">
+<head>
+  <title layout:fragment="title">ERP 서비스 가입</title>
+  <th:block layout:fragment="head_extra">
+    <style>
+      .auth-forms { width: 100%; }
+      .auth-forms h2 { text-align: center; margin-bottom: 2.5rem; color: #1f2937; font-weight: 700; font-size: 2rem; }
+      .form-group { border: none; padding: 0; margin: 0 0 2.5rem 0; }
+      .form-group:last-of-type { margin-bottom: 0; }
+      .form-group-title { width: 100%; font-size: 1.5rem; font-weight: 600; color: #374151; padding-bottom: 0.75rem; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; }
+      .form-row { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem; }
+      .form-row .input-field { flex: 1 1 calc(50% - 0.75rem); margin-bottom: 0; }
+      .auth-forms .input-field { width: 100%; position: relative; }
+      .input-field label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151; font-size: 0.9rem; }
+      .auth-forms .input-field input, .auth-forms .input-field select { width: 100%; padding: 14px 16px; border: 1px solid #d1d5db; border-radius: 8px; background-color: #f9fafb; outline: none; font-size: 1rem; color: #374151; transition: border-color 0.2s, box-shadow 0.2s; }
+      .auth-forms .input-field input::placeholder { color: #9ca3af; }
+      .auth-forms .input-field input:focus, .auth-forms .input-field select:focus { border-color: #4d341e; background-color: #fff; box-shadow: 0 0 0 3px rgba(77, 52, 30, 0.15); }
+      .auth-forms .input-field input[readonly] { background-color: #e5e7eb; cursor: not-allowed; }
+      .input-field.has-button input { padding-right: 120px; }
+      .btn-check-username, .btn-find-address { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); height: 38px; width: 105px; background-color: #e5e7eb; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: #4b5563; transition: background-color 0.2s; }
+      .btn-check-username:hover, .btn-find-address:hover { background-color: #d1d5db; }
+      .form-buttons { display: flex; gap: 1rem; margin-top: 2.5rem; }
+      .form-buttons button { flex: 1; padding: 14px; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; border-radius: 8px; transition: all 0.2s ease-in-out; }
+      .btn-primary { background: #4d341e; color: #fff; }
+      .btn-primary:hover { background: #3c2a1a; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+      .btn-secondary { background: #fff; color: #374151; border: 1px solid #d1d5db; }
+      .btn-secondary:hover { background: #f9fafb; border-color: #9ca3af; }
+      .link-small { font-size: 0.9rem; text-align: center; margin-top: 1.5rem; }
+      .link-small a { color: #4d341e; text-decoration: none; font-weight: 500; }
+      .link-small a:hover { text-decoration: underline; }
+      .form-step { display: none; }
+      .form-step.active { display: block; }
+      .error-message { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; display: none; }
+      .error-message.show { display: block; }
+      input.invalid { border-color: #ef4444; }
+      .email-container { display: flex; align-items: center; gap: 0.5rem; }
+      .email-container .at-symbol { color: #6b7280; font-weight: 600; }
+      .email-container input, .email-container select { flex: 1; }
+    </style>
+  </th:block>
+</head>
+<body>
+<th:block layout:fragment="content">
+  <div class="auth-forms">
+    <h2>ERP 서비스 가입</h2>
+    <form th:action="@{/register}" method="post" id="registerForm">
+      
+      <!-- STEP 1: 회사 정보 -->
+      <div id="form-step-1" class="form-step active">
+        <fieldset class="form-group">
+          <legend class="form-group-title">1. 회사 정보</legend>
+          <div class="form-row">
+            <div class="input-field">
+              <label for="compName">회사이름</label>
+              <input type="text" id="comp_name" name="compName" placeholder="회사명을 입력하세요" required>
+            </div>
+            <div class="input-field">
+              <label for="ceo">대표자명</label>
+              <input type="text" id="ceo" name="ceo" placeholder="대표자명을 입력하세요" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="input-field">
+              <label for="com_code">사업자등록번호</label>
+              <input type="text" id="brm" name="brm" placeholder="'-' 없이 숫자만 입력" required>
+            </div>
+            <div class="input-field">
+              <label for="com_tel">회사대표번호</label>
+              <input type="text" id="com_tel" name="comTel" placeholder="'-' 없이 숫자만 입력" required>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom: 0.5rem;">
+            <div class="input-field has-button" style="flex-basis: 100%;">
+              <label for="zipode">회사 주소</label>
+              <input type="text" id="zip_code" name="zipCode" placeholder="우편번호" readonly required>
+              <button type="button" onclick="execDaumPostcode()" class="btn-find-address">우편번호 찾기</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="input-field">
+              <input type="text" id="compAddr" name="compAddr" placeholder="도로명주소" readonly>
+            </div>
+            <div class="input-field">
+              <input type="text" id="jibunAddress" name="jibunAddress" placeholder="지번주소" readonly>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="input-field" style="flex-basis: 100%;">
+              <input type="text" id="detailAddress" name="detailAddress" placeholder="상세주소를 입력하세요">
+            </div>
+          </div>
+          <input type="hidden" id="extraAddress" placeholder="참고항목">
+          <div class="input-field" style="margin-top: -1rem; margin-bottom: 1rem; height: 1.2rem;">
+            <span id="guide" style="color: #6b7280; display: none; padding-left: 5px; font-size: 0.85rem;"></span>
+          </div>
+        </fieldset>
+        <div class="form-buttons">
+          <button type="button" class="btn-secondary" onclick="location.href='/'">취소</button>
+          <button type="button" id="btn-next" class="btn-primary">다음</button>
+        </div>
+      </div>
+      
+      <!-- STEP 2: 관리자 정보 -->
+      <div id="form-step-2" class="form-step">
+        <fieldset class="form-group">
+          <legend class="form-group-title">2. 관리자 계정 정보</legend>
+          <div class="form-row">
+            <div class="input-field has-button">
+              <label for="emp_id">아이디</label>
+              <input type="text" id="emp_id" name="empId" placeholder="사용할 아이디를 입력하세요" required>
+              <button type="button" class="btn-check-username">중복확인</button>
+            </div>
+            <div class="input-field">
+              <label for="mat_name">담당자명</label>
+              <input type="text" id="mat_name" name="matName" placeholder="담당자(가입자) 이름을 입력하세요" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="input-field">
+              <label for="emp_pw">비밀번호</label>
+              <input type="password" id="emp_pw" name="empPw" placeholder="비밀번호를 입력하세요" required>
+              <div id="password-error" class="error-message"></div>
+            </div>
+            <div class="input-field">
+              <label for="repassword">비밀번호 재확인</label>
+              <input type="password" id="repassword" name="repassword" placeholder="비밀번호를 다시 한번 입력하세요" required>
+              <div id="repassword-error" class="error-message"></div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="input-field">
+              <label for="mat_tel">담당자 휴대폰 번호</label>
+              <input type="text" id="mat_tel" name="matTel" placeholder="'-' 없이 숫자만 입력" required>
+            </div>
+            <div class="input-field">
+              <label for="email_id">담당자 이메일 주소</label>
+              <div class="email-container">
+                <input type="text" id="email_id" placeholder="이메일 아이디" required>
+                <span class="at-symbol">@</span>
+                <input type="text" id="email_domain" placeholder="도메인" required>
+              </div>
+              <input type="hidden" id="mat_mail" name="matMail">
+            </div>
+          </div>
+          <div class="form-row" style="margin-top: -0.5rem;">
+            <div class="input-field"></div>
+            <div class="input-field">
+              <select id="email_select">
+                <option value="">직접입력</option>
+                <option value="naver.com">naver.com</option>
+                <option value="gmail.com">gmail.com</option>
+                <option value="daum.net">daum.net</option>
+                <option value="kakao.com">kakao.com</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+        <div class="form-buttons">
+          <button type="button" id="btn-prev" class="btn-secondary">이전</button>
+          <button type="submit" class="btn-primary">가입하기</button>
+        </div>
+      </div>
+    </form>
+    <div class="link-small">
+      <a href="/login">이미 계정이 있으신가요? 로그인</a>
+    </div>
+  </div>
+</th:block>
+
+<th:block layout:fragment="body_extra">
+  <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script>
+    function execDaumPostcode() {
+      new daum.Postcode({
+        oncomplete: function(data) {
+          const roadAddr = data.roadAddress;
+          let extraRoadAddr = '';
+          if(data.bname && /[동|로|가]$/g.test(data.bname)) extraRoadAddr += data.bname;
+          if(data.buildingName && data.apartment === 'Y') extraRoadAddr += (extraRoadAddr ? ', ' : '') + data.buildingName;
+
+          document.getElementById('zip_code').value = data.zonecode;
+          document.getElementById("compAddr").value = roadAddr;
+          document.getElementById("jibunAddress").value = data.jibunAddress;
+          document.getElementById("extraAddress").value = extraRoadAddr;
+
+          const guideTextBox = document.getElementById("guide");
+          if(data.autoRoadAddress) {
+            guideTextBox.innerHTML = '(예상 도로명 주소 : ' + data.autoRoadAddress + extraRoadAddr + ')';
+            guideTextBox.style.display = 'block';
+          } else if(data.autoJibunAddress) {
+            guideTextBox.innerHTML = '(예상 지번 주소 : ' + data.autoJibunAddress + ')';
+            guideTextBox.style.display = 'block';
+          } else {
+            guideTextBox.innerHTML = '';
+            guideTextBox.style.display = 'none';
+          }
+        }
+      }).open();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const formStep1 = document.getElementById('form-step-1');
+      const formStep2 = document.getElementById('form-step-2');
+      const btnNext = document.getElementById('btn-next');
+      const btnPrev = document.getElementById('btn-prev');
+
+      const registerForm = document.getElementById('registerForm');
+      const passwordInput = document.getElementById('emp_pw');
+      const repasswordInput = document.getElementById('repassword');
+      const passwordError = document.getElementById('password-error');
+      const repasswordError = document.getElementById('repassword-error');
+
+      const emailIdInput = document.getElementById('email_id');
+      const emailDomainInput = document.getElementById('email_domain');
+      const emailSelect = document.getElementById('email_select');
+      const hiddenEmailInput = document.getElementById('mat_mail');
+
+      // STEP 전환
+      btnNext.addEventListener('click', () => {
+        const inputs = formStep1.querySelectorAll('input[required]');
+        let valid = true;
+        inputs.forEach(input => { if(!input.checkValidity()) { input.reportValidity(); valid=false; }});
+        if(valid) { formStep1.classList.remove('active'); formStep2.classList.add('active'); window.scrollTo(0,0);}
+      });
+
+      btnPrev.addEventListener('click', () => {
+        formStep2.classList.remove('active'); formStep1.classList.add('active'); window.scrollTo(0,0);
+      });
+
+      // 이메일 선택
+      emailSelect.addEventListener('change', function() {
+        if(this.value) { emailDomainInput.value = this.value; emailDomainInput.readOnly = true; }
+        else { emailDomainInput.value=''; emailDomainInput.readOnly=false; emailDomainInput.focus(); }
+      });
+
+      // 폼 제출 → Ajax + JSON
+      registerForm.addEventListener('submit', function(event){
+        event.preventDefault();
+
+        // 이메일 합치기
+        const emailId = emailIdInput.value.trim();
+        const emailDomain = emailDomainInput.value.trim();
+        hiddenEmailInput.value = (emailId && emailDomain) ? emailId + '@' + emailDomain : '';
+
+        // 비밀번호 검증
+        let valid = true;
+        passwordError.textContent=''; passwordError.classList.remove('show'); passwordInput.classList.remove('invalid');
+        repasswordError.textContent=''; repasswordError.classList.remove('show'); repasswordInput.classList.remove('invalid');
+
+        const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{8,}).*$/;
+        if(!passwordRegex.test(passwordInput.value)) {
+          passwordError.textContent='비밀번호는 8자리 이상, 대문자, 특수문자(!@#$%^&*) 포함';
+          passwordError.classList.add('show'); passwordInput.classList.add('invalid'); passwordInput.focus();
+          valid=false;
+        }
+        if(passwordInput.value !== repasswordInput.value) {
+          repasswordError.textContent='비밀번호가 일치하지 않습니다';
+          repasswordError.classList.add('show'); repasswordInput.classList.add('invalid');
+          if(valid) repasswordInput.focus();
+          valid=false;
+        }
+        if(!valid) return;
+
+        // FormData → JSON
+        const formData = new FormData(registerForm);
+        const jsonData = {};
+        formData.forEach((value,key)=>{jsonData[key]=value;});
+
+        fetch('/register',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(jsonData)
+        })
+        .then(res=>{if(!res.ok) throw new Error('서버 오류'); return res.text();})
+        .then(data=>{ alert('회원가입 완료!'); window.location.href='/login'; })
+        .catch(err=>{ console.error(err); alert('회원가입 실패: 서버 오류'); });
+      });
+    });
+  </script>
+</th:block>
+</body>
+</html>

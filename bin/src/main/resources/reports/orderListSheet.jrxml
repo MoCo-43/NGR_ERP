@@ -1,0 +1,516 @@
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
+<jasperReport name="orderSheet" language="java" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="4eedbb89-b4f6-4469-9ab6-f642a1688cf7">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="cloud"/>
+	<style name="Title" forecolor="#FFFFFF" fontName="Times New Roman" fontSize="50.0" bold="false" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontName="Times New Roman" fontSize="18.0" bold="false" pdfFontName="Times-Roman"/>
+	<style name="Column header" forecolor="#666666" fontName="Times New Roman" fontSize="14.0" bold="true"/>
+	<style name="Detail" mode="Transparent" fontName="Times New Roman"/>
+	<style name="Row" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman">
+		<conditionalStyle mode="Opaque" backcolor="#EEEFF0">
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+		</conditionalStyle>
+	</style>
+	<style name="Table">
+		<box>
+			<pen lineWidth="1.0" lineColor="#000000"/>
+			<topPen lineWidth="1.0" lineColor="#000000"/>
+			<leftPen lineWidth="1.0" lineColor="#000000"/>
+			<bottomPen lineWidth="1.0" lineColor="#000000"/>
+			<rightPen lineWidth="1.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_TH" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_CH" mode="Opaque" backcolor="#CACED0">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+		<conditionalStyle backcolor="#D8D8D8">
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+		</conditionalStyle>
+	</style>
+	<style name="hangle" mode="Transparent" fontName="malgun"/>
+	<dataset name="tableDataset" uuid="f13e6d36-5148-4ecc-bbe3-3035def80980">
+		<query language="sql"><![CDATA[]]></query>
+	</dataset>
+	<parameter name="orderCodeParam" class="java.lang.String"/>
+	<parameter name="brnParam" class="java.lang.Long"/>
+	<parameter name="compNameCeoParam" class="java.lang.String"/>
+	<parameter name="compAddrParam" class="java.lang.String"/>
+	<parameter name="compMatParam" class="java.lang.String"/>
+	<parameter name="cusNameParam" class="java.lang.String"/>
+	<parameter name="telParam" class="java.lang.String"/>
+	<parameter name="emailParam" class="java.lang.String"/>
+	<query language="SQL"><![CDATA[SELECT 
+       ord.product_code AS product_code,
+       ord.product_name AS product_name,
+       ord.qty AS qty, 
+       ord.order_price AS order_price, 
+       ord.sup_amt AS sup_amt,
+       ord.vat_amt AS vat_amt,
+       orr.due_date AS due_date, 
+       CASE WHEN SUBSTR(orr.VAT_TYPE,1,1) = '부' THEN 'VAT 포함'
+          WHEN SUBSTR(orr.VAT_TYPE,1,1) = '영' THEN '영세율 적용'
+          ELSE '면세'
+       END AS "taxType" 
+FROM order_detail ord 
+JOIN order_req orr 
+ON orr.order_code = ord.order_code 
+WHERE orr.order_code =  $P{orderCodeParam} 
+ORDER BY ord.OD_NO]]></query>
+	<field name="productCode" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="productCode"/>
+		<property name="com.jaspersoft.studio.field.label" value="productCode"/>
+	</field>
+	<field name="productName" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="productName"/>
+		<property name="com.jaspersoft.studio.field.label" value="productName"/>
+	</field>
+	<field name="qty" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="qty"/>
+		<property name="com.jaspersoft.studio.field.label" value="qty"/>
+	</field>
+	<field name="orderPrice" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="orderPrice"/>
+		<property name="com.jaspersoft.studio.field.label" value="orderPrice"/>
+	</field>
+	<field name="supAmt" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="supAmt"/>
+		<property name="com.jaspersoft.studio.field.label" value="supAmt"/>
+	</field>
+	<field name="vatAmt" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="vatAmt"/>
+		<property name="com.jaspersoft.studio.field.label" value="vatAmt"/>
+	</field>
+	<field name="dueDate" class="java.util.Date">
+		<property name="com.jaspersoft.studio.field.name" value="dueDate"/>
+		<property name="com.jaspersoft.studio.field.label" value="dueDate"/>
+	</field>
+	<field name="taxType" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="taxType"/>
+		<property name="com.jaspersoft.studio.field.label" value="taxType"/>
+	</field>
+	<variable name="dueDate1" calculation="DistinctCount" class="java.lang.Integer">
+		<expression><![CDATA[$F{dueDate}]]></expression>
+	</variable>
+	<variable name="totalQty" calculation="Sum" class="java.math.BigDecimal">
+		<expression><![CDATA[$F{qty}]]></expression>
+	</variable>
+	<variable name="totalSupAmt" calculation="Sum" class="java.math.BigDecimal">
+		<expression><![CDATA[$F{supAmt}]]></expression>
+	</variable>
+	<variable name="totalVatAmt" calculation="Sum" class="java.math.BigDecimal">
+		<expression><![CDATA[$F{vatAmt}]]></expression>
+	</variable>
+	<variable name="totalSumAmt" calculation="Sum" class="java.math.BigDecimal">
+		<expression><![CDATA[$F{supAmt}.add($F{vatAmt})]]></expression>
+	</variable>
+	<title height="171" splitType="Stretch">
+		<element kind="line" uuid="806ce5df-1219-4876-ae0c-ca7405b1f246" x="39" y="26" width="449" height="1">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="frame" uuid="90ff199c-5b23-4dcc-a23a-07cc752f497c" x="39" y="29" width="180" height="54">
+			<element kind="staticText" uuid="88a960b9-cc39-4839-a771-8b1e0ef3d3b7" mode="Opaque" x="1" y="1" width="80" height="10" backcolor="#CACED0" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[발주코드]]></text>
+				<box style="hangle">
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="29eebcb2-00c6-437b-b2da-a6bc04a41727" mode="Opaque" x="1" y="11" width="80" height="10" backcolor="#CACED0" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[수신]]></text>
+				<box style="hangle">
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="59fdf523-ae66-4970-b027-7e5049a43104" mode="Opaque" x="1" y="21" width="80" height="10" backcolor="#CACED0" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[TEL]]></text>
+				<box style="hangle">
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="1e873e6c-8df1-485f-9928-3a4edbdcadd7" mode="Opaque" x="1" y="31" width="80" height="10" backcolor="#CACED0" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[EMAIL]]></text>
+				<box style="hangle">
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="9a4a16d3-a392-42c3-ad81-be45ff14b290" mode="Opaque" x="33" y="42" width="48" height="11" backcolor="#FFFFFF" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[납기예정일자 :  ]]></text>
+				<box style="hangle">
+					<pen lineWidth="0.0" lineStyle="Solid"/>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="5a596bfd-42ab-4526-85ce-d72f99f3c342" x="81" y="11" width="98" height="10" fontSize="7.0" bold="false" hTextAlign="Center" style="hangle">
+				<expression><![CDATA[$P{cusNameParam}]]></expression>
+				<box style="hangle">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="527923a7-4ffa-4111-a749-7cdb57a476a5" x="81" y="21" width="98" height="10" fontSize="7.0" bold="false" hTextAlign="Center">
+				<expression><![CDATA[$P{telParam}]]></expression>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="0d51c811-7575-4d2a-a110-5165cf05ce29" x="81" y="31" width="98" height="10" fontSize="7.0" bold="false" hTextAlign="Center">
+				<expression><![CDATA[$P{emailParam}]]></expression>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="baf5ec06-3f80-4878-8f55-64c91d679e7d" x="81" y="42" width="98" height="11" fontSize="6.0" pattern="yyyy-MM-dd" bold="false" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{dueDate}]]></expression>
+			</element>
+			<element kind="textField" uuid="90193f82-a259-42a2-a567-5615a1f92e01" x="81" y="1" width="98" height="10" fontSize="7.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$P{orderCodeParam}]]></expression>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<box>
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="frame" uuid="c03c7513-0951-4ac2-88a9-3bb57451d813" x="308" y="29" width="180" height="54">
+			<element kind="staticText" uuid="f6f7b9f4-156d-4664-b1f1-2ba588ef97b2" mode="Opaque" x="1" y="1" width="78" height="10" backcolor="#CACED0" fontName="malgun" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<text><![CDATA[사업자등록번호]]></text>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="f9699216-1fe1-4f5a-b43f-f6927e149a51" mode="Opaque" x="1" y="12" width="78" height="10" backcolor="#CACED0" fontName="malgun" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<text><![CDATA[회사명/대표]]></text>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="ee639ec4-bd2a-48a2-b9c8-aad2d55fb8fb" mode="Opaque" x="1" y="23" width="78" height="20" backcolor="#CACED0" fontName="malgun" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<text><![CDATA[주소]]></text>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="2474f156-6006-4969-a27c-ea9e0c191999" mode="Opaque" x="1" y="43" width="78" height="10" backcolor="#CACED0" fontName="malgun" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<text><![CDATA[담당자/연락처]]></text>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="64b6b2d6-ffe5-429b-ad54-78cd9d5d4546" x="80" y="1" width="100" height="11" fontSize="7.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$P{brnParam}]]></expression>
+				<box>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="3143d018-8d5c-4089-b7b2-a64a5de86f85" x="80" y="12" width="100" height="11" fontSize="7.0" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<expression><![CDATA[$P{compNameCeoParam}]]></expression>
+				<box style="hangle">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="7980ce9b-b24c-4939-a197-8effdd77fc0d" x="80" y="23" width="100" height="20" fontSize="5.0" bold="false" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<expression><![CDATA[$P{compAddrParam}]]></expression>
+				<box style="hangle">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="de77ae8b-f2a8-49c9-b5d8-20cbccf079c5" x="80" y="43" width="100" height="10" fontSize="7.0" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<expression><![CDATA[$P{compMatParam}]]></expression>
+				<box style="hangle">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<box>
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="5af02334-af2a-4298-acd0-d6b06b606650" mode="Opaque" x="58" y="158" width="80" height="12" backcolor="#CACED0" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+			<text><![CDATA[제품코드]]></text>
+			<box style="hangle">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="6b4583c8-b33b-4532-9fc2-742e2d5900da" mode="Opaque" x="138" y="158" width="80" height="12" backcolor="#CACED0" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+			<text><![CDATA[제품명]]></text>
+			<box style="hangle">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="333cd4f7-b84f-4fe1-93ae-77c52005eb7d" mode="Opaque" x="219" y="158" width="68" height="12" backcolor="#CACED0" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+			<text><![CDATA[수량]]></text>
+			<box style="hangle">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="fb3da1ce-a8f8-4bf0-93fc-4e71701db745" mode="Opaque" x="288" y="158" width="62" height="12" backcolor="#CACED0" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+			<text><![CDATA[단가]]></text>
+			<box style="hangle">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="60ea42a2-3fb6-4e40-a2a0-a91f31097965" mode="Opaque" x="350" y="158" width="53" height="12" backcolor="#CACED0" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+			<text><![CDATA[공급가액]]></text>
+			<box style="hangle">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="858ca13a-74a1-4812-8b44-ce6ce20545ab" mode="Opaque" x="403" y="158" width="65" height="12" backcolor="#CACED0" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+			<text><![CDATA[부가세]]></text>
+			<box style="hangle">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="frame" uuid="ed98fb1e-b4ae-4b9a-b3f2-b88ba78fbe8a" x="40" y="110" width="448" height="21">
+			<element kind="staticText" uuid="b17f2651-a836-4473-8b79-d476f70e5043" x="250" y="1" width="100" height="19" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[정               /]]></text>
+			</element>
+			<element kind="staticText" uuid="da23cb81-b57b-4799-9c78-fad41e1a585d" x="1" y="0" width="49" height="20" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[금액 :]]></text>
+			</element>
+			<element kind="textField" uuid="6f22b9dd-b594-4d9a-a24d-33a1968504b5" x="366" y="1" width="80" height="19" fontSize="7.0" bold="true" hTextAlign="Left" vTextAlign="Middle" style="hangle">
+				<expression><![CDATA[$F{taxType}]]></expression>
+			</element>
+			<element kind="textField" uuid="b56366a6-f3ef-4dfe-ba32-bf1fc413d50e" x="53" y="1" width="197" height="19" fontSize="10.0" hTextAlign="Left" evaluationTime="Report" vTextAlign="Middle" style="hangle">
+				<expression><![CDATA[com.yedam.erp.service.JasperService.convertToKorean($V{totalSumAmt})]]></expression>
+			</element>
+			<box>
+				<pen lineWidth="0.75"/>
+				<topPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="20a10a46-5af2-4239-91f9-7f75e8747e91" x="208" y="-4" width="100" height="30" fontSize="18.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+			<text><![CDATA[발주서]]></text>
+		</element>
+	</title>
+	<detail>
+		<band height="10">
+			<element kind="textField" uuid="cc4a0ae3-25d9-4cce-a41a-640149407639" x="58" y="0" width="80" height="10" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{productCode}]]></expression>
+				<box>
+					<pen lineWidth="0.25"/>
+					<topPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="eb873ef5-b480-40ac-b266-5ec7c35db39e" x="138" y="0" width="80" height="10" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<expression><![CDATA[$F{productName}]]></expression>
+				<box style="hangle">
+					<pen lineWidth="0.25"/>
+					<topPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="9d449d6e-002a-4eb3-aa00-8dda89ddfcba" x="218" y="0" width="70" height="10" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{qty}]]></expression>
+				<box>
+					<pen lineWidth="0.25"/>
+					<topPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="56487b90-7b34-47a5-aa24-418f2884e2ed" x="288" y="0" width="62" height="10" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{orderPrice}]]></expression>
+				<box>
+					<pen lineWidth="0.25"/>
+					<topPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="cea22db4-19ae-487b-b0f7-2e89f3bf99a8" x="350" y="0" width="53" height="10" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{supAmt}]]></expression>
+				<box>
+					<pen lineWidth="0.25"/>
+					<topPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="1e21e5f1-618c-4978-9b4d-c33d2d332aa1" x="403" y="0" width="65" height="10" fontSize="5.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{vatAmt}]]></expression>
+				<box>
+					<pen lineWidth="0.25"/>
+					<topPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.25" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+		</band>
+	</detail>
+	<pageFooter height="24">
+		<element kind="frame" uuid="6c83781c-24af-4cbb-ac25-1b7c199a5a55" x="39" y="1" width="448" height="20">
+			<element kind="staticText" uuid="f202b109-4005-49fc-a35c-f32e35d21b09" mode="Opaque" x="0" y="0" width="51" height="20" backcolor="#CACED0" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[수량]]></text>
+				<box style="hangle">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="a3980490-4403-4981-bfcc-6f080b3bd85e" mode="Opaque" x="117" y="0" width="37" height="20" backcolor="#CACED0" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[공급가액]]></text>
+				<box style="hangle">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="ea55d630-9d23-4c25-a823-b248caa9e4c3" mode="Opaque" x="221" y="0" width="51" height="20" backcolor="#CACED0" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[VAT]]></text>
+				<box style="hangle">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="bf65dd64-b726-4190-a6cd-7318a19a10c0" mode="Opaque" x="332" y="0" width="51" height="20" backcolor="#CACED0" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+				<text><![CDATA[합계]]></text>
+				<box style="hangle">
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="textField" uuid="6c533ec9-32f8-4fd1-9ec8-8759c6075130" x="51" y="2" width="66" height="16" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$V{totalQty}]]></expression>
+			</element>
+			<element kind="textField" uuid="bcb3aa41-46f4-4046-ab2c-58f65a5049e0" x="154" y="1" width="67" height="19" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$V{totalSupAmt}]]></expression>
+			</element>
+			<element kind="textField" uuid="2d9b5fc9-3db8-48cf-b826-f4e35b564fb3" x="272" y="1" width="60" height="19" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$V{totalVatAmt}]]></expression>
+			</element>
+			<element kind="textField" uuid="48c6f4c9-033e-4460-9ec6-a0da5d61aa7d" x="383" y="1" width="64" height="18" fontSize="7.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$V{totalSumAmt}]]></expression>
+			</element>
+			<box>
+				<topPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+	</pageFooter>
+</jasperReport>

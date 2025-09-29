@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
+<head>
+<title layout:fragment="title">계정과목 관리</title>
+<th:block layout:fragment="head_extra">
+
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+	<style>
+#grid.ag-theme-quartz {
+	height: 520px;
+	width: 100%;
+}
+
+.tabbar {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+	align-items: center; /* 세로 가운데 정렬 */
+}
+
+.tabbar .btn {
+	border-radius: 8px;
+}
+
+.btn-use {
+	padding: 0.15rem 0.5rem;
+	font-size: 12px;
+}
+
+.ag-theme-quartz .ag-row-pinned {
+	font-weight: 700;
+	background: #fafafa;
+}
+</style>
+</th:block>
+</head>
+
+<body>
+	<section layout:fragment="content">
+		<div class="card shadow mb-3">
+			<div
+				class="card-header py-3 d-flex align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">계정과목 관리</h6>
+			</div>
+			<div class="card-body">
+				<!-- 탭: 그대로 category 값으로 보냄 -->
+				<div class="tabbar">
+					<button class="btn btn-primary btn-sm" data-category="">
+						전체</button>
+					<button class="btn btn-outline-secondary btn-sm" data-category="자산">
+						자산</button>
+					<button class="btn btn-outline-secondary btn-sm" data-category="부채">
+						부채</button>
+					<button class="btn btn-outline-secondary btn-sm" data-category="자본">
+						자본</button>
+					<button class="btn btn-outline-secondary btn-sm" data-category="수익">
+						수익</button>
+					<button class="btn btn-outline-secondary btn-sm" data-category="비용">
+						비용</button>
+					<form id="uploadForm" enctype="multipart/form-data"
+						style="margin-left: auto; display: flex; gap: 0.5rem;">
+						<!-- 숨겨진 파일 input -->
+						<input type="file" id="fileInput" name="file" accept=".xlsx,.xls"
+							style="display: none;" />
+
+						<!-- 파일명 표시 -->
+						<span id="fileName" class="text-muted small align-self-center">선택된
+							파일 없음</span>
+
+						<!-- 파일 선택 버튼 -->
+						<button type="button" class="btn btn-outline-secondary btn-sm"
+							onclick="document.getElementById('fileInput').click();">파일 선택 <i class="fas fa-search mr-1"></i>
+							</button>
+
+						<!-- 업로드 버튼 -->
+						<button type="submit" class="btn btn-success btn-sm">엑셀
+							업로드</button>
+					</form>
+				</div>
+
+				<div id="grid" class="ag-theme-quartz"></div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Bootstrap JS (필수) -->
+
+	<th:block layout:fragment="body_extra">
+		<script defer
+			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+		<script defer
+			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+
+		<script th:inline="none">
+        let gridApi;
+        
+        window.loadAndRender = async function () {
+          const { data } = await axios.get("/api/account/list");
+          const rows = Array.isArray(data) ? data : [];
+          gridApi?.setGridOption
+            ? gridApi.setGridOption("rowData", rows)
+            : gridApi.setRowData(rows);
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+          const gridDiv = document.getElementById("grid");
+
+          // ===== 컬럼: 필요한 것만 남김 =====
+          const columnDefs = [
+            {
+              headerName: "",
+              checkboxSelection: true,
+              headerCheckboxSelection: true,
+              maxWidth: 50,
+              resizable: false,
+              pinned: "left",
+            },
+            {
+              field: "acctCode",
+              headerName: "코드",
+              minWidth: 90,
+              valueGetter: (p) => p.data.acct_code ?? p.data.acctCode,
+            },
+            {
+              field: "acctName",
+              headerName: "계정과목",
+              flex: 1,
+              valueGetter: (p) => p.data.acct_name ?? p.data.acctName,
+            },
+            {
+              field: "stdAcctName",
+              headerName: "표준계정과목",
+              flex: 1,
+              valueGetter: (p) => p.data.std_acct_name ?? p.data.stdAcctName,
+            },
+            {
+              field: "category",
+              headerName: "카테고리",
+              minWidth: 120,
+              valueGetter: (p) => p.data.category,
+            },
+            {
+              headerName: "사용여부",
+              field: "useYn",
+              minWidth: 110,
+              cellRenderer: (p) => {
+                const btn = document.createElement("button");
+
+                // 버튼 그리는 함수
+                function render(val) {
+                  btn.className =
+                    "btn btn-sm btn-use " +
+                    (val === "Y" ? "btn-success" : "btn-danger");
+                  btn.textContent = val === "Y" ? "사용" : "중지";
+                }
+
+                // 초기 값 세팅 (DB 값 기준)
+                let current = (p.data.use_yn ?? "Y").toUpperCase();
+                render(current);
+
+                btn.addEventListener("click", async () => {
+                  // 1. 화면 먼저 즉시 토글
+                  current = current === "Y" ? "N" : "Y";
+                  p.data.use_yn = current; // 데이터 동기화
+                  render(current);
+
+                  // 2. DB 비동기 업데이트
+                  try {
+                    await axios.put(
+                      `/api/account/${encodeURIComponent(
+                        p.data.acctCode
+                      )}/useYN`
+                    );
+                  } catch (e) {
+                    alert("DB 반영 실패");
+                    console.error(e);
+
+                    // 실패 시 원상복구
+                    current = current === "Y" ? "N" : "Y";
+                    p.data.use_yn = current;
+                    render(current);
+                  }
+                });
+
+                return btn;
+              },
+            },
+          ];
+
+          const gridOptions = {
+            columnDefs,
+            rowData: [],
+            rowSelection: "multiple",
+            pagination: true,
+            paginationPageSize: 12,
+            animateRows: true,
+            defaultColDef: {
+              filter: true, // ✅ 모든 컬럼 필터링 허용
+            },
+
+            onGridReady: async (params) => {
+              gridApi = params.api;
+              
+              await loadAndRender(""); // 전체
+            },
+          };
+
+          if (window.agGrid?.createGrid) {
+            gridApi = agGrid.createGrid(gridDiv, gridOptions);
+          } else {
+            new agGrid.Grid(gridDiv, gridOptions);
+            gridApi = gridOptions.api;
+          }
+
+          // 탭 클릭: category 문자열 그대로 전달
+          document.querySelectorAll(".tabbar .btn").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+              document.querySelectorAll(".tabbar .btn").forEach((b) => {
+                b.classList.remove("btn-primary");
+                b.classList.add("btn-outline-secondary");
+              });
+              1;
+              btn.classList.remove("btn-outline-secondary");
+              btn.classList.add("btn-primary");
+
+              const category = btn.getAttribute("data-category") || "";
+              if (!category) {
+                // 전체 보기 (필터 해제)
+                gridApi.setFilterModel(null);
+              } else {
+                // category 컬럼에서 해당 값만 남김
+                gridApi.setFilterModel({
+                  category: {
+                    type: "contains",
+                    filter: category,
+                  },
+                });
+              }
+              gridApi.onFilterChanged(); // 적용
+            });
+          });
+        });
+
+        // 엑셀 파일 등록버튼
+        document
+          .getElementById("uploadForm")
+          .addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById("fileInput");
+            if (!fileInput.files.length) {
+              alert("파일을 선택하세요");
+              return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            axios
+              .post("/api/account/upload", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+              })
+              .then(() => {
+                alert("업로드 성공");
+                loadAndRender("");
+              })
+              .catch((err) => {
+                console.error(err);
+                alert("업로드실패");
+              });
+          });
+
+        // 알림
+        function showToast(message, type = "primary") {
+          const toastEl = document.getElementById("toastMsg");
+          if (!toastEl) return;
+
+          const body = toastEl.querySelector(".toast-body");
+          body.textContent = message;
+
+          // 색상 클래스만 교체
+          toastEl.classList.remove(
+            "text-bg-primary",
+            "text-bg-success",
+            "text-bg-danger"
+          );
+          toastEl.classList.add(`text-bg-${type}`);
+
+          new bootstrap.Toast(toastEl).show();
+        }
+        
+        // 파일 업로드 txt
+        document.getElementById("fileInput").addEventListener("change", function () {
+        	  const fileName = this.files.length ? this.files[0].name : "선택된 파일 없음";
+        	  document.getElementById("fileName").textContent = fileName;
+        	});
+      </script>
+	</th:block>
+</body>
+</html>

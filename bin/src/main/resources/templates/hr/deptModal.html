@@ -1,0 +1,103 @@
+<th:block th:fragment="deptManagerLookupModal">
+	<div class="modal fade" id="deptManagerLookupModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-scrollable">
+			<div class="modal-content">
+
+				<div class="modal-header">
+					<h5 class="modal-title">부서장(팀장) 선택</h5>
+					<button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal" aria-label="닫기">
+            <i class="fas fa-times"></i>
+          </button>
+				</div>
+
+				<div class="modal-body p-2">
+					<!-- ag-Grid 컨테이너 -->
+					<div id="deptManagerGrid" class="ag-theme-quartz"
+						style="height: 400px; width: 100%;"></div>
+				</div>
+
+				<div class="modal-footer">
+					<small class="text-secondary me-auto">행을 <b>더블클릭</b>하면
+						선택됩니다.
+					</small>
+					<button type="button" class="btn btn-secondary"
+						data-bs-dismiss="modal">닫기</button>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<script>
+    window.DeptManagerLookup = (function () {
+      let bsModal, gridApi;
+
+      // 외부에서 호출
+      async function open({ targetId = 'manager_emp_id' } = {}) {
+        const modalEl = document.getElementById('deptManagerLookupModal');
+        bsModal = bsModal || new bootstrap.Modal(modalEl);
+        bsModal.show();
+
+        await refresh(targetId);
+      }
+
+      // 모달 내부 데이터 로드
+      async function refresh(targetId) {
+        try {
+          const res = await fetch('/api/v1/emps/managers');
+          const rows = res.ok ? await res.json() : [];
+
+          initGrid(rows, targetId);
+        } catch (e) {
+          console.error('manager list error', e);
+          initGrid([], targetId);
+        }
+      }
+
+      // ag-Grid 초기화
+      function initGrid(rows, targetId) {
+        const gridDiv = document.getElementById('deptManagerGrid');
+        const columnDefs = [
+          { headerName:'사번', field:'emp_id', width:140 },
+          { headerName:'이름', field:'name', flex:1, minWidth:120 },
+          { headerName:'부서', field:'dept_name', flex:1, minWidth:140 },
+          { headerName:'직책', field:'title', width:100 }
+        ];
+        const gridOptions = {
+          columnDefs,
+          rowData: rows,
+          pagination: true,
+          paginationPageSize: 10,
+          defaultColDef: { resizable:true, sortable:true },
+          onRowDoubleClicked: (p) => pick(p.data, targetId)
+        };
+
+        if (gridApi && typeof gridApi.destroy === 'function') {
+          gridApi.destroy();
+          gridApi = null;
+        }
+
+        if (window.agGrid?.createGrid) {
+          gridApi = window.agGrid.createGrid(gridDiv, gridOptions);
+        } else {
+          new agGrid.Grid(gridDiv, gridOptions);
+          gridApi = gridOptions.api;
+        }
+      }
+
+      // 선택 처리
+      function pick(row, targetId) {
+        if (!row) return;
+        const t = document.getElementById(targetId);
+        if (t) {
+          t.value = row.emp_id;
+          t.dispatchEvent(new Event('change'));
+        }
+        if (bsModal) bsModal.hide();
+      }
+
+      return { open };
+    })();
+  </script>
+</th:block>

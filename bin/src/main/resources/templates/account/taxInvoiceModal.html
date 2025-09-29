@@ -1,0 +1,258 @@
+<!-- account/taxInvoiceModal.html -->
+
+<!-- ✅ 스타일 fragment: head_extra에 include -->
+<th:block th:fragment="taxInvoiceModalStyles">
+  <style>
+    :root{
+      --border:rgb(0, 0, 0); --line:#ccd2d9; --ink:#111827;
+      --blue:#2563eb; --blue-50:#eaf1ff; --red:#ef4444; --red-50:#ffecec; --bg:#ffffff;
+    }
+    *{box-sizing:border-box}
+    .ti-page{background:var(--bg); border:1.5px solid var(--border); border-radius:12px; overflow:hidden; color:black;}
+    .ti-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1.5px solid var(--border)}
+    .ti-title{font-size:22px;font-weight:800;letter-spacing:.02em}
+    .ti-approval{display:flex;align-items:center;gap:10px;border-left:6px solid var(--red); padding:6px 10px;background:var(--red-50);font-weight:700}
+    .ti-approval .label{font-size:13px;color:#a11f1f}
+    .ti-approval .no{font-size:16px}
+
+    .ti-topgrid{display:grid;grid-template-columns:1fr 1fr;border-bottom:1.5px solid var(--border)}
+    .ti-panel{padding:0;border-right:1.5px solid var(--border)}
+    .ti-panel:last-child{border-right:none}
+
+    /* ✅ 영역 전체 배경색 */
+    .ti-supplier{background:#ffecec; color:#7a1b1b;}
+    .ti-buyer{background:#eaf1ff; color:#0b4f9c;}
+
+    .ti-panel-head{display:flex;align-items:center;gap:8px;padding:10px 12px;font-weight:800;border-bottom:1px solid rgba(0,0,0,.08)}
+    .ti-supplier .ti-panel-head{background:#ffd9d9; color:#7a1b1b;}
+    .ti-buyer   .ti-panel-head{background:#d9e6ff; color:#0b4f9c;}
+    .ti-panel-head .small{font-size:12px;opacity:.7;font-weight:600}
+
+    .ti-kv{display:grid;grid-template-columns:130px 1fr;border-bottom:1px solid rgba(0,0,0,.06)}
+    .ti-kv>div{padding:8px 10px;border-right:1px solid rgba(0,0,0,.06)}
+    .ti-kv>div:last-child{border-right:none}
+    .ti-supplier .ti-k .k,
+    .ti-buyer   .ti-k .k{font-weight:800;}
+    .ti-k{background:rgba(255,255,255,.55); font-weight:800}
+    .ti-v{min-height:36px}
+    .ti-supplier input, .ti-buyer input{width:100%; border:none; background:transparent; color:inherit; font-weight:600}
+    .ti-supplier input::placeholder, .ti-buyer input::placeholder{color:currentColor; opacity:.55}
+
+    .ti-summary{display:grid;grid-template-columns:180px 1fr 1fr 1fr 1fr;border-bottom:1.5px solid var(--border)}
+    .ti-summary .cell{padding:10px 12px;border-right:1px solid var(--line); color:black;}
+    .ti-summary .cell:last-child{border-right:none; color:black;}
+    .ti-summary .k{font-weight:700;background:#fafbfc; color:black;}
+    .ti-summary .v{text-align:right;font-variant-numeric:tabular-nums; color:black;}
+    .ti-summary .v input{width:100%;text-align:right;border:none;background:transparent;font-size:15px; color:black;}
+
+    .ti-table{width:100%;border-collapse:collapse;color:black;}
+    .ti-table th, .ti-table td{border:1px solid var(--line);padding:8px 10px;font-size:14px;color:black;}
+    .ti-table thead th{background:#f8fafc;font-weight:800;color:black;}
+    .right{text-align:right;font-variant-numeric:tabular-nums}
+    .center{text-align:center}
+
+    .ti-foot{display:grid;grid-template-columns:repeat(6,1fr);border-top:0;border-bottom:1.5px solid var(--border);color:black;}
+    .ti-foot .cell{padding:8px 10px;border-right:1px solid var(--line);color:black;}
+    .ti-foot .cell:last-child{border-right:none;color:black;}
+    .ti-foot .k{background:#fafbfc;font-weight:700;color:black;}
+    .ti-foot .v{text-align:right;color:black;}
+    .ti-foot input{width:100%;border:none;text-align:right;background:transparent}
+
+    .ti-actions{display:flex;justify-content:flex-end;gap:10px;padding:10px 4px}
+    .ti-btn{padding:9px 16px;border-radius:10px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-weight:700}
+    .ti-btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+    .ti-btn-primary:hover{filter:brightness(.97)}
+    .ti-note{color:var(--muted);font-size:12px;margin-right:auto}
+
+    /* ✅ 프린트에서도 색 유지 */
+    @media print{
+     body * {
+    visibility: hidden;     /* 전체 숨김 */
+  }
+  #taxInvoiceModal, #taxInvoiceModal * {
+    visibility: visible;    /* 모달만 보이게 */
+  }
+  #taxInvoiceModal {
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%;
+  }
+      .ti-page, .ti-supplier, .ti-buyer, .ti-panel-head, .ti-k{
+        -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact;
+      }
+      .modal{position:static !important; inset:auto !important}
+      .modal-dialog{max-width:none !important; width:100% !important}
+      .modal-content{border:none !important; box-shadow:none !important}
+      .ti-actions{display:none}
+      input, textarea{border:none !important; outline:none !important}
+    }
+   
+  </style>
+</th:block>
+
+<!-- ✅ 모달 fragment -->
+<div th:fragment="taxInvoiceModal">
+  <div class="modal fade" id="taxInvoiceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">전자세금계산서</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="ti-page">
+            <!-- 상단 -->
+            <div class="ti-head">
+              <div class="ti-title">전자세금계산서</div>
+              <div class="ti-approval">
+                <span class="label">승인번호</span>
+                <span class="no" id="tiApprovalNo">632-08-00201</span>
+              </div>
+            </div>
+
+            <!-- 공급자/공급받는자 -->
+            <div class="ti-topgrid">
+              <!-- 공급자(발행자) -->
+              <div class="ti-panel ti-supplier">
+                <div class="ti-panel-head">공급자 <span class="small">(발행자)</span></div>
+                <div class="ti-kv"><div class="ti-k k">등록번호</div><div class="ti-v v"><input value="632-08-00201"></div></div>
+                <div class="ti-kv"><div class="ti-k k">상호(법인명)</div><div class="ti-v v"><input value="한경세무회계"></div></div>
+                <div class="ti-kv"><div class="ti-k k">성명</div><div class="ti-v v"><input value="정영록"></div></div>
+                <div class="ti-kv"><div class="ti-k k">사업장 주소</div><div class="ti-v v"><input value="서울특별시 영등포구 선유동1로 32, 301호"></div></div>
+                <div class="ti-kv"><div class="ti-k k">업태</div><div class="ti-v v"><input value="전문, 과학 및 기술서비스업"></div></div>
+                <div class="ti-kv"><div class="ti-k k">종목</div><div class="ti-v v"><input value="회계감사 및 사업비정산"></div></div>
+                <div class="ti-kv"><div class="ti-k k">이메일</div><div class="ti-v v"><input placeholder="example@domain.com"></div></div>
+              </div>
+
+              <!-- 공급받는자(수신자) -->
+              <div class="ti-panel ti-buyer">
+                <div class="ti-panel-head">공급받는자 <span class="small">(수신자)</span></div>
+                <div class="ti-kv"><div class="ti-k k">등록번호</div><div class="ti-v v"><input></div></div>
+                <div class="ti-kv"><div class="ti-k k">상호(법인명)</div><div class="ti-v v"><input></div></div>
+                <div class="ti-kv"><div class="ti-k k">성명</div><div class="ti-v v"><input></div></div>
+                <div class="ti-kv"><div class="ti-k k">사업장 주소</div><div class="ti-v v"><input></div></div>
+                <div class="ti-kv"><div class="ti-k k">업태</div><div class="ti-v v"><input></div></div>
+                <div class="ti-kv"><div class="ti-k k">종목</div><div class="ti-v v"><input></div></div>
+                <div class="ti-kv"><div class="ti-k k">이메일</div><div class="ti-v v"><input></div></div>
+              </div>
+            </div>
+
+            <!-- 요약 -->
+            <div class="ti-summary">
+              <div class="cell k">작성일자</div>
+              <div class="cell v"><input id="tiWriteDate" value="2025-09-23" /></div>
+            <div class="cell v"><input id="tiSumSupply" value="300000" /></div>
+<div class="cell v" style="border-right:2px solid #000;"><input id="tiSumVat" value="30000" /></div>
+<div class="cell k" style="grid-column: 5/6; text-align:right;">세액</div>
+
+            </div>
+
+            <!-- 수정사유 / 비고 -->
+            <div class="ti-summary" style="grid-template-columns:180px 1fr 180px 1fr;">
+              <div class="cell k">수정사유</div><div class="cell"><input id="tiReason" placeholder="(선택)"></div>
+              <div class="cell k">비고</div><div class="cell"><input id="tiNote" placeholder="(선택)"></div>
+            </div>
+
+            <!-- 품목 -->
+            <table class="ti-table">
+              <thead>
+                <tr>
+                  <th style="width:60px">월</th>
+                  <th style="width:60px">일</th>
+                  <th>품목</th>
+                  <th style="width:120px">규격</th>
+                  <th style="width:90px">수량</th>
+                  <th style="width:120px">단가</th>
+                  <th style="width:140px">공급가액</th>
+                  <th style="width:120px">세액</th>
+                  <th style="width:160px">비고</th>
+                </tr>
+              </thead>
+              <tbody id="tiLines">
+                <tr>
+                  <td class="center">09</td>
+                  <td class="center">23</td>
+                  <td>수수료</td>
+                  <td></td>
+                  <td class="right"><input type="number" value="1" min="1" style="width:100%;border:none;text-align:right"></td>
+                  <td class="right"><input type="number" value="300000" step="1" style="width:100%;border:none;text-align:right"></td>
+                  <td class="right ti-sup">300000</td>
+                  <td class="right ti-vat">30000</td>
+                  <td></td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="6" class="right"><strong>합계</strong></td>
+                  <td class="right" id="tiTfootSupply"><strong>300,000</strong></td>
+                  <td class="right" id="tiTfootVat"><strong>30,000</strong></td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <!-- 하단 합계/결제 -->
+            <div class="ti-foot">
+              <div class="cell k">합계금액</div><div class="cell v"><input id="tiTotalAmt" value="330000" /></div>
+              <div class="cell k">현금</div><div class="cell v"><input id="tiCash" value="" /></div>
+              <div class="cell k">수표</div><div class="cell v"><input id="tiCheck" value="" /></div>
+              <div class="cell k">어음</div><div class="cell v"><input id="tiBill" value="" /></div>
+              <div class="cell k">외상미수금</div><div class="cell v"><input id="tiRecv" value="" /></div>
+              <div class="cell k">이 금액을(청구) 함</div><div class="cell v"><input id="tiClaim" value="330000" /></div>
+            </div>
+
+            <!-- 내부 액션 (모달 바깥 버튼과 별개) -->
+            <div class="ti-actions">
+              <span class="ti-note">※ 인쇄 시 이 영역은 표시되지 않습니다.</span>
+              <button class="ti-btn" type="button" onclick="window.print()">인쇄</button>
+              <button class="ti-btn ti-btn-primary" type="button" id="tiSendBtn">송신</button>
+            </div>
+          </div>
+        </div>
+
+        
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="none">
+    // 합계/부가세(10%) 재계산
+    function tiRecalc(){
+      const rows = Array.from(document.querySelectorAll('#tiLines tr'));
+      let s=0, v=0;
+      rows.forEach(tr=>{
+        const qty = Number(tr.querySelector('td:nth-child(5) input')?.value || 0);
+        const price = Number(tr.querySelector('td:nth-child(6) input')?.value || 0);
+        const sup = Math.round(qty * price);
+        const vat = Math.round(sup * 0.1);
+        tr.querySelector('.ti-sup').textContent = sup.toLocaleString();
+        tr.querySelector('.ti-vat').textContent = vat.toLocaleString();
+        s += sup; v += vat;
+      });
+      document.getElementById('tiTfootSupply').innerHTML = '<strong>'+s.toLocaleString()+'</strong>';
+      document.getElementById('tiTfootVat').innerHTML    = '<strong>'+v.toLocaleString()+'</strong>';
+      document.getElementById('tiSumSupply').value = s;
+      document.getElementById('tiSumVat').value    = v;
+      document.getElementById('tiTotalAmt').value  = s+v;
+      document.getElementById('tiClaim').value     = s+v;
+    }
+    document.addEventListener('input', (e)=>{
+      if(e.target.closest('#tiLines')) tiRecalc();
+    });
+
+    // 모달 표시될 때 레이아웃 보정/초기 계산
+    document.addEventListener('shown.bs.modal', (e)=>{
+      if(e.target && e.target.id === 'taxInvoiceModal'){
+        tiRecalc();
+      }
+    });
+
+    // 데모용 송신
+    document.addEventListener('click', (e)=>{
+      if(e.target && e.target.id === 'tiSendBtn'){
+        alert('송신 요청이 완료되었습니다. (데모)');
+      }
+    });
+  </script>
+</div>

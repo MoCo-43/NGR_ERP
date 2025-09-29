@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.erp.mapper.stock.StockMapper">
+<insert id="insertProduct" parameterType="ProductVO">
+INSERT INTO product(
+		PRODUCT_CODE
+		,PRODUCT_NAME
+		,SPECIFICATION
+		,EMP_NAME
+		,PRODUCT_IMAGE
+		,PURCHASE_PRICE
+		,SALES_PRICE
+		,NOTE
+		,INSERT_DATE
+		,COMPANY_CODE
+)
+VALUES(CONCAT('P',LPAD(seq_product.nextval,5,'0')),
+       #{productName},
+       #{specification},
+       #{empName},
+       #{productImageName},
+       #{purchasePrice},
+       #{salesPrice},
+       #{note},
+       #{insertDate},
+       #{companyCode}
+)
+
+</insert>
+
+<select id="customerAll" resultType="PartnerVO" parameterType="Long">
+SELECT 
+       emp_name, 
+       cus_name,
+       cus_code,
+       biz_no,
+       ceo_name, 
+       biz_type ,
+       biz_category,
+       addr 
+FROM customer
+WHERE gbn = '구매처'
+AND company_code = #{compCode}
+</select>
+
+<select id="productAll" resultType="ProductVO" parameterType="Long">
+SELECT PRODUCT_CODE
+       ,PRODUCT_NAME
+       ,SPECIFICATION
+FROM PRODUCT
+WHERE COMPANY_CODE = #{companyCode}
+
+</select>
+
+<insert id="insertOrderPlan" parameterType="OrderPlanVO">
+<selectKey keyProperty="xpCode" resultType="string" order="BEFORE">
+        SELECT CONCAT('OP', SEQ_EXPLAIN.nextval) FROM dual
+</selectKey>
+INSERT INTO EXPLAIN(
+         XP_CODE
+         ,EMP_ID
+         ,INS_DATE
+         ,VAT_TYPE
+         ,COMPANY_CODE
+)
+VALUES (#{xpCode}, #{empId}, #{insDate}, #{taxType}, #{companyCode})
+
+
+</insert>
+<insert id="insertOrderPlanDetail" parameterType="OrderPlanDetailVO">
+INSERT INTO EXPLAIN_DETAIL(
+         XD_NO
+        ,PRODUCT_CODE
+        ,PRODUCT_NAME
+        ,SPECIFICATION
+        ,BUSINESS_PARTNER
+        ,BUSINESS_CODE
+        ,AMOUNT
+        ,PURCHASE_PRICE
+        ,SUP_AMT
+        ,VAT_AMT
+        ,XP_CODE
+)
+VALUES (SEQ_EXPLAIN_DETAIL.nextval ,
+        #{productCode}, 
+        #{productName},
+        #{specification}, 
+        #{businessPartner},
+        #{businessCode},
+        #{amount},
+        #{purchasePrice},
+        #{supAmt},
+        #{vatAmt},
+        #{xpCode}
+)
+
+
+</insert>
+<!-- 발주 계획 조회 -->
+<select id="selectOrderPlans" resultMap="orderPlanResultMap">
+SELECT 
+    m.xp_code as "xp_code",
+    min(d.business_partner) as "business_partner",
+    min(d.business_code) as "business_code",  
+    m.emp_id as "emp_id",
+    m.vat_type as "vat_type",
+    m.ins_date as "ins_date",
+    case
+        when count(d.xd_no) > 1 
+            then min(d.product_name) || ' 외 ' || (count(d.xd_no) - 1) || '건' 
+        else min(d.product_name) 
+    end as "product_name",
+    sum(d.amount) as "amount",
+    sum(d.sup_amt) as "sup_amt",
+     case 
+        when exists (
+            select 1 from order_req o 
+            where o.xp_code = m.xp_code
+        ) then 'Y'
+        else 'N'
+    end as "has_order_sheet"
+   
+FROM explain m 
+JOIN explain_detail d 
+    ON m.xp_code = d.xp_code 
+GROUP BY 
+    m.xp_code, 
+    m.emp_id, 
+    m.vat_type,
+    m.ins_date
+    
+</select>
+
+<!-- ResultMap -->
+<resultMap id="orderPlanResultMap" type="OrderPlanVO">
+    <id property="xpCode" column="xp_code"/>
+    <result property="empId" column="emp_id"/>
+    <result property="insDate" column="ins_date"/>
+    <result property="taxType" column="vat_type"/>
+    <result property="hasOrderSheet" column="has_order_sheet"/> <!-- 추가 -->
+    
+    <!-- 디테일 매핑 -->
+    <collection property="details" ofType="OrderPlanDetailVO" 
+        select="selectOrderPlanDetailsByXpCode" column="xp_code"/>
+</resultMap>
+
+<!-- 발주 계획 상세 조회 -->
+<select id="selectOrderPlanDetailsByXpCode" parameterType="String" resultType="OrderPlanDetailVO">
+SELECT 
+    xd_no       as xd_no,
+    product_code as product_code,
+    product_name as product_name,
+    specification as specification,
+    business_partner as business_partner,
+    business_code as business_code,
+    amount as amount,
+    purchase_price as purchase_price,
+    sup_amt as sup_amt,
+    vat_amt as vat_amt
+FROM explain_detail
+WHERE xp_code = #{xpCode}
+</select>
+
+<!-- 발주서 마스터 조회 -->
+<select id="selectOrderByXpCode" resultType="OrderVO" parameterType="String">
+    SELECT 
+        om.XP_CODE AS xpCode,
+        om.CUS_CODE AS cusCode,
+        c.CUS_NAME AS cusName,
+        om.due_DATE AS dueDate
+    FROM order_req om
+    JOIN customer c ON om.CUS_CODE = c.CUS_CODE
+    WHERE om.XP_CODE = #{xpCode}
+</select>
+
+<!-- 발주서 상세 조회 -->
+<select id="selectOrderDetailsByXpCode" resultType="OrderDetailVO" parameterType="String">
+SELECT 
+    od.PRODUCT_CODE AS PRODUCT_CODE,
+    od.PRODUCT_NAME AS PRODUCT_NAME,
+    od.QTY AS QTY,
+    od.ORDER_PRICE AS ORDER_PRICE,
+    od.SUP_AMT AS SUP_AMT,
+    od.VAT_AMT AS VAT_AMT,
+    om.due_date AS DUE_DATE
+    ,CASE WHEN SUBSTR(ex.VAT_TYPE,1,1) = '부' THEN 'VAT 포함'
+          WHEN SUBSTR(ex.VAT_TYPE,1,1) = '영' THEN '영세율 적용'
+          ELSE '면세'
+     END AS "taxType"
+FROM order_req om
+JOIN order_detail od ON om.ORDER_CODE = od.ORDER_CODE
+JOIN customer c ON om.CUS_CODE = c.CUS_CODE
+JOIN explain ex ON ex.xp_code = om.xp_code
+WHERE om.xp_code = #{xpCode}
+ORDER BY od.OD_NO
+</select>
+
+<!-- 발주서 세션의 회사정보 조회 -->
+<select id="selectComp" resultType="com.yedam.erp.vo.main.CompanyVO" parameterType="Long">
+SELECT 
+      BRM,
+      COMP_NAME,
+      CEO,
+      COMP_ADDR,
+      MAT_NAME,
+      MAT_TEL
+FROM COMPANY
+WHERE MAT_NO = #{compId}
+</select>
+
+<!-- 발주서 거래처 정보 조회 -->
+<select id="selectCutomer" resultType="com.yedam.erp.vo.Biz.CustomerVO" parameterType="String">
+SELECT 
+       CUS_NAME, 
+       TEL, 
+       EMAIL 
+FROM CUSTOMER 
+WHERE CUS_CODE = #{cusCode}
+</select>
+
+<!-- 발주 조회 -->
+<select id="getOrderList" resultMap="orderListResultMap">
+SELECT
+       orr.order_code AS order_code,
+       orr.business_partner AS business_partner,
+       orr.cus_code AS cus_code,
+       orr.emp_id AS emp_id, 
+       CASE
+         WHEN COUNT(ord.od_no) > 1 
+             THEN MIN(ord.product_name) || ' 외 ' || (COUNT(ord.od_no) - 1) || '건' 
+         ELSE MIN(ord.product_name) 
+       END as "product_name",
+       SUM(ord.qty) AS qty,
+       orr.due_date AS due_date,
+       orr.vat_type AS vat_type,
+       sum(ord.sup_amt) AS sup_amt  
+FROM order_req orr
+JOIN order_detail ord
+ON orr.order_code = ord.order_code
+GROUP BY 
+    orr.order_code,
+    orr.business_partner,
+    orr.cus_code,
+    orr.emp_id,
+    orr.due_date,
+    orr.vat_type
+
+</select>
+<resultMap id="orderListResultMap" type="OrderVO">
+    <id property="orderCode" column="order_code"/>
+    <result property="businessPartner" column="business_partner"/>
+    <result property="cusCode" column="cus_code"/>
+    <result property="productName" column="product_name"/>
+    <result property="empId" column="emp_id"/>
+    <result property="amount" column="qty"/>
+    <result property="supAmt" column="sup_amt"/>
+   	<result property="vatType" column="vat_type"/>
+   	<result property="dueDate" column="due_date"/>
+    
+    <!-- 디테일 매핑 -->
+    <collection property="details" ofType="OrderDetailVO" 
+        select="getOrderDetailByOrderCode" column="order_code"/>
+</resultMap>
+
+<select id="getOrderDetailByOrderCode" resultType="OrderDetailVO">
+SELECT 
+       ord.product_code AS product_code,
+       ord.product_name AS product_name,
+       ord.qty AS qty, 
+       ord.order_price AS order_price, 
+       ord.sup_amt AS sup_amt,
+       ord.vat_amt AS vat_amt,
+       orr.due_date AS due_date, 
+       CASE WHEN SUBSTR(orr.VAT_TYPE,1,1) = '부' THEN 'VAT 포함'
+          WHEN SUBSTR(orr.VAT_TYPE,1,1) = '영' THEN '영세율 적용'
+          ELSE '면세'
+       END AS "taxType" 
+FROM order_detail ord 
+JOIN order_req orr 
+ON orr.order_code = ord.order_code 
+WHERE orr.order_code = #{orderCode}
+ORDER BY ord.od_no 
+</select>
+
+
+</mapper>

@@ -32,12 +32,13 @@ LEFT JOIN
 LEFT JOIN
     PO_DETAIL pod ON p.PO_ID = pod.PO_ID
 LEFT JOIN
-    (SELECT PO_ID, COUNT(*) as cnt FROM PO_DETAIL GROUP BY PO_ID) pd_counts
+    (SELECT PO_ID, COUNT(*) as cnt 
+     FROM PO_DETAIL 
+     GROUP BY PO_ID)pd_counts
 ON
     p.PO_ID = pd_counts.PO_ID
-WHERE p.COMPANY_CODE = #{companyCode}
-ORDER BY
-    p.PO_START DESC
+WHERE c.COMPANY_CODE = #{companyCode} AND p.COMPANY_CODE = #{companyCode} AND pod.COMPANY_CODE = #{companyCode}
+ORDER BY PO_START DESC
 </select>
 
 
@@ -45,11 +46,11 @@ ORDER BY
 <insert id="insertPO" parameterType="PoInsertVO">
   INSERT ALL
     INTO purchase_order (
-      PO_ID, COMPANY_CODE, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
+      PO_ID, COMPANY_CODE, PO_CODE, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
       TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
     )
     VALUES (
-      PO_ID_SEQ.NEXTVAL, #{companyCode},
+      PO_ID_SEQ.NEXTVAL, #{companyCode}, FN_PO_CODE(#{poStart}),
       #{cusCode}, #{cusName}, #{creater}, #{poStart}, #{exDate}, #{poDate},
       #{totalPrice}, '작성완료',
       #{payMethod}, #{notes}, #{vatType}, #{poType}

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.PayDeductCodeMapper">
+
+  <resultMap id="DeductMap" type="com.yedam.erp.vo.hr.PayDeductCodeVO">
+    <id     property="deductCode"  column="deduct_code"/>
+    <result property="deductName"  column="deduct_name"/>
+    <result property="formulaTxt"  column="formula_txt"/>
+    <result property="methodDesc"  column="method_desc"/>
+    <result property="useYn"       column="use_yn"/>
+    <result property="companyCode" column="companyCode"/>
+  </resultMap>
+
+  <!-- 전체조회 -->
+  <select id="selectDeductList" resultMap="DeductMap">
+    SELECT
+      DEDUCT_CODE   AS deduct_code,
+      DEDUCT_NAME   AS deduct_name,
+      FORMULA_TXT   AS formula_txt,
+      METHOD_DESC   AS method_desc,
+      USE_YN        AS use_yn,
+      COMPANY_CODE  AS companyCode
+    FROM PAY_DEDUCT_CODE
+    WHERE COMPANY_CODE = #{value}
+    ORDER BY DEDUCT_CODE
+  </select>
+
+  <!-- 단건 조회 -->
+  <select id="selectDeduct"
+          parameterType="com.yedam.erp.vo.hr.PayDeductCodeVO"
+          resultMap="DeductMap">
+    SELECT
+      DEDUCT_CODE   AS deduct_code,
+      DEDUCT_NAME   AS deduct_name,
+      FORMULA_TXT   AS formula_txt,
+      METHOD_DESC   AS method_desc,
+      USE_YN        AS use_yn,
+      COMPANY_CODE  AS companyCode
+    FROM PAY_DEDUCT_CODE
+    WHERE DEDUCT_CODE  = #{deductCode}
+      AND COMPANY_CODE = #{companyCode}
+  </select>
+
+  <!-- 등록 -->
+  <insert id="insertDeduct" parameterType="com.yedam.erp.vo.hr.PayDeductCodeVO">
+    INSERT INTO PAY_DEDUCT_CODE (
+      DEDUCT_CODE, DEDUCT_NAME, FORMULA_TXT, METHOD_DESC, USE_YN, COMPANY_CODE
+    ) VALUES (
+      #{deductCode}, #{deductName}, #{formulaTxt}, #{methodDesc}, NVL(#{useYn}, 'Y'), #{companyCode}
+    )
+  </insert>
+
+  <!-- 수정 -->
+  <update id="updateDeduct" parameterType="com.yedam.erp.vo.hr.PayDeductCodeVO">
+    UPDATE PAY_DEDUCT_CODE
+    <set>
+      <if test="deductName  != null"> DEDUCT_NAME  = #{deductName},</if>
+      <if test="formulaTxt  != null"> FORMULA_TXT  = #{formulaTxt},</if>
+      <if test="methodDesc  != null"> METHOD_DESC  = #{methodDesc},</if>
+      <if test="useYn       != null"> USE_YN       = #{useYn},</if>
+    </set>
+    WHERE DEDUCT_CODE  = #{deductCode}
+      AND COMPANY_CODE = #{companyCode}
+  </update>
+
+  <!-- 사용여부 변경-->
+  <update id="updateUseYn" parameterType="com.yedam.erp.vo.hr.PayDeductCodeVO">
+    UPDATE PAY_DEDUCT_CODE
+       SET USE_YN = #{useYn}
+     WHERE DEDUCT_CODE  = #{deductCode}
+       AND COMPANY_CODE = #{companyCode}
+  </update>
+
+</mapper>

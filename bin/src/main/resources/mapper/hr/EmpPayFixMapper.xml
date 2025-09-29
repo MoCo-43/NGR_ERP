@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.EmpPayFixMapper">
+
+  <!-- resultMap -->
+  <resultMap id="EmpPayFixMap" type="com.yedam.erp.vo.hr.EmpPayFixVO">
+    <id     column="EMP_ID"        property="emp_id"/>
+    <result column="BASE_PAY"      property="base_pay"/>
+    <result column="BIRTH_CARE"    property="birth_care"/>
+    <result column="FAMILY_ALLOW"  property="family_allow"/>
+    <result column="MEAL_ALLOW"    property="meal_allow"/>
+    <result column="ANNUAL_ALLOW"  property="annual_allow"/>
+  </resultMap>
+
+  <!-- 단건 조회 -->
+  <select id="selectByEmpId" parameterType="string" resultMap="EmpPayFixMap">
+    SELECT EMP_ID, BASE_PAY, BIRTH_CARE, FAMILY_ALLOW, MEAL_ALLOW, ANNUAL_ALLOW
+    FROM EMP_PAY_FIX
+    WHERE EMP_ID = #{empId}
+  </select>
+
+  <!-- 신규 (동적 INSERT: null 컬럼 생략하여 DEFAULT 0 적용) -->
+  <insert id="insert" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
+    INSERT INTO EMP_PAY_FIX
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      EMP_ID
+      <if test="base_pay != null">, BASE_PAY</if>
+      <if test="birth_care != null">, BIRTH_CARE</if>
+      <if test="family_allow != null">, FAMILY_ALLOW</if>
+      <if test="meal_allow != null">, MEAL_ALLOW</if>
+      <if test="annual_allow != null">, ANNUAL_ALLOW</if>
+    </trim>
+    <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+      #{emp_id}
+      <if test="base_pay != null">, #{base_pay}</if>
+      <if test="birth_care != null">, #{birth_care}</if>
+      <if test="family_allow != null">, #{family_allow}</if>
+      <if test="meal_allow != null">, #{meal_allow}</if>
+      <if test="annual_allow != null">, #{annual_allow}</if>
+    </trim>
+  </insert>
+
+  <!-- 수정 -->
+  <update id="update" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
+    UPDATE EMP_PAY_FIX
+       SET BASE_PAY     = #{base_pay},
+           BIRTH_CARE   = #{birth_care},
+           FAMILY_ALLOW = #{family_allow},
+           MEAL_ALLOW   = #{meal_allow},
+           ANNUAL_ALLOW = #{annual_allow}
+     WHERE EMP_ID = #{emp_id}
+  </update>
+
+  <!-- UPSERT (MERGE) : NULL 방어 (NVL) + NOT NULL 위반 방지 -->
+  <update id="upsert" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
+    MERGE INTO EMP_PAY_FIX t
+    USING (SELECT
+             #{emp_id}       AS EMP_ID,
+             #{base_pay}     AS BASE_PAY,
+             #{birth_care}   AS BIRTH_CARE,
+             #{family_allow} AS FAMILY_ALLOW,
+             #{meal_allow}   AS MEAL_ALLOW,
+             #{annual_allow} AS ANNUAL_ALLOW
+           FROM dual) s
+       ON (t.EMP_ID = s.EMP_ID)
+     WHEN MATCHED THEN
+       UPDATE SET t.BASE_PAY      = NVL(s.BASE_PAY, t.BASE_PAY),
+                  t.BIRTH_CARE    = NVL(s.BIRTH_CARE, t.BIRTH_CARE),
+                  t.FAMILY_ALLOW  = NVL(s.FAMILY_ALLOW, t.FAMILY_ALLOW),
+                  t.MEAL_ALLOW    = NVL(s.MEAL_ALLOW, t.MEAL_ALLOW),
+                  t.ANNUAL_ALLOW  = NVL(s.ANNUAL_ALLOW, t.ANNUAL_ALLOW)
+     WHEN NOT MATCHED THEN
+       INSERT (EMP_ID, BASE_PAY, BIRTH_CARE, FAMILY_ALLOW, MEAL_ALLOW, ANNUAL_ALLOW)
+       VALUES ( s.EMP_ID,
+                NVL(s.BASE_PAY,      0),
+                NVL(s.BIRTH_CARE,    0),
+                NVL(s.FAMILY_ALLOW,  0),
+                NVL(s.MEAL_ALLOW,    0),
+                NVL(s.ANNUAL_ALLOW,  0) )
+  </update>
+
+</mapper>

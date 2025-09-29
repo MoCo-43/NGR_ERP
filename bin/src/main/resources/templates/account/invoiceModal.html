@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8" />
+
+<!-- Bootstrap & FontAwesome (UI용) -->
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+	rel="stylesheet" />
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" />
+<style>
+</style>
+</head>
+<body>
+	<div th:fragment="invoiceModal">
+
+		<div class="modal fade" id="invoiceModal" tabindex="-1"
+			aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+
+					<div class="modal-header">
+						<h5 class="modal-title">매출/매입 전표</h5>
+						<button type="button" class="btn btn-light btn-sm border-0"
+							data-bs-dismiss="modal" aria-label="닫기">
+							<i class="fas fa-times"></i>
+						</button>
+					</div>
+
+					<div class="modal-body">
+						<!-- 전표 기본정보 -->
+						<div class="row mb-2">
+							<div class="col-md-3">
+								<label class="form-label">전표일자</label>
+								<!-- ✅ 오늘 날짜가 기본값, 변경 가능 -->
+								<input type="date" class="form-control" id="invoiceDate"
+									th:value="${invoiceHeader?.invoiceDate}" />
+							</div>
+							<div class="col-md-4">
+								<label class="form-label">주문서</label>
+								<div class="input-group">
+									<input type="text" class="form-control"
+										th:value="${invoiceHeader?.orderCode}" readonly />
+									<button class="btn btn-outline-secondary btn-icon"
+										type="button">
+										<i class="fas fa-search"></i>
+									</button>
+								</div>
+							</div>
+							<div class="col-md-5">
+								<label class="form-label">부서명</label>
+								<div class="input-group">
+									<input type="text" id="deptNameInput" class="form-control"
+										th:value="${invoiceHeader?.deptName}" readonly />
+									<button class="btn btn-outline-secondary btn-icon"
+										type="button" id="btnDeptLookup">
+										<i class="fas fa-search"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+
+						<div class="row mb-2">
+							<div class="col-md-4">
+								<label class="form-label">부가세 유형</label> <select
+									class="form-select-invoice"
+									th:value="${invoiceHeader?.vatType}">
+									<option value="과세">세금계산서</option>
+									<option value="영세">영세율</option>
+									<option value="면세">면세</option>
+								</select>
+							</div>
+
+							<!-- 거래처 -->
+							<div class="col-md-8">
+								<label class="form-label">거래처</label>
+								<div class="input-group">
+									<input type="text" class="form-control" id="cusCodeInput"
+										th:value="${invoiceHeader?.cusCode}" placeholder="코드" />
+									<button class="btn btn-outline-secondary btn-icon"
+										type="button" id="openBusinessModalBtn">
+										<i class="fas fa-search"></i>
+									</button>
+									<input type="text" class="form-control" id="cusNameInput"
+										th:value="${invoiceHeader?.cusName}" placeholder="거래처명" />
+								</div>
+							</div>
+						</div>
+
+						<!-- 품목 Grid -->
+						<div id="invoiceGrid" class="ag-theme-quartz"></div>
+
+						<!-- 세부내역 -->
+						<div class="mb-2 mt-3">
+							<label class="form-label">세부내역</label>
+							<textarea class="form-control" rows="3"
+								th:text="${invoiceHeader?.memo}"></textarea>
+						</div>
+
+						<!-- 결제방식 / 적요 -->
+						<div class="row mb-2">
+							<div class="col-md-6">
+								<label class="form-label">결제방식</label> <input type="text"
+									class="form-control" th:value="${invoiceHeader?.payMethod}" />
+							</div>
+							<div class="col-md-6">
+								<label class="form-label">적요</label> <input type="text"
+									class="form-control" th:value="${invoiceHeader?.note}" />
+							</div>
+						</div>
+
+						<div class="modal-footer">
+							<button class="btn btn-success" type="button">저장</button>
+							<button class="btn btn-warning" type="button"
+								id="resetInvoiceBtn">초기화</button>
+						</div>
+
+					</div>
+				</div>
+			</div>
+
+			<!--  매입매출 모달 -->
+<script th:inline="none">
+
+document.addEventListener("DOMContentLoaded", () => {
+  const modalEl = document.getElementById('invoiceModal');
+  let invoiceGridApi;
+  let invoiceGridCreated = false;
+
+  modalEl.addEventListener('shown.bs.modal', () => {
+    const gridDiv = document.querySelector("#invoiceGrid");
+
+    if (!invoiceGridCreated) {
+      const gridOptions = {
+        columnDefs: [
+          { headerName: "품목코드", field: "itemCode", flex: 1 },
+          { headerName: "품목명",   field: "itemName", flex: 1 },
+          { headerName: "단가",     field: "price",    flex: 1,
+            valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
+          { headerName: "수량",     field: "qty",      flex: 1 },
+          { headerName: "공급가액", field: "supply",   flex: 1,
+            valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
+          { headerName: "부가세",   field: "vat",      flex: 1,
+            valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
+          { headerName: "비고",     field: "note",     flex: 1 }
+        ],
+        rowData: /*[[${invoiceItems}]]*/ [],
+      
+        defaultColDef: { resizable: true, filter:true },
+        pinnedBottomRowData: [
+          {
+            itemName: "합계",
+            supply: /*[[${invoiceHeader?.subtotalAmt}]]*/ 0,
+            vat: /*[[${invoiceHeader?.vatAmt}]]*/ 0
+          }
+        ]
+      };
+      invoiceGridApi = agGrid.createGrid(gridDiv, gridOptions);
+      invoiceGridCreated = true;
+    } else {
+      invoiceGridApi.resetRowHeights();
+    }
+  });
+});
+</script>
+	<script th:inline="none">
+let businessGridApi = null;
+
+async function loadBusinessData() {
+  try {
+    const res = await axios.get("/api/v1/stock/cusList");
+    if (businessGridApi) {
+      businessGridApi.setRowData(res.data);
+      businessGridApi.sizeColumnsToFit();
+    }
+  } catch (err) {
+    console.error("cusList 로드 실패:", err);
+  }
+}
+
+function initBusinessGrid() {
+  const gridDiv = document.querySelector("#businessModal #myGrid") || document.querySelector("#myGrid");
+  if (!gridDiv) {
+    console.error("거래처 그리드 컨테이너(#myGrid)를 찾을 수 없습니다.");
+    return;
+  }
+
+  const columnDefs = [
+    { headerName: "거래처코드", field: "cusCode" },
+    { headerName: "거래처명", field: "cusName" },
+    { headerName: "담당자명", field: "empName" },
+    { headerName: "사업자번호", field: "bizNo" },
+    { headerName: "대표명", field: "ceoName" },
+    { headerName: "업태", field: "bizType" },
+    { headerName: "종목", field: "bizCategory" },
+    { headerName: "거래처주소", field: "addr" }
+  ];
+
+  const gridOptions = {
+    columnDefs,
+    rowSelection: "single",
+    pagination: true,
+    rowData: [],
+    defaultColDef: { resizable: true, sortable: true, minWidth: 100 },
+    onGridReady: (e) => {
+      businessGridApi = e.api;
+      businessGridApi.sizeColumnsToFit();
+      loadBusinessData();
+    },
+    onRowDoubleClicked: (e) => {
+      // 값 반영
+      document.getElementById("cusCodeInput").value = e.data.cusCode ?? "";
+      document.getElementById("cusNameInput").value = e.data.cusName ?? "";
+
+      // 거래처 모달 닫고 → 전표 모달 다시 열기
+      const businessModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal"));
+      businessModal.hide();
+
+      const invoiceModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("invoiceModal"));
+      invoiceModal.show();
+    }
+  };
+
+  new agGrid.Grid(gridDiv, gridOptions);
+}
+
+// DOM 렌더링시 
+document.addEventListener("DOMContentLoaded", () => {
+  const invoiceModalEl = document.getElementById("invoiceModal");
+  const businessModalEl = document.getElementById("businessModal");
+
+  
+  if (!invoiceModalEl || !businessModalEl) {
+    console.error("invoiceModal 또는 businessModal 요소가 없습니다.");
+    return;
+  }
+
+  const invoiceModal = bootstrap.Modal.getOrCreateInstance(invoiceModalEl);
+  const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
+
+  
+  // 버튼 클릭 → 전표모달 닫고 → 닫힌 후 거래처 모달 열기 (연쇄)
+  document.getElementById("openBusinessModalBtn").addEventListener("click", () => {
+    const openBusinessAfterHide = () => {
+      // 한 번만 실행하고 핸들러 제거
+      invoiceModalEl.removeEventListener("hidden.bs.modal", openBusinessAfterHide);
+
+      // 거래처 모달 열기
+      businessModal.show();
+    };
+
+    // 전표 모달이 완전히 닫힌 뒤 실행
+    invoiceModalEl.addEventListener("hidden.bs.modal", openBusinessAfterHide);
+    invoiceModal.hide(); // 먼저 닫는다
+  });
+
+  // 거래처 모달이 보여질 때 그리드 준비/리사이즈/로딩
+  businessModalEl.addEventListener("shown.bs.modal", () => {
+    if (!businessGridApi) initBusinessGrid();
+    else {
+      businessGridApi.sizeColumnsToFit();	
+      loadBusinessData();
+    }
+  });
+});
+</script>
+		</div>
+
+		<!-- ✅ 오늘 날짜 기본값 세팅 스크립트 -->
+		<script th:inline="none">
+document.addEventListener("DOMContentLoaded", () => {
+  const dateInput = document.getElementById("invoiceDate");
+  if (dateInput && !dateInput.value) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+  }
+});
+
+</script>
+</body>
+</html>

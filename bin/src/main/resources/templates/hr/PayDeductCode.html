@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}">
+<head>
+  <title layout:fragment="title">공제 등록</title>
+  <th:block layout:fragment="head_extra">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+    <style>
+      #deductGrid.ag-theme-quartz { height: 44rem; width: 100%; margin-top: .5rem; }
+      .btn-use { padding: .2rem .6rem; font-size: 12px; }
+    </style>
+  </th:block>
+</head>
+<body>
+<section layout:fragment="content">
+  <div class="card shadow mb-3">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">공제 등록</h6>
+    </div>
+    <div class="card-body">
+      <div id="deductGrid" class="ag-theme-quartz"></div>
+    </div>
+  </div>
+</section>
+
+<th:block layout:fragment="body_extra">
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+<script th:inline="none">
+  let gridApi;
+
+  const API_BASE = '/api/hr/deduct-codes';
+
+  // 응답 성공 처리
+  const isOk = (res) => res?.data?.success === true || res?.data === 1 || res?.data === true;
+
+  // 유틸
+  const isBlank = (v) => v === null || v === undefined || String(v).trim() === '';
+  function newInputRow(){
+    return { _isInput:true, deductCode:'', deductName:'', formulaTxt:'', methodDesc:'', useYn:'Y' };
+  }
+  function isInsertSavable(r){ return r?._isInput && !isBlank(r.deductCode) && !isBlank(r.deductName); }
+  function isUpdateSavable(r){ return !r?._isInput && !isBlank(r.deductCode) && !isBlank(r.deductName); }
+
+  // ===== API =====
+  async function fetchList(){
+    try{
+      const res = await axios.get(API_BASE);
+      const data = Array.isArray(res.data) ? res.data : [];
+      return data;
+    }catch(err){
+      console.error('목록 조회 실패', err);
+      alert('목록 조회에 실패했습니다.');
+      return [];
+    }
+  }
+  async function insertRow(r){
+    const payload = {
+      deductCode:r.deductCode, deductName:r.deductName,
+      formulaTxt:r.formulaTxt, methodDesc:r.methodDesc, useYn:r.useYn
+    };
+    const res = await axios.post(API_BASE, payload);
+    return isOk(res);
+  }
+  async function updateRow(r){
+    const payload = {
+      deductName:r.deductName, formulaTxt:r.formulaTxt,
+      methodDesc:r.methodDesc, useYn:r.useYn
+    };
+    const res = await axios.put(`${API_BASE}/${encodeURIComponent(r.deductCode)}`, payload);
+    return isOk(res);
+  }
+  async function patchUseYn(code, yn){
+    const res = await axios.patch(`${API_BASE}/${encodeURIComponent(code)}/use-yn`, null, { params:{ useYn: yn }});
+    return isOk(res);
+  }
+
+  // 사용/중지 버튼 렌더러
+  function useToggleRenderer(p){
+    if (p.data?._isInput) return document.createTextNode('');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    const cur = (p.value ?? 'Y');
+    btn.className = 'btn btn-sm btn-use ' + (cur === 'Y' ? 'btn-success' : 'btn-danger');
+    btn.textContent = (cur === 'Y' ? '사용' : '중지');
+
+    btn.addEventListener('click', async () => {
+      const row = p.data;
+      const next = (row.useYn ?? 'Y') === 'Y' ? 'N' : 'Y';
+
+      // 화면 즉시 반영
+      row.useYn = next;
+      btn.className = 'btn btn-sm btn-use ' + (next === 'Y' ? 'btn-success' : 'btn-danger');
+      btn.textContent = (next === 'Y' ? '사용' : '중지');
+
+      try{
+        const ok = await patchUseYn(row.deductCode, next);
+        if(!ok) throw new Error();
+      }catch(e){
+        // 실패 시 원복
+        const prev = next === 'Y' ? 'N' : 'Y';
+        row.useYn = prev;
+        btn.className = 'btn btn-sm btn-use ' + (prev === 'Y' ? 'btn-success' : 'btn-danger');
+        btn.textContent = (prev === 'Y' ? '사용' : '중지');
+        alert('사용여부 변경 실패');
+      }
+    });
+
+    return btn;
+  }
+
+  // 입력행은 항상 마지막에 유지
+  function keepInputRowAtEnd(params){
+    const rows = params.nodes;
+    const inputNodes = [];
+    for(let i = rows.length - 1; i >= 0; i--){
+      const n = rows[i];
+      if(n?.data?._isInput){
+        inputNodes.push(n);
+        rows.splice(i,1);
+      }
+    }
+    inputNodes.forEach(n => rows.push(n));
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const columnDefs = [
+      { headerName:'공제 코드', field:'deductCode', width:120, editable:(p)=>p.data?._isInput },
+      { headerName:'공제 항목 명', field:'deductName', minWidth:160, flex:1, editable:true },
+      { headerName:'계산식', field:'formulaTxt', minWidth:220, flex:1.2, editable:true },
+      { headerName:'산출 방법', field:'methodDesc', minWidth:260, flex:1.5, editable:true },
+      { headerName:'사용 여부', field:'useYn', width:120,
+        editable:(p)=> p.data?._isInput === true,
+        cellEditor:'agSelectCellEditor', cellEditorParams:{ values:['Y','N'] },
+        cellRenderer: useToggleRenderer },
+    ];
+
+    gridApi = agGrid.createGrid(document.querySelector('#deductGrid'), {
+      columnDefs,
+      rowData: [],
+      pagination:true,
+      paginationPageSize:20,
+      defaultColDef:{ resizable:true, filter:false },
+      editType:'fullRow',
+      singleClickEdit:true,
+      stopEditingWhenCellsLoseFocus:true,
+      sortModel:[{ colId:'deductCode', sort:'asc' }],
+      postSortRows: keepInputRowAtEnd,
+
+      onRowValueChanged: async (ev) => {
+        const d = ev.data;
+        try {
+          if (isInsertSavable(d)) {
+            const ok = await insertRow(d);
+            if(!ok) throw new Error();
+            const rows = await fetchList();
+            gridApi.setGridOption('rowData', [...rows, newInputRow()]);
+          } else if (isUpdateSavable(d)) {
+            const ok = await updateRow(d);
+            if(!ok) throw new Error();
+            gridApi.refreshClientSideRowModel('sort');
+          }
+        } catch(e){
+          console.error(e);
+          alert('저장 실패: 입력값을 확인하세요.');
+        }
+      },
+
+      onGridReady: async () => {
+        const rows = await fetchList();
+        gridApi.setGridOption('rowData', [...rows, newInputRow()]);
+      }
+    });
+  });
+</script>
+</th:block>
+</body>
+</html>
