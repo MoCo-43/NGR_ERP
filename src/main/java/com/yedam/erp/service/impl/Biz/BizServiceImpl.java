@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.yedam.erp.mapper.Biz.BizMapper;
-import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.Biz.BizService;
 import com.yedam.erp.vo.Biz.CustomerVO;
+import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
@@ -35,6 +35,7 @@ public class BizServiceImpl implements BizService {
 	// 주문서 입력
 	@Override
 	public int insertPO(PoInsertVO pvo) {
+		System.out.println(pvo.getCompanyCode() != null ? pvo.getCompanyCode() : "NO COMPANYCODE");  // 회사코드 출력
 		return bizMapper.insertPO(pvo);
 	}
 
@@ -53,4 +54,12 @@ public class BizServiceImpl implements BizService {
 	public List<CustomerVO> getCustomers(Long companyCode) {
 		return bizMapper.getCustomers(companyCode);
 	}
+
+	// 출하지시서 전체조회
+	@Override
+	public List<DeliveryOrderVO> selectDo(Long companyCode) {
+		return bizMapper.selectDo(companyCode);
+	}
+
+	
 }

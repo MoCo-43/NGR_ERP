@@ -49,6 +49,8 @@
     </th:block>
   </head>
   <body>
+    <!-- 회사코드 -->
+    <input type="hidden" id="companyCode" th:value="${session.companyCode}" />
     <form
       th:action="@{/sales/order/new}"
       th:object="${form}"
@@ -344,7 +346,7 @@
             });
             const pinned = [
               {
-                dPrdName: `합계 (행 ${cnt}건)`,
+                productName: `합계 (행 ${cnt}건)`,
                 supAmt: sumSupply,
                 vatAmt: sumVat,
                 dcPrice: sumDc,
@@ -365,7 +367,7 @@
             },
             {
               headerName: "품목명",
-              field: "dPrdName",
+              field: "productName",
               editable: true,
               flex: 1,
               minWidth: 160,
@@ -425,7 +427,7 @@
             rowData: [
               {
                 productCode: "A01",
-                dPrdName: "맛있는쿠키",
+                productName: "맛있는쿠키",
                 unitPrice: 1000,
                 orderQty: 100,
                 dcPrice: 5000,
@@ -451,7 +453,7 @@
           byId("btnAddRow").addEventListener("click", () => {
             const blank = {
               productCode: "",
-              dPrdName: "",
+              productName: "",
               unitPrice: null,
               orderQty: null,
               dcPrice: null,
@@ -484,9 +486,8 @@
                   dcPrice: toNum(r.dcPrice),
                   supAmt,
                   vatAmt,
-                  dPrdName: r.dPrdName,
+                  productName: r.productName.trim(),
                 });
-                console.log("상세행 dPrdName은 => ", r.details.dPrdName);
               });
               if (!details.length)
                 return alert("상세 품목을 1건 이상 입력하세요.");
@@ -508,6 +509,7 @@
               const poDate = poStart; // 정책상 동일 사용
 
               const payload = {
+                companyCode: Number(getVal("companyCode")),
                 cusName,
                 cusCode,
                 creater: getVal("creater") || "세션유저이름",
@@ -551,16 +553,16 @@
             setVal("settleDue", today);
             setVal("cusName", "");
             setVal("creater", "");
-            setVal("bizType", "VAT_INCLUDED");
-            setVal("vatDocType", "TAX_INVOICE");
-            setVal("payMethod", "CASH");
-            setVal("poStatus", "WRITTEN");
+            setVal("bizType", "부가세율 적용");
+            setVal("vatDocType", "세금계산서");
+            setVal("payMethod", "현금");
+            setVal("poStatus", "주문승인");
             setVal("notes", "");
             byId("billDates").classList.add("d-none");
             gridApi.setRowData([
               {
                 productCode: "",
-                dPrdName: "",
+                productName: "",
                 unitPrice: null,
                 orderQty: null,
                 dcPrice: null,
@@ -647,15 +649,11 @@
 
                 const newItems = selectedRows.map((row) => ({
                   prdCode: row.prdCode || "",
-                  prdName: row.prdName || "",
+                  productName: row.prdName || "",
                   unitPrice: row.unitPrice || null,
 
                   notes: `${row.poStart} 주문 건에서 가져옴`,
                 }));
-                console.log(
-                  "주문서건의 품목이름인 productName은 ==> ",
-                  newItems.productName
-                );
 
                 gridApi.applyTransaction({ add: newItems });
                 updatePinned();
@@ -736,7 +734,7 @@
 
               const newItems = selectedRows.map((row) => ({
                 productCode: row.productCode,
-                dPrdName: row.productName,
+                productName: row.productName,
                 unitPrice: row.unitPrice || null,
                 orderQty: null,
                 dcPrice: null,

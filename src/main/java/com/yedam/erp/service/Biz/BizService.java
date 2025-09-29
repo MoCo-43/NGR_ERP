@@ -3,6 +3,7 @@ package com.yedam.erp.service.Biz;
 import java.util.List;
 
 import com.yedam.erp.vo.Biz.CustomerVO;
+import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
@@ -28,4 +29,6 @@ public interface BizService {
   // 거래처 조회
   List<CustomerVO> getCustomers(Long companyCode);
 
+  // 출하지시서 조회
+  List<DeliveryOrderVO> selectDo(Long companyCode);
 }

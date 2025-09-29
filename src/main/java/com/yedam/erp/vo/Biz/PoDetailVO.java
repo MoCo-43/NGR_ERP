@@ -13,5 +13,5 @@ public class PoDetailVO{
   private int dcPrice;
   private int supAmt;
   private int vatAmt;
-  private String dPrdName;
+  private String productName;
 }

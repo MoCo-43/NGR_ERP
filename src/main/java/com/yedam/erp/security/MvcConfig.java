@@ -31,6 +31,10 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/biz/productcode").setViewName("biz/modals/ProductCodeModal");
 		// 영업-거래처조회
 		registry.addViewController("/biz/customercode").setViewName("biz/modals/PoCustomerModal");
+		// 영업-출하지시서 조회
+		registry.addViewController("/biz/dolist").setViewName("biz/ViewAllDO");
+		// 영업-출하지시서 입력페이지
+		registry.addViewController("/biz/doinsert").setViewName("biz/InsertDO");
 
 		// 회계
 		registry.addViewController("/vouchers").setViewName("account/list");
