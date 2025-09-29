@@ -1,120 +1,175 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
 <head>
-  <meta charset="UTF-8"/>
-  <title layout:fragment="title">일반 전표 마감</title>
+<meta charset="UTF-8" />
+<title layout:fragment="title">일반 전표 마감</title>
 
-  <th:block layout:fragment="head_extra">
-    <!-- AG Grid -->
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
-    <style>
-      .btn-bar {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 0.75rem;
-      }
-      .section-title {
-        margin-top: 0.5rem;
-        margin-bottom: .5rem;
-        color: black;
-        font-weight: bold;
-      }
-      .grid-sm { height: 220px; width: 100%; }
-      .grid-md { height: 100%; width: 100%; }
-      .voucher-section {
-        display: flex;
-        gap: 1rem;
-        align-items: stretch;
-      }
-      .voucher-left,
-      .voucher-right {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
-      .voucher-left .ag-theme-quartz {
-        flex: 1;
-      }
-      .voucher-right .detail-form {
-        margin-bottom: 0.5rem;
-      }
-      .voucher-right .ag-theme-quartz {
-        flex: 1;
-      }
-    </style>
-  </th:block>
+<th:block layout:fragment="head_extra">
+	<!-- AG Grid -->
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+	<style>
+.btn-bar {
+	display: flex;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.section-title {
+	margin-top: 0.5rem;
+	margin-bottom: .5rem;
+	color: black;
+	font-weight: bold;
+}
+
+.grid-sm {
+	height: 220px;
+	width: 100%;
+}
+
+.grid-md {
+	height: 100%;
+	width: 100%;
+}
+
+.voucher-section {
+	display: flex;
+	gap: 1rem;
+	align-items: stretch;
+}
+
+.voucher-left, .voucher-right {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.voucher-left .ag-theme-quartz {
+	flex: 1;
+}
+
+.voucher-right .detail-form {
+	margin-bottom: 0.5rem;
+}
+
+.voucher-right .ag-theme-quartz {
+	flex: 1;
+}
+.badge-status-open {
+	background: #dcfce7; /* 연한 초록 */
+	color: #15803d; /* 진한 초록 */
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+
+.badge-status-closed {
+	background: #fee2e2; /* 차변과 동일 */
+	color: #b91c1c;
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
+}
+.badge-status-submit {
+  background: #fef9c3; /* 연노랑 */
+  color: #ca8a04;      /* 진한 노랑/주황 */
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+
+.badge-status-reverse {
+  background: #dbeafe; /* 연한 파랑 */
+  color: #1d4ed8;      /* 진한 파랑 */
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+</style>
+</th:block>
 </head>
-
+<script th:inline="javascript">
+  const loginUser = /*[[${loginId}]]*/ "";
+</script>
 <body>
-<section layout:fragment="content">
-  <div class="card shadow mb-3">
-    <div class="card-header py-3 d-flex align-items-center justify-content-between">
-      <h6 class="m-0 font-weight-bold text-primary">일반 전표 마감</h6>
-    </div>
-    <div class="card-body">
+	<section layout:fragment="content">
+		<div class="card shadow mb-3">
+			<div
+				class="card-header py-3 d-flex align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">일반 전표 마감</h6>
+			</div>
+			<div class="card-body">
 
-      <!-- 버튼바 -->
-      <div class="btn-bar">
-        <input type="date" id="searchDate" class="form-control form-control-sm" style="width:150px"/>
-        <button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
-        <button class="btn btn-success btn-sm">제출</button>
-        <button class="btn btn-warning btn-sm">승인</button>
-        <button class="btn btn-danger btn-sm">역분개</button>
-      </div>
+				<div class="btn-bar d-flex justify-content-between">
+					<div class="d-flex gap-2 ml-2">
+						<input type="date" id="searchDate"
+							class="form-control form-control-sm" style="width: 150px" />
+						<button class="btn btn-dark btn-sm ml-3" id="btnSearch">조회</button>
+					</div>
 
-      <!-- 전표 리스트 + 전표 상세 -->
-      <div class="voucher-section" style="min-height: 400px;">
-        <!-- 좌측: 전표 리스트 -->
-        <div class="voucher-left">
-          <div class="section-title">전표 리스트</div>
-          <div id="voucherGrid" class="ag-theme-quartz grid-md"></div>
-        </div>
+					<div class="d-flex gap-2 mr-2">
+						<button id="btnSubmit" class="btn btn-success btn-sm mr-2">제출</button>
+						<button id="btnApprove" class="btn btn-warning btn-sm mr-2">승인</button>
+						<button id="btnReverse" class="btn btn-danger btn-sm">역분개</button>
+					</div>
+				</div>
 
-        <!-- 우측: 전표 상세 -->
-        <div class="voucher-right">
-          <div class="section-title">전표 상세</div>
-          <div class="row mb-2 detail-form">
-            <div class="col-md-6">
-              <label class="form-label">전표번호</label>
-              <input id="detailNo" class="form-control form-control-sm" readonly/>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">작성자</label>
-              <input id="detailWriter" class="form-control form-control-sm" readonly/>
-            </div>
-            <div class="col-md-6 mt-2">
-              <label class="form-label">전표일자</label>
-              <input id="detailDate" class="form-control form-control-sm" readonly/>
-            </div>
-            <div class="col-md-6 mt-2">
-              <label class="form-label">적요</label>
-              <input id="detailDesc" class="form-control form-control-sm" readonly/>
-            </div>
-          </div>
-          <div id="detailGrid" class="ag-theme-quartz grid-md"></div>
-        </div>
-      </div>
 
-      <!-- 마감 로그 -->
-      <div class="section-title">마감 로그</div>
-      <div id="logGrid" class="ag-theme-quartz grid-sm"></div>
+				<!-- 전표 리스트 + 전표 상세 -->
+				<div class="voucher-section" style="min-height: 400px;">
+					<!-- 좌측: 전표 리스트 -->
+					<div class="voucher-left">
+						<div class="section-title">전표 리스트</div>
+						<div id="voucherGrid" class="ag-theme-quartz grid-md"></div>
+					</div>
 
-      <!-- 액션 버튼 -->
-      <div class="mt-3 text-end">
-        <button class="btn btn-danger btn-sm">Close</button>
-      </div>
-    </div>
-  </div>
+					<!-- 우측: 전표 상세 -->
+					<div class="voucher-right">
+						<div class="section-title">전표 상세</div>
+						<div class="row mb-2 detail-form">
+							<div class="col-md-6">
+								<label class="form-label">전표번호</label> <input id="detailNo"
+									class="form-control form-control-sm" readonly />
+							</div>
+							<div class="col-md-6">
+								<label class="form-label">작성자</label> <input id="detailWriter"
+									class="form-control form-control-sm" readonly />
+							</div>
+							<div class="col-md-6 mt-2">
+								<label class="form-label">전표일자</label> <input id="detailDate"
+									class="form-control form-control-sm" readonly />
+							</div>
+							<div class="col-md-6 mt-2">
+								<label class="form-label">적요</label> <input id="detailDesc"
+									class="form-control form-control-sm" readonly />
+							</div>
+						</div>
+						<div id="detailGrid" class="ag-theme-quartz grid-md"></div>
+					</div>
+				</div>
 
-  <!-- Script -->
-  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script>
+				<!-- 액션 버튼 -->
+
+				<div
+					class="d-flex justify-content-between align-items-center section-title">
+					<span>마감 로그</span>
+				</div>
+				<div id="logGrid" class="ag-theme-quartz grid-sm"></div>
+
+			</div>
+			<div th:replace="~{modal/signModal :: signModal}"></div>
+
+		</div>
+
+		<!-- Script -->
+		<script
+			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+		<script>
     let voucherApi, detailApi, logApi;
 
     function todayStr() {
@@ -132,9 +187,18 @@
         columnDefs: [
           { checkboxSelection: true, headerCheckboxSelection: true, flex:0.3 },
           { headerName: '전표번호', field: 'jrnNo', flex: 1 },
-          { headerName: '전표일자', field: 'jrnDate', flex: 1 },
+          { headerName: '전표일자', field: 'jrnDate', flex: 1,
+        	  valueFormatter: p => p.value ? p.value.substring(0,10):""},
           { headerName: '거래처', field: 'cusName', flex: 1 },
-          { headerName: '상태', field: 'status', flex: 1 }
+          { headerName: '상태', field: 'status', flex: 1,
+        	  cellRenderer: p => {
+        	        const v = (p.value || "").toLowerCase();
+        	        if (v === "open")     return `<span class="badge-status-open">OPEN</span>`;
+        	        if (v === "submit")   return `<span class="badge-status-submit">SUBMIT</span>`;
+        	        if (v === "closed")    return `<span class="badge-status-closed">CLOSED</span>`;
+        	        if (v === "reverse")  return `<span class="badge-status-reverse">REVERSE</span>`;
+        	        return v || "";
+        	      }}
         ],
         rowData: [],
         rowSelection: 'multiple',
@@ -151,13 +215,13 @@
           { headerName: '적요', field: 'remarks', flex: 1 },
           { 
               headerName: '차변', 
-              valueGetter: p => p.data.dcType === 'D' ? p.data.amount : null, 
+              field : 'credit',
               flex: 1, 
               valueFormatter: p => p.value ? Number(p.value).toLocaleString() : "" 
             },
             { 
               headerName: '대변', 
-              valueGetter: p => p.data.dcType === 'C' ? p.data.amount : null, 
+              field : 'debit',
               flex: 1, 
               valueFormatter: p => p.value ? Number(p.value).toLocaleString() : "" 
             }
@@ -169,22 +233,23 @@
       // 마감 로그
       logApi = agGrid.createGrid(document.getElementById('logGrid'), {
         columnDefs: [
-          { headerName: '마감일자', field: 'closeDate', flex: 1 },
+          { headerName: '마감일자', field: 'actionDate', flex: 1,
+        	  valueFormatter: p => p.value ? p.value.substring(0,10):""},
           { headerName: '전표범위', field: 'jrnRange', flex: 1 },
           { headerName: '건수', field: 'count', flex: 1 },
           { 
               headerName: '차변', 
-              valueGetter: p => p.data.dcType === 'D' ? p.data.amount : null, 
+              field:'creditSum',
               flex: 1, 
-              valueFormatter: p => p.value ? Number(p.value).toLocaleString() : "" 
+              valueFormatter: p => p.value ? Number(p.value).toLocaleString() : 0
             },
             { 
               headerName: '대변', 
-              valueGetter: p => p.data.dcType === 'C' ? p.data.amount : null, 
+              field:'debitSum',
               flex: 1, 
-              valueFormatter: p => p.value ? Number(p.value).toLocaleString() : "" 
+              valueFormatter: p => p.value ? Number(p.value).toLocaleString() : 0 
             },
-          { headerName: '작성자', field: 'writer', flex: 1 },
+          { headerName: '작성자', field: 'createdBy', flex: 1 },
           { headerName: '상태', field: 'status', flex: 1 }
         ],
         rowData: [],
@@ -195,35 +260,201 @@
       document.getElementById('btnSearch').addEventListener('click', loadVoucherList);
     });
 
-    // 전표 리스트 조회 (마감용 API)
+ // 전표 리스트 조회 (전체 불러온 뒤 날짜 필터링)
     async function loadVoucherList() {
       try {
+        const searchDate = document.getElementById('searchDate').value;
         const { data } = await axios.get('/api/account/journalClose');
-        voucherApi.setGridOption("rowData", Array.isArray(data) ? data : []);
-        // 로그도 같이 조회하고 싶으면 별도 API 연결
+
+        let rows = Array.isArray(data) ? data : [];
+
+        // ✅ 날짜 필터링 (프론트에서만)
+        if (searchDate) {
+          rows = rows.filter(r => r.jrnDate && r.jrnDate.substring(0,10) === searchDate);
+        }
+
+        voucherApi.setGridOption("rowData", rows);
         logApi.setGridOption("rowData", []);
+        
       } catch (err) {
         console.error(err);
         alert('전표 리스트 조회 실패');
       }
+      
     }
+    
+ 
+    document.getElementById('searchDate').value = todayStr();
+ // 전표 상세 조회 (마감용 API)
+   async function loadDetail(jrnNo) {
+  try {
+    const { data } = await axios.get(`/api/account/journalClose/${jrnNo}`);
+    document.getElementById('detailNo').value     = data?.[0]?.jrnNo || '';
+    document.getElementById('detailWriter').value = data?.[0]?.writer || '';
+    document.getElementById('detailDate').value   = data?.[0]?.jrnDate?.substring(0,10) || '';
+    document.getElementById('detailDesc').value   = data?.[0]?.remarks || '';
 
-    // 전표 상세 조회 (마감용 API)
-    async function loadDetail(jrnNo) {
-      try {
-        const { data } = await axios.get(`/api/account/journalClose/${jrnNo}`);
-        document.getElementById('detailNo').value = data?.[0]?.jrnNo || '';
-        document.getElementById('detailWriter').value = data?.[0]?.writer || '';
-        document.getElementById('detailDate').value = data?.[0]?.jrnDate || '';
-        document.getElementById('detailDesc').value = data?.[0]?.remarks || '';
-        detailApi.setGridOption('rowData', data || []);
-        console.log(data);
-      } catch (err) {
-        console.error(err);
-        alert('전표 상세 조회 실패');
+    // ✅ 바뀐 문법
+    detailApi.setGridOption("rowData", data || []);
+
+    // 로그도 같이 조회
+    loadLogByJrn(jrnNo);
+
+  } catch (err) {
+    console.error(err);
+    alert('전표 상세 조회 실패');
+  }
+}
+
+// 로그 조회 후 바인딩
+   async function loadLogByJrn(jrnNo) {
+     try {
+       const { data } = await axios.get(`/api/account/journalClose/logs/${jrnNo}`);
+       let rows = Array.isArray(data) ? data : [];
+
+       // ✅ 건수 계산
+       rows = rows.map(r => {
+         if (r.jrnRange) {
+           const [start, end] = r.jrnRange.split("~").map(x => parseInt(x, 10));
+           if (!isNaN(start) && !isNaN(end)) {
+             r.count = (end - start + 1);   // ex) 003~007 → 5건
+           } else {
+             r.count = 1; // fallback
+           }
+         } else {
+           r.count = 0;
+         }
+         return r;
+       });
+
+       logApi.setGridOption("rowData", rows); // ✅ 최신 방식
+     } catch (e) {
+       console.error(e);
+       alert("마감 로그 조회 실패");
+     }
+   }
+ // 제출 버튼
+    document.getElementById('btnSubmit').addEventListener('click', async () => {
+      const selected = voucherApi.getSelectedRows();
+      if (selected.length === 0) {
+        alert("제출할 전표를 선택하세요.");
+        return;
       }
-    }
+
+      // ✅ 이미 제출/승인/역분개 된 전표는 막기
+      const invalid = selected.filter(r => ["submit","closed","reverse"].includes((r.status || "").toLowerCase()));
+      if (invalid.length > 0) {
+        alert("이미 제출/승인/역분개된 전표는 다시 제출할 수 없습니다.");
+        return;
+      }
+
+      const jrnNoList = selected.map(r => r.jrnNo);
+      await axios.put('/api/account/journal/status', { jrnNoList, status: 'submit' });
+
+      alert("제출 완료되었습니다.");
+      loadVoucherList();
+    });
+
+    async function saveSignature() {
+    	  if (!pendingIds.length) {
+    	    alert('대상이 없습니다.');
+    	    return;
+    	  }
+
+    	  const blob = await new Promise(res => signCanvas.toBlob(res, 'image/png', 1.0));
+
+    	  // 1) 서명 업로드
+    	  const form = new FormData();
+    	  form.append("file", blob, `signature_${Date.now()}.png`);
+
+    	  let signPath = null;
+    	  try {
+    	    const uploadRes = await axios.post('/api/approval/signature', form, {
+    	      headers: { 'Content-Type': 'multipart/form-data' }
+    	    });
+    	    signPath = uploadRes?.data?.path || null;
+    	  } catch (e) {
+    	    console.error(e);
+    	    alert('서명 업로드 실패');
+    	    return;
+    	  }
+
+    	  // 2) approve / reverse API 분기
+    	  try {
+    	    if (signMode === "approve") {
+    	      await axios.put('/api/approval/journal/approve', {
+    	        ids: pendingIds,
+    	        signPath: signPath
+    	      });
+    	      alert('승인 완료');
+    	    } else if (signMode === "reverse") {
+    	      await axios.post('/api/account/journal/reverse', {
+    	    	  originJrnNos: pendingIds.join(','),
+    	    	  signPath: signPath
+    	      });
+    	      alert('역분개 완료');
+    	    }
+
+    	    bootstrap.Modal.getOrCreateInstance(document.getElementById('signModal')).hide();
+    	    loadVoucherList();
+    	  } catch (e) {
+    	    console.error(e);
+    	    alert('처리 실패');
+    	  }
+    	}
+    
+ // 제출 버튼은 기존 그대로 (상태만 바꾸면 됨)
+
+ // 승인 버튼
+document.getElementById('btnApprove').addEventListener('click', () => {
+  const selected = voucherApi.getSelectedRows();
+  if (!selected.length) return alert("승인할 전표를 선택하세요.");
+  if (selected.some(r => ["closed","reverse"].includes((r.status||"").toLowerCase())))
+    return alert("이미 승인/역분개된 전표 포함");
+  openSignModal("approve", selected.map(r => r.jrnNo));
+});
+
+// 역분개 버튼
+document.getElementById('btnReverse').addEventListener('click', () => {
+  const selected = voucherApi.getSelectedRows();
+  console.log(selected);
+  if (!selected.length) return alert("역분개할 전표를 선택하세요.");
+//✅ reverseYn 값도 같이 체크
+  if (selected.some(r => (r.status||"").toLowerCase()==="reverse" || (r.reversedYn||"").toUpperCase()==="Y")) {
+    return alert("이미 역분개된 전표가 포함되어 있습니다.");
+  }
+  openSignModal("reverse", selected.map(r => r.jrnNo));
+});
+
+async function loadLogByDate(dateStr) {
+	  try {
+	    const { data } = await axios.get(`/api/account/journalClose/logs/date/${dateStr}`);
+	    let rows = Array.isArray(data) ? data : [];
+
+	    // ✅ 건수 계산
+	    rows = rows.map(r => {
+	      if (r.jrnRange) {
+	        const [start, end] = r.jrnRange.split("~").map(x => parseInt(x, 10));
+	        if (!isNaN(start) && !isNaN(end)) {
+	          r.count = (end - start + 1);
+	        } else {
+	          r.count = 1;
+	        }
+	      } else {
+	        r.count = 0;
+	      }
+	      return r;
+	    });
+
+	    logApi.setGridOption("rowData", rows);
+	  } catch (e) {
+	    console.error(e);
+	    alert("오늘자 마감 로그 조회 실패");
+	  }
+	}
+
+ 
   </script>
-</section>
+	</section>
 </body>
 </html>

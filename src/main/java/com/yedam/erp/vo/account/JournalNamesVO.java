@@ -10,4 +10,8 @@ import lombok.NoArgsConstructor;
 	public class JournalNamesVO extends JournalVO {
 	    private String acctName;   // 계정명
 	    private String cusName;    // 거래처명
+	    private Long debit;
+	    private Long credit;
+	    private String LoginId;
+	    private String reversedYn;
 	}

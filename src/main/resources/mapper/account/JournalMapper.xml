@@ -174,11 +174,11 @@
     SELECT 
         j.jrn_no,
         c.CUS_NAME,
-        j.dc_type,
         MIN(j.jrn_date)   AS jrn_date,   -- 전표일자 (가장 빠른 날짜 기준)
         MIN(j.remarks)    AS remarks,    -- 대표 적요 (첫 행 기준)
         MIN(j.created_by) AS writer,     -- 작성자
         MIN(j.status)     AS status,     -- 전표 상태
+        MAX(j.reversed_yn) AS reversedYn,  -- ✅ 역분개 여부 추가
         COUNT(*)        AS line_count, -- 라인 수
         SUM(CASE WHEN j.dc_type = 'D' THEN j.amount ELSE 0 END) AS total_debit,
         SUM(CASE WHEN j.dc_type = 'C' THEN j.amount ELSE 0 END) AS total_credit
@@ -186,7 +186,7 @@
 		ON J.CUS_CODE
 		= C.CUS_CODE
     WHERE j.company_code = #{companyCode}
-    GROUP BY j.jrn_no, c.CUS_NAME,j.dc_type
+    GROUP BY j.jrn_no, c.CUS_NAME
     ORDER BY j.jrn_no DESC
   </select>
 
@@ -217,4 +217,23 @@
     ORDER BY j.line_no
   </select>
 
+ <update id="updateStatusBatch" parameterType="map">
+    UPDATE journal
+       SET status = #{status}
+     WHERE company_code = #{companyCode}
+       AND jrn_no IN
+       <foreach item="jrnNo" collection="jrnNoList" open="(" separator="," close=")">
+         #{jrnNo}
+       </foreach>
+</update>
+
+
+<!-- ✅ 역분개는 프로시저 호출 -->
+<select id="reverseJournalCsv" statementType="CALLABLE">
+    { call PRC_REVERSE_JOURNAL_CSV(
+        #{companyCode, jdbcType=NUMERIC},
+        #{originJrnNos, jdbcType=VARCHAR},
+        #{createdBy, jdbcType=VARCHAR}
+      ) }
+</select>
 </mapper>
