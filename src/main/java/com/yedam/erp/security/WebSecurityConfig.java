@@ -55,7 +55,7 @@ public class WebSecurityConfig {
             .rememberMe(remember -> remember
                 .tokenRepository(tokenRepository(dataSource))
                 .tokenValiditySeconds(60 * 60 * 24 * 3) // 3일
-                .key("uniqueAndSecretKey")
+//                .key("uniqueAndSecretKey")
                 .userDetailsService(customUserDetailsService)
             )
             .logout(logout -> logout

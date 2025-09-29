@@ -5,22 +5,26 @@
       layout:decorate="~{layout/main_auth_base}">
 <head>
   <title layout:fragment="title">비밀번호 찾기</title>
-  
+
   <th:block layout:fragment="head_extra">
     <style>
-      .auth-forms h2 { text-align: center; margin-bottom: 1.5rem; color: #4d341e; }
+      .auth-forms h2 { text-align: center; margin-bottom: 1.5rem; color: #333; }
       .auth-forms .input-field { width: 100%; margin-bottom: 1rem; }
-      .auth-forms .input-field input { width: 100%; padding: 10px; border: none; border-bottom: 2px solid #ccc; background: transparent; outline: none; }
-      .auth-forms .btn-primary { width: 100%; padding: 12px; background: #4d341e; color: #fff; border: none; cursor: pointer; margin-top: 10px; }
+      .auth-forms .input-field input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; background: transparent; outline: none; box-sizing: border-box; }
+      .auth-forms .btn-primary { width: 100%; padding: 12px; background: #343a40; color: #fff; border: none; cursor: pointer; margin-top: 10px; border-radius: 4px; transition: background-color 0.2s; }
+      .auth-forms .btn-primary:disabled { background-color: #6c757d; cursor: not-allowed; }
       .link-small { font-size: 0.9rem; text-align: center; margin-top: 1rem; }
-      .link-small a { color: #4d341e; }
+      .link-small a { color: #007bff; text-decoration: none; }
       .message { padding: 10px; margin-bottom: 1rem; border-radius: 4px; text-align: center; }
       .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
       .success-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+      
       /* 인증번호 관련 필드 그룹 */
-      .verification-group { display: flex; align-items: center; }
-      .verification-group input { flex-grow: 1; margin-right: 10px; }
-      .verification-group button { flex-shrink: 0; padding: 10px; }
+      .verification-group { display: flex; align-items: center; gap: 10px; }
+      .verification-group input { flex-grow: 1; }
+      .verification-group button { flex-shrink: 0; padding: 12px; border: 1px solid #ced4da; background-color: #e9ecef; cursor: pointer; border-radius: 4px; }
+      .verification-group button:disabled { background-color: #f8f9fa; color: #6c757d; cursor: not-allowed; }
+      
       /* 단계별 폼 숨기기 */
       #step2-form { display: none; }
     </style>
@@ -32,11 +36,12 @@
   <div>
     <h2>비밀번호 찾기</h2>
 
-    <div th:if="${message}" th:class="'message ' + (${isError} ? 'error-message' : 'success-message')" th:text="${message}"></div>
+    <div id="message-area">
+      <div th:if="${message}" th:class="'message ' + (${isError} ? 'error-message' : 'success-message')" th:text="${message}"></div>
+    </div>
 
-    <!-- STEP1: 회사코드, 아이디 입력 -->
-    <form id="step1-form" th:action="@{/sendSms}" method="post">
-      <input type="hidden" name="userKey" th:value="${userKey}"> 
+    <form id="step1-form" th:action="@{/sendSms}" method="post" onsubmit="return false;">
+      <input type="hidden" name="userKey" th:value="${userKey}">
 
       <div class="input-field">
           <input type="text" name="comCode" placeholder="회사코드" required th:value="${comCode}">
@@ -44,26 +49,27 @@
       <div class="input-field">
           <input type="text" name="empId" placeholder="아이디" required th:value="${empId}">
       </div>
-      <!-- 이메일은 선택사항 -->
       <div class="input-field">
-          <input type="email" name="email" placeholder="이메일 (선택)">
+          <input type="email" name="matMail" placeholder="가입 시 등록한 이메일" required>
       </div>
 
-      <button type="submit" class="btn-primary" id="sendSmsBtn">인증번호 SMS 받기</button>
+      <button type="button" class="btn-primary" id="requestVerificationBtn">인증 요청</button>
     </form>
-    
-    <!-- STEP2: 인증번호 입력 -->
+
     <form id="step2-form" th:action="@{/findpw/verify-token}" method="post">
       <input type="hidden" name="comCode" id="hiddenComCode">
       <input type="hidden" name="empId" id="hiddenEmpId">
-      <input type="hidden" name="userKey" id="hiddenUserKey"> 
-      
+      <input type="hidden" name="matMail" id="hiddenMatMail">
+      <input type="hidden" name="userKey" id="hiddenUserKey">
+
+      <p style="text-align:center; font-size:0.9em; color:#555;">DB에 등록된 휴대폰 번호로 인증번호를 발송했습니다.</p>
+
       <div class="input-field verification-group">
           <input type="text" name="smsCode" id="smsCode" placeholder="인증번호 6자리" maxlength="6" required>
-          <button type="button" id="resendBtn" class="btn-secondary" disabled>재전송 (60s)</button>
+          <button type="button" id="resendBtn" disabled>재전송 (60s)</button>
       </div>
-      
-      <button type="submit" class="btn-primary" id="verifyBtn">인증 완료 및 비밀번호 재설정 이메일 받기</button>
+
+      <button type="submit" class="btn-primary" id="verifyBtn">인증 확인</button>
     </form>
 
     <div class="link-small">
@@ -74,66 +80,127 @@
 </th:block>
 
 <th:block layout:fragment="body_extra">
-  <script th:inline="javascript">
-    /* <![CDATA[ */
-    const currentStep = '[[${currentStep}]]' || 'STEP1'; 
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // HTML 요소 변수 선언
+        const step1Form = document.getElementById('step1-form');
+        const step2Form = document.getElementById('step2-form');
+        const requestVerificationBtn = document.getElementById('requestVerificationBtn');
+        const resendBtn = document.getElementById('resendBtn');
+        const messageArea = document.getElementById('message-area');
 
-    const step1Form = document.getElementById('step1-form');
-    const step2Form = document.getElementById('step2-form');
-    
-    const comCodeInput = step1Form.querySelector('input[name="comCode"]');
-    const empIdInput = step1Form.querySelector('input[name="empId"]');
-    const userKeyInput = step1Form.querySelector('input[name="userKey"]');
+        // STEP1 입력 필드
+        const comCodeInput = step1Form.querySelector('input[name="comCode"]');
+        const empIdInput = step1Form.querySelector('input[name="empId"]');
+        const matMailInput = step1Form.querySelector('input[name="matMail"]');
+        const userKeyInput = step1Form.querySelector('input[name="userKey"]');
+        
+        // STEP2 숨겨진 필드
+        const hiddenComCode = document.getElementById('hiddenComCode');
+        const hiddenEmpId = document.getElementById('hiddenEmpId');
+        const hiddenMatMail = document.getElementById('hiddenMatMail');
+        const hiddenUserKey = document.getElementById('hiddenUserKey');
 
-    const hiddenComCode = document.getElementById('hiddenComCode');
-    const hiddenEmpId = document.getElementById('hiddenEmpId');
-    const hiddenUserKey = document.getElementById('hiddenUserKey');
+        let timerInterval;
 
-    // STEP 표시 및 STEP2 초기화
-    function showStep(step) {
-      if (step === 'STEP2') {
-        step1Form.style.display = 'none';
-        step2Form.style.display = 'block';
-        hiddenComCode.value = comCodeInput.value;
-        hiddenEmpId.value = empIdInput.value;
-        hiddenUserKey.value = userKeyInput.value;
-        startTimer(60); 
-      } else {
-        step1Form.style.display = 'block';
-        step2Form.style.display = 'none';
-      }
-    }
+        // 재전송 타이머 함수
+        function startTimer(duration) {
+            let timer = duration;
+            resendBtn.disabled = true;
+            clearInterval(timerInterval);
 
-    if (currentStep === 'STEP2') {
-        showStep('STEP2');
-    } else {
-        showStep('STEP1');
-    }
-
-    // 인증번호 재전송 타이머
-    const resendBtn = document.getElementById('resendBtn');
-    let timerInterval;
-
-    function startTimer(duration) {
-      let timer = duration;
-      resendBtn.disabled = true;
-      clearInterval(timerInterval); 
-      
-      timerInterval = setInterval(function () {
-        let seconds = timer < 10 ? '0' + timer : timer;
-        resendBtn.textContent = `재전송 (${seconds}s)`;
-        if (--timer < 0) {
-          clearInterval(timerInterval);
-          resendBtn.textContent = '인증번호 재전송';
-          resendBtn.disabled = false; 
+            timerInterval = setInterval(() => {
+                const seconds = String(timer).padStart(2, '0');
+                resendBtn.textContent = `재전송 (${seconds}s)`;
+                if (--timer < 0) {
+                    clearInterval(timerInterval);
+                    resendBtn.textContent = '인증번호 재전송';
+                    resendBtn.disabled = false;
+                }
+            }, 1000);
         }
-      }, 1000);
-    }
 
-    resendBtn.addEventListener('click', function() {
-        step1Form.submit(); 
+        // STEP1, STEP2 화면 전환 함수
+        function showStep(step) {
+            if (step === 'STEP2') {
+                step1Form.style.display = 'none';
+                step2Form.style.display = 'block';
+
+                // STEP1의 값들을 STEP2의 hidden input으로 복사
+                hiddenComCode.value = comCodeInput.value;
+                hiddenEmpId.value = empIdInput.value;
+                hiddenMatMail.value = matMailInput.value;
+                if(userKeyInput) hiddenUserKey.value = userKeyInput.value;
+
+                startTimer(60); // 타이머 시작
+            } else {
+                step1Form.style.display = 'block';
+                step2Form.style.display = 'none';
+            }
+        }
+        
+        // 메시지 출력 함수
+        function showMessage(text, isError) {
+            messageArea.innerHTML = `<div class="message ${isError ? 'error-message' : 'success-message'}">${text}</div>`;
+        }
+        
+        // 서버로 인증번호 발송을 요청하는 함수
+        function sendVerificationCode(isResend = false) {
+            const button = isResend ? resendBtn : requestVerificationBtn;
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = '전송 중...';
+            
+            messageArea.innerHTML = ''; // 이전 메시지 초기화
+
+            const formData = new FormData(step1Form);
+
+            // Fetch API를 이용한 비동기 서버 요청
+            fetch(step1Form.action, {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            })
+            .then(response => response.json()) // 응답을 JSON으로 파싱
+            .then(data => {
+                // 서버로부터 success:true 응답을 받았을 경우
+                if (data.success) {
+                    showMessage('인증번호가 발송되었습니다. 휴대폰을 확인해주세요.', false);
+                    if (!isResend) {
+                        showStep('STEP2'); // 최초 요청 시 STEP2로 전환
+                    } else {
+                        startTimer(60); // 재전송 시 타이머만 재시작
+                    }
+                } else {
+                    // 서버로부터 success:false 응답을 받았을 경우
+                    throw new Error(data.message || '입력하신 정보가 일치하지 않습니다.');
+                }
+            })
+            .catch(error => {
+                // 네트워크 오류 또는 서버 에러 발생 시
+                console.error('인증 요청 오류:', error);
+                showMessage(error.message, true);
+                button.disabled = false;
+                button.textContent = originalText;
+            });
+        }
+        
+        // '인증 요청' 버튼 클릭 이벤트
+        requestVerificationBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            // 필수 입력 필드가 비어있는지 확인
+            if (!comCodeInput.value || !empIdInput.value || !matMailInput.value) {
+                showMessage('회사코드, 아이디, 이메일을 모두 입력해주세요.', true);
+                return;
+            }
+            sendVerificationCode(false);
+        });
+
+        // '재전송' 버튼 클릭 이벤트
+        resendBtn.addEventListener('click', () => sendVerificationCode(true));
+
+        // 페이지 로드 시 항상 STEP1부터 시작
+        showStep('STEP1');
     });
-    /* ]]> */
   </script>
 </th:block>
 </body>

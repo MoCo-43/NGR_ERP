@@ -2,14 +2,13 @@
 
 package com.yedam.erp.web.ApiController;
 
-import java.io.IOException;
-import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -63,6 +62,7 @@ public class LoginController {
     public String handleForgotPassword(
         @RequestParam("comCode") String comCode, // 파라미터를 Long 타입의 matNo로 받습니다.
         @RequestParam("empId") String empId,
+        @RequestParam("matMail") String matMail,
         RedirectAttributes redirectAttributes) {
 
         // 1. DTO 객체 생성 및 데이터 설정
@@ -86,14 +86,30 @@ public class LoginController {
     // Step 1: SMS 발송
     @PostMapping("/sendSms")
     @ResponseBody
-    public ResponseEntity<String> sendSms(@RequestParam String comCode,
-                                          @RequestParam String empId) {
+    public ResponseEntity<Map<String, Object>> sendSms(@RequestParam String comCode,
+                                                       @RequestParam String empId,
+                                                       @RequestParam(required = false) String matMail) {
         PasswordResetRequestVO requestDto = new PasswordResetRequestVO();
         requestDto.setComCode(comCode);
         requestDto.setEmpId(empId);
+        requestDto.setMatMail(matMail);
 
-        // SMS 발송 + userKey 반환
-        return userService.sendSmsForPasswordReset(requestDto);
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // userService에서 SMS 발송 후 userKey 반환하도록 구현했다고 가정
+            String userKey = userService.sendSmsForPasswordReset(requestDto).getBody();
+
+            result.put("success", true);
+            result.put("message", "인증번호가 발송되었습니다.");
+            result.put("userKey", userKey); // STEP2 hidden input에 넣을 값
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
+        }
     }
 
     // Step 2: 인증번호 검증

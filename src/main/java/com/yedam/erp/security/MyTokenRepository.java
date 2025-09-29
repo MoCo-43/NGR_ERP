@@ -51,7 +51,6 @@ public class MyTokenRepository implements PersistentTokenRepository {//스프링
         String sql = "UPDATE remember_login SET token = ?, last_used = ? WHERE series = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setString(1, tokenValue);
             ps.setTimestamp(2, new Timestamp(lastUsed.getTime()));
             ps.setString(3, series);

@@ -109,6 +109,14 @@ const MENUS = {
       { title: "재무상태표", items: [["재무상태표", "/acc/bs"]] },
     ],
   },
+  mains:{
+	title:"mypage",
+	content:"마이페이지대시보드",
+	groups:[
+		{title:"관리",items:[["마이페이지","/mypage"]]}
+	]
+  }
+  
 };
 
 /** DOM 참조 */

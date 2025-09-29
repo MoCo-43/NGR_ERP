@@ -1,257 +1,817 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>구독 정보</title>
-    <style>
-        /* 기본 스타일 */
-        body {
-            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-            margin: 0;
-        }
-        
-        main {
-            display: flex;
-            justify-content: center;
-            padding: 30px 20px;
-            width: 100%;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<title>구독 상세</title>
+<style>
+/* 기본 스타일 */
+body {
+	font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+	background-color: #f8f9fa;
+	color: #333;
+	margin: 0;
+}
 
-        /* 메인 콘텐츠 래퍼 (더 크게 수정) */
-        .content-wrapper {
-            width: 1400px; 
-            background-color: #fff;
-            border: 1px solid #dee2e6;
-            padding: 24px;
-        }
+main {
+	display: flex;
+	justify-content: center;
+	padding: 30px 20px;
+	width: 100%;
+	box-sizing: border-box;
+}
 
-        /* 페이지 상단 제목 */
-        .page-title {
-            text-align: center;
-            font-size: 28px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
+.content-wrapper {
+	width: 1400px;
+	background-color: #fff;
+	border: 1px solid #dee2e6;
+	padding: 24px;
+}
 
-        /* 스텝 네비게이션 */
-        .steps {
-            display: flex;
-            list-style: none;
-            padding: 0 0 20px 0;
-            margin: 0 0 24px 0;
-            justify-content: space-evenly;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .steps .step { display: flex; align-items: center; color: #888; }
-        .steps .step .number {
-            width: 28px; height: 28px; border-radius: 50%; background-color: #adb5bd;
-            color: white; display: flex; justify-content: center; align-items: center;
-            margin-right: 8px; font-weight: bold; font-size: 14px;
-        }
-        .steps .step.active .number { background-color: #e53935; }
-        .steps .step.active span { color: #e53935; font-weight: bold; }
+.page-title {
+	text-align: center;
+	font-size: 28px;
+	font-weight: bold;
+	margin-bottom: 20px;
+}
 
-        /* 내부 콘텐츠 레이아웃 (폼 | 사이드바) */
-        .inner-layout {
-            display: flex;
-            gap: 32px; /* 폼과 사이드바 간격 */
-        }
+.steps {
+	display: flex;
+	list-style: none;
+	padding: 0 0 20px 0;
+	margin: 0 0 24px 0;
+	justify-content: space-evenly;
+	border-bottom: 1px solid #e9ecef;
+}
 
-        .subscription-form { 
-            flex: 2; /* 폼 영역 비율 (2:1) */
-        }
+.steps .step {
+	display: flex;
+	align-items: center;
+	color: #888;
+}
 
-        /* 폼 섹션 제목 */
-        .form-section-label {
-            font-size: 14px;
-            font-weight: bold;
-            color: #495057;
-            margin-bottom: 8px;
-            display: block;
-        }
-        
-        .form-group {
-            margin-bottom: 24px;
-        }
-        
-        .options-group { display: flex; gap: 12px; margin-bottom: 20px; }
+.steps .step .number {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background-color: #adb5bd;
+	color: white;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-right: 8px;
+	font-weight: bold;
+	font-size: 14px;
+}
 
-        /* --- CSS 수정: 클릭 안되는 서비스 표시 상자 --- */
-        .service-display-box {
-            flex: 1; padding: 16px; border: 1px solid #ced4da; background-color: #f8f9fa;
-            text-align: center; border-radius: 4px; color: #495057;
-        }
+.steps .step.active .number {
+	background-color: #e53935;
+}
 
-        /* 구독 기간 옵션 (클릭 가능) */
-        .option-button {
-            flex: 1; padding: 16px; border: 1px solid #ced4da; background-color: #fff;
-            text-align: center; cursor: pointer; transition: all 0.2s; border-radius: 4px;
-        }
-        .option-button .icon { font-size: 24px; margin-bottom: 8px; }
-        .option-button:hover { border-color: #495057; }
-        .option-button.selected { border-color: #e53935; background-color: #fff3f2; color: #e53935; font-weight: bold; }
-        
-        /* 사용자 수 선택 (셀렉트 박스) 스타일 */
-        .custom-select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 16px;
-            background-color: #fff;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 16px 12px;
-        }
+.steps .step.completed .number {
+	background-color: #3498db;
+}
 
-        /* 프리미엄 섹션 */
-        .premium-section {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px; border: 1px solid #dee2e6; margin-top: 24px;
-        }
-        .premium-section .label { font-weight: bold; }
-        .premium-section .price { font-size: 18px; font-weight: bold; color: #e53935; }
-        
-        /* 하단 네비게이션 버튼 */
-        .form-navigation { display: flex; justify-content: space-between; margin-top: 32px; }
-        .nav-btn { padding: 12px 24px; border: none; cursor: pointer; font-size: 16px; border-radius: 4px; }
-        .prev-btn { background-color: #6c757d; color: white; }
-        .next-btn { background-color: #e53935; color: white; }
+.steps .step.active span {
+	color: #e53935;
+	font-weight: bold;
+}
 
-        /* 오른쪽 사이드바 (제품 설명) 스타일 */
-        .sidebar {
-            flex: 1; /* 사이드바 영역 비율 (2:1) */
-            padding: 24px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-        }
-        .sidebar h3 {
-            font-size: 18px;
-            margin-top: 0;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        .sidebar ul {
-            padding-left: 20px;
-            margin: 10px 0;
-            line-height: 1.8;
-            color: #495057;
-        }
-        .sidebar p {
-            line-height: 1.8;
-            color: #495057;
-        }
-    </style>
+.steps .step.completed span {
+	color: #3498db;
+}
+
+.inner-layout {
+	display: flex;
+	gap: 32px;
+}
+
+.main-form, .subscription-form {
+	flex: 2;
+}
+
+.sidebar {
+	flex: 1;
+	padding: 24px;
+	background-color: #f8f9fa;
+	border-radius: 4px;
+}
+
+.sidebar h3 {
+	font-size: 18px;
+	margin-top: 0;
+	margin-bottom: 16px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid #e9ecef;
+}
+
+.sidebar ul {
+	padding-left: 20px;
+	margin: 10px 0;
+	line-height: 1.8;
+	color: #495057;
+}
+
+.sidebar p {
+	line-height: 1.8;
+	color: #495057;
+}
+
+.form-section-label {
+	font-size: 14px;
+	font-weight: bold;
+	color: #495057;
+	margin-bottom: 8px;
+	display: block;
+}
+
+.form-section-title {
+	font-size: 18px;
+	font-weight: bold;
+	color: #333;
+	margin-bottom: 24px;
+	padding-bottom: 12px;
+	border-bottom: 2px solid #e9ecef;
+}
+
+.form-group {
+	margin-bottom: 24px;
+}
+
+.input-field {
+	width: 100%;
+	padding: 12px;
+	border: 1px solid #ced4da;
+	border-radius: 4px;
+	font-size: 16px;
+	box-sizing: border-box;
+}
+
+.input-field:read-only {
+	background-color: #e9ecef;
+	cursor: default;
+}
+
+.summary-box {
+	border: 1px solid #e9ecef;
+	border-radius: 4px;
+}
+
+.summary-box .summary-item {
+	display: flex;
+	justify-content: space-between;
+	padding: 16px;
+	border-bottom: 1px solid #e9ecef;
+}
+
+.summary-box .summary-item:last-child {
+	border-bottom: none;
+}
+
+.summary-box .item-label {
+	color: #495057;
+}
+
+.summary-box .item-value {
+	font-weight: bold;
+}
+
+.summary-box .total {
+	background-color: #f8f9fa;
+	font-size: 18px;
+}
+
+.summary-box .total .item-value {
+	color: #e53935;
+}
+
+.options-group {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 20px;
+}
+
+.service-display-box {
+	flex: 1;
+	padding: 16px;
+	border: 1px solid #ced4da;
+	background-color: #f8f9fa;
+	text-align: center;
+	border-radius: 4px;
+	color: #495057;
+}
+
+.option-button, .payment-option {
+	flex: 1;
+	padding: 16px;
+	border: 1px solid #ced4da;
+	background-color: #fff;
+	text-align: center;
+	cursor: pointer;
+	transition: all 0.2s;
+	border-radius: 4px;
+}
+
+.option-button:hover, .payment-option:hover {
+	border-color: #495057;
+}
+
+.option-button.selected, .payment-option.selected {
+	border-color: #e53935;
+	background-color: #fff3f2;
+	color: #e53935;
+	font-weight: bold;
+}
+
+.custom-select {
+	width: 100%;
+	padding: 12px;
+	border: 1px solid #ced4da;
+	border-radius: 4px;
+	font-size: 16px;
+	background-color: #fff;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	background-image:
+		url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+	background-repeat: no-repeat;
+	background-position: right 0.75rem center;
+	background-size: 16px 12px;
+}
+
+.premium-section {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px;
+	border: 1px solid #dee2e6;
+	margin-top: 24px;
+}
+
+.premium-section .label {
+	font-weight: bold;
+}
+
+.premium-section .price {
+	font-size: 18px;
+	font-weight: bold;
+	color: #e53935;
+}
+
+.form-navigation {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 32px;
+}
+
+.nav-btn {
+	padding: 12px 24px;
+	border: none;
+	cursor: pointer;
+	font-size: 16px;
+	border-radius: 4px;
+}
+
+.prev-btn {
+	background-color: #6c757d;
+	color: white;
+}
+
+.next-btn {
+	background-color: #e53935;
+	color: white;
+}
+
+.completion-container {
+	text-align: center;
+	padding: 60px 20px;
+}
+
+.completion-container h2 {
+	font-size: 24px;
+	margin-bottom: 16px;
+	color: #e53935;
+}
+
+.completion-container p {
+	font-size: 16px;
+	color: #495057;
+	margin-bottom: 32px;
+}
+
+.completion-container .home-btn {
+	background-color: #e53935;
+	color: white;
+	padding: 14px 40px;
+	font-size: 18px;
+	text-decoration: none;
+	border-radius: 4px;
+}
+
+.step-section {
+	display: none;
+}
+
+.step-section.active {
+	display: block;
+}
+
+/* 전자 계약서 스타일 */
+#contract-document-wrapper {
+	border: 1px solid #dee2e6;
+	padding: 10px;
+	height: 500px;
+	overflow-y: auto;
+	margin-bottom: 20px;
+	background-color: #fff;
+}
+
+#contract-document {
+	padding: 20px;
+	line-height: 1.7;
+	font-size: 14px;
+	color: #333;
+}
+
+#contract-document h1 {
+	text-align: center;
+	font-size: 22px;
+	margin-bottom: 24px;
+	font-weight: bold;
+}
+
+#contract-document h2 {
+	font-size: 18px;
+	margin-top: 32px;
+	margin-bottom: 16px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid #e0e0e0;
+	font-weight: bold;
+}
+
+#contract-document h3 {
+	font-size: 16px;
+	margin-bottom: 12px;
+	font-weight: bold;
+}
+
+#contract-document p, #contract-document ul, #contract-document ol {
+	margin-bottom: 16px;
+}
+
+#contract-document .introduction {
+	text-align: center;
+	margin-bottom: 32px;
+	color: #555;
+}
+
+#contract-document ul, #contract-document ol {
+	padding-left: 20px;
+}
+
+#contract-document strong {
+	color: #000;
+}
+
+#contract-document .sub-list {
+	margin-top: 8px;
+	padding-left: 20px;
+}
+</style>
 </head>
 <body>
-    <div th:replace="~{layout/main_header :: headerFragment}"></div>
-    
-    <main>
-        <div class="content-wrapper">
-            <h1 class="page-title">구독제품이름</h1>
 
-            <ol class="steps">
-                <li class="step active"><div class="number">1</div><span>구독정보</span></li>
-                <li class="step"><div class="number">2</div><span>사용자정보</span></li>
-                <li class="step"><div class="number">3</div><span>전자 계약서</span></li>
-                <li class="step"><div class="number">4</div><span>결제 및 결제완료</span></li>
-            </ol>
+	<div th:replace="~{layout/main_header :: headerFragment}"></div>
+
+	<main>
+		<div class="content-wrapper">
+			<h1 class="page-title">구독상세</h1>
+
+			<ol class="steps">
+				<li id="step-ui-1" class="step active"><div class="number">1</div>
+					<span>구독정보</span></li>
+				<li id="step-ui-2" class="step"><div class="number">2</div> <span>사용자정보</span></li>
+				<li id="step-ui-3" class="step"><div class="number">3</div> <span>전자
+						계약서</span></li>
+				<li id="step-ui-4" class="step"><div class="number">4</div> <span>결제
+						및 결제완료</span></li>
+			</ol>
+
+			<!-- STEP 1: 구독정보 -->
+			<div id="step-1" class="step-section active">
+				<div class="inner-layout">
+					<div class="subscription-form">
+						<div class="form-group">
+							<label class="form-section-label">제공 서비스</label>
+							<div
+								th:each="svc : ${#strings.arraySplit(subPlan.avaiModules, ',')}"
+								class="service-display-box">
+								<div th:text="${svc}"></div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="form-section-label">구독기간</label>
+							<div class="options-group" id="duration-options">
+								<div class="option-button">
+									<div class="icon">📅</div>
+									<div>3개월</div>
+								</div>
+								<div class="option-button selected">
+									<div class="icon">📅</div>
+									<div>6개월</div>
+								</div>
+								<div class="option-button">
+									<div class="icon">📅</div>
+									<div>12개월</div>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="user-count-select" class="form-section-label">사용자
+								수(규모)</label> <select id="user-count-select" class="custom-select">
+								<option value="10">10명</option>
+								<option value="50" selected>50명</option>
+								<option value="100">100명</option>
+							</select>
+						</div>
+						<div class="premium-section">
+							<span class="label">프리미엄 12개월 구독 금액</span> <span class="price"
+								th:text="${subPlan.baseSalary}"></span></span>
+						</div>
+						<div class="form-navigation">
+							<button type="button" class="nav-btn prev-btn" disabled>이전단계</button>
+							<button type="button" class="nav-btn next-btn"
+								onclick="goToStep(2)">다음단계</button>
+						</div>
+					</div>
+					<aside class="sidebar">
+						<h3>제품에 대한 설명</h3>
+						<p>
+							<strong>구독 안내</strong>
+						</p>
+						<ul>
+							<li>원하는 구독 기간과 회사 규모(사용자 수)에 맞는 플랜을 선택하세요.</li>
+							<li><strong>12개월</strong> 구독 시 <strong>10% 할인</strong>이
+								적용됩니다.</li>
+						</ul>
+						<p>
+							<strong>초과 요금 정책</strong>
+						</p>
+						<ul>
+							<li>선택한 플랜의 최대 인원을 초과하여 사용자를 추가할 경우, 인당 추가 요금이 발생합니다.</li>
+						</ul>
+						<p>
+							<strong>다음 단계</strong>
+						</p>
+						<ul>
+							<li>선택 완료 후 '다음단계'를 누르면 전자 계약 페이지로 이동합니다.</li>
+						</ul>
+					</aside>
+				</div>
+			</div>
+
+			<!-- STEP 2: 사용자정보 -->
+			<div id="step-2" class="step-section">
+				<div class="inner-layout">
+					<div class="main-form">
+						<h3 class="form-section-title">회사 정보 (자동 입력)</h3>
+						<div class="form-group">
+							<label for="company-name" class="form-section-label">회사명</label>
+							<input type="text" id="compName" class="input-field" readonly>
+						</div>
+						<div class="form-group">
+							<label for="biz-reg-number" class="form-section-label">사업자
+								등록번호</label> <input type="text" id="brm" class="input-field"
+								readonly>
+						</div>
+						<div class="form-group">
+							<label for="ceo-name" class="form-section-label">대표자명</label> <input
+								type="text" id="ceo" class="input-field" readonly>
+						</div>
+						<div class="form-group">
+							<label for="company-address" class="form-section-label">회사
+								주소</label> <input type="text" id="company-address" class="input-field"
+								readonly> <input type="text" id="company-address-detail"
+								class="input-field" readonly style="margin-top: 10px;">
+						</div>
+
+						<h3 class="form-section-title" style="margin-top: 48px;">관리자
+							정보 (자동 입력)</h3>
+						<div class="form-group">
+							<label for="admin-name" class="form-section-label">관리자 이름</label>
+							<input type="text" id="matName" class="input-field" readonly>
+						</div>
+						<div class="form-group">
+							<label for="admin-email" class="form-section-label">관리자
+								이메일 (ID)</label> <input type="email" id="matMail"
+								class="input-field" readonly>
+						</div>
+
+						<div class="form-navigation">
+							<button type="button" class="nav-btn prev-btn"
+								onclick="goToStep(1)">이전단계</button>
+							<button type="button" class="nav-btn next-btn"
+								onclick="goToStep(3)">정보 확인 및 다음단계</button>
+						</div>
+					</div>
+
+					<aside class="sidebar">
+						<h3>선택한 구독 정보</h3>
+						<div class="summary-box">
+							<div class="summary-item">
+								<span class="item-label">구독 기간</span> <span class="item-value">6개월</span>
+							</div>
+							<div class="summary-item">
+								<span class="item-label">사용자 수</span> <span class="item-value">50명</span>
+							</div>
+							<div class="summary-item total">
+								<span class="item-label">예상 결제금액</span> <span class="price"
+									th:text="${subPlan.baseSalary}"></span></span>
+							</div>
+						</div>
+						<h3 style="margin-top: 24px;">안내</h3>
+						<ul>
+							<li>사용자 정보는 현재 로그인된 계정을 기준으로 자동 입력됩니다.</li>
+							<li>정보 변경이 필요한 경우, 마이페이지에서 수정해 주세요.</li>
+						</ul>
+					</aside>
+				</div>
+				<script>
+				   document.addEventListener('DOMContentLoaded', function() {
+				       // 이 fetch 호출에서 문제가 발생했을 가능성이 높습니다.
+				      fetch('/api/subDetail?planId=' + '[[${subPlanNo}]]')
+				           .then(response => {
+							    return response.json(); // 유효한 응답일 때만 JSON 파싱 시도
+							})
+				           .then(data => {
+				               // 가져온 데이터(data)의 속성 이름이 HTML ID와 일치하지 않거나,
+				               // data 자체가 오류일 수 있습니다.
+				               document.getElementById('compName').value = data.company.compName;
+				               document.getElementById('brm').value = data.company.brm;
+				               document.getElementById('ceo').value = data.company.ceo;
+				               document.getElementById('company-address').value = data.company.address;
+				               document.getElementById('company-address-detail').value = data.company.addressDetail;
+				               document.getElementById('matName').value = data.company.matName;
+				               document.getElementById('matMail').value = data.company.matMail;
+				           })
+				           //.catch(error => console.error('Error fetching company info:', error));
+				   });
+				</script>
+			</div>
+
+			<!-- STEP 3: 전자 계약서 (수정됨) -->
+			<div id="step-3" class="step-section">
+				<div id="contract-document-wrapper">
+					<div id="contract-document">
+						<h1>NGR_ERP 서비스 이용계약서</h1>
+						<p class="introduction">본 계약서는 NGR_ERP 서비스 이용과 관련하여 필요한 제반 사항을
+							규정함을 목적으로 합니다.</p>
+
+						<h2>제1장 총칙</h2>
+						<article>
+							<h3>제1조 (목적)</h3>
+							<p>본 약관은 엔지알(이하 "회사")이 제공하는 NGR_ERP 서비스(이하 "서비스")의 이용과 관련하여
+								회사와 이용자(이하 "고객")의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
+						</article>
+						<article>
+							<h3>제2조 (용어의 정의)</h3>
+							<div class="article-content">
+								<ul>
+									<li><strong>서비스:</strong> 회사가 고객에게 제공하는 전사적자원관리(ERP) 시스템 및
+										관련 부가 서비스를 의미합니다.</li>
+									<li><strong>고객:</strong> 회사와 서비스 이용계약을 체결하고 회사가 제공하는 서비스를
+										이용하는 법인 또는 개인사업자를 의미합니다.</li>
+									<li><strong>이용요금:</strong> 고객이 서비스를 이용하는 대가로 회사에 지불해야 하는
+										비용을 의미합니다.</li>
+								</ul>
+							</div>
+						</article>
+						<article>
+							<h3>제3조 (약관의 효력 및 변경)</h3>
+							<div class="article-content">
+								<ol>
+									<li>본 약관은 서비스를 신청한 고객이 동의함으로써 효력이 발생합니다.</li>
+									<li>회사는 합리적인 사유가 발생할 경우 관련 법령에 위배되지 않는 범위에서 본 약관을 개정할 수
+										있습니다.</li>
+									<li>회사가 약관을 개정할 경우에는 적용일자 및 개정사유를 명시하여 현행약관과 함께 서비스 홈페이지에
+										그 적용일자 7일 이전부터 적용일자 전일까지 공지합니다.</li>
+								</ol>
+							</div>
+						</article>
+						<h2>제2장 서비스 이용계약</h2>
+						<article>
+							<h3>제4조 (이용계약의 성립)</h3>
+							<p>이용계약은 고객이 회사가 정한 소정의 절차에 따라 이용신청을 하고, 회사가 이에 대해 승낙함으로써
+								체결됩니다.</p>
+						</article>
+						<article>
+							<h3>제5조 (서비스의 제공 및 변경)</h3>
+							<div class="article-content">
+								<ol>
+									<li>회사는 계약에서 정한 바에 따라 안정적인 서비스를 지속적으로 제공할 의무가 있습니다.</li>
+									<li>서비스의 내용에 변경이 있을 경우, 회사는 이를 고객에게 사전에 공지하여야 합니다.</li>
+									<li>회사는 정기점검, 시스템 개선 등의 사유로 서비스 제공을 일시적으로 중단할 수 있으며, 이 경우
+										사전에 공지합니다.</li>
+								</ol>
+							</div>
+						</article>
+						<h2>제3장 당사자의 의무</h2>
+						<article>
+							<h3>제6조 (회사의 의무)</h3>
+							<div class="article-content">
+								<ol>
+									<li>회사는 고객의 정보 보안을 위해 최선을 다하며, 개인정보처리방침을 준수합니다.</li>
+									<li>회사는 서비스 이용과 관련하여 고객으로부터 제기된 의견이나 불만이 정당하다고 인정될 경우에는 이를
+										신속하게 처리하여야 합니다.</li>
+								</ol>
+							</div>
+						</article>
+						<article>
+							<h3>제7조 (고객의 의무)</h3>
+							<div class="article-content">
+								<ol>
+									<li>고객은 서비스 이용에 따른 이용요금을 지정된 기일에 납부하여야 합니다.</li>
+									<li>고객은 부여받은 아이디와 비밀번호의 관리 소홀로 인해 발생하는 모든 책임은 고객 본인에게
+										있습니다.</li>
+									<li>고객은 서비스 이용과 관련하여 다음 각 호의 행위를 하여서는 안 됩니다.
+										<ul class="sub-list">
+											<li>타인의 정보를 도용하는 행위</li>
+											<li>서비스를 이용하여 얻은 정보를 회사의 사전 승낙 없이 복제, 유통하거나 상업적으로 이용하는
+												행위</li>
+											<li>회사의 지적재산권을 침해하는 행위</li>
+										</ul>
+									</li>
+								</ol>
+							</div>
+						</article>
+						<h2>제4장 계약의 해지 및 이용 제한</h2>
+						<article>
+							<h3>제8조 (계약의 해지)</h3>
+							<p>고객 또는 회사는 부득이한 사유가 있는 경우 상대방에게 서면 통보함으로써 본 계약을 해지할 수 있습니다.</p>
+						</article>
+						<article>
+							<h3>제9조 (이용 제한)</h3>
+							<p>회사는 고객이 본 약관의 의무를 위반하거나 서비스의 정상적인 운영을 방해한 경우, 서비스 이용을
+								제한하거나 계약을 해지할 수 있습니다.</p>
+						</article>
+						<h2>제5장 손해배상 및 면책</h2>
+						<article>
+							<h3>제10조 (손해배상)</h3>
+							<p>당사자 일방이 본 계약상의 의무를 위반하여 상대방에게 손해를 입힌 경우, 귀책사유 있는 당사자는 상대방이
+								입은 손해를 배상하여야 합니다.</p>
+						</article>
+						<article>
+							<h3>제11조 (면책)</h3>
+							<div class="article-content">
+								<ol>
+									<li>천재지변 또는 이에 준하는 불가항력으로 인하여 서비스를 제공할 수 없는 경우에는 서비스 제공에
+										관한 책임이 면제됩니다.</li>
+									<li>회사는 고객의 귀책사유로 인한 서비스 이용의 장애에 대하여는 책임을 지지 않습니다.</li>
+								</ol>
+							</div>
+						</article>
+					</div>
+				</div>
+				<div class="form-navigation">
+					<button type="button" class="nav-btn prev-btn"
+						onclick="goToStep(2)">이전단계</button>
+					<button type="button" class="nav-btn next-btn"
+						onclick="goToStep(4)">계약에 동의 및 다음단계</button>
+				</div>
+			</div>
+
+			<!-- STEP 4: 결제 -->
+			<div id="step-4" class="step-section">
+				<div class="inner-layout">
+					<div class="main-form">
+						<div class="form-group">
+							<label class="form-section-label">최종 결제 정보</label>
+							<div class="summary-box">
+								<div class="summary-item">
+									<span class="item-label">구독 기간</span> <span class="item-value">6개월</span>
+								</div>
+								<div class="summary-item">
+									<span class="item-label">사용자 수</span> <span class="item-value">50명</span>
+								</div>
+								<div class="summary-item">
+									<span class="item-label">기본 금액</span> <span class="price"
+										th:text="${subPlan.baseSalary}"></span></span>
+								</div>
+								<div class="summary-item">
+									<span class="item-label">할인 금액</span> <span class="item-value">-
+										0원</span>
+								</div>
+								<div class="summary-item">
+									<span class="item-label">초과 금액</span> <span class="item-value">20,000원</span>
+								</div>
+								<div class="summary-item total">
+									<span class="item-label">총 결제 금액</span> <span
+										class="item-value">1,020,000원</span>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="form-section-label">결제 수단 선택</label>
+							<div class="options-group" id="payment-options">
+								<div class="payment-option selected">신용카드</div>
+								<div class="payment-option">계좌이체</div>
+								<div class="payment-option">가상계좌</div>
+							</div>
+						</div>
+						<div class="form-navigation">
+							<button type="button" class="nav-btn prev-btn"
+								onclick="goToStep(3)">이전단계</button>
+							<button type="button" class="nav-btn next-btn"
+								onclick="goToStep(5)">1,000,000원 결제하기</button>
+						</div>
+					</div>
+					<aside class="sidebar">
+						<h3>결제 안내</h3>
+						<ul>
+							<li>결제는 안전한 PG사를 통해 진행됩니다.</li>
+							<li>결제 완료 후 즉시 서비스를 이용할 수 있습니다.</li>
+							<li>결제 관련 문의는 고객센터(1234-5678)로 연락주시기 바랍니다.</li>
+						</ul>
+					</aside>
+				</div>
+			</div>
+
+			<!-- STEP 5: 결제 완료 -->
+			<div id="step-5" class="step-section">
+				<div class="completion-container">
+					<h2>결제가 성공적으로 완료되었습니다!</h2>
+					<p>
+						이제 모든 서비스를 정상적으로 이용하실 수 있습니다.<br>관리자 계정으로 로그인하여 서비스를 시작해 보세요.
+					</p>
+					<div class="summary-box"
+						style="width: 500px; margin: 0 auto 40px auto; text-align: left;">
+						<div class="summary-item">
+							<span class="item-label">구독 플랜</span> <span class="item-value">프리미엄</span>
+						</div>
+						<div class="summary-item">
+							<span class="item-label">구독 기간</span> <span class="item-value">2025-09-29
+								~ 2026-03-28</span>
+						</div>
+					</div>
+					<a href="/dashboard" class="home-btn">서비스 시작하기</a>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<div th:replace="~{layout/main_footer :: footerFragment}"></div>
+
+	<script>
+        let currentStep = 1;
+
+        function goToStep(stepNumber) {
+            document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step-${stepNumber}`).classList.add('active');
             
-            <div class="inner-layout">
-                <div class="subscription-form">
-                    <div class="form-group">
-                        <label class="form-section-label">제공 서비스</label>
-                        <div class="options-group">
-                            <div class="service-display-box">
-                                <div>인사</div>
-                            </div>
-                            <div class="service-display-box">
-                                <div>회계</div>
-                            </div>
-                        </div>
-                    </div>
+            updateStepUI(stepNumber);
+            currentStep = stepNumber;
+        }
 
-                    <div class="form-group">
-                        <label class="form-section-label">구독기간</label>
-                        <div class="options-group" id="duration-options">
-                            <div class="option-button">
-                                <div class="icon">📅</div>
-                                <div>3개월</div>
-                            </div>
-                            <div class="option-button selected">
-                                <div class="icon">📅</div>
-                                <div>6개월</div>
-                            </div>
-                            <div class="option-button">
-                                <div class="icon">📅</div>
-                                <div>12개월</div>
-                            </div>
-                        </div>
-                    </div>
+        function updateStepUI(targetStep) {
+            const steps = document.querySelectorAll('.steps .step');
+            const uiTargetStep = targetStep > 4 ? 4 : targetStep;
 
-                    <div class="form-group">
-                        <label for="user-count-select" class="form-section-label">사용자 수(규모)</label>
-                        <select id="user-count-select" class="custom-select">
-                            <option value="10">10명</option>
-                            <option value="50" selected>50명</option>
-                            <option value="100">100명</option>
-                        </select>
-                    </div>
+            steps.forEach((step, index) => {
+                const stepIndex = index + 1;
+                step.classList.remove('active', 'completed');
+                if (stepIndex < uiTargetStep) {
+                    step.classList.add('completed');
+                } else if (stepIndex === uiTargetStep) {
+                    step.classList.add('active');
+                }
+            });
 
-                    <div class="premium-section">
-                        <span class="label">프리미엄 12개월 구독 금액</span>
-                        <span class="price">금액</span>
-                    </div>
+            if (targetStep === 5) {
+                const step4UI = document.getElementById('step-ui-4');
+                if (step4UI) { 
+                    step4UI.classList.remove('active');
+                    step4UI.classList.add('completed');
+                }
+            }
+        }
 
-                    <div class="form-navigation">
-                        <button type="button" class="nav-btn prev-btn" onclick="location.href='/subscribe'">이전단계</button>
-                        <button type="button" class="nav-btn next-btn" onclick="location.href='/eContract'">다음단계</button>
-                    </div>
-                </div>
-                
-                <aside class="sidebar">
-                    <h3>제품에 대한 설명</h3>
-                    <p><strong>구독 안내</strong></p>
-                    <ul>
-                        <li>원하는 구독 기간과 회사 규모(사용자 수)에 맞는 플랜을 선택하세요.</li>
-                        <li><strong>12개월</strong> 구독 시 <strong>10% 할인</strong>이 적용됩니다.</li>
-                    </ul>
-                    <p><strong>초과 요금 정책</strong></p>
-                    <ul>
-                        <li>선택한 플랜의 최대 인원을 초과하여 사용자를 추가할 경우, 인당 추가 요금이 발생합니다.</li>
-                    </ul>
-                    <p><strong>다음 단계</strong></p>
-                    <ul>
-                        <li>선택 완료 후 '다음단계'를 누르면 전자 계약 페이지로 이동합니다.</li>
-                    </ul>
-                </aside>
-            </div>
-        </div>
-    </main>
-    
-    <div th:replace="~{layout/main_footer :: footerFragment}"></div>
-
-    <script>
-        // 문서의 모든 콘텐츠가 로드된 후에 스크립트를 실행합니다.
         document.addEventListener('DOMContentLoaded', function() {
-            // '구독 기간' 옵션 버튼들을 모두 선택합니다.
-            const durationButtons = document.querySelectorAll('#duration-options .option-button');
+            // 초기 활성 섹션 설정
+            document.getElementById(`step-${currentStep}`).classList.add('active');
 
-            // 각 버튼에 대해 클릭 이벤트를 추가합니다.
+            const durationButtons = document.querySelectorAll('#duration-options .option-button');
             durationButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    // 먼저 모든 버튼에서 'selected' 클래스를 제거합니다.
                     durationButtons.forEach(btn => btn.classList.remove('selected'));
-                    // 그 다음, 방금 클릭한 버튼에만 'selected' 클래스를 추가합니다.
                     button.classList.add('selected');
+                });
+            });
+
+            const paymentOptions = document.querySelectorAll('#payment-options .payment-option');
+            paymentOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    paymentOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
                 });
             });
         });
