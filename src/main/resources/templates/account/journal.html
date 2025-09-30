@@ -113,7 +113,9 @@
 				<!-- 일반전표 목록 Grid -->
 				<div id="generalVoucherGrid" class="ag-theme-quartz"></div>
 			</div>
+			 <input class="form-control" id="compCode" name="compCode" type="hidden">
 		</div>
+         
 		<!-- 거래처 모달 fragment include -->
 		<div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
 		<div th:replace="~{account/accountModal :: accountModal}"></div>
@@ -317,8 +319,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     	  valueSetter: (params) => {
     	    if (params.data?._isDiffRow) return false; // 차액행은 수정 불가
     	    let v = (params.newValue || "").trim().toUpperCase();
-    	    if (v === "ㅇ" || v === "D" || v === "d") { params.data.dcType = "D"; return true; }
-    	    if (v === "C" || v === "ㅊ" || v === "c") { params.data.dcType = "C"; return true; }
+    	    if (v === "ㅊ" || v === "C" || v === "c") { params.data.dcType = "C"; return true; }
+    	    if (v === "D" || v === "ㅇ" || v === "d") { params.data.dcType = "D"; return true; }
     	    return false;
     	  },
     	  cellRenderer: p => {
@@ -326,8 +328,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     	      return `<span style="color:#b91c1c;font-weight:700">${p.value}</span>`;
     	    }
     	    const v = (p.value || "").toUpperCase();
-    	    if (v === "D") return `<span class="badge-debit">차변</span>`;
-    	    if (v === "C") return `<span class="badge-credit">대변</span>`;
+    	    if (v === "C") return `<span class="badge-debit">차변</span>`;
+    	    if (v === "D") return `<span class="badge-credit">대변</span>`;
     	    return "";
     	  },
     	  cellClass: params => params.data?._isDiffRow ? "diff-row" : ""
@@ -419,17 +421,24 @@ document.getElementById("btnToggleDiff").addEventListener("click", () => {
 
 // === 거래처 모달 ===
 let businessGridApi = null;
-
+axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+.then(res => {
+		document.getElementById("compCode").value = res.data;
+	})
+  .catch(err => console.error(err));
+  
 async function loadBusinessData() {
-  try {
-    const res = await axios.get("/api/v1/stock/cusList");
-    if (businessGridApi) {
-      businessGridApi.setRowData(res.data);
-      businessGridApi.sizeColumnsToFit();
-    }
-  } catch (err) {
-    console.error("cusList 로드 실패:", err);
-  }
+	const compCode = Number(document.getElementById('compCode').value);
+    try {
+        const res = await axios.get(`/api/v1/stock/cusList/${compCode}`, {
+            
+            withCredentials: true           // 세션 쿠키 포함
+        });
+        if (businessGridApi) {
+        	businessGridApi.setGridOption("rowData", res.data);
+        	businessGridApi.sizeColumnsToFit();
+        }
+    } catch (err) { console.error(err); }
 }
 
 function initBusinessGrid() {
@@ -474,7 +483,8 @@ function initBusinessGrid() {
     	  ).hide();
     	}
   };
-  new agGrid.Grid(gridDiv, gridOptions);
+  // ✅ 새 방식
+  businessGridApi = agGrid.createGrid(gridDiv, gridOptions);
 }
 
 document.addEventListener("DOMContentLoaded", () => {

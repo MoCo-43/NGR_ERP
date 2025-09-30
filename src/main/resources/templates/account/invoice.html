@@ -75,7 +75,7 @@
 				<!-- 버튼 영역 -->
 				<div class="btn-bar">
 					<button class="btn btn-danger btn-sm open-invoice"
-						data-bs-toggle="modal" data-bs-target="#invoiceModal"
+						data-bs-toggle="modal" data-bs-target=""
 						data-type="S">매출</button>
 					<button class="btn btn-primary btn-sm open-invoice"
 						data-bs-toggle="modal" data-bs-target="#invoiceModal"
@@ -111,10 +111,18 @@
 		<script th:inline="none">
   let voucherApi, detailApi;
   let selectedInvoice = null; // ✅ 현재 선택한 상단 전표행 저장
+  
+  // compCode받아놓기
+  axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+  .then(res => {
+  		document.getElementById("compCode").value = res.data;
+  	})
+    .catch(err => console.error(err));
+    
   // === 전표 데이터 불러오기 ===
   async function loadAndRenderVoucher() {
     try {
-      const { data } = await axios.get("/api/account/invoice");
+      const { data } = await axios.get("/api/account/headers");
       voucherApi.setGridOption("rowData", Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
@@ -210,27 +218,6 @@
   });
   
 
-//✅ 초기화 버튼 동작
-document.getElementById("resetInvoiceBtn")?.addEventListener("click", () => {
- const modalEl = document.getElementById("invoiceModal");
-
- // 모든 input, textarea, select 초기화
- modalEl.querySelectorAll("input, textarea, select").forEach(el => {
-   if (el.type === "date") {
-     el.value = ""; // 날짜는 공백 처리
-   } else if (el.tagName === "SELECT") {
-     el.selectedIndex = 0; // 첫번째 옵션으로
-   } else {
-     el.value = "";
-   }
- });
-
- // ag-grid 초기화
- const gridDiv = document.getElementById("invoiceGrid");
- if (gridDiv && gridDiv.api) {
-   gridDiv.api.setRowData([]); // 행 비우기
- }
-});
 
 // 오늘 날짜
 const todayStr = () => {
