@@ -48,4 +48,8 @@ public interface StockMapper {
 	public List<OrderVO> getOrderList(Long compId);
 	public List<OrderDetailVO> getOrderDetailByOrderCode(String orderCode); 
 	
+	// 발주 등록
+	public void insertOrder(OrderVO order); // 마스터
+	public int insertOrderDetail(OrderDetailVO item); // 상세
+	
 }

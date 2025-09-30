@@ -3,6 +3,8 @@ package com.yedam.erp.vo.stock;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.format.annotation.NumberFormat;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -21,8 +23,11 @@ public class OrderPlanVO {
 	private String empId;
 	@JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "yyyy-MM-dd")
 	private Date insDate;
+	@NumberFormat(pattern = "#,###")
 	private int amount;
+	@NumberFormat(pattern = "#,###")
 	private int purchasePrice;
+	@NumberFormat(pattern = "#,###")
 	private int supAmt;
 	
 	private String taxType;

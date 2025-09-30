@@ -40,7 +40,7 @@
   <!-- 마스터 카드 -->
   <!-- <div class="card shadow-sm mb-4"> -->
     <div class="card-header py-3 d-flex align-items-center justify-content-between">
-      <h6 class="mb-0 font-weight-bold text-primary">발주 계획 등록 페이지</h5>
+      <h6 class="mb-0 font-weight-bold text-primary">발주 계획 등록 페이지</h6>
     </div>
   <!-- </div>  -->
 
@@ -190,7 +190,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	  }
 	  
 	  // 지정한 세액별 계산값 바인딩
-	  row.querySelector('.supAmt').value = Math.floor(qty * price * (1 + taxRate)); // 공급가액
+	  //row.querySelector('.supAmt').value = Math.floor(qty * price * (1 + taxRate)); // 공급가액
+	  row.querySelector('.supAmt').value = Math.floor(qty * price); // 공급가액
 	  row.querySelector('.vatAmt').value = Math.floor(supAmt * taxRate); // 공급가액 기준 부가세
 	}
 
@@ -216,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	
 	row.innerHTML = `
 		<td class="text-center">${rowCount}</td>
-	       <td><input type="text" class="form-control productCode" name="productCode"></td>
+	       <td><input type="text" class="form-control productCode" name="productCode" readonly></td>
 	       <td><input type="text" class="form-control productName" name="productName"></td>
 	       <td><input type="text" class="form-control specification" name="specification"></td>
 	       <td><input type="text" class="form-control partnerCode" name="partnerCode" readonly></td>
