@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -29,12 +30,19 @@ import lombok.RequiredArgsConstructor;
 public class ApprovalController {
 
     private final ApprovalService approvalService;
+    
+    @Value("${file.upload.dir}")
+    private String baseDirectory;
+
+//    @Value("${upload.sign.public-path}")
+//    private String publicPath;
+
 
     // 공통 서명 이미지 업로드
     @PostMapping(value = "/signature", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadSignature(@RequestPart("file") MultipartFile file) {
         try {
-            String baseDir = System.getProperty("user.dir") + File.separator + "uploads" + File.separator + "signatures";
+            String baseDir =  baseDirectory + File.separator + "uploads" + File.separator + "signatures";
             Files.createDirectories(Path.of(baseDir));
 
             String original = StringUtils.hasText(file.getOriginalFilename()) ? file.getOriginalFilename() : "sign.png";

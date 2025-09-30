@@ -302,6 +302,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+	  const invoiceModalEl = document.getElementById('invoiceModal');
+	  const btn = invoiceModalEl?.querySelector('#btnBankLookup');
+	  if (!btn) return;
+
+	  // 중복 바인딩 방지
+	  if (btn.dataset.bound === '1') return;
+	  btn.dataset.bound = '1';
+
+	  btn.addEventListener('click', (e) => {
+	    e.preventDefault();
+	    e.stopPropagation();
+
+	    CodeLookup.open({
+	      groupId: 'BK',
+	      title:  '은행 선택',
+	      // 필요한대로 지정
+	      // targetId: 'deptCodeInput',
+	      targetNameId: 'bankNameInput',
+	    });
+	  });
+	});
 </script>
 
 </th:block>
