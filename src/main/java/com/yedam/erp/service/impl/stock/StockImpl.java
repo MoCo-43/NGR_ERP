@@ -101,4 +101,22 @@ public class StockImpl implements StockService{
 		return mapper.getOrderDetailByOrderCode(orderCode);
 	}
 
+	@Transactional
+	@Override
+	public void insertOrder(OrderVO order) {
+		mapper.insertOrder(order);
+        if(order.getDetails() != null) {
+            for(OrderDetailVO item : order.getDetails()) {
+                //item.setXpCode(order.getXpCode()); // 마스터 PK -> 디테일 FK
+            	item.setOrderCode(order.getOrderCode());
+                System.out.println("Detail ORDER_CODE: " + item.getOrderCode()); // 디버깅용
+                mapper.insertOrderDetail(item);
+            }
+        }
+		
+	}
+
+
+
+
 }

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.DeptPayrollSumMapper">
+
+  <!-- 등록 -->
+  <insert id="insertDeptPayrollSum"
+    parameterType="com.yedam.erp.vo.hr.DeptPayrollSumVO">
+    INSERT INTO DEPT_PAYROLL_SUM (
+      CONFIRM_NO,
+      YEAR_MONTH,
+      DEPT_CODE,
+      EMP_COUNT,
+      TOTAL_ALLOW_SUM,
+      TOTAL_DEDUCT_SUM,
+      NET_PAY_SUM,
+      BASE_PAY_SUM,
+      FAMILY_ALLOW_SUM,
+      MEAL_ALLOW_SUM,
+      ANNUAL_ALLOW_SUM,
+      INCOME_TAX_SUM,
+      RESIDENT_TAX_SUM,
+      NATIONAL_PENSION_SUM,
+      HEALTH_INS_SUM,
+      EMPLOY_INS_SUM,
+      COMPANY_CODE
+    ) VALUES (
+      SEQ_DEPT_PAYROLL_SUM_NO.NEXTVAL,
+      #{yearMonth},
+      #{deptCode},
+      #{empCount},
+      #{totalAllowSum},
+      #{totalDeductSum},
+      #{netPaySum},
+      #{basePaySum},
+      #{familyAllowSum},
+      #{mealAllowSum},
+      #{annualAllowSum},
+      #{incomeTaxSum},
+      #{residentTaxSum},
+      #{nationalPensionSum},
+      #{healthInsSum},
+      #{employInsSum},
+      #{companyCode}
+    )
+  </insert>
+
+  <!-- 수정 -->
+  <update id="updateDeptPayrollSum"
+    parameterType="com.yedam.erp.vo.hr.DeptPayrollSumVO">
+    UPDATE DEPT_PAYROLL_SUM
+    SET
+      EMP_COUNT = #{empCount},
+      TOTAL_ALLOW_SUM = #{totalAllowSum},
+      TOTAL_DEDUCT_SUM = #{totalDeductSum},
+      NET_PAY_SUM = #{netPaySum},
+      BASE_PAY_SUM = #{basePaySum},
+      FAMILY_ALLOW_SUM = #{familyAllowSum},
+      MEAL_ALLOW_SUM = #{mealAllowSum},
+      ANNUAL_ALLOW_SUM = #{annualAllowSum},
+      INCOME_TAX_SUM = #{incomeTaxSum},
+      RESIDENT_TAX_SUM = #{residentTaxSum},
+      NATIONAL_PENSION_SUM = #{nationalPensionSum},
+      HEALTH_INS_SUM = #{healthInsSum},
+      EMPLOY_INS_SUM = #{employInsSum},
+      COMPANY_CODE = #{companyCode}
+    WHERE CONFIRM_NO = #{confirmNo}
+  </update>
+
+  <!-- 단건 조회 -->
+  <select id="selectDeptPayrollSum" parameterType="long"
+    resultType="com.yedam.erp.vo.hr.DeptPayrollSumVO">
+    SELECT *
+    FROM DEPT_PAYROLL_SUM
+    WHERE CONFIRM_NO = #{confirmNo}
+  </select>
+
+  <!-- 연월 + 회사코드 기준 조회 -->
+  <select id="selectDeptPayrollSumList"
+    resultType="com.yedam.erp.vo.hr.DeptPayrollSumVO">
+    SELECT *
+    FROM DEPT_PAYROLL_SUM
+    WHERE YEAR_MONTH = #{yearMonth}
+      AND COMPANY_CODE = #{companyCode}
+  </select>
+
+</mapper>

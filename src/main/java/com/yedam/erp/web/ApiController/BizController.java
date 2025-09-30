@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +14,7 @@ import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.Biz.BizService;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
+import com.yedam.erp.vo.Biz.DoInsertVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
 import com.yedam.erp.vo.Biz.PoDetailVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
@@ -83,9 +83,22 @@ public class BizController {
   }
 
   // 출하지시서 조회
-  @GetMapping("/dolist")
+  @GetMapping(value = "/dolist", consumes = "application/json")
   public List<DeliveryOrderVO> getDoList() {
     Long companyCode = SessionUtil.companyId();
+        System.out.println("companyCode => " + companyCode);
       return service.selectDo(companyCode);
+  }
+
+  // 출하지시서 등록 처리
+  @PostMapping(value = "/doinsert", consumes = "application/json")
+  public ResponseEntity<Integer> insertDO(@RequestBody DoInsertVO dovo) {
+
+    // 세션에서 회사코드 꺼내오기
+    Long companyCode = SessionUtil.companyId();
+    dovo.setCompanyCode(companyCode);
+
+    int result = service.insertDO(dovo);
+    return ResponseEntity.ok(result);
   }
 }

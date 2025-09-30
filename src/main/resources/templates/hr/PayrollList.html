@@ -60,35 +60,32 @@
       </div>
     </div>
 
-    <!-- 목록 -->
     <div class="card-body pt-3">
       <div id="payrollGrid" class="ag-theme-quartz"></div>
     </div>
   </div>
 
-  <!-- ✅ 모달 프래그먼트(자바스크립트 포함)를 content 내부에 포함 -->
   <th:block th:replace="~{hr/payrollModal :: payrollModal}"></th:block>
 
 </section>
 
 <th:block layout:fragment="body_extra">
-  <!-- ag-Grid / axios (전역) -->
-  <script defer src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+  <!-- ag-Grid / axios -->
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 
   <script th:inline="none">
     document.addEventListener('DOMContentLoaded', () => {
       const gridDiv      = document.getElementById('payrollGrid');
       const btnSearch    = document.getElementById('btnSearch');
       const btnReset     = document.getElementById('btnReset');
-
       const srchMonth    = document.getElementById('srchMonth');
       const srchDeptName = document.getElementById('srchDeptName');
 
       let gridApi = null;
       let rowDataCache = [];
 
-      // ===== 컬럼 정의 =====
+      // 컬럼 정의
       const columnDefs = [
         { headerName:'귀속연월', field:'yearMonth', width:120 },
         { headerName:'대장 명칭', field:'title', flex:1, minWidth:220 },
@@ -98,10 +95,9 @@
         { headerName:'인원수', field:'empCount', width:100 },
         { headerName:'상태', field:'status', width:100,
           cellRenderer:(p)=> p.value==='CONFIRMED'
-            ? `<span class="status-confirm">확정</span>`
-            : `<span class="status-wait">대기</span>` },
+            ? '<span class="status-confirm">확정</span>'
+            : '<span class="status-wait">대기</span>' },
         { headerName:'급여대장', width:100,
-          // 인라인 onclick 대신 안전한 이벤트 방식
           cellRenderer:(p)=> {
             const no = p.data?.payrollNo ?? p.data?.payroll_no;
             if (!no) return '';
@@ -110,8 +106,11 @@
             a.textContent = '보기';
             a.addEventListener('click', (e)=>{
               e.preventDefault();
-              if (window.PayrollDetail?.open) window.PayrollDetail.open(Number(no));
-              else alert('PayrollDetail 전역이 아직 준비되지 않았습니다.');
+              try {
+                window.PayrollDetail?.open?.(Number(no));
+              } catch (err) {
+                console.warn('PayrollDetail.open 호출 실패', err);
+              }
             });
             return a;
           } }
@@ -127,14 +126,10 @@
         onGridReady: (params) => { gridApi = params.api; initLoad(); }
       };
 
-      if (window.agGrid && typeof window.agGrid.createGrid === 'function') {
-        gridApi = window.agGrid.createGrid(gridDiv, gridOptions);
-      } else {
-        new agGrid.Grid(gridDiv, gridOptions);
-        gridApi = gridOptions.api;
-      }
+      // 기존 방식만 사용 
+      new agGrid.Grid(gridDiv, gridOptions);
 
-      // ===== 초기 로드: 현재 월 기본 조회 =====
+      // 초기 로드: 현재 월 기본 조회 
       async function initLoad(){
         try{
           const now = new Date();
@@ -142,27 +137,31 @@
           srchMonth.value = ym;
           await loadFromServer();
         }catch(e){
-          console.error(e);
-          alert('급여대장 조회 중 오류 발생');
+          console.error('initLoad 실패', e);
           setRows([]);
         }
       }
 
-      // ===== 서버 조회 =====
+      // 서버 조회
       async function loadFromServer(){
-        const monthVal = srchMonth.value;
-        const yearMonth = monthVal ? monthVal.replace('-','') : '';
+        try{
+          const monthVal = srchMonth.value;
+          const yearMonth = monthVal ? monthVal.replace('-','') : '';
 
-        const params = new URLSearchParams();
-        if (yearMonth) params.append('yearMonth', yearMonth);
-        const url = `/api/hr/payroll${params.toString() ? ('?'+params.toString()) : ''}`;
+          const params = new URLSearchParams();
+          if (yearMonth) params.append('yearMonth', yearMonth);
+          const url = `/api/hr/payroll${params.toString() ? ('?'+params.toString()) : ''}`;
 
-        const { data } = await axios.get(url);
-        rowDataCache = Array.isArray(data) ? data : [];
-        applyFrontFilter();
+          const { data } = await axios.get(url, { validateStatus:s=>s>=200&&s<500 });
+          rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
+          applyFrontFilter();
+        }catch(e){
+          console.error('서버 조회 실패', e);
+          setRows([]);
+        }
       }
 
-      // ===== 부서명 프론트 필터 =====
+      // 부서명 프론트 필터
       function applyFrontFilter(){
         const dept = (srchDeptName.value||'').trim().toLowerCase();
         const filtered = rowDataCache.filter(r=>{
@@ -170,10 +169,10 @@
           return !dept || name.includes(dept);
         });
         setRows(filtered);
-        if (gridApi?.paginationGoToFirstPage) gridApi.paginationGoToFirstPage();
+        gridApi?.paginationGoToFirstPage?.();
       }
 
-      // ===== 초기화 =====
+      //초기화 
       function doReset(){
         const now = new Date();
         srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -184,11 +183,10 @@
       btnSearch.addEventListener('click', loadFromServer);
       btnReset .addEventListener('click', doReset);
 
-      // ===== Helper =====
+      // Helper =
       function setRows(rows){
         if (!gridApi) return;
-        if (typeof gridApi.setGridOption === 'function') gridApi.setGridOption('rowData', rows);
-        else if (typeof gridApi.setRowData === 'function') gridApi.setRowData(rows);
+        gridApi.setRowData?.(rows);
       }
       function formatDate(v){ return v ? String(v).slice(0,10) : ''; }
       function inferDeptName(row){
@@ -199,22 +197,7 @@
     });
   </script>
 
-  <!-- 안전장치: 모달 스크립트가 늦게 로드돼도 호출 가능 -->
-  <script>
-    window.PayrollDetail ||= {
-      open(no) {
-        no = Number(no);
-        const el = document.getElementById('payrollModal');
-        if (!el) { alert('모달 DOM(payrollModal)이 없습니다. include 경로/프래그먼트명을 확인하세요.'); return; }
-        const modal = window.bootstrap?.Modal
-          ? bootstrap.Modal.getOrCreateInstance(el)
-          : null;
-        if (modal) modal.show();
-        else { el.style.display='block'; el.classList.add('show'); el.removeAttribute('aria-hidden'); document.body.classList.add('modal-open'); }
-        // 실제 데이터 로딩은 프래그먼트 쪽의 window.PayrollDetail.open이 덮어쓰면서 수행됨
-      }
-    };
-  </script>
+ 
 </th:block>
 </body>
 </html>

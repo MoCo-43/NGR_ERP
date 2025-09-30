@@ -83,9 +83,9 @@
 							<!-- 거래처 -->
 							<div class="col-md-8">
 								<label class="form-label">거래처</label>
-								<div class="row g-2">
+								<div class="row mb-2">
 									<!-- 코드 (주문서와 같은 폭: col-md-4) -->
-									<div class="col-md-4">
+									<div class="col-md-6">
 										<div class="input-group">
 											<input type="text" class="form-control" id="cusCodeInput"
 												th:value="${invoiceHeader?.cusCode}" placeholder="코드" />
@@ -96,7 +96,7 @@
 										</div>
 									</div>
 									<!-- 거래처명 (부서명 input 폭과 동일: col-md-8) -->
-									<div class="col-md-8">
+									<div class="col-md-6">
 										<input type="text" class="form-control text-center"
 											id="cusNameInput" th:value="${invoiceHeader?.cusName}"
 											placeholder="거래처명" />
@@ -112,8 +112,6 @@
 						<!-- 세부내역 -->
 						<div class="mb-2 mt-3">
 							<label class="form-label">세부내역</label>
-							<textarea class="form-control" rows="3"
-								th:text="${invoiceHeader?.memo}"></textarea>
 						</div>
 
 						<!-- 결제방식 / 적요 -->
@@ -127,10 +125,32 @@
 									class="form-control" th:value="${invoiceHeader?.note}" />
 							</div>
 						</div>
+						<div class="row mb-2">
+						<div class="col-md-6">
+								<label class="form-label">은행</label>
+								<div class="input-group">
+									<input type="text" class="form-control"
+										th:value="${invoiceHeader?.bankCode}" id="bankNameInput" />
+									<button class="btn btn-outline-secondary btn-icon"
+										type="button" id="btnBankLookup">
+										<i class="fas fa-search"></i>
+									</button>
+								</div>
+							</div>
 
+							<!-- 부서명 -->
+							<div class="col-md-6">
+								<label class="form-label">계좌번호</label>
+								<div class="input-group">
+									<input type="text" id="deptNameInput"
+										class="form-control text-center"
+										th:value="${invoiceHeader?.accountNo}" />
+								</div>
+							</div>
+						</div>
 						<div class="modal-footer">
 							<button class="btn btn-danger" type="button" id="resetInvoiceBtn">초기화</button>
-							<button class="btn btn-success" type="button">저장</button>
+							<button class="btn btn-success" type="button" id="insertInvoiceBtn">저장</button>
 
 						</div>
 
@@ -156,69 +176,103 @@ document.addEventListener("DOMContentLoaded", () => {
     	let vatTypeSelect = document.querySelector(".form-select-invoice"); // 부가세 유형 selectbox
 
     	const gridOptions = {
-    	  columnDefs: [
-    	    { headerName: "품목코드", field: "productCode", flex: 1,
-    	      onCellClicked: (params) => {
-    	        if (params.colDef.field === "productCode") {
-    	          selectedInvoiceRow = params.node;
-    	          const productModalEl = document.getElementById("productModal");
-    	          const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
-    	          productModal.show();
-    	          if (!productGridApi) {
-    	            initProductGrid();
-    	          } else {
-    	            loadProductData();
-    	          }
-    	        }
-    	      }
-    	    },
-    	    { headerName: "품목명", field: "productName", flex: 1, editable: true },
-    	    { headerName: "단가", field: "price", flex: 1, editable: true,
-    	      valueFormatter: p => p.value ? p.value.toLocaleString() : ""
-    	    },
-    	    { headerName: "수량", field: "qty", flex: 1, editable: true },
-    	    { headerName: "공급가액", field: "supply", flex: 1,
-    	      valueFormatter: p => p.value ? p.value.toLocaleString() : ""
-    	    },
-    	    { headerName: "부가세", field: "vat", flex: 1,
-    	      valueFormatter: p => p.value ? p.value.toLocaleString() : ""
-    	    },
-    	    { headerName: "비고", field: "note", flex: 1, editable: true }
-    	  ],
-    	  rowData: [],
-    	  defaultColDef: { resizable: true, filter: true, editable: true },
+    			  columnDefs: [
+    			    { headerName: "품목코드", field: "productCode", flex: 1,
+    			      onCellClicked: (params) => {
+    			        if (params.colDef.field === "productCode") {
+    			          selectedInvoiceRow = params.node;
+    			          const productModalEl = document.getElementById("productModal");
+    			          const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
+    			          productModal.show();
+    			          if (!productGridApi) {
+    			            initProductGrid();
+    			          } else {
+    			            loadProductData();
+    			          }
+    			        }
+    			      }
+    			    },
+    			    { headerName: "품목명", field: "productName", flex: 1, editable: true },
+    			    { headerName: "단가", field: "price", flex: 1, editable: true,
+    			      valueFormatter: p => p.value ? p.value.toLocaleString() : ""
+    			    },
+    			    { headerName: "수량", field: "qty", flex: 1, editable: true },
+    			    { headerName: "공급가액", field: "supply", flex: 1,
+    			      valueFormatter: p => p.value ? p.value.toLocaleString() : ""
+    			    },
+    			    { headerName: "부가세", field: "vat", flex: 1,
+    			      valueFormatter: p => p.value ? p.value.toLocaleString() : ""
+    			    },
+    			    { headerName: "비고", field: "note", flex: 1, editable: true }
+    			  ],
+    			  rowData: [],
+    			  defaultColDef: { resizable: true, filter: true, editable: true },
 
-    	  // 👉 셀 값 변경될 때 이벤트
-    	  onCellValueChanged: (params) => {
-    	    if (params.colDef.field === "price" || params.colDef.field === "qty") {
-    	      let price = Number(params.data.price) || 0;
-    	      let qty = Number(params.data.qty) || 0;
-    	      let supply = price * qty;
+    			  // 👉 셀 값 변경될 때 이벤트
+    			  onCellValueChanged: (params) => {
+    			    if (params.colDef.field === "price" || params.colDef.field === "qty") {
+    			      let price = Number(params.data.price) || 0;
+    			      let qty = Number(params.data.qty) || 0;
+    			      let supply = price * qty;
 
-    	      // 부가세 유형 체크
-    	      let vatType = vatTypeSelect.value; 
-    	      let vat = 0;
-    	      if (vatType === "과세") { // 세금계산서
-    	        vat = Math.floor(supply * 0.1);
-    	      } else { // 영세 / 면세
-    	        vat = 0;
-    	      }
+    			      // 부가세 유형 체크
+    			      let vatType = vatTypeSelect.value;
+    			      let vat = 0;
+    			      if (vatType === "과세") {
+    			        vat = Math.floor(supply * 0.1);
+    			      }
 
-    	      // 데이터 반영
-    	      params.node.setData({
-    	        ...params.data,
-    	        supply: supply,
-    	        vat: vat
-    	      });
-    	    }
-    	  }
-    	,
+    			      params.node.setData({
+    			        ...params.data,
+    			        supply: supply,
+    			        vat: vat
+    			      });
+    			    }
+
+    			    // ✅ 현재 행이 다 채워졌으면 마지막 행인지 확인 후 새 빈행 추가
+    			    const isRowFilled =
+    			      params.data.productCode &&
+    			      params.data.productName &&
+    			      (params.data.price || params.data.price === 0) &&
+    			      (params.data.qty || params.data.qty === 0);
+
+    			    const allRows = [];
+    			    invoiceGridApi.forEachNode(node => allRows.push(node));
+
+    			    const isLastRow = allRows[allRows.length - 1].id === params.node.id;
+
+    			    if (isRowFilled && isLastRow) {
+    			      invoiceGridApi.applyTransaction({
+    			        add: [{
+    			          productCode: "",
+    			          productName: "",
+    			          price: null,
+    			          qty: null,
+    			          supply: null,
+    			          vat: null,
+    			          note: ""
+    			        }]
+    			      });
+    			    }
+    			    // ✅ 합계 다시 계산
+    			    let subtotal = 0;
+    			    let vatTotal = 0;
+    			    invoiceGridApi.forEachNode(node => {
+    			      subtotal += Number(node.data.supply) || 0;
+    			      vatTotal += Number(node.data.vat) || 0;
+    			    });
+
+    			    invoiceGridApi.setPinnedBottomRowData([{
+    			      supply: "합계",
+    			      vat: subtotal + vatTotal,
+    			    
+    			    }]);
+    			  },
         defaultColDef: { resizable: true, filter:true },
         pinnedBottomRowData: [
           {
-            productName: "합계",
-            supply: /*[[${invoiceHeader?.subtotalAmt}]]*/ 0,
-            vat: /*[[${invoiceHeader?.vatAmt}]]*/ 0
+        	  supply: "합계",
+        	  vat: /*[[${invoiceHeader?.subtotalAmt}]]*/ +/*[[${invoiceHeader?.vatAmt}]]*/+ "원" ,
           }
         ]
       };
@@ -309,6 +363,64 @@ document.getElementById("resetInvoiceBtn")?.addEventListener("click", () => {
     });
   }
 });
+
+document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () => {
+	  try {
+	    // 📌 헤더 값 수집
+	    const header = {
+	      invoiceDate: document.getElementById("invoiceDate").value,
+	      orderCode: null, // 필요 시 값 넣기
+	      deptCode: null,  // 부서코드 따로 받는다면 여기서 채우기
+	      deptName: document.getElementById("deptNameInput").value,
+	      cusCode: document.getElementById("cusCodeInput").value,
+	      cusName: document.getElementById("cusNameInput").value,
+	      vatType: document.querySelector(".form-select-invoice").value,
+	      payMethod: null,
+	      memo: null,
+	      bankCode: document.getElementById("bankNameInput").value,
+	      accountNo: document.getElementById("accountNoInput")?.value, // input id 확인 필요
+	      Type:"P",
+	      lines: []
+	    };
+
+	    // 📌 라인 데이터 수집
+	    const lines = [];
+	    invoiceGridApi.forEachNode(node => {
+	      if (node.data.productCode && node.data.qty && node.data.price) {
+	        lines.push({
+	          productName: node.data.productName,
+	          qty: node.data.qty,
+	          unitPrice: node.data.price,
+	          supAmt: node.data.supply,
+	          vatAmt: node.data.vat
+	        });
+	      }
+	    });
+	    header.lines = lines;
+
+	    if (lines.length === 0) {
+	      alert("저장할 품목이 없습니다.");
+	      return;
+	    }
+
+	    // 📌 서버 전송
+	    const res = await axios.post("/api/account/invoice", header, {
+	      withCredentials: true
+	    });
+
+	    if (res.data.success) {
+	      alert(`저장 완료! 전표번호: ${res.data.invoiceNo}`);
+	      bootstrap.Modal.getOrCreateInstance(document.getElementById("invoiceModal")).hide();
+	      // 저장 후 전표 목록 다시 로딩
+	      if (typeof loadAndRenderVoucher === "function") loadAndRenderVoucher();
+	    } else {
+	      alert("저장 실패: " + res.data.message);
+	    }
+	  } catch (err) {
+	    console.error(err);
+	    alert("저장 중 오류 발생");
+	  }
+	});
 </script>
 
 			<!-- 거래처 모달 -->
