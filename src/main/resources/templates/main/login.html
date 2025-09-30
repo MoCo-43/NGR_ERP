@@ -53,12 +53,12 @@
         </label>
       </div>
 
-      <!-- Google reCAPTCHA -->
+      <!-- Google reCAPTCHA
       <div id="recaptcha-section" class="input-field">
         <div class="g-recaptcha" th:attr="data-sitekey=${@environment.getProperty('recaptcha.key.site')}"></div>
-      </div>
+      </div> -->
 
-      <!-- Naver CAPTCHA -->
+      <!-- Naver CAPTCHA 
       <div id="naver-captcha-section" class="input-field" style="display:none;">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <img id="captchaImage" alt="CAPTCHA" class="captcha-img" style="width: 150px; height: 50px;">
@@ -66,7 +66,7 @@
         </div>
         <input type="hidden" name="captchaKey" id="captchaKey">
         <input type="text" name="captchaValue" placeholder="보안문자 입력" style="margin-top: 10px;">
-      </div>
+      </div>-->
 
       <button type="submit" class="btn-primary">로그인</button>
     </form>

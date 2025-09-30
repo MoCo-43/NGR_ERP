@@ -681,8 +681,8 @@ main {
 				<div class="form-navigation">
 					<button type="button" class="nav-btn prev-btn"
 						onclick="goToStep(2)">이전단계</button>
-					<button type="button" class="nav-btn next-btn" id="signbtn"
-						>계약에 동의 및 다음단계</button>
+					<button type="button" class="nav-btn next-btn" id="signbtn">계약에
+						동의 및 다음단계</button>
 				</div>
 			</div>
 			<script>
@@ -694,13 +694,14 @@ main {
 						{
 						 await axios.post('/api/main/sign');
 						}
+					 goToStep(4); 
 				}
 			</script>
 
-			<!-- STEP 4: 결제 -->
 			<div id="step-4" class="step-section">
 				<div class="inner-layout">
 					<div class="main-form">
+
 						<div class="form-group">
 							<label class="form-section-label">최종 결제 정보</label>
 							<div class="summary-box">
@@ -710,37 +711,40 @@ main {
 								<div class="summary-item">
 									<span class="item-label">사용자 수</span> <span class="item-value">50명</span>
 								</div>
-								<div class="summary-item">
-									<span class="item-label">기본 금액</span> <span class="price"
-										th:text="${subPlan.baseSalary}"></span></span>
-								</div>
-								<div class="summary-item">
-									<span class="item-label">할인 금액</span> <span class="item-value">-
-										0원</span>
-								</div>
-								<div class="summary-item">
-									<span class="item-label">초과 금액</span> <span class="item-value">20,000원</span>
-								</div>
 								<div class="summary-item total">
 									<span class="item-label">총 결제 금액</span> <span
-										class="item-value">1,020,000원</span>
+										class="item-value" id="total-amount-display">1,020,000원</span>
 								</div>
 							</div>
 						</div>
+
 						<div class="form-group">
-							<label class="form-section-label">결제 수단 선택</label>
-							<div class="options-group" id="payment-options">
-								<div class="payment-option selected">신용카드</div>
-								<div class="payment-option">계좌이체</div>
-								<div class="payment-option">가상계좌</div>
+							<label class="form-section-label">결제 방식 선택</label>
+							<div class="options-group" id="payment-type-options">
+								<div class="payment-option selected" data-type="NORMAL">
+									<span class="fw-bold">일반결제</span>
+									<div class="form-text">선택한 기간만큼 한 번에 결제</div>
+								</div>
+								<div class="payment-option" data-type="RECURRING">
+									<span class="fw-bold">정기결제</span>
+									<div class="form-text">매월 자동 결제를 위한 카드 등록</div>
+								</div>
 							</div>
 						</div>
+
+						<div class="form-group">
+							<label class="form-section-label"></label>
+							<div id="payment-method-widget"></div>
+							<div id="agreement-widget" style="margin-top: 16px;"></div>
+						</div>
+
 						<div class="form-navigation">
 							<button type="button" class="nav-btn prev-btn"
 								onclick="goToStep(3)">이전단계</button>
 							<button type="button" class="nav-btn next-btn"
-								onclick="goToStep(5)">1,000,000원 결제하기</button>
+								id="payment-button" onclick="goToStep(5)">결제하기</button>
 						</div>
+
 					</div>
 					<aside class="sidebar">
 						<h3>결제 안내</h3>
@@ -752,7 +756,12 @@ main {
 					</aside>
 				</div>
 			</div>
-
+			<script>
+			document.getElementById("payment-button").addEventListener("click", () => {
+				location.href = '/subpay';
+			});
+			
+			</script>
 			<!-- STEP 5: 결제 완료 -->
 			<div id="step-5" class="step-section">
 				<div class="completion-container">

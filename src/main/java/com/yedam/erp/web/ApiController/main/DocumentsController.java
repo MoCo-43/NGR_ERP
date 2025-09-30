@@ -23,7 +23,7 @@ public class DocumentsController {
 	@PostMapping("/sign")
 	public int mainSign(DocumentsVO vo) {
 		vo.setMatNo(SessionUtil.companyId());
-		vo.setDocNo(1233L);
+		vo.setDocNo(1201L);
 		return service.insertSign(vo);
 	}
 
