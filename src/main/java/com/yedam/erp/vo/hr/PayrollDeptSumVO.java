@@ -21,4 +21,5 @@ public class PayrollDeptSumVO {
 
 	private Long sumDeduct; // 공제총액 합계
 	private Long sumNetPay; // 실지급액 합계
+	private Long companyCode; //회사코드
 }
