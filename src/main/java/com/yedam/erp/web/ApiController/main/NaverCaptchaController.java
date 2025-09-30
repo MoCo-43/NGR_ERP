@@ -1,5 +1,5 @@
 //네이버캡차기능 모아둔 컨트롤러
-package com.yedam.erp.web.ApiController;
+package com.yedam.erp.web.ApiController.main;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;

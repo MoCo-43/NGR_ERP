@@ -1,4 +1,4 @@
-package com.yedam.erp.web.ApiController;
+package com.yedam.erp.web.ApiController.main;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

@@ -1,6 +1,6 @@
 // LoginController.java
 
-package com.yedam.erp.web.ApiController;
+package com.yedam.erp.web.ApiController.main;
 
 import java.util.HashMap;
 import java.util.Map;

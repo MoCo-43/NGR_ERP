@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yedam.erp.mapper.main.DocumentsMapper">
-	<insert id="insertSigin">
+	<insert id="insertSign"  > 
+    INSERT INTO documents (
+        doc_no,
+        doc_name,
+        file_path,
+        create_at,
+        mat_no,
+        sign_path,
+        sign_date
+    ) VALUES (
+        #{docNo},     
+        #{docName},
+        #{filePath},    
+        #{createAt},   
+        #{matNo},     
+        #{signPath},   
+        #{signDate}    
+    )
 	</insert>
 </mapper>
