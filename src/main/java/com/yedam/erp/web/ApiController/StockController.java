@@ -59,13 +59,13 @@ public class StockController {
 	@Autowired
 	DataSource datasource;
 	
-	
+	// 세션 회사코드 불러오기
 	@GetMapping("/getCompId")
 	public Long getCompId(Model model) {
 		 Long compId = SessionUtil.companyId();
 	        return compId != null ? compId : 0L; // null 방지
 	}
-	
+	// 세션 사원이름 불러오기
 	@GetMapping("/getEmpName")
 	public String getEmpName(Model model) {
 		 String empName = SessionUtil.empId();
@@ -171,6 +171,12 @@ public class StockController {
 		return service.getOrderList(compId);
 	}
 
+	@PostMapping("/orderInsert") // 발주 등록
+	public ResponseEntity<String> insertOrder(OrderVO order){
+		service.insertOrder(order);
+		return ResponseEntity.ok("등록 성공");
+	}
+	
 	
 	@GetMapping("/orderPlans") // 발주 계획 조회
 	public List<OrderPlanVO> getOrderPlans() {

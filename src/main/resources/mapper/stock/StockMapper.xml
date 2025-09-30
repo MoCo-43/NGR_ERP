@@ -129,6 +129,7 @@ GROUP BY
     m.vat_type,
     m.ins_date
     
+ORDER BY TO_NUMBER(SUBSTR(m.xp_code, 3)) DESC
 </select>
 
 <!-- ResultMap -->
@@ -244,6 +245,8 @@ GROUP BY
     orr.emp_id,
     orr.due_date,
     orr.vat_type
+    
+ORDER BY TO_NUMBER(REGEXP_SUBSTR(orr.order_code, '\d+')) DESC
 
 </select>
 <resultMap id="orderListResultMap" type="OrderVO">
