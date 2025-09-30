@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 인터페이스 FQN과 100% 일치 -->
+<mapper namespace="com.yedam.erp.mapper.account.InvoiceMapper">
+
+
+ <!-- 헤더 목록 조회 -->
+  <select id="selectInvoiceHeaders" resultType="InvoiceHeaderVO">
+    SELECT
+      INVOICE_CODE, INVOICE_NO, TYPE, INVOICE_DATE,
+      ORDER_CODE, DEPT_CODE, CUS_CODE, BIZ_NO, CUS_NAME,
+      VAT_TYPE, DUE_DATE, SUBTOTAL_AMT, VAT_AMT, TOTAL_AMT,
+      PAY_METHOD, MEMO, AR_AP_ACCT, CASH_ACCOUNT, STATUS,
+      CREATED_AT, UPDATED_AT, COMPANY_CODE, POSTED_FLAG
+    FROM INVOICE_HEADER
+    WHERE COMPANY_CODE = #{companyCode}
+    ORDER BY INVOICE_DATE DESC
+  </select>
+
+  <!-- 특정 전표 라인 조회 -->
+  <select id="selectInvoiceLinesByHeader" resultType="InvoiceLineVO">
+    SELECT
+      LINE_NO, PRODUCT_NAME, QTY, UNIT_PRICE, SUP_AMT, VAT_AMT,
+      INVOICE_CODE, COMPANY_CODE
+    FROM INVOICE_LINE
+    WHERE INVOICE_CODE = #{invoiceCode}
+    ORDER BY LINE_NO
+  </select>
+
+  <!-- 헤더 등록 -->
+  <insert id="insertInvoiceHeader" parameterType="InvoiceHeaderVO">
+    INSERT INTO INVOICE_HEADER (
+      INVOICE_CODE, INVOICE_NO, TYPE, INVOICE_DATE,
+      ORDER_CODE, DEPT_CODE, CUS_CODE, BIZ_NO, CUS_NAME,
+      VAT_TYPE, DUE_DATE, SUBTOTAL_AMT, VAT_AMT, TOTAL_AMT,
+      PAY_METHOD, MEMO, AR_AP_ACCT, CASH_ACCOUNT, STATUS,
+      CREATED_AT, COMPANY_CODE, POSTED_FLAG
+    ) VALUES (
+      #{invoiceCode}, #{invoiceNo}, #{type}, #{invoiceDate},
+      #{orderCode}, #{deptCode}, #{cusCode}, #{bizNo}, #{cusName},
+      #{vatType}, #{dueDate}, #{subtotalAmt}, #{vatAmt}, #{totalAmt},
+      #{payMethod}, #{memo}, #{arApAcct}, #{cashAccount}, #{status},
+      SYSDATE, #{companyCode}, #{postedFlag}
+    )
+  </insert>
+
+  <!-- 라인 등록 -->
+  <insert id="insertInvoiceLine" parameterType="InvoiceLineVO">
+  INSERT INTO INVOICE_LINE (
+    PRODUCT_NAME, QTY, UNIT_PRICE, SUP_AMT, VAT_AMT,
+    INVOICE_CODE, COMPANY_CODE
+  ) VALUES (
+    #{productName}, #{qty}, #{unitPrice}, #{supAmt}, #{vatAmt},
+    #{invoiceCode}, #{companyCode}
+  )
+</insert>
+	
+</mapper>

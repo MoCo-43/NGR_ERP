@@ -11,17 +11,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.account.AccountService;
+import com.yedam.erp.service.account.InvoiceService;
 import com.yedam.erp.service.account.JournalCloseLogService;
 import com.yedam.erp.service.account.JournalService;
+import com.yedam.erp.vo.account.InvoiceHeaderVO;
+import com.yedam.erp.vo.account.InvoiceLineVO;
 import com.yedam.erp.vo.account.JournalCloseLogVO;
 import com.yedam.erp.vo.account.JournalVO;
 import com.yedam.erp.vo.account.accountVO;
-import com.yedam.erp.vo.account.invoiceVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +36,7 @@ public class AccountController {
 	private final AccountService accountService;
 	private final JournalService journalService;  
 	private final JournalCloseLogService logService;
+	private final InvoiceService invoiceService;
 	
 	@GetMapping("/list")
 	public List<accountVO> list(Long companyCode){
@@ -60,12 +64,7 @@ public class AccountController {
 	    }
 	}
 	
-	@GetMapping("/invoice")
-	public List<invoiceVO> invoiceList(Long companyCode){
-		companyCode = SessionUtil.companyId();
-		return accountService.selectInvoice(companyCode);
-	}
-	
+
 	
 	 // =======================
     @GetMapping("/journal")
@@ -150,10 +149,47 @@ public class AccountController {
     }
     // 마감로그
 
-@GetMapping("/journalClose/logs/{jrnNo}")
-public List<JournalCloseLogVO> getLogsByJrn(@PathVariable String jrnNo) {
-    Long companyCode = SessionUtil.companyId();
-    return logService.getLogByJrn(companyCode, jrnNo);
-}
+	@GetMapping("/journalClose/logs/{jrnNo}")
+	public List<JournalCloseLogVO> getLogsByJrn(@PathVariable String jrnNo) {
+	    Long companyCode = SessionUtil.companyId();
+	    return logService.getLogByJrn(companyCode, jrnNo);
+	}
+
+	// 헤더 목록 조회
+	@GetMapping("/headers")
+	public List<InvoiceHeaderVO> getHeaders(Long companyCode) {
+		companyCode = SessionUtil.companyId();
+	    return invoiceService.getInvoiceHeaders(companyCode);
+	}
+	
+	// 특정 전표 라인 조회
+	@GetMapping("/{invoiceCode}/lines")
+	public List<InvoiceLineVO> getLines(@PathVariable String invoiceCode) {
+	    return invoiceService.getInvoiceLines(invoiceCode);
+	}
+	
+	// 헤더 등록
+	@PostMapping("/header")
+	public int createHeader(@RequestBody InvoiceHeaderVO vo) {
+	    return invoiceService.createInvoiceHeader(vo);
+	}
+	
+	// 라인 등록
+	@PostMapping("/line")
+	public int createLine(@RequestBody InvoiceLineVO vo) {
+	    return invoiceService.createInvoiceLine(vo);
+	}
+	// ✅ 헤더 + 라인 동시에 저장
+    @PostMapping("/with-lines")
+    public void createInvoiceWithLines(@RequestBody InvoiceHeaderVO vo) {
+        invoiceService.createInvoiceWithLines(vo, vo.getLines());
+    }
+	
+	
+	
+	
 	
 }
+
+	
+

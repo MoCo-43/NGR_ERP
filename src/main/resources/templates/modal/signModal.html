@@ -85,10 +85,9 @@
     }
 
     // ===== 모달 열기 =====
-    function openSignModal(mode, idList) {
+  	window.openSignModal = function(mode, callback) {
       signMode = mode;
-      pendingIds = idList.slice();
-
+	
       if (!signCanvas) {
         signCanvas = document.getElementById('signCanvas');
         signCtx = signCanvas.getContext('2d');
@@ -102,15 +101,12 @@
       }, { once: true });
 
       bootstrap.Modal.getOrCreateInstance(modalEl).show();
-    }
+      document.getElementById("btnSignSave")?.removeEventListener("click",saveSignature);	
+      document.getElementById("btnSignSave")?.addEventListener("click", ()=>{saveSignature(callback)});
+	}
 
     // ===== 저장 (승인/역분개 공통) =====
-    async function saveSignature() {
-      if (!pendingIds.length) {
-        alert(signMode === "approve" ? "승인 대상이 없습니다." : "역분개 대상이 없습니다.");
-        return;
-      }
-
+    async function saveSignature(callback) {
       const blob = await new Promise(res => signCanvas.toBlob(res, 'image/png', 1.0));
       const form = new FormData();
       form.append("file", blob, `signature_${Date.now()}.png`);
@@ -121,33 +117,19 @@
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         signPath = uploadRes?.data?.path || null;
+        callback(signPath);
       } catch (e) {
         console.error(e);
         alert('서명 업로드 실패');
         return;
       }
-
-      try {
-        if (signMode === "approve") {
-          await axios.put('/api/approval/journal/approve', { ids: pendingIds, signPath });
-          alert('승인 완료');
-        } else if (signMode === "reverse") {
-          await axios.post('/api/account/journal/reverse', { jrnNos: pendingIds, signPath });
-          alert('역분개 완료');
-        }
-
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('signModal')).hide();
-        loadVoucherList();
-      } catch (e) {
-        console.error(e);
-        alert('처리 실패');
-      }
     }
+
 
     // ===== 버튼 이벤트 =====
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("btnSignClear")?.addEventListener("click", clearSignCanvas);
-      document.getElementById("btnSignSave")?.addEventListener("click", saveSignature);
+  
     });
   </script>
 </div>
