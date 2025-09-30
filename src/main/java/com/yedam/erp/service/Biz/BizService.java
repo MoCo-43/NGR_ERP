@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
+import com.yedam.erp.vo.Biz.DoInsertVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
@@ -31,4 +32,7 @@ public interface BizService {
 
   // 출하지시서 조회
   List<DeliveryOrderVO> selectDo(Long companyCode);
+
+  // 출하지시서 등록
+  int insertDO(DoInsertVO dovo);
 }
