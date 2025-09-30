@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -168,25 +167,30 @@ public class AccountController {
 	    return invoiceService.getInvoiceLines(invoiceCode);
 	}
 	
-	// 헤더 등록
-	@PostMapping("/header")
-	public int createHeader(@RequestBody InvoiceHeaderVO vo) {
-	    return invoiceService.createInvoiceHeader(vo);
+	
+	@PostMapping("/invoice")
+	@Transactional
+	public ResponseEntity<?> saveInvoice(@RequestBody InvoiceHeaderVO header) {
+	    Long companyCode = SessionUtil.companyId();
+	    header.setCompanyCode(companyCode);
+	    header.setStatus("OPEN");
+	    header.setPostedFlag("N");
+
+	    try {
+	        invoiceService.saveInvoice(header); // header + lines 처리
+	        return ResponseEntity.ok(Map.of(
+	            "success", true,
+	            "invoiceNo", header.getInvoiceNo()
+	        ));
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        // 여기서 트랜잭션이 rollback-only 되니까 그냥 error 내려주면 됨
+	        return ResponseEntity.internalServerError().body(Map.of(
+	            "success", false,
+	            "message", e.getMessage()
+	        ));
+	    }
 	}
-	
-	// 라인 등록
-	@PostMapping("/line")
-	public int createLine(@RequestBody InvoiceLineVO vo) {
-	    return invoiceService.createInvoiceLine(vo);
-	}
-	// ✅ 헤더 + 라인 동시에 저장
-    @PostMapping("/with-lines")
-    public void createInvoiceWithLines(@RequestBody InvoiceHeaderVO vo) {
-        invoiceService.createInvoiceWithLines(vo, vo.getLines());
-    }
-	
-	
-	
 	
 	
 }

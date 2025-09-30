@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 public class InvoiceHeaderVO {
-    private String invoiceCode;   // 전표코드
+    private Long invoiceCode;   // 전표코드
     private String invoiceNo;     // 전표번호
     private String type;          // 매출/매입 구분
     private Date invoiceDate;     // 전표일자

@@ -9,7 +9,6 @@ import com.yedam.erp.mapper.account.InvoiceMapper;
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.account.InvoiceService;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
-import com.yedam.erp.vo.account.InvoiceLineVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,48 +16,39 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InvoiceServiceImpl implements InvoiceService {
 
-    private final InvoiceMapper invoiceMapper;
-    
-    @Override
-    public List<InvoiceHeaderVO> getInvoiceHeaders(Long companyCode) {
-        return invoiceMapper.selectInvoiceHeaders(companyCode);
-    }
+	  private final InvoiceMapper invoiceMapper;
 
-    @Override
-    public List<InvoiceLineVO> getInvoiceLines(String invoiceCode) {
-        return invoiceMapper.selectInvoiceLinesByHeader(invoiceCode);
-    }
+	    @Override
+	    public List<InvoiceHeaderVO> getInvoiceHeaders(Long companyCode) {
+	        return invoiceMapper.selectInvoiceHeaders(companyCode);
+	    }
 
-    @Override
-    public int createInvoiceHeader(InvoiceHeaderVO vo) {
-        vo.setCompanyCode(SessionUtil.companyId()); 
-        return invoiceMapper.insertInvoiceHeader(vo);
-    }
+	    @Override
+	    public List<com.yedam.erp.vo.account.InvoiceLineVO> getInvoiceLines(String invoiceCode) {
+	        return invoiceMapper.selectInvoiceLinesByHeader(invoiceCode);
+	    }
 
-    @Override
-    public int createInvoiceLine(InvoiceLineVO vo) {
-        vo.setCompanyCode(SessionUtil.companyId()); 
-        return invoiceMapper.insertInvoiceLine(vo);
-    }
-    /**
-     * ✅ 전표 + 라인 전체 저장 (트랜잭션)
-     */
-    @Transactional
-    @Override
-    public void createInvoiceWithLines(InvoiceHeaderVO header, List<InvoiceLineVO> lines) {
-        Long companyId = SessionUtil.companyId();
-        header.setCompanyCode(companyId);
-        invoiceMapper.insertInvoiceHeader(header);
+	    @Override
+	    @Transactional
+	    public void saveInvoice(InvoiceHeaderVO header) {
+	        // 회사코드 강제 세팅
+	        header.setCompanyCode(SessionUtil.companyId());
 
-        if (lines != null) {
-            for (InvoiceLineVO line : lines) {
-                line.setInvoiceCode(header.getInvoiceCode()); // FK 세팅
-                line.setCompanyCode(companyId);
-                invoiceMapper.insertInvoiceLine(line);
-            }
-        }
-    }
-    
-    
-    
+	        // 1. 전표번호 생성
+	        String nextNo = invoiceMapper.selectNextInvoiceNo();
+	        header.setInvoiceNo(nextNo);
+
+	        // 2. 헤더 저장 (invoiceCode는 selectKey로 채워짐)
+	        invoiceMapper.insertInvoiceHeader(header);
+
+	        // 3. 라인 저장
+	        if (header.getLines() != null && !header.getLines().isEmpty()) {
+	            header.getLines().forEach(line -> {
+	                line.setCompanyCode(header.getCompanyCode());
+	            });
+	            invoiceMapper.insertInvoiceLines(header.getLines()); // bulk insert
+	        }
+	    }
+	
+	
 }

@@ -6,12 +6,9 @@ import com.yedam.erp.vo.account.InvoiceHeaderVO;
 import com.yedam.erp.vo.account.InvoiceLineVO;
 
 public interface InvoiceService {
-    List<InvoiceHeaderVO> getInvoiceHeaders(Long companyCode);
-    List<InvoiceLineVO> getInvoiceLines(String invoiceCode);
+	  List<InvoiceHeaderVO> getInvoiceHeaders(Long companyCode);
 
-    int createInvoiceHeader(InvoiceHeaderVO vo);
-    int createInvoiceLine(InvoiceLineVO vo);
-    
-    // ✅ 헤더 + 라인 일괄 저장
-    void createInvoiceWithLines(InvoiceHeaderVO header, List<InvoiceLineVO> lines);	
+	    List<InvoiceLineVO> getInvoiceLines(String invoiceCode);
+
+	    void saveInvoice(InvoiceHeaderVO header);
 }
