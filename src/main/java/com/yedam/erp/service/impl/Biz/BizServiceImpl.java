@@ -9,6 +9,7 @@ import com.yedam.erp.mapper.Biz.BizMapper;
 import com.yedam.erp.service.Biz.BizService;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
+import com.yedam.erp.vo.Biz.DoInsertVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
@@ -61,5 +62,10 @@ public class BizServiceImpl implements BizService {
 		return bizMapper.selectDo(companyCode);
 	}
 
+	// 출하지시서 등록
+	@Override
+	public int insertDO(DoInsertVO dovo) {
+		return bizMapper.insertDo(dovo);
+	}	
 	
 }
