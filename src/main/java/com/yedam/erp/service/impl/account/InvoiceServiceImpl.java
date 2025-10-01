@@ -1,6 +1,7 @@
 package com.yedam.erp.service.impl.account;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,6 +10,7 @@ import com.yedam.erp.mapper.account.InvoiceMapper;
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.account.InvoiceService;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
+import com.yedam.erp.vo.account.InvoiceLineVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class InvoiceServiceImpl implements InvoiceService {
 
-	  private final InvoiceMapper invoiceMapper;
+	 private final InvoiceMapper invoiceMapper;
 
 	    @Override
 	    public List<InvoiceHeaderVO> getInvoiceHeaders(Long companyCode) {
@@ -24,31 +26,54 @@ public class InvoiceServiceImpl implements InvoiceService {
 	    }
 
 	    @Override
-	    public List<com.yedam.erp.vo.account.InvoiceLineVO> getInvoiceLines(String invoiceCode) {
-	        return invoiceMapper.selectInvoiceLinesByHeader(invoiceCode);
+	    public InvoiceHeaderVO getInvoiceHeader(Long companyCode, Long invoiceCode) {
+	        return invoiceMapper.selectInvoiceHeaderById(companyCode, invoiceCode);
 	    }
 
+
 	    @Override
+	    public List<InvoiceLineVO> getInvoiceLines(Long invoiceCode,Long companyCode) {
+	        return invoiceMapper.selectInvoiceLinesByHeader(invoiceCode,companyCode);
+	    }
+
 	    @Transactional
-	    public void saveInvoice(InvoiceHeaderVO header) {
-	        // 회사코드 강제 세팅
+	    @Override
+	    public void saveInvoiceWithLines(InvoiceHeaderVO header) {
+	        // 회사 코드 세팅
 	        header.setCompanyCode(SessionUtil.companyId());
 
-	        // 1. 전표번호 생성
+	        // 전표번호 채번
 	        String nextNo = invoiceMapper.selectNextInvoiceNo();
 	        header.setInvoiceNo(nextNo);
 
-	        // 2. 헤더 저장 (invoiceCode는 selectKey로 채워짐)
-	        invoiceMapper.insertInvoiceHeader(header);
-
-	        // 3. 라인 저장
-	        if (header.getLines() != null && !header.getLines().isEmpty()) {
-	            header.getLines().forEach(line -> {
-	                line.setCompanyCode(header.getCompanyCode());
-	            });
-	            invoiceMapper.insertInvoiceLines(header.getLines()); // bulk insert
+	        // 라인번호 세팅 (1,2,3…)
+	        if (header.getLines() != null) {
+	            int idx = 1;
+	            for (InvoiceLineVO line : header.getLines()) {
+	                line.setLineNo(idx++);
+	            }
 	        }
+
+	        // Mapper 호출
+	        invoiceMapper.insertInvoiceWithLines(header);
 	    }
-	
-	
+	    
+	    // 전자 세금 계산서 호출
+	    @Override
+	    public InvoiceHeaderVO getInvoiceWithLines(Long companyCode, Long invoiceCode) {
+	        InvoiceHeaderVO header = invoiceMapper.selectInvoiceHeaderById(companyCode, invoiceCode);
+	        List<InvoiceLineVO> lines = invoiceMapper.selectInvoiceLinesByHeader(invoiceCode, companyCode);
+	        header.setLines(lines);
+	        return header;
+	    }
+	    
+	    // 매출매입전표 상태변경
+	    @Override
+	    @Transactional
+	    public void updatePostedFlag(Long companyCode, Long invoiceCode, String postedFlag) {
+	        invoiceMapper.updatePostedFlag(companyCode, invoiceCode, postedFlag);
+	    }
+	    
+	    
+	    	
 }
