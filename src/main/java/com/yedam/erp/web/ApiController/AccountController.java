@@ -1,5 +1,6 @@
 package com.yedam.erp.web.ApiController;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,11 +20,14 @@ import com.yedam.erp.service.account.AccountService;
 import com.yedam.erp.service.account.InvoiceService;
 import com.yedam.erp.service.account.JournalCloseLogService;
 import com.yedam.erp.service.account.JournalService;
+import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
 import com.yedam.erp.vo.account.InvoiceLineVO;
 import com.yedam.erp.vo.account.JournalCloseLogVO;
 import com.yedam.erp.vo.account.JournalVO;
 import com.yedam.erp.vo.account.accountVO;
+import com.yedam.erp.vo.stock.OrderDetailVO;
+import com.yedam.erp.vo.stock.OrderVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,6 +40,7 @@ public class AccountController {
 	private final JournalService journalService;  
 	private final JournalCloseLogService logService;
 	private final InvoiceService invoiceService;
+	final private StockService stockService;
 	
 	@GetMapping("/list")
 	public List<accountVO> list(Long companyCode){
@@ -163,33 +168,62 @@ public class AccountController {
 	
 	// 특정 전표 라인 조회
 	@GetMapping("/{invoiceCode}/lines")
-	public List<InvoiceLineVO> getLines(@PathVariable String invoiceCode) {
-	    return invoiceService.getInvoiceLines(invoiceCode);
+	public List<InvoiceLineVO> getLines(@PathVariable Long invoiceCode, Long companyCode) {
+		companyCode = SessionUtil.companyId();
+	    return invoiceService.getInvoiceLines(invoiceCode,companyCode);
 	}
 	
 	
 	@PostMapping("/invoice")
-	@Transactional
-	public ResponseEntity<?> saveInvoice(@RequestBody InvoiceHeaderVO header) {
-	    Long companyCode = SessionUtil.companyId();
-	    header.setCompanyCode(companyCode);
-	    header.setStatus("OPEN");
-	    header.setPostedFlag("N");
-
+	public Map<String, Object> saveInvoice(@RequestBody InvoiceHeaderVO header) {
+	    Map<String, Object> result = new HashMap<>();
 	    try {
-	        invoiceService.saveInvoice(header); // header + lines 처리
-	        return ResponseEntity.ok(Map.of(
-	            "success", true,
-	            "invoiceNo", header.getInvoiceNo()
-	        ));
+	        invoiceService.saveInvoiceWithLines(header);
+
+	        result.put("success", true);
+	        result.put("message", "저장 성공");
+	        result.put("invoiceNo", header.getInvoiceNo()); // 서비스에서 세팅된 번호
 	    } catch (Exception e) {
-	        e.printStackTrace();
-	        // 여기서 트랜잭션이 rollback-only 되니까 그냥 error 내려주면 됨
-	        return ResponseEntity.internalServerError().body(Map.of(
-	            "success", false,
-	            "message", e.getMessage()
-	        ));
+	        result.put("success", false);
+	        result.put("message", e.getMessage());
 	    }
+	    return result;
+	}
+	
+	@GetMapping("/invoice/{invoiceCode}")
+	public Map<String, Object> getInvoice(@PathVariable Long invoiceCode) {
+	    Long companyCode = SessionUtil.companyId();
+	    InvoiceHeaderVO header = invoiceService.getInvoiceHeader(companyCode, invoiceCode);
+	    System.out.println(header);
+	    List<InvoiceLineVO> lines = invoiceService.getInvoiceLines(invoiceCode, companyCode);
+
+	    Map<String, Object> result = new HashMap<>();
+	    result.put("header", header);
+	    result.put("lines", lines);
+	    return result;
+	}
+	
+	// 매출매입전표 상태변경
+	@PutMapping("/invoice/{invoiceCode}/posted")
+	public void updatePostedFlag(
+	        @PathVariable Long invoiceCode,
+	        @RequestBody Map<String, String> payload) {
+	    
+	    String postedFlag = payload.get("postedFlag");
+	    Long companyCode = SessionUtil.companyId();
+	    invoiceService.updatePostedFlag(companyCode, invoiceCode, postedFlag);
+	}
+	
+	
+	@GetMapping("/orders")
+	public List<OrderVO> getOrders() {
+	    Long companyCode = SessionUtil.companyId();
+	    return stockService.getOrderList(companyCode);
+	}
+	
+	@GetMapping("/orders/{orderCode}/details")
+	public List<OrderDetailVO> getOrderDetail(@PathVariable String orderCode) {
+	    return stockService.getOrderDetailByOrderCode(orderCode);
 	}
 	
 	
