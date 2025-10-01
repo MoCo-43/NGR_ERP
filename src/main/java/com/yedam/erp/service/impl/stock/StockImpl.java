@@ -2,6 +2,7 @@ package com.yedam.erp.service.impl.stock;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,6 +10,8 @@ import com.yedam.erp.mapper.stock.StockMapper;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.stock.InvenDetailVO;
+import com.yedam.erp.vo.stock.InvenVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
@@ -103,16 +106,38 @@ public class StockImpl implements StockService{
 
 	@Transactional
 	@Override
-	public void insertOrder(OrderVO order) {
-		mapper.insertOrder(order);
+	public void insertOrderReq(OrderVO order) {
+		mapper.insertOrderReq(order);
+		System.out.println(order.getDetails());
         if(order.getDetails() != null) {
             for(OrderDetailVO item : order.getDetails()) {
                 //item.setXpCode(order.getXpCode()); // 마스터 PK -> 디테일 FK
-            	item.setOrderCode(order.getOrderCode());
+            	item.setOrderCode(order.getOrderCode());// 마스터 PK -> 디테일 FK
                 System.out.println("Detail ORDER_CODE: " + item.getOrderCode()); // 디버깅용
                 mapper.insertOrderDetail(item);
             }
         }
+		
+	}
+
+
+	@Override
+	public List<InvenVO> getIcList(Long companyCode) {
+		// TODO Auto-generated method stub
+		return mapper.getIcList(companyCode);
+	}
+
+
+	@Override
+	public List<InvenDetailVO> getIcDetailList(Long companyCode, String selectedRow) {
+		// TODO Auto-generated method stub
+		return mapper.getIcDetailList(companyCode, selectedRow);
+	}
+
+
+	@Override
+	public void insertInvenClosing(InvenVO inven) {
+		// TODO Auto-generated method stub
 		
 	}
 

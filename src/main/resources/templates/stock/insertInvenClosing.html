@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	 layout:decorate="~{layout/base}">
+<head>
+  <meta charset="UTF-8">
+  <title layout:fragment="title">너 구 름(Your Cloud)</title>
+  <th:block layout:fragment="head_extra">
+     <!-- Bootstrap CSS -->
+  	<!--  base에 있는 버전과 달라서 강제 주입 --> 
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    crossorigin="anonymous"
+  />
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <!-- AG Grid CSS (Quartz) -->
+   <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
+    />
+   <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
+   />
+   <!-- TOASTR -->
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+   
+   <!-- CSS(confirm alert + Quartz) -->
+   <link rel="stylesheet" href="/style/confirm.css" />
+   
+  </th:block>
+</head>
+<body>
+<section layout:fragment="content">
+<!-- 컨테이너 시작 -->
+<div class="card shadow">
+  <!-- 마스터 카드 -->
+  <!-- <div class="card shadow-sm mb-4"> -->
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="mb-0 font-weight-bold text-primary">재고 결산 페이지</h6>
+    </div>
+  <!-- </div>  -->
+
+  <!-- 폼 카드 -->
+  <!-- <div class="card shadow-sm">  -->
+    <div class="card-body">
+     <form class="row g-3" id="filterForm" enctype="application/x-www-form-urlencoded">
+        <div class="col-md-4">
+          <label for="empId" class="form-label">담당자명</label>
+          <input type="text" class="form-control" id="empId" name="empId" placeholder="담당자명 기입">
+        </div>
+        <div class="col-md-4">
+          <label for="icDate" class="form-label">결산일자</label>
+          <input type="date" class="form-control" id="icDate" name="icDate">
+        </div>
+        <div class="col-md-4">
+		  <label class="form-label">상태</label>
+		  <div class="d-flex" style="gap: 3rem;">
+		    <div class="form-check" style="display: flex; align-items: center;">
+		      <input class="form-check-input" type="radio" name="icStatus" id="statusAll" value="all" checked style="vertical-align: middle;">
+		      <label class="form-check-label ms-1" for="statusAll">전체</label>
+		    </div>
+		    <div class="form-check" style="display: flex; align-items: center;">
+		      <input class="form-check-input" type="radio" name="icStatus" id="statusPending" value="pending" style="vertical-align: middle;">
+		      <label class="form-check-label ms-1" for="statusPending">대기</label>
+		    </div>
+		    <div class="form-check" style="display: flex; align-items: center;">
+		      <input class="form-check-input" type="radio" name="icStatus" id="statusComplete" value="complete" style="vertical-align: middle;">
+		      <label class="form-check-label ms-1" for="statusComplete">완료</label>
+		    </div>
+		  </div>
+		</div>
+      </form>
+       
+    </div>
+    <!-- END OF CARD BODY -->
+   
+  <!-- </div>  -->
+  <div class="btn-bar">
+    	 <!-- 버튼 영역 (폼 전체 최상단 오른쪽) -->
+	<div class="d-flex justify-content-end me-3">
+	    <button type="button" class="btn btn-primary" id="createIcBtn">결산생성</button>
+	 </div>
+  </div>
+  
+	  <div class="card shadow-sm mt-2">
+  <div class="card-header bg-secondary text-white">
+    <h5 class="mb-0">결산 목록</h5>
+  </div>
+  <div class="card-body">
+  <div id="orderItemsTable" class="ag-theme-quartz" style="width:100%; height:400px;"></div>
+  </div>
+</div>
+
+<!-- 결산 상세 카드 -->
+ <div class="btn-bar mt-2">
+    <!-- 버튼 영역 (폼 전체 최상단 오른쪽) -->
+	<div class="d-flex justify-content-end me-3">
+		<button type="button" class="btn btn-primary" id="registerIcBtn">결산등록</button>
+	</div>
+ </div>
+<div class="card shadow-sm mt-2">
+  <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">결산 상세</h5>
+    <!-- 결산등록 버튼 추가 -->
+    
+  </div>
+  <div class="card-body">
+    <div id="orderItemsDetailGrid" class="ag-theme-quartz" style="width:100%; height:400px;"></div>
+  </div>
+</div>
+  
+  
+  
+  
+	  <!-- Toast (닫기 버튼 제거) -->
+	<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+	  <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+	    <div class="toast-body" id="toastMessage">등록 성공!</div>
+	  </div>
+	</div>
+  
+  <!-- 컨테이너 종료 -->
+</div>
+
+  <!-- 모달 include              경로             ::  div id 부분  -->   
+  <div th:replace="~{stock/modals/orderListModal :: orderListModal}"></div>
+  
+</section>
+  
+<th:block layout:fragment="body_extra">
+ <!-- Axios 등록 -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+ <!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+ <!-- ag-Grid JS -->
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/dist/ag-grid-community.min.noStyle.js"></script>
+ <!-- toastr -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+ <!-- cuteAlert js -->
+<script src="/js/cuteAlert.js"></script>
+
+  <!-- 스크립트 -->
+<script th:inline="none">
+document.addEventListener("DOMContentLoaded", () => {
+	
+	// 변수 지정 및 초기화
+	const form = document.getElementById('filterForm');
+	const toastEl = document.getElementById('successToast');
+	const registerIcBtn = document.getElementById('registerIcBtn');
+	const toast = new bootstrap.Toast(toastEl);
+	let selectedRow = null; // 전역(이벤트 바깥)으로 선언
+	//let realRowCnt = tableBody.rows.length; // 실제 테이블 행 개수
+	//let rowCount = tableBody.rows.length + 1; // 현재 행 개수 + 1
+ 	let gridApi = null;
+ 	let gridOptions = null;
+ 	let invenGridOptions = null;
+ 	
+ 	// 공통 모달 호출 함수
+ 	function initGrid(config) {
+ 	    const eGridDiv = document.getElementById(config.el);
+ 	    if (!eGridDiv) {
+ 	        console.error(`${config.el} div를 찾을 수 없습니다!`);
+ 	        return null;
+ 	    }
+ 		let gridApi = null;
+ 	    const gridOptions = {
+ 	        columnDefs: config.columnDefs || [],
+ 	        rowSelection: config.rowSelection || "single",
+ 	        pagination: true,
+ 	        paginationPageSize: config.paginationPageSize || 12,
+ 	        domLayout: config.domLayout || "normal",
+ 	        rowData: [],
+ 	        defaultColDef: {
+ 	            resizable: true,
+ 	            sortable: true,
+ 	            minWidth: 100,
+ 	        },
+ 	        onRowDoubleClicked: (event) => {
+ 	            if (typeof config.onRowDoubleClicked === "function") {
+ 	                config.onRowDoubleClicked(event);
+ 	            }
+ 	        },
+ 	       onRowClicked: (event) => {
+	            if (typeof config.onRowClicked === "function") {
+	                config.onRowClicked(event);
+	            }
+	        },
+ 	        onGridReady: (event) => {
+ 	            if (typeof config.onGridReady === "function") {
+ 	                config.onGridReady(event);
+ 	            }
+ 	            event.api.sizeColumnsToFit();
+ 	        },
+ 	    };
+
+ 	    new agGrid.Grid(eGridDiv, gridOptions);
+ 	    return { gridApi: gridOptions.api, gridOptions };
+	}// END OF FUNCTION
+ 	
+	const icListGrid = initGrid({
+	    el: 'orderItemsTable',
+	    columnDefs: [
+	        { headerName: "No.", field: "no",valueGetter: "node.rowIndex + 1", width: 70, cellStyle: { textAlign: "left" } },
+	        { headerName: "결산코드", field: "icCode", width: 150 },
+	        { headerName: "결산일자", field: "icDate", width: 120,},
+	        { headerName: "담당자", field: "empId", width: 150 },
+	        { headerName: "진행상태", field: "icStatus", width: 100, cellStyle: { textAlign: "center" },
+	        	cellStyle: (params) => {
+	                if (params.value === "결재대기") {
+	                    return { backgroundColor: "#f5da2c", color: "#d10202" ,  fontWeight: "bold" }; // 노랑 배경 + 글자색
+	                }
+	                return { backgroundColor: "#054cb5", color: "#ffffff" }; // 기본 스타일
+	            }	
+	        },
+	    ],
+	    rowSelection: "single",
+	    paginationPageSize: 10,
+	    onRowClicked: async (event) => {
+	        console.log("선택된 행 데이터(selectedRow):", event.data);
+	        selectedRow = event.data.icCode;
+	        console.log("selectedRow : "+selectedRow);
+	        await loadICDetailData(selectedRow); // 상세 그리드 데이터 로드
+	        // 여기서 선택된 결산 상세를 불러오는 로직 추가 가능
+	    },
+	    onGridReady: async (event) => {
+	        try {
+	            const res = await axios.get('/api/v1/stock/icList', { withCredentials: true });
+	            event.api.setRowData(res.data); // 마스터 그리드에 데이터 뿌리기
+	        } catch (err) {
+	            console.error(err);
+	            toastr.error('마스터 데이터 로드 실패');
+	        }
+	    }
+	});
+	const invenClosingColumnDefs = [
+	    { headerName: "No.",valueGetter: "node.rowIndex + 1", field: "no", width: 80 ,
+	    	valueFormatter: (params) => {
+	        if (params.node.rowPinned) return '합계'; // pinned row이면 합계 표시
+	        return params.value;
+	    },
+	    
+        colSpan: (params) => {
+            if (params.node.rowPinned) return 3; // No + 제품코드 + 제품명 합치기
+            return 1;
+        },
+	    cellStyle: (params) => {
+	        if (params.node.rowPinned) {
+	            return {
+	                backgroundColor: '#f5f5f5', // 원하는 배경색
+	                textAlign: 'center',         // 가운데 정렬
+	                fontWeight: 'bold'           // 굵게
+	            };
+	        }
+	        return null;
+	    }
+	    	
+	    },
+	    { headerName: "제품코드", field: "productCode" },
+	    { headerName: "제품명", field: "productName" },
+	    { headerName: "이월재고", field: "openingStock", type: 'numericColumn' },
+	    { headerName: "현재고량", field: "stock", type: 'numericColumn' },
+	    { headerName: "평가액", field: "valuationAmount", valueFormatter: (params) => {
+            if (!params.value) return "";
+            return Number(params.value).toLocaleString(); // 문자열 -> 숫자로 변환 후 천단위 콤마
+        	}
+	    }
+	];
+	// 그리드 초기화
+	function initInvenGrid() {
+	    const { gridOptions } = initGrid({
+	        el: "orderItemsDetailGrid",
+	        columnDefs: invenClosingColumnDefs,
+	        paginationPageSize: 10,
+	        domLayout: "autoHeight"
+	    });
+
+	    invenGridOptions = gridOptions;
+	}
+	async function loadICDetailData(){
+		try {
+		    const res = await axios.get(`/api/v1/stock/icDetailList/${selectedRow}`, { withCredentials: true });
+		    console.log("loadICDetailData: "+JSON.stringify(res.data, null, 2));
+		    if (invenGridOptions) {
+		      // rowData 세팅
+		      invenGridOptions.api.setRowData(res.data);
+
+		      // 합계 계산: pinnedBottomRowData 사용
+		      const totalRow = {
+		        no: '합계',
+		        openingStock: res.data.reduce((sum, r) => sum + r.openingStock, 0),
+		        stock: res.data.reduce((sum, r) => sum + r.stock, 0),
+		        valuationAmount: res.data.reduce((sum, r) => sum + Number(r.valuationAmount), 0)
+		      };
+		        invenGridOptions.api.setPinnedBottomRowData([totalRow]);
+		    }
+		  } catch (err) {
+		    console.error(err);
+		    toastr.error('데이터 로드 실패');
+		  }
+	}    
+	
+	initInvenGrid();
+	document.getElementById('createIcBtn').addEventListener('click', async () => {
+	//	console.log("loadICDetailData > selectedRow : "+selectedRow);
+	  //  await loadICDetailData();
+	});
+	
+ 	//let gridCreated = false;
+ 	// withCredentials: true를 추가해야 쿠키 기반 세션을 함께 보내서 로그인 상태를 유지
+ 	axios.get("/api/v1/stock/getEmpName", { withCredentials: true })
+		  .then(res => {
+    			document.getElementById("empId").value = res.data;
+  			})
+  		  .catch(err => console.error(err));
+	//axios.get("/get/v1/stock/getIcList",{ withCredentials : true })
+	  //   .then(res=>{})
+
+  // Axios 등록 + Toast
+	registerIcBtn.addEventListener('click', async (event) => {
+		event.preventDefault(); // 페이지 새로고침 방지
+		 const rows = tableBody.querySelectorAll('tr');
+	        if(rows.length === 0) {
+	            toastr.error('행 데이터를 추가해주세요!');
+	            return;
+	        }
+	        // confirm 먼저
+	        const res = await cuteAlert({
+	        	type: "question",
+	            title: "발주 확인",
+	            message: "정말 등록하시겠습니까?",
+	            imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
+	            confirmText: "네",
+	            cancelText: "아니오"
+	        });
+	        console.log('cuteAlert result:', res);
+	        if(res !== true) {
+	            return; // 취소 시 함수 종료
+	        }
+	        
+	     // master + details
+	      const details = [];
+		  document.querySelectorAll('#orderItemsTable tbody tr').forEach(row => {
+			  details.push({
+				  productCode: row.querySelector('.productCode').value,
+				  productName: row.querySelector('.productName').value,
+				  specification: row.querySelector('.specification').value,
+				  qty: Number(row.querySelector('.qty').value) || 0,
+				  orderPrice: Number(row.querySelector('.orderPrice').value) || 0,
+				  supAmt: Number(row.querySelector('.supAmt').value) || 0,
+				  vatAmt: Number(row.querySelector('.vatAmt').value) || 0,
+				  note : row.querySelector('.note').value,
+				  companyCode: Number(document.getElementById('compCode').value) || 0
+		    });
+		  });
+		  const payload = {
+				  	xpCode: document.getElementById('xpCode').value,
+		            empId: document.getElementById('empId').value,
+		            businessPartner : document.getElementById('businessPartnerInput').value,
+		            cusCode : document.getElementById('businessCodeInput').value,
+		            dueDate: document.getElementById('dueDate').value,
+		            vatType: document.getElementById('taxType').value,
+		            companyCode: Number(document.getElementById('compCode').value),
+		            details:details
+		        };
+		  console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
+		  console.log("payload.dueDate: "+payload.dueDate);
+		  try {
+			  	
+			    await axios.post('/api/v1/stock/orderInsert', payload, {
+			      headers: { 'Content-Type': 'application/json' }
+			    });
+			    //toast.show();
+			    toastr.success('등록성공');
+			    //form.reset();
+			    resetOrderFields();
+			    // 테이블 초기화
+        		tableBody.innerHTML = '';
+        		rowCount = 1; // 행 번호 초기화
+			  } catch (err) {
+			    //alert('등록 실패: ' + err.message);
+			   
+				toastr.error('등록 실패: ' + err.message,{timeOut: 3000});
+			  }
+	});
+
+});
+</script>
+</th:block>
+
+</body>
+</html>

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
@@ -32,6 +33,8 @@ import com.yedam.erp.service.JasperService;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.stock.InvenDetailVO;
+import com.yedam.erp.vo.stock.InvenVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.OrderVO;
@@ -72,14 +75,29 @@ public class StockController {
 	        return empName;
 	}
 	
+	@GetMapping("/icList")
+	public List<InvenVO> getIcList(){
+		Long companyCode = SessionUtil.companyId();
+		System.out.println(companyCode);
+		return service.getIcList(companyCode);
+	}
 	
-	@PostMapping("/requestOrderInsert")
-	public ResponseEntity<String> insertOrder(@RequestBody OrderPlanVO plan) {
-        
-            // 1️⃣ DB에 발주 등록
-            service.insertOrderPlan(plan);
-            return ResponseEntity.ok("발주 등록 완료");
-    }
+	@GetMapping("/icDetailList/{selectedRow}")
+	public List<InvenDetailVO> getIcDetailList(@PathVariable String selectedRow){
+		Long companyCode = SessionUtil.companyId();
+		System.out.println(companyCode);
+		return service.getIcDetailList(companyCode,selectedRow);
+	}
+	
+	
+	
+//	@PostMapping("/requestOrderInsert")
+//	public ResponseEntity<String> insertOrder(@RequestBody OrderPlanVO plan) {
+//        
+//            // 1️⃣ DB에 발주 등록
+//            service.insertOrderPlan(plan);
+//            return ResponseEntity.ok("발주 등록 완료");
+//    }
 	
 	
 	@GetMapping("/orderListSheet/{orderCode}/{businessCode}") // 발주 조회시 발주서 상세 조회()
@@ -172,9 +190,15 @@ public class StockController {
 	}
 
 	@PostMapping("/orderInsert") // 발주 등록
-	public ResponseEntity<String> insertOrder(OrderVO order){
-		service.insertOrder(order);
-		return ResponseEntity.ok("등록 성공");
+	public ResponseEntity<String> insertOrderReq(@RequestBody  OrderVO order){
+		//service.insertOrderReq(order);
+		try {
+	        service.insertOrderReq(order);
+	        return ResponseEntity.ok("등록 성공");
+	    } catch(Exception e) {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                             .body("등록 실패: " + e.getMessage());
+	    }
 	}
 	
 	
