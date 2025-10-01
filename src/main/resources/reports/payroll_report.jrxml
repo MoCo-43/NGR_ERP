@@ -1,0 +1,771 @@
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
+<jasperReport name="payroll_report" language="java" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="adc09178-1893-452f-902c-460fa5caf63d">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="cloud"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="248"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="745"/>
+	<style name="hangle" mode="Transparent" fontName="malgun"/>
+	<style name="Background" style="hangle" mode="Opaque" forecolor="#000000" backcolor="#CACED0"/>
+	<parameter name="PAYROLL_NO" class="java.lang.Long">
+		<defaultValueExpression><![CDATA[3]]></defaultValueExpression>
+	</parameter>
+	<parameter name="P_company" class="java.lang.String">
+		<defaultValueExpression><![CDATA["회사"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="p_year_month" class="java.lang.String">
+		<defaultValueExpression><![CDATA["2025-09"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="p_dept" class="java.lang.String">
+		<defaultValueExpression><![CDATA["부서"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="P_companyCode" class="java.lang.Long"/>
+	<query language="SQL"><![CDATA[SELECT
+    d.dept_code,
+    d.dept_name,
+    e.emp_id,
+    e.name        AS emp_name,
+    e.position    AS position,
+
+    NVL(a.base_pay,      NVL(epf.base_pay,0))      AS base_pay,
+    NVL(a.family_allow,  NVL(epf.family_allow,0))  AS family_allow,
+    NVL(a.meal_allow,    NVL(epf.meal_allow,0))    AS meal_allow,
+    NVL(a.annual_allow,  NVL(epf.annual_allow,0))  AS annual_allow,
+
+    ( NVL(a.base_pay,      NVL(epf.base_pay,0))
+    + NVL(a.family_allow,  NVL(epf.family_allow,0))
+    + NVL(a.meal_allow,    NVL(epf.meal_allow,0))
+    + NVL(a.annual_allow,  NVL(epf.annual_allow,0)) )                AS total_allow,
+
+    NVL(ded.income_tax,0)       AS income_tax,
+    NVL(ded.resident_tax,0)     AS resident_tax,
+    NVL(ded.national_pension,0) AS national_pension,
+    NVL(ded.health_ins,0)       AS health_ins,
+    NVL(ded.employ_ins,0)       AS employ_ins,
+
+    ( NVL(ded.income_tax,0)
+    + NVL(ded.resident_tax,0)
+    + NVL(ded.national_pension,0)
+    + NVL(ded.health_ins,0)
+    + NVL(ded.employ_ins,0) )                                       AS total_deduct,
+
+    ( ( NVL(a.base_pay,      NVL(epf.base_pay,0))
+      + NVL(a.family_allow,  NVL(epf.family_allow,0))
+      + NVL(a.meal_allow,    NVL(epf.meal_allow,0))
+      + NVL(a.annual_allow,  NVL(epf.annual_allow,0)) )
+     - ( NVL(ded.income_tax,0)
+      + NVL(ded.resident_tax,0)
+      + NVL(ded.national_pension,0)
+      + NVL(ded.health_ins,0)
+      + NVL(ded.employ_ins,0) ) )                                   AS net_pay
+
+FROM emp e
+JOIN dept d
+  ON d.dept_code    = e.dept_code
+ AND d.company_code = e.company_code
+LEFT JOIN emp_pay_fix epf
+  ON epf.emp_id = e.emp_id
+
+/* 해당 급여차수(payroll_no) 수당 합계 */
+LEFT JOIN (
+    SELECT emp_id,
+           SUM(CASE WHEN allow_code='BASE'   THEN allow_amount ELSE 0 END) AS base_pay,
+           SUM(CASE WHEN allow_code='FAMILY' THEN allow_amount ELSE 0 END) AS family_allow,
+           SUM(CASE WHEN allow_code='MEAL'   THEN allow_amount ELSE 0 END) AS meal_allow,
+           SUM(CASE WHEN allow_code='ANNUAL' THEN allow_amount ELSE 0 END) AS annual_allow
+      FROM emp_allow_detail
+     WHERE payroll_no = $P{PAYROLL_NO}
+     GROUP BY emp_id
+) a ON a.emp_id = e.emp_id
+
+/* 해당 급여차수(payroll_no) 공제 합계 */
+LEFT JOIN (
+    SELECT emp_id,
+           SUM(CASE WHEN deduct_code='INCOME_TAX'       THEN deduct_amount ELSE 0 END) AS income_tax,
+           SUM(CASE WHEN deduct_code='RESIDENT_TAX'     THEN deduct_amount ELSE 0 END) AS resident_tax,
+           SUM(CASE WHEN deduct_code='NATIONAL_PENSION' THEN deduct_amount ELSE 0 END) AS national_pension,
+           SUM(CASE WHEN deduct_code='HEALTH_INS'       THEN deduct_amount ELSE 0 END) AS health_ins,
+           SUM(CASE WHEN deduct_code='EMPLOY_INS'       THEN deduct_amount ELSE 0 END) AS employ_ins
+      FROM emp_deduct_detail
+     WHERE payroll_no = $P{PAYROLL_NO}
+     GROUP BY emp_id
+) ded ON ded.emp_id = e.emp_id
+
+WHERE d.dept_name    = $P{p_dept}
+  AND d.company_code = $P{P_companyCode}
+
+ORDER BY d.dept_code, e.emp_id
+]]></query>
+	<field name="DEPT_CODE" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="DEPT_CODE"/>
+		<property name="com.jaspersoft.studio.field.label" value="DEPT_CODE"/>
+	</field>
+	<field name="DEPT_NAME" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="DEPT_NAME"/>
+		<property name="com.jaspersoft.studio.field.label" value="DEPT_NAME"/>
+	</field>
+	<field name="EMP_ID" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="EMP_ID"/>
+		<property name="com.jaspersoft.studio.field.label" value="EMP_ID"/>
+	</field>
+	<field name="EMP_NAME" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="EMP_NAME"/>
+		<property name="com.jaspersoft.studio.field.label" value="EMP_NAME"/>
+	</field>
+	<field name="POSITION" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="POSITION"/>
+		<property name="com.jaspersoft.studio.field.label" value="POSITION"/>
+	</field>
+	<field name="BASE_PAY" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="BASE_PAY"/>
+		<property name="com.jaspersoft.studio.field.label" value="BASE_PAY"/>
+	</field>
+	<field name="FAMILY_ALLOW" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="FAMILY_ALLOW"/>
+		<property name="com.jaspersoft.studio.field.label" value="FAMILY_ALLOW"/>
+	</field>
+	<field name="MEAL_ALLOW" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="MEAL_ALLOW"/>
+		<property name="com.jaspersoft.studio.field.label" value="MEAL_ALLOW"/>
+	</field>
+	<field name="ANNUAL_ALLOW" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="ANNUAL_ALLOW"/>
+		<property name="com.jaspersoft.studio.field.label" value="ANNUAL_ALLOW"/>
+	</field>
+	<field name="TOTAL_ALLOW" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="TOTAL_ALLOW"/>
+		<property name="com.jaspersoft.studio.field.label" value="TOTAL_ALLOW"/>
+	</field>
+	<field name="INCOME_TAX" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="INCOME_TAX"/>
+		<property name="com.jaspersoft.studio.field.label" value="INCOME_TAX"/>
+	</field>
+	<field name="RESIDENT_TAX" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="RESIDENT_TAX"/>
+		<property name="com.jaspersoft.studio.field.label" value="RESIDENT_TAX"/>
+	</field>
+	<field name="NATIONAL_PENSION" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="NATIONAL_PENSION"/>
+		<property name="com.jaspersoft.studio.field.label" value="NATIONAL_PENSION"/>
+	</field>
+	<field name="HEALTH_INS" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="HEALTH_INS"/>
+		<property name="com.jaspersoft.studio.field.label" value="HEALTH_INS"/>
+	</field>
+	<field name="EMPLOY_INS" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="EMPLOY_INS"/>
+		<property name="com.jaspersoft.studio.field.label" value="EMPLOY_INS"/>
+	</field>
+	<field name="TOTAL_DEDUCT" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="TOTAL_DEDUCT"/>
+		<property name="com.jaspersoft.studio.field.label" value="TOTAL_DEDUCT"/>
+	</field>
+	<field name="NET_PAY" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="NET_PAY"/>
+		<property name="com.jaspersoft.studio.field.label" value="NET_PAY"/>
+	</field>
+	<variable name="Variable_1" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{BASE_PAY}]]></expression>
+	</variable>
+	<variable name="FAM_AMT" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{FAMILY_ALLOW}]]></expression>
+	</variable>
+	<variable name="MEAL_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{MEAL_ALLOW}]]></expression>
+	</variable>
+	<variable name="ANNUAL_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{ANNUAL_ALLOW}]]></expression>
+	</variable>
+	<variable name="BASE_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{BASE_PAY}]]></expression>
+	</variable>
+	<variable name="TOTAL_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{TOTAL_ALLOW}]]></expression>
+	</variable>
+	<variable name="INCOME_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{INCOME_TAX}]]></expression>
+	</variable>
+	<variable name="RESIDENT_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{RESIDENT_TAX}]]></expression>
+	</variable>
+	<variable name="NATIONAL_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{NATIONAL_PENSION}]]></expression>
+	</variable>
+	<variable name="HEALTH_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{HEALTH_INS}]]></expression>
+	</variable>
+	<variable name="EMPLOY_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{EMPLOY_INS}]]></expression>
+	</variable>
+	<variable name="TOTAL_DEDUCT_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{TOTAL_DEDUCT}]]></expression>
+	</variable>
+	<variable name="NET_PAY_ATM" calculation="Sum" class="java.lang.Long">
+		<expression><![CDATA[$F{NET_PAY}]]></expression>
+	</variable>
+	<background height="555">
+		<element kind="image" uuid="f699a218-72c3-416e-b3ed-c222bafc996e" x="0" y="0" width="768" height="555" hImageAlign="Center" vImageAlign="Middle">
+			<expression><![CDATA["reports/너구리 흐릿.png"]]></expression>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+		</element>
+	</background>
+	<title height="84" splitType="Stretch">
+		<element kind="textField" uuid="42856015-9646-490d-9261-4ad13d4d66a7" x="700" y="0" width="100" height="30" pattern="yyyy년MMMMM dd일">
+			<expression><![CDATA[new java.util.Date()]]></expression>
+		</element>
+		<element kind="textField" uuid="87302c3b-49a7-42ff-beaf-912392b17b2b" x="0" y="50" width="800" height="30" markup="html" fontSize="22.0" printRepeatedValues="false" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+			<expression><![CDATA[$P{p_year_month} + " "+$P{p_dept} + " 급여대장"]]></expression>
+		</element>
+		<element kind="textField" uuid="05eb0573-fc43-4271-9ccb-8ece3ee299ce" x="0" y="0" width="100" height="30">
+			<expression><![CDATA[$P{PAYROLL_NO}]]></expression>
+		</element>
+	</title>
+	<detail>
+		<band height="154" splitType="Stretch">
+			<element kind="frame" uuid="0b202370-1b50-4ef2-b749-1239ddc5f695" x="0" y="61" width="769" height="71">
+				<element kind="textField" uuid="c43c4fd6-bece-4366-ab77-4df20beeb79b" x="0" y="10" width="140" height="67" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{EMP_ID}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="ccd7bf5d-71ce-4cc5-b624-4d0414c43aa0"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="03088a0f-8e03-493f-bab1-14b338d407b1" x="139" y="9" width="91" height="30" removeLineWhenBlank="true" bold="false" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+					<expression><![CDATA[$F{EMP_NAME}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="38b8550f-c928-4d7c-9051-2689498af626"/>
+					<box style="hangle">
+						<pen lineWidth="0.75" lineStyle="Dotted"/>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.75" lineStyle="Dotted" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="37fad637-2cd9-49cb-8f5c-12c8339217b6" x="230" y="9" width="90" height="30" removeLineWhenBlank="true" bold="false" hTextAlign="Center" vTextAlign="Middle" style="hangle">
+					<expression><![CDATA[$F{POSITION}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="91c98b1b-e213-4217-a03b-e9cf21e40bb1"/>
+					<box style="hangle">
+						<pen lineWidth="0.75" lineStyle="Dotted"/>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.75" lineStyle="Dotted" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="2ddf46b4-fb79-419f-a60d-b8e0251c4ba1" x="590" y="9" width="90" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{BASE_PAY}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="a7357407-6cf6-4f91-9276-1f7122286953"/>
+					<box>
+						<pen lineWidth="0.75" lineStyle="Dotted"/>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.75" lineStyle="Dotted" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="5dd6854c-c095-48aa-8c14-226ee59f4fcc" x="320" y="9" width="91" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{FAMILY_ALLOW}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="611ee3a0-4e87-4938-8d12-9e871a9b99b2"/>
+					<box>
+						<pen lineWidth="0.75" lineStyle="Dotted"/>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.75" lineStyle="Dotted" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="da5515db-a7f7-48f3-a44a-845f1d212d02" x="411" y="9" width="89" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{MEAL_ALLOW}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="9fda1a71-0ff3-418d-9b74-f44f90982b9d"/>
+					<box>
+						<pen lineWidth="0.75" lineStyle="Dotted"/>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.75" lineStyle="Dotted" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="f9793148-64ce-45cc-9fba-3061c4a7b9f7" x="680" y="9" width="89" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{TOTAL_ALLOW}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="a2ff886a-fbd1-41f9-90ea-2d4f59bf97be"/>
+					<box>
+						<pen lineWidth="0.75" lineStyle="Dotted"/>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.75" lineStyle="Dotted" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="7f0f2c54-455f-459a-8f77-3ac7866c960f" x="139" y="40" width="92" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{INCOME_TAX}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="17abc9c8-1160-4626-9af4-84349a8a4994"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="8370a9ab-0374-4dc8-a578-d54b5dbab5a3" x="231" y="40" width="90" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{RESIDENT_TAX}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e23eda68-516d-4ca0-85bf-9f87518ee1f1"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="5b9a6f74-f32a-4481-ab32-5db83a6c738f" x="321" y="40" width="90" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{NATIONAL_PENSION}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8f2d3788-0c5a-4b76-a85f-b70b441e54f4"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="dfd291e0-788d-47f9-a4d8-1b320a2ad766" x="411" y="40" width="90" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{HEALTH_INS}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6738e71e-b533-4fbb-bbfc-92eed4ec5362"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="23320395-4a5a-46e1-a432-80f338faee83" x="501" y="40" width="90" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{EMPLOY_INS}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1fe90216-9260-4778-aba2-29a0e9232d59"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="7d2598ed-fff7-40c9-b309-14bf583a6576" x="591" y="40" width="90" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{TOTAL_DEDUCT}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="d56ca4fe-27ad-4750-a1af-67e0f953174a"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="12f4bf87-ff68-4713-91fa-428a686d0dad" x="681" y="40" width="88" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{NET_PAY}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="a554809a-667f-4fc2-8b75-956096ec6632"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<element kind="textField" uuid="48b54279-7676-4526-9d96-75e3e91dd8f5" x="500" y="9" width="90" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+					<expression><![CDATA[$F{ANNUAL_ALLOW}]]></expression>
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="67e541fd-e947-4528-a7ee-7e228c29c156"/>
+					<box>
+						<pen lineWidth="0.75" lineStyle="Dotted"/>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.75" lineStyle="Dotted" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+				</element>
+				<box>
+					<pen lineWidth="0.75"/>
+					<topPen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.5" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="950fb95b-0efe-40f1-afe9-98c6bbe216cb" mode="Opaque" x="0" y="0" width="138" height="61" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[사원번호]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="ccd7bf5d-71ce-4cc5-b624-4d0414c43aa0"/>
+				<box style="Background">
+					<pen lineWidth="0.75"/>
+					<topPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.75" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="69069671-267b-40c4-a722-67b3c36d138d" mode="Opaque" x="499" y="31" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[고용보험]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1fe90216-9260-4778-aba2-29a0e9232d59"/>
+				<box style="Background">
+					<bottomPen lineWidth="0.75"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="2ab795e7-11cc-46e3-97f3-3030f93ba862" mode="Opaque" x="138" y="0" width="91" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[사원명]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="38b8550f-c928-4d7c-9051-2689498af626"/>
+				<box style="Background">
+					<topPen lineWidth="0.75"/>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="552b4274-051c-4482-a83e-2b9d36081421" mode="Opaque" x="319" y="31" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[국민연금]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8f2d3788-0c5a-4b76-a85f-b70b441e54f4"/>
+				<box style="Background">
+					<bottomPen lineWidth="0.75"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="8b4e658e-ff41-4ae0-99e3-1844b8843a3a" mode="Opaque" x="229" y="0" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[직급]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="91c98b1b-e213-4217-a03b-e9cf21e40bb1"/>
+				<box style="Background">
+					<topPen lineWidth="0.75"/>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="33dab32e-42ee-46b3-9f9d-285d5e140947" mode="Opaque" x="499" y="0" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[연차수당]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="67e541fd-e947-4528-a7ee-7e228c29c156"/>
+				<box style="Background">
+					<topPen lineWidth="0.75"/>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="ef88b8ca-8432-460e-b40c-70d963f01f5a" mode="Opaque" x="229" y="31" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[주민세]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e23eda68-516d-4ca0-85bf-9f87518ee1f1"/>
+				<box style="Background">
+					<bottomPen lineWidth="0.75"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="e20e5867-7a5a-45bc-b97c-6a47c9ff68c0" mode="Opaque" x="409" y="31" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[건강보험]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6738e71e-b533-4fbb-bbfc-92eed4ec5362"/>
+				<box style="Background">
+					<bottomPen lineWidth="0.75"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="6ed56bd6-ad60-400e-807b-1497b0f1b536" mode="Opaque" x="138" y="31" width="91" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[소득세]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="17abc9c8-1160-4626-9af4-84349a8a4994"/>
+				<box style="Background">
+					<bottomPen lineWidth="0.75"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="d57cfafc-c6dd-4db9-85b9-f52f17497886" mode="Opaque" x="679" y="31" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[실지급액]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="a554809a-667f-4fc2-8b75-956096ec6632"/>
+				<box style="Background">
+					<bottomPen lineWidth="0.75"/>
+					<rightPen lineWidth="0.75"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="c0e6d35a-99e1-4532-815f-6cc607fa2393" mode="Opaque" x="319" y="0" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[부양가족]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="611ee3a0-4e87-4938-8d12-9e871a9b99b2"/>
+				<box style="Background">
+					<topPen lineWidth="0.75"/>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="515a2b8a-ab48-4f84-b470-8e8567b7802a" mode="Opaque" x="679" y="0" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[지급총액]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="a2ff886a-fbd1-41f9-90ea-2d4f59bf97be"/>
+				<box style="Background">
+					<topPen lineWidth="0.75"/>
+					<bottomPen lineWidth="1.0"/>
+					<rightPen lineWidth="0.75"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="74a7dc9a-0a1e-4e39-a3ee-86134717d6fc" mode="Opaque" x="589" y="0" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[기본급]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="a7357407-6cf6-4f91-9276-1f7122286953"/>
+				<box style="Background">
+					<topPen lineWidth="0.75"/>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="662d9c9e-9d37-4d82-b10c-874357ad7860" mode="Opaque" x="409" y="0" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[식대]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="9fda1a71-0ff3-418d-9b74-f44f90982b9d"/>
+				<box style="Background">
+					<topPen lineWidth="0.75"/>
+					<bottomPen lineWidth="1.0"/>
+				</box>
+			</element>
+			<element kind="staticText" uuid="27707b90-35c9-4109-bee7-7c66c6226bf2" mode="Opaque" x="589" y="31" width="90" height="30" removeLineWhenBlank="true" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+				<text><![CDATA[공제총액]]></text>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="d56ca4fe-27ad-4750-a1af-67e0f953174a"/>
+				<box style="Background">
+					<bottomPen lineWidth="0.75"/>
+				</box>
+			</element>
+		</band>
+	</detail>
+	<summary height="120" splitType="Stretch">
+		<element kind="textField" uuid="d3c4422f-d605-416b-8be0-bab74f3634d8" x="388" y="90" width="95" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{HEALTH_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="a111e0ad-a680-45a9-85fc-1856b16cc5c6" mode="Opaque" x="483" y="60" width="97" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[고용보험]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="140b3c94-84f9-4516-a8b4-fdbcad729050" mode="Opaque" x="0" y="0" width="100" height="120" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[부서합계]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="5586a1e7-4abd-4502-abc3-66940a55e74a" mode="Opaque" x="234" y="0" width="134" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[식대 ]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="a79f24c6-3d7c-42ee-877e-760277c66c67" mode="Opaque" x="675" y="60" width="94" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[실지급액 총액]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="e69978c2-f67e-4ec5-8850-01179ae5e79f" mode="Opaque" x="100" y="60" width="95" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[소득세]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="ade8fb43-e06f-4d9a-8833-fa7d72164fa6" mode="Opaque" x="368" y="0" width="134" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[연차수당]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="01c565eb-3ea6-48b7-bd2c-9c25d728557b" mode="Opaque" x="636" y="0" width="133" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[지급총액]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="8e4eaf29-fb7a-4288-9568-fbd1a67cebb4" mode="Opaque" x="580" y="60" width="95" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[공제총액]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="1f666360-8ac4-4cc5-adb1-eee9d31000c0" x="483" y="90" width="97" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{EMPLOY_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="669344a0-c4e2-47b1-9d85-ca73946320b9" x="291" y="90" width="97" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{NATIONAL_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="9ad56770-2ed5-45f5-a859-cab5d8c5a68a" x="195" y="90" width="96" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{RESIDENT_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="43da41b9-d1d8-41a2-b017-2dadb2118957" x="100" y="30" width="134" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{FAM_AMT}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="3ba46441-9de0-4327-a85d-85b30a22ef02" mode="Opaque" x="100" y="0" width="134" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[부양가족]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="802e8137-d22b-46de-842f-a98e31d7a1c3" x="368" y="30" width="134" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{ANNUAL_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="55d5371d-f257-476f-8c3d-643f25722569" x="502" y="30" width="134" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{BASE_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="3bcc5a35-26c9-4d37-9c8c-362f44675371" mode="Opaque" x="195" y="60" width="96" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[주민세]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="a9ec2246-d0c9-4def-8f83-149135dea262" x="675" y="90" width="94" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{NET_PAY_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="726458bd-f0f4-454b-a99b-906814a51bc8" x="580" y="90" width="95" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{TOTAL_DEDUCT_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="5e672d54-b646-4300-85dd-487156db2b8a" x="234" y="30" width="134" height="30" pattern="#,##0.###;#,##0.###-" linkType="None" linkTarget="Self" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{MEAL_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="16d2d500-ec70-4e93-b6cf-d062feeb0a67" mode="Opaque" x="388" y="60" width="95" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[건강보험]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="79629606-5e8b-426e-ba1e-96b517f16107" mode="Opaque" x="502" y="0" width="134" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[기본급 합계]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="staticText" uuid="8b991081-be15-4f3e-b118-9701d13a78dc" mode="Opaque" x="291" y="60" width="97" height="30" bold="true" hTextAlign="Center" vTextAlign="Middle" style="Background">
+			<text><![CDATA[국민연금]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<box style="Background">
+				<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="71a580b7-e2df-4113-b120-f42c6a665fda" x="100" y="90" width="95" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{INCOME_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+		<element kind="textField" uuid="a3d4cdfa-8ef1-4a3a-ba82-7ed309c71846" x="636" y="30" width="133" height="30" pattern="#,##0.###;#,##0.###-" bold="false" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$V{TOTAL_ATM}]]></expression>
+			<box>
+				<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+			</box>
+		</element>
+	</summary>
+</jasperReport>
