@@ -388,6 +388,10 @@ main {
 </style>
 </head>
 <body>
+	<input type="hidden" id="max-users-hidden"
+		th:value="${subPlan.maxUsers}">
+	<input type="hidden" id="min-users-hidden"
+		th:value="${subPlan.minUsers}">
 	<div th:replace="~{layout/main_header :: headerFragment}"></div>
 	<div th:replace="~{modal/signModal :: signModal}"></div>
 	<main>
@@ -419,27 +423,33 @@ main {
 						<div class="form-group">
 							<label class="form-section-label">구독기간</label>
 							<div class="options-group" id="duration-options">
-								<div class="option-button">
+								<div class="option-button" data-duration="3개월">
 									<div class="icon">📅</div>
 									<div>3개월</div>
 								</div>
-								<div class="option-button selected">
+								<div class="option-button selected" data-duration="6개월">
 									<div class="icon">📅</div>
 									<div>6개월</div>
 								</div>
-								<div class="option-button">
+								<div class="option-button" data-duration="12개월">
 									<div class="icon">📅</div>
 									<div>12개월</div>
 								</div>
 							</div>
 						</div>
-						<div class="form-group">
+						<!--  <div class="form-group">
 							<label for="user-count-select" class="form-section-label">사용자
 								수(규모)</label> <select id="user-count-select" class="custom-select">
 								<option value="10">10명</option>
 								<option value="50" selected>50명</option>
 								<option value="100">100명</option>
 							</select>
+						</div>-->
+						<div class="form-group">
+							<label for="user-count-input" class="form-section-label">사용자
+								수(규모)</label> <input type="text" id="user-count-input"
+								class="input-field" value="0" min="1"
+								placeholder="사용할 인원 수를 입력하세요.">
 						</div>
 						<div class="premium-section">
 							<span class="label">프리미엄 12개월 구독 금액</span> <span class="price"
@@ -495,10 +505,11 @@ main {
 								type="text" id="ceo" class="input-field" readonly>
 						</div>
 						<div class="form-group">
-							<label for="company-address" class="form-section-label">회사
-								주소</label> <input type="text" id="company-address" class="input-field"
-								readonly> <input type="text" id="company-address-detail"
-								class="input-field" readonly style="margin-top: 10px;">
+							<label class="form-section-label">회사 주소</label> <input
+								type="text" id="compAddr" class="form-control"
+								placeholder="도로명주소" readonly> <input type="text"
+								id="compDelAddr" class="form-control" placeholder="상세주소"
+								readonly>
 						</div>
 
 						<h3 class="form-section-title" style="margin-top: 48px;">관리자
@@ -525,13 +536,15 @@ main {
 						<h3>선택한 구독 정보</h3>
 						<div class="summary-box">
 							<div class="summary-item">
-								<span class="item-label">구독 기간</span> <span class="item-value">6개월</span>
+								<span class="item-label">구독 기간</span> <span class="item-value"
+									id="summary-duration">6개월</span>
 							</div>
 							<div class="summary-item">
-								<span class="item-label">사용자 수</span> <span class="item-value">50명</span>
+								<span class="item-label">사용자 수</span> <span class="item-value"
+									id="summary-user-count">50명</span>
 							</div>
 							<div class="summary-item total">
-								<span class="item-label">예상 결제금액</span> <span class="price"
+								<span class="item-label">기본 결제금액</span> <span class="price"
 									th:text="${subPlan.baseSalary}"></span></span>
 							</div>
 						</div>
@@ -555,8 +568,8 @@ main {
 				               document.getElementById('compName').value = data.company.compName;
 				               document.getElementById('brm').value = data.company.brm;
 				               document.getElementById('ceo').value = data.company.ceo;
-				               document.getElementById('company-address').value = data.company.address;
-				               document.getElementById('company-address-detail').value = data.company.addressDetail;
+				               document.getElementById('compAddr').value = data.company.compAddr;
+				               document.getElementById('compDelAddr').value = data.company.compDelAddr;
 				               document.getElementById('matName').value = data.company.matName;
 				               document.getElementById('matMail').value = data.company.matMail;
 				           })
@@ -676,6 +689,12 @@ main {
 								</ol>
 							</div>
 						</article>
+						<!--  <article>
+							<div class="form-group">
+							 고객사:<input type="text" id="compName" readonly>
+							 고객담당자:<input type="text" id="matName" readonly>
+							</div>
+						</article>-->
 					</div>
 				</div>
 				<div class="form-navigation">
@@ -694,10 +713,21 @@ main {
 						{
 						 await axios.post('/api/main/sign');
 						}
-					 goToStep(4); 
+		    	    bootstrap.Modal.getOrCreateInstance(document.getElementById('signModal')).hide();
+					goToStep(4); 
 				}
+			   //document.addEventListener('DOMContentLoaded', function() {
+			     // fetch('/api/subDetail?planId=' + '[[${subPlanNo}]]')
+			          // .then(response => {
+						 //   return response.json(); // 유효한 응답일 때만 JSON 파싱 시도
+						//})
+			           //.then(data => {
+			            //   document.getElementById('compName').value = data.company.compName;
+			            //   document.getElementById('matName').value = data.company.matName;
+			          // })
+			  // });
 			</script>
-
+<!-- https://docs.stripe.com/api/errors/https://docs.stripe.com/api/errors -->
 			<div id="step-4" class="step-section">
 				<div class="inner-layout">
 					<div class="main-form">
@@ -706,14 +736,28 @@ main {
 							<label class="form-section-label">최종 결제 정보</label>
 							<div class="summary-box">
 								<div class="summary-item">
-									<span class="item-label">구독 기간</span> <span class="item-value">6개월</span>
+									<span class="item-label">구독 기간</span> <span class="item-value"
+										id="summary-duration">6개월</span>
 								</div>
 								<div class="summary-item">
-									<span class="item-label">사용자 수</span> <span class="item-value">50명</span>
+									<span class="item-label">사용자 수</span> <span class="item-value"
+										id="summary-user-count">50명</span>
+								</div>
+								<div class="summary-item">
+									<span class="item-label">기본 금액(사용자수)</span> <span class="price"
+										id="base-price-display" th:text="${subPlan.baseSalary}"></span></span>
+								</div>
+								<div class="summary-item">
+									<span class="item-label">할인 금액</span> <span class="item-value"
+										id="summary-discount-price">- 0원</span>
+								</div>
+								<div class="summary-item">
+									<span class="item-label">초과 금액</span> <span class="item-value"
+										id="summary-excess-price">0원</span>
 								</div>
 								<div class="summary-item total">
 									<span class="item-label">총 결제 금액</span> <span
-										class="item-value" id="total-amount-display">1,020,000원</span>
+										class="item-value" id="summary-total-payment">0원</span>
 								</div>
 							</div>
 						</div>
@@ -786,62 +830,205 @@ main {
 	</main>
 
 	<div th:replace="~{layout/main_footer :: footerFragment}"></div>
-
 	<script>
-        let currentStep = 1;
+    // ------------------------------------
+    //  1. 전역 변수 설정 
+    // ------------------------------------
+    let currentStep = 1;
+    let selectedDuration = 6; // 구독 기간 (숫자: 3, 6, 12)
+    let selectedDurationText = "6개월"; // 구독 기간 (텍스트)
+    let selectedUserCount = 0; // 사용자 수 (숫자)
 
-        function goToStep(stepNumber) {
-            document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
-            document.getElementById(`step-${stepNumber}`).classList.add('active');
-            
-            updateStepUI(stepNumber);
-            currentStep = stepNumber;
-        }
+    //  DB에서 가져온 가격 및 인원 정보 (DOMContentLoaded에서 실제 값으로 초기화됨)
+    let basePriceFromDB = 0; // subPlan.baseSalary 값
+    let maxUsers = 0; // subPlan.maxUsers 값
+    let minUsers = 0; // subPlan.minUsers 값
+    const USER_UNIT_PRICE = 5000; // 초과/미만 인원당 추가/차감 비용
 
-        function updateStepUI(targetStep) {
-            const steps = document.querySelectorAll('.steps .step');
-            const uiTargetStep = targetStep > 4 ? 4 : targetStep;
+    // 2. 결제 계산 함수 
+function calculatePayment() {
+    const duration = selectedDuration;
+    const userCount = parseInt(selectedUserCount) || 0;
+    const minCount = minUsers;
+    const maxCount = maxUsers;
 
-            steps.forEach((step, index) => {
-                const stepIndex = index + 1;
-                step.classList.remove('active', 'completed');
-                if (stepIndex < uiTargetStep) {
-                    step.classList.add('completed');
-                } else if (stepIndex === uiTargetStep) {
-                    step.classList.add('active');
-                }
-            });
+    // DB에서 가져온 기본 금액
+    let grossTotal = basePriceFromDB;
 
-            if (targetStep === 5) {
-                const step4UI = document.getElementById('step-ui-4');
-                if (step4UI) { 
-                    step4UI.classList.remove('active');
-                    step4UI.classList.add('completed');
-                }
+    // 1️ 할인 계산 (12개월 선택 시만 10%)
+    let discount = 0;
+    if (duration === 12) {
+        discount = Math.round(grossTotal * 0.1);
+        console.log(`discount 할인`);
+    }
+
+    // 2️초과/미만 금액 계산
+    let adjustmentCharge = 0;
+
+    if (userCount > maxCount) {
+        // 초과 금액: 1명당 5000원 * 기간
+        adjustmentCharge = (userCount - maxCount) * USER_UNIT_PRICE * duration;
+    	console.log(`adjustmentCharge 초과`);
+    } else if (userCount < minCount) {
+        // 미만 금액: 1명당 5000원 * 기간, 음수 처리
+        adjustmentCharge = -(minCount - userCount) * USER_UNIT_PRICE * duration;
+        console.log(`adjustmentCharge 미만`);
+    }
+
+    // 3️ 최종 결제 금액
+    let finalPayment = grossTotal - discount + adjustmentCharge;
+    finalPayment = Math.max(0, finalPayment);
+    console.log(finalPayment);
+
+    // 4️ 화면에 반영
+    const discountPriceElement = document.getElementById('summary-discount-price');
+    const excessPriceElement = document.getElementById('summary-excess-price');
+    const totalPaymentElement = document.getElementById('summary-total-payment');
+
+    discountPriceElement.textContent = '- ' + discount.toLocaleString() + '원';
+
+    if (adjustmentCharge > 0) {
+        excessPriceElement.textContent = '+' + adjustmentCharge.toLocaleString() + '원';
+    } else if (adjustmentCharge < 0) {
+        excessPriceElement.textContent = adjustmentCharge.toLocaleString() + '원';
+    } else {
+        excessPriceElement.textContent = '0원';
+    }
+
+    totalPaymentElement.textContent = finalPayment.toLocaleString() + '원';
+}
+
+
+    // 3. UI 업데이트 함수 
+    function updateSummaryDuration() {
+        const summaryElements = document.querySelectorAll('#summary-duration');
+        summaryElements.forEach(element => {
+            element.textContent = selectedDurationText;
+        });
+    }
+    
+    function updateSummaryUserCount() {
+        const userCountElements = document.querySelectorAll('#summary-user-count');
+        
+        const count = parseInt(selectedUserCount) || 0;
+        const formattedCount = count.toLocaleString() + "명"; 
+
+        userCountElements.forEach(element => {
+            element.textContent = formattedCount;
+        });
+    }
+
+    function goToStep(stepNumber) {
+        document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step-${stepNumber}`).classList.add('active');
+        
+        updateStepUI(stepNumber);
+        currentStep = stepNumber;
+        
+        // Step 2, 3, 4로 이동할 때 UI 및 결제 정보 업데이트 실행
+        if (stepNumber >= 2 && stepNumber <= 4) {
+            updateSummaryDuration();
+            updateSummaryUserCount();
+            // DB 값이 로드된 후에만 계산 실행
+            if (basePriceFromDB > 0) {
+                calculatePayment(); 
             }
         }
+    }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // 초기 활성 섹션 설정
-            document.getElementById(`step-${currentStep}`).classList.add('active');
+    function updateStepUI(targetStep) {
+        const steps = document.querySelectorAll('.steps .step');
+        const uiTargetStep = targetStep > 4 ? 4 : targetStep;
 
-            const durationButtons = document.querySelectorAll('#duration-options .option-button');
-            durationButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    durationButtons.forEach(btn => btn.classList.remove('selected'));
-                    button.classList.add('selected');
-                });
-            });
+        steps.forEach((step, index) => {
+            const stepIndex = index + 1;
+            step.classList.remove('active', 'completed');
+            if (stepIndex < uiTargetStep) {
+                step.classList.add('completed');
+            } else if (stepIndex === uiTargetStep) {
+                step.classList.add('active');
+            }
+        });
 
-            const paymentOptions = document.querySelectorAll('#payment-options .payment-option');
-            paymentOptions.forEach(option => {
-                option.addEventListener('click', () => {
-                    paymentOptions.forEach(opt => opt.classList.remove('selected'));
-                    option.classList.add('selected');
-                });
+        if (targetStep === 5) {
+            const step4UI = document.getElementById('step-ui-4');
+            if (step4UI) { 
+                step4UI.classList.remove('active');
+                step4UI.classList.add('completed');
+            }
+        }
+    }
+
+
+    //  4. DOMContentLoaded 이벤트 핸들러 
+    document.addEventListener('DOMContentLoaded', function() {
+        
+    	// DB 변수 초기화 (ID 'base-price-display'에서 값 읽기)
+    	const basePriceElement = document.getElementById('base-price-display');
+    	if (basePriceElement && basePriceElement.textContent) {
+    	    // textContent (예: "500,000원")에서 숫자만 추출
+    	    const rawValue = basePriceElement.textContent.replace(/[^0-9]/g, '');
+    	    basePriceFromDB = parseInt(rawValue, 10) || 0;
+    	}
+
+    	const maxUsersHidden = document.getElementById('max-users-hidden');
+    	if (maxUsersHidden) {
+    	    maxUsers = parseInt(maxUsersHidden.value, 10) || 0;
+    	}
+    	const minUsersHidden = document.getElementById('min-users-hidden');
+    	if (minUsersHidden) {
+    	    minUsers = parseInt(minUsersHidden.value, 10) || 0;
+    	}
+
+        // 초기 활성 섹션 설정
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+
+        const durationButtons = document.querySelectorAll('#duration-options .option-button');
+        durationButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                durationButtons.forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                
+                // 기간 텍스트와 숫자를 모두 저장하고 계산 로직 실행
+                selectedDurationText = button.getAttribute('data-duration'); 
+                selectedDuration = parseInt(selectedDurationText.replace(/[^0-9]/g, '')) || 1;
+                
+                calculatePayment(); // 기간 변경 시 즉시 계산
             });
         });
-    </script>
+
+        // 초기 로드 시 구독 기간 변수 초기화
+        const initialSelectedDuration = document.querySelector('#duration-options .option-button.selected');
+        if (initialSelectedDuration) {
+            selectedDurationText = initialSelectedDuration.getAttribute('data-duration');
+            selectedDuration = parseInt(selectedDurationText.replace(/[^0-9]/g, '')) || 1;
+        }
+        
+        // 사용자 수 입력 필드 값 변경 리스너
+        const userCountInput = document.getElementById('user-count-input');
+        if (userCountInput) {
+            // 초기 사용자 수 설정
+            selectedUserCount = userCountInput.value.replace(/[^0-9]/g, '');
+            
+            // input 값이 변경될 때마다 변수 업데이트 및 계산 실행
+            userCountInput.addEventListener('input', () => {
+                selectedUserCount = userCountInput.value.replace(/[^0-9]/g, '');
+                calculatePayment(); // 사용자 수 변경 시 즉시 계산
+            });
+        }
+
+        const paymentOptions = document.querySelectorAll('#payment-options .payment-option');
+        paymentOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                paymentOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+            });
+        });
+        
+        // 페이지가 로드된 후, 초기 계산을 실행합니다.
+        calculatePayment(); 
+    });
+</script>
 </body>
 </html>
 

@@ -55,7 +55,7 @@ public class WebSecurityConfig {
             .rememberMe(remember -> remember
                 .tokenRepository(tokenRepository(dataSource))
                 .tokenValiditySeconds(60 * 60 * 24 * 3) // 3일
-//                .key("uniqueAndSecretKey")
+                .key("uniqueAndSecretKey")
                 .userDetailsService(customUserDetailsService)
             )
             .logout(logout -> logout
@@ -66,10 +66,9 @@ public class WebSecurityConfig {
             ).headers(headers -> headers
                 .frameOptions(frame -> frame.sameOrigin()) // PDF 시큐리티 허가(모달로 띄우려면 무조건 필요)
             );
-
         return http.build();
     }
-
+    
     @Bean
     public PersistentTokenRepository tokenRepository(DataSource dataSource) {
         return new MyTokenRepository(dataSource); // 커스텀 Repository 사용

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yedam.erp.mapper.main.DocumentsMapper">
-	<insert id="insertSign"  > 
+<insert id="insertSign">
+    <selectKey keyProperty="docNo" resultType="long" order="BEFORE">
+        SELECT doc_no_seq.NEXTVAL FROM DUAL
+    </selectKey>
     INSERT INTO documents (
         doc_no,
         doc_name,
@@ -19,5 +22,5 @@
         #{signPath},   
         #{signDate}    
     )
-	</insert>
+</insert>
 </mapper>

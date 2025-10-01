@@ -15,4 +15,6 @@ public class SubscriptionVO {
 	private Long TotalPay;
 	private Long MatNo;
 	private Long Mon;
+	private String comCode;
 }
+

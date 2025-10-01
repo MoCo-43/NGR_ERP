@@ -45,6 +45,9 @@
             comp_name,
             mat_name,
             mat_mail,
+            comp_addr,
+            comp_del_addr,
+            jibun_address,
             com_code
         FROM
             company
@@ -52,6 +55,7 @@
             com_code = #{comCode}
     </select>
     
+    <!-- ??? -->
      <select id="selectCompanyByUsername" parameterType="string" resultType="com.yedam.erp.vo.main.CompanyVO">
         SELECT
             COMP_NAME,
