@@ -3,6 +3,8 @@ package com.yedam.erp.vo.account;
 import java.util.Date;
 import java.util.List;
 
+import com.yedam.erp.vo.Biz.CustomerVO;
+
 import lombok.Data;
 
 @Data
@@ -12,7 +14,7 @@ public class InvoiceHeaderVO {
     private String type;          // 매출/매입 구분
     private Date invoiceDate;     // 전표일자
     private String orderCode;     // 주문서 코드
-    private String deptCode;      // 부서코드
+    private String deptName;      // 부서코드
     private String cusCode;       // 거래처 코드
     private String bizNo;         // 사업자번호
     private String cusName;       // 거래처명
@@ -36,4 +38,20 @@ public class InvoiceHeaderVO {
 
     // 1:N 매핑
     private List<InvoiceLineVO> lines;
+    
+    // 거래처
+    // ✅ Buyer (구매자)
+    private String buyerCeoName;
+    private String buyerAddr;
+    private String buyerBizType;
+    private String buyerBizCategory;
+    private String buyerEmail;
+
+    // ✅ Seller (판매처)
+    private String sellerCeoName;
+    private String sellerAddr;
+    private String sellerBizType;
+    private String sellerBizCategory;
+    private String sellerEmail;
+    
 }

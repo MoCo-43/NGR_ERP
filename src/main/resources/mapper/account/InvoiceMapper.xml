@@ -10,13 +10,110 @@
   <select id="selectInvoiceHeaders" resultType="InvoiceHeaderVO">
     SELECT
       INVOICE_CODE, INVOICE_NO, TYPE, INVOICE_DATE,
-      ORDER_CODE, DEPT_CODE, CUS_CODE, BIZ_NO, CUS_NAME,
+      ORDER_CODE, DEPT_NAME, CUS_CODE, BIZ_NO, CUS_NAME,
       VAT_TYPE, DUE_DATE, SUBTOTAL_AMT, VAT_AMT, TOTAL_AMT,
       PAY_METHOD, MEMO, AR_AP_ACCT, CASH_ACCOUNT, STATUS,
       CREATED_AT, UPDATED_AT, COMPANY_CODE, POSTED_FLAG
     FROM INVOICE_HEADER
     WHERE COMPANY_CODE = #{companyCode}
     ORDER BY INVOICE_DATE DESC
+  </select>
+
+  
+  
+<!-- 전표번호 뽑기 -->
+<select id="selectNextInvoiceNo" resultType="string">
+  SELECT FN_NEXT_VOUCHER_NO('I', SYSDATE) FROM dual
+</select>
+
+<!-- 전표 헤더 + 라인 등록 -->
+<insert id="insertInvoiceWithLines" parameterType="com.yedam.erp.vo.account.InvoiceHeaderVO">
+  INSERT ALL
+    INTO INVOICE_HEADER (
+      INVOICE_CODE, INVOICE_NO, TYPE, INVOICE_DATE,
+      ORDER_CODE, DEPT_NAME, CUS_CODE, BIZ_NO, CUS_NAME,
+      VAT_TYPE, DUE_DATE, SUBTOTAL_AMT, VAT_AMT, TOTAL_AMT,
+      PAY_METHOD, MEMO, AR_AP_ACCT, CASH_ACCOUNT, STATUS,
+      CREATED_AT, COMPANY_CODE, POSTED_FLAG
+    )
+    VALUES (
+      SEQ_INVOICE_HEADER.NEXTVAL,   -- 헤더 PK
+      #{invoiceNo}, #{type}, #{invoiceDate},
+      #{orderCode}, #{deptName}, #{cusCode}, #{bizNo}, #{cusName},
+      #{vatType}, #{dueDate}, #{subtotalAmt}, #{vatAmt}, #{totalAmt},
+      #{payMethod}, #{memo}, #{arApAcct}, #{cashAccount}, #{status},
+      SYSDATE, #{companyCode}, 'N'
+    )
+
+    <foreach collection="lines" item="line">
+      INTO INVOICE_LINE (
+        LINE_NO, PRODUCT_NAME, QTY, UNIT_PRICE, SUP_AMT, VAT_AMT,
+        INVOICE_CODE, COMPANY_CODE
+      )
+      VALUES (
+        #{line.lineNo},
+        #{line.productName}, #{line.qty}, #{line.unitPrice}, #{line.supAmt}, #{line.vatAmt},
+        SEQ_INVOICE_HEADER.CURRVAL,   -- 방금 INSERT한 헤더 PK 따라감
+        #{companyCode}
+      )
+    </foreach>
+  SELECT 1 FROM DUAL
+</insert>
+
+
+<!-- 전자세금계산서 -->
+
+  <!-- 전표 헤더 단건 조회 -->
+  <select id="selectInvoiceHeaderById" resultType="com.yedam.erp.vo.account.InvoiceHeaderVO">
+     SELECT
+      ih.INVOICE_CODE,
+      ih.INVOICE_NO,
+      ih.TYPE,
+      ih.INVOICE_DATE,
+      ih.ORDER_CODE,
+      ih.DEPT_NAME,
+      ih.CUS_CODE,
+      ih.BIZ_NO,
+      ih.CUS_NAME,
+      ih.VAT_TYPE,
+      ih.DUE_DATE,
+      ih.SUBTOTAL_AMT,
+      ih.VAT_AMT,
+      ih.TOTAL_AMT,
+      ih.PAY_METHOD,
+      ih.MEMO,
+      ih.AR_AP_ACCT,
+      ih.CASH_ACCOUNT,
+      ih.STATUS,
+      ih.CREATED_AT,
+      ih.UPDATED_AT,
+      ih.COMPANY_CODE,
+      ih.POSTED_FLAG,
+
+      -- 구매처
+      buyer.CEO_NAME     AS buyerCeoName,
+      buyer.ADDR         AS buyerAddr,
+      buyer.BIZ_TYPE     AS buyerBizType,
+      buyer.BIZ_CATEGORY AS buyerBizCategory,
+      buyer.EMAIL        AS buyerEmail,
+
+      -- 판매처
+      seller.CEO_NAME     AS sellerCeoName,
+      seller.ADDR         AS sellerAddr,
+      seller.BIZ_TYPE     AS sellerBizType,
+      seller.BIZ_CATEGORY AS sellerBizCategory,
+      seller.EMAIL        AS sellerEmail
+
+  FROM INVOICE_HEADER ih
+  LEFT JOIN CUSTOMER buyer
+    ON ih.COMPANY_CODE = buyer.COMPANY_CODE
+   AND ih.CUS_CODE = buyer.CUS_CODE
+   AND buyer.GBN = '구매처'
+  LEFT JOIN CUSTOMER seller
+    ON ih.COMPANY_CODE = seller.COMPANY_CODE
+   AND seller.GBN = '공급자'
+  WHERE ih.INVOICE_CODE = #{invoiceCode}
+    AND ih.COMPANY_CODE = #{companyCode}
   </select>
 
   <!-- 특정 전표 라인 조회 -->
@@ -26,47 +123,16 @@
       INVOICE_CODE, COMPANY_CODE
     FROM INVOICE_LINE
     WHERE INVOICE_CODE = #{invoiceCode}
+      AND COMPANY_CODE = #{companyCode}
     ORDER BY LINE_NO
   </select>
   
-  
-  
-  <select id="selectNextInvoiceNo" resultType="string">
-    SELECT FN_NEXT_JRN_NO(SYSDATE) FROM dual
-  </select>
-  
-
- <!-- 헤더 등록: invoice_code는 selectKey로 SEQ 채움 -->
-<insert id="insertInvoiceHeader" parameterType="InvoiceHeaderVO">
-  <selectKey keyProperty="invoiceCode" order="BEFORE" resultType="long">
-    SELECT SEQ_INVOICE_HEADER.NEXTVAL FROM dual
-  </selectKey>
-  INSERT INTO INVOICE_HEADER (
-    INVOICE_CODE, INVOICE_NO, TYPE, INVOICE_DATE,
-    ORDER_CODE, DEPT_CODE, CUS_CODE, BIZ_NO, CUS_NAME,
-    VAT_TYPE, DUE_DATE, SUBTOTAL_AMT, VAT_AMT, TOTAL_AMT,
-    PAY_METHOD, MEMO, AR_AP_ACCT, CASH_ACCOUNT, STATUS,
-    CREATED_AT, COMPANY_CODE, POSTED_FLAG
-  ) VALUES (
-    #{invoiceCode}, #{invoiceNo}, #{type}, #{invoiceDate},
-    #{orderCode}, #{deptCode}, #{cusCode}, #{bizNo}, #{cusName},
-    #{vatType}, #{dueDate}, #{subtotalAmt}, #{vatAmt}, #{totalAmt},
-    #{payMethod}, #{memo}, #{arApAcct}, #{cashAccount}, #{status},
-    SYSDATE, #{companyCode}, #{postedFlag}
-  )
-</insert>
-
-<!-- 라인 등록: line_no는 트리거가 자동 생성 -->
-<insert id="insertInvoiceLines">
-  INSERT INTO invoice_line
-    (product_name, qty, unit_price, sup_amt, vat_amt, invoice_code, company_code)
-  VALUES
-    <foreach collection="list" item="line" separator=",">
-      (#{line.productName}, #{line.qty}, #{line.unitPrice},
-       #{line.supAmt}, #{line.vatAmt}, #{line.invoiceCode}, #{line.companyCode})
-    </foreach>
-</insert>
-  
-  
-  
+ <!-- 일반전표로 등록시 Y로 상태변경 -->
+  <update id="updatePostedFlag">
+    UPDATE INVOICE_HEADER
+       SET POSTED_FLAG = #{postedFlag},
+           UPDATED_AT = SYSDATE
+     WHERE COMPANY_CODE = #{companyCode}
+       AND INVOICE_CODE = #{invoiceCode}
+</update>
 </mapper>

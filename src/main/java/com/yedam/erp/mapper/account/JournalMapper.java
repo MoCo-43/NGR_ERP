@@ -36,7 +36,7 @@ public interface JournalMapper {
 	// 마감용 전표 상세
 	List<JournalVO> selectJournalDetailClose(Map<String, Object> params);
 
-	// 마감 버튼 (상태변경)
+	// 마감 버튼 (일반전표의 상태변경)
 	int updateStatusBatch(Map<String, Object> params);
 
 	 // ✅ 역분개 (DB 프로시저 호출)

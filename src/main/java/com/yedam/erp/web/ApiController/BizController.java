@@ -83,16 +83,15 @@ public class BizController {
   }
 
   // 출하지시서 조회
-  @GetMapping(value = "/dolist", consumes = "application/json")
+  @GetMapping("/dolist")
   public List<DeliveryOrderVO> getDoList() {
     Long companyCode = SessionUtil.companyId();
-        System.out.println("companyCode => " + companyCode);
       return service.selectDo(companyCode);
   }
 
   // 출하지시서 등록 처리
-  @PostMapping(value = "/doinsert", consumes = "application/json")
-  public ResponseEntity<Integer> insertDO(@RequestBody DoInsertVO dovo) {
+  @PostMapping("/doinsert")
+  public ResponseEntity<Integer> insertDO(DoInsertVO dovo) {
 
     // 세션에서 회사코드 꺼내오기
     Long companyCode = SessionUtil.companyId();
