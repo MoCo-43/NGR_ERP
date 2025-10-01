@@ -3,9 +3,12 @@ package com.yedam.erp.mapper.stock;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.stock.InvenDetailVO;
+import com.yedam.erp.vo.stock.InvenVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
@@ -49,7 +52,17 @@ public interface StockMapper {
 	public List<OrderDetailVO> getOrderDetailByOrderCode(String orderCode); 
 	
 	// 발주 등록
-	public void insertOrder(OrderVO order); // 마스터
+	public void insertOrderReq(OrderVO order); // 마스터
 	public int insertOrderDetail(OrderDetailVO item); // 상세
+	
+	// 결산 마스터 조회
+	public List<InvenVO> getIcList(Long companyCode);
+	
+	// 결산 디테일 조회
+	public List<InvenDetailVO> getIcDetailList(Long companyCode ,  @Param("icCode")String selectedRow);
+	
+	// 결산 등록
+	public void insertInvenClosing(InvenVO inven);// 마스터
+	public int insertInvenClosingDetail(InvenDetailVO item);// 상세
 	
 }

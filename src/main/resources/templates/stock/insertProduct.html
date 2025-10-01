@@ -67,6 +67,10 @@
           <label for="salesPrice" class="form-label">판매단가</label>
           <input type="text" class="form-control" id="salesPrice" name="salesPrice">
         </div>
+        <div class="col-md-4">
+          <label for="leadTime" class="form-label">리드타임</label>
+          <input type="number" class="form-control" id="leadTime" name="leadTime">
+        </div>
       </form>
     </div>
   </div>
@@ -132,9 +136,10 @@
 		event.preventDefault(); // 페이지 새로고침 방지
 		const purInput = document.getElementById('purchasePrice');
 		const salInput = document.getElementById('salesPrice');
-		
+		const ltInput = document.getElementById('leadTime');
 		purInput.value = purInput.value || 0;
 		salInput.value= salInput.value || 0;
+		ltInput.value = ltInput.value || 0;
 		
 	    const formData = new FormData(form);
 		
