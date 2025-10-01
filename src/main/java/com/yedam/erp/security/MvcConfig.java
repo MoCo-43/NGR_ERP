@@ -37,6 +37,8 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/biz/dolist").setViewName("biz/ViewAllDO");
 		// 영업-출하지시서 입력페이지
 		registry.addViewController("/biz/doinsert").setViewName("biz/InsertDO");
+		// 영업-거래처관리 페이지
+		registry.addViewController("/biz/mngcus").setViewName("biz/ManagementCustomer");
 
 		// 회계
 		registry.addViewController("/vouchers").setViewName("account/list");
