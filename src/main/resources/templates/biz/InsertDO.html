@@ -134,8 +134,6 @@
                     class="form-control"
                     id="managerName"
                     placeholder="담당자명"
-                    data-bs-toggle="modal"
-                    data-bs-target="#"
                   />
                   <button
                     type="button"
@@ -229,61 +227,16 @@
 
               <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
               <script>
-                //본 예제에서는 도로명 주소 표기 방식에 대한 법령에 따라, 내려오는 데이터를 조합하여 올바른 주소를 구성하는 방법을 설명합니다.
                 function sample4_execDaumPostcode() {
                   new daum.Postcode({
                     oncomplete: function (data) {
-                      // 팝업에서 검색결과 항목을 클릭했을때 실행할 코드를 작성하는 부분.
-
-                      // 도로명 주소의 노출 규칙에 따라 주소를 표시한다.
-                      // 내려오는 변수가 값이 없는 경우엔 공백('')값을 가지므로, 이를 참고하여 분기 한다.
-                      var roadAddr = data.roadAddress; // 도로명 주소 변수
-                      var extraRoadAddr = ""; // 참고 항목 변수
-
-                      // 법정동명이 있을 경우 추가한다. (법정리는 제외)
-                      // 법정동의 경우 마지막 문자가 "동/로/가"로 끝난다.
-                      if (
-                        data.bname !== "" &&
-                        /[동|로|가]$/g.test(data.bname)
-                      ) {
-                        extraRoadAddr += data.bname;
-                      }
-                      // 건물명이 있고, 공동주택일 경우 추가한다.
-                      if (data.buildingName !== "" && data.apartment === "Y") {
-                        extraRoadAddr +=
-                          extraRoadAddr !== ""
-                            ? ", " + data.buildingName
-                            : data.buildingName;
-                      }
-                      // 표시할 참고항목이 있을 경우, 괄호까지 추가한 최종 문자열을 만든다.
-                      if (extraRoadAddr !== "") {
-                        extraRoadAddr = " (" + extraRoadAddr + ")";
-                      }
-
-                      // 우편번호와 주소 정보를 해당 필드에 넣는다.
+                      var roadAddr = data.roadAddress;
                       document.getElementById("sample4_postcode").value =
                         data.zonecode;
                       document.getElementById("sample4_roadAddress").value =
                         roadAddr;
                       document.getElementById("sample4_jibunAddress").value =
                         data.jibunAddress;
-
-                      var guideTextBox = document.getElementById("guide");
-                      // 사용자가 '선택 안함'을 클릭한 경우, 예상 주소라는 표시를 해준다.
-                      if (data.autoRoadAddress) {
-                        var expRoadAddr = data.autoRoadAddress + extraRoadAddr;
-                        guideTextBox.innerHTML =
-                          "(예상 도로명 주소 : " + expRoadAddr + ")";
-                        guideTextBox.style.display = "block";
-                      } else if (data.autoJibunAddress) {
-                        var expJibunAddr = data.autoJibunAddress;
-                        guideTextBox.innerHTML =
-                          "(예상 지번 주소 : " + expJibunAddr + ")";
-                        guideTextBox.style.display = "block";
-                      } else {
-                        guideTextBox.innerHTML = "";
-                        guideTextBox.style.display = "none";
-                      }
                     },
                   }).open();
                 }
@@ -296,6 +249,8 @@
                 type="button"
                 class="btn btn-outline-secondary btn-slim"
                 id="btnFindProduct"
+                data-bs-toggle="modal"
+                data-bs-target="#productcodeModal"
               >
                 품목코드
               </button>
@@ -366,20 +321,15 @@
         </div>
       </div>
 
-      <!-- 모달설정 -->
-
-      <!-- 거래처모달 -->
-      <div>
-        <th:replace
-          fragment="customermodal"
-          th:replace="~{biz/modals/PoCustomerModal :: customermodal}"
-        ></th:replace>
-      </div>
-      <!-- 품목모달 -->
-      <!-- <div th:replace
-        fragment="itemmodal"
+      <!-- 모달 -->
+      <!-- 거래처 모달 -->
+      <div th:replace="~{biz/modals/PoCustomerModal :: customermodal}"></div>
+      <!-- 품목코드 모달 -->
+      <div
         th:replace="~{biz/modals/ProductCodeModal :: productcodeModal}"
-      ></div th:replace> -->
+      ></div>
+      <!-- 주문서 모달 -->
+      <!-- <div th:replace="~{biz/modals/PoHistoryModal :: PoHistoryModal}"></div> -->
     </section>
 
     <th:block layout:fragment="body_extra">
@@ -400,15 +350,29 @@
 
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
-          // ===== Header DOM =====
+          // ===== 공통 =====
+          const numberParser = (v) => {
+            const n = Number(String(v ?? "").replaceAll(",", ""));
+            return isNaN(n) ? null : n;
+          };
+          const computeRow = (d) => {
+            const qty = Number(d.qty || 0);
+            const price = Number(d.price || 0);
+            d.supplyAmt = qty * price;
+            d.vat = Math.round(d.supplyAmt * 0.1);
+          };
+
+          // ===== 폼 =====
           const writeDate = document.getElementById("writeDate");
           const customerCode = document.getElementById("customerCode");
           const customerName = document.getElementById("customerName");
           const managerName = document.getElementById("managerName");
           const phone = document.getElementById("phone");
           const shipDate = document.getElementById("shipDate");
-          const zipCode = document.getElementById("zipCode");
-          const address = document.getElementById("address");
+
+          const zipEl = document.getElementById("sample4_postcode");
+          const roadEl = document.getElementById("sample4_roadAddress");
+          const detailEl = document.getElementById("sample4_detailAddress");
 
           const btnReset = document.getElementById("btnReset");
           const btnSave = document.getElementById("btnSave");
@@ -420,38 +384,20 @@
           const sumSupply = document.getElementById("sumSupply");
           const sumVat = document.getElementById("sumVat");
 
-          // ===== AG Grid 설정 =====
-          const numberParser = (params) => {
-            const v = params.newValue ?? params.value ?? "";
-            if (v === null || v === undefined || v === "") return null;
-            const n = Number(String(v).replaceAll(",", ""));
-            return isNaN(n) ? null : n;
-          };
-
-          const computeRow = (data) => {
-            const qty = Number(data.qty || 0);
-            const price = Number(data.price || 0);
-            // 공급가액 = 수량 * 단가
-            const supplyAmt = qty * price;
-            data.supplyAmt = supplyAmt;
-            // 부가세 = 공급가액 * 0.1 (VAT 10%) - 프로젝트 정책에 맞게 수정
-            data.vat = Math.round(supplyAmt * 0.1);
-          };
-
-          const columnDefs = [
+          // ===== 아이템 그리드 =====
+          const itemColumnDefs = [
+            { headerName: "", checkboxSelection: true, width: 50 },
             {
               headerName: "품목코드",
               field: "code",
               editable: true,
               width: 120,
-              cellEditor: "agTextCellEditor",
             },
             {
               headerName: "품목명",
               field: "name",
               editable: true,
               minWidth: 160,
-              cellEditor: "agTextCellEditor",
             },
             {
               headerName: "결제방식",
@@ -467,11 +413,11 @@
               editable: true,
               width: 110,
               type: "rightAligned",
-              valueParser: numberParser,
+              valueParser: (p) => numberParser(p.newValue),
               valueFormatter: (p) => (p.value ?? 0).toLocaleString(),
               onCellValueChanged: (p) => {
                 computeRow(p.data);
-                gridOptions.api.refreshCells({ force: true });
+                itemGridOptions.api.refreshCells({ force: true });
                 updateSummary();
               },
             },
@@ -481,11 +427,11 @@
               editable: true,
               width: 120,
               type: "rightAligned",
-              valueParser: numberParser,
+              valueParser: (p) => numberParser(p.newValue),
               valueFormatter: (p) => (p.value ?? 0).toLocaleString(),
               onCellValueChanged: (p) => {
                 computeRow(p.data);
-                gridOptions.api.refreshCells({ force: true });
+                itemGridOptions.api.refreshCells({ force: true });
                 updateSummary();
               },
             },
@@ -513,151 +459,28 @@
             },
           ];
 
-          const gridOptions = {
-            columnDefs,
+          const itemGridOptions = {
+            columnDefs: itemColumnDefs,
             rowData: [],
-            rowSelection: "single",
+            rowSelection: "multiple",
+            rowMultiSelectWithClick: true,
             animateRows: true,
-            defaultColDef: { sortable: true, resizable: true },
-            onGridReady: () => gridOptions.api.sizeColumnsToFit(),
+            defaultColDef: {
+              sortable: true,
+              resizable: true,
+              filter: false,
+              minWidth: 90,
+            },
+            onGridReady: (e) => e.api.sizeColumnsToFit(),
           };
+          const itemGridDiv = document.getElementById("itemGrid");
+          new agGrid.Grid(itemGridDiv, itemGridOptions);
 
-          /*
-
-                        ======================== 거래처 모달 ========================
-
-
-                */
-
-          // ===== 공통 Grid 초기화 유틸=====
-          function initGrid({
-            el,
-            columnDefs,
-            onGridReady,
-            onRowDoubleClicked,
-          }) {
-            const e = document.getElementById(el);
-            if (!e) {
-              console.error(`${el} 요소를 찾지 못했습니다.`);
-              return null;
-            }
-            const gridOptions = {
-              columnDefs,
-              rowData: [],
-              rowSelection: "single",
-              pagination: true,
-              paginationPageSize: 12,
-              defaultColDef: {
-                resizable: true,
-                sortable: true,
-                minWidth: 100,
-                filter: true,
-              },
-              onGridReady: (ev) => {
-                gridOptions.api = ev.api;
-                ev.api.sizeColumnsToFit();
-                onGridReady && onGridReady(ev);
-              },
-              onRowDoubleClicked: (ev) =>
-                onRowDoubleClicked && onRowDoubleClicked(ev),
-            };
-            new agGrid.Grid(e, gridOptions);
-            return gridOptions;
-          }
-
-          // ===== 거래처 모달 =====
-          (function setupCustomerModal() {
-            const modalEl = document.getElementById("customermodal");
-            if (!modalEl) return;
-
-            // 부트스트랩 인스턴스
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-
-            // 폼 필드 (값 주입 대상) - 네 페이지의 id에 정확히 맞춤
-            const cusNameEl = document.getElementById("customerName");
-            const cusCodeHiddenEl = document.getElementById("customerCode");
-
-            // 그리드 상태
-            let grid; // gridOptions
-            let initialized = false;
-
-            // 컬럼 정의 (팀원 스타일)
-            const columnDefs = [
-              { headerName: "거래처코드", field: "cusCode", width: 140 },
-              {
-                headerName: "거래처명",
-                field: "cusName",
-                flex: 1,
-                minWidth: 160,
-              },
-              { headerName: "담당자명", field: "empName", width: 120 },
-              { headerName: "사업자번호", field: "bizNo", width: 140 },
-              { headerName: "신용등급", field: "creditGrade", width: 120 },
-              {
-                headerName: "미수금",
-                field: "leftPrice",
-                width: 120,
-                valueFormatter: (p) => (p.value ?? 0).toLocaleString(),
-              },
-              { headerName: "주소", field: "addr", minWidth: 200, flex: 1 },
-            ];
-
-            // 데이터 로드 (엔드포인트는 프로젝트에 맞게 선택)
-            async function loadCustomers() {
-              try {
-                const { data } = await axios.get("/api/biz/customercode");
-                grid.api.setRowData(data || []);
-                grid.api.sizeColumnsToFit();
-              } catch (err) {
-                console.error("거래처 로드 실패:", err);
-                toastr?.error?.("거래처 목록 조회 실패");
-              }
-            }
-
-            // 거래처 선택 후 모달창 닫기
-            function pick(row) {
-              if (!row) return;
-              cusNameEl.value = row.cusName ?? "";
-              cusCodeHiddenEl.value = row.cusCode ?? "";
-
-              // modal.hide() 대신 close 버튼
-              modalEl.querySelector(".btn-close")?.click();
-            }
-
-            // 모달 최초 오픈 시 그리드 1회 초기화
-            modalEl.addEventListener("shown.bs.modal", () => {
-              if (!initialized) {
-                grid = initGrid({
-                  el: "customerGrid",
-                  columnDefs,
-                  onGridReady: loadCustomers,
-                  onRowDoubleClicked: (ev) => pick(ev.data),
-                });
-                initialized = true;
-              } else {
-                loadCustomers(); // 재오픈 시 최신화
-              }
-            });
-
-            // 가져오기 버튼
-            document
-              .getElementById("CstImportBtn")
-              ?.addEventListener("click", () => {
-                const selected = grid?.api?.getSelectedRows?.() || [];
-                if (!selected.length)
-                  return toastr?.info?.("거래처를 선택하세요");
-                pick(selected[0]);
-              });
-          })();
-
-          new agGrid.Grid(document.getElementById("itemGrid"), gridOptions);
-
-          // ===== 합계 =====
           function updateSummary() {
             let tQty = 0,
               tSupply = 0,
               tVat = 0;
-            gridOptions.api.forEachNode((n) => {
+            itemGridOptions.api.forEachNode((n) => {
               tQty += Number(n.data.qty || 0);
               tSupply += Number(n.data.supplyAmt || 0);
               tVat += Number(n.data.vat || 0);
@@ -667,63 +490,61 @@
             sumVat.textContent = tVat.toLocaleString();
           }
 
-          // ===== 버튼 동작 =====
+          // 행 조작
           btnAddRow.addEventListener("click", () => {
-            const newRow = {
-              code: "",
-              name: "",
-              payType: "현금",
-              qty: null,
-              price: null,
-              vat: 0,
-              supplyAmt: 0,
-              note: "",
-            };
-            gridOptions.api.applyTransaction({ add: [newRow] });
+            itemGridOptions.api.applyTransaction({
+              add: [
+                {
+                  code: "",
+                  name: "",
+                  payType: "현금",
+                  qty: null,
+                  price: null,
+                  vat: 0,
+                  supplyAmt: 0,
+                  note: "",
+                },
+              ],
+            });
           });
-
           btnDelRow.addEventListener("click", () => {
-            const sel = gridOptions.api.getSelectedRows();
+            const sel = itemGridOptions.api.getSelectedRows();
             if (!sel.length) return toastr.info("삭제할 행을 선택하세요");
-            gridOptions.api.applyTransaction({ remove: sel });
+            itemGridOptions.api.applyTransaction({ remove: sel });
             updateSummary();
           });
-
           btnClearRows.addEventListener("click", () => {
-            gridOptions.api.setRowData([]);
+            itemGridOptions.api.setRowData([]);
             updateSummary();
           });
 
           btnReset.addEventListener("click", () => {
-            // 상단 입력 초기화
             writeDate.value = "";
             customerCode.value = "";
             customerName.value = "";
             managerName.value = "";
             phone.value = "";
             shipDate.value = "";
-            zipCode.value = "";
-            address.value = "";
-            // 그리드 초기화
-            gridOptions.api.setRowData([]);
+            zipEl && (zipEl.value = "");
+            roadEl && (roadEl.value = "");
+            detailEl && (detailEl.value = "");
+            itemGridOptions.api.setRowData([]);
             updateSummary();
           });
 
-          // ===== 등록 =====
+          // 저장
           btnSave.addEventListener("click", async () => {
             try {
               const header = {
                 writeDate: writeDate.value,
                 customerCode: customerCode.value,
-                customerName: customerName.value,
                 managerName: managerName.value,
                 phone: phone.value,
                 shipDate: shipDate.value,
-                zipCode: zipCode.value,
-                address: address.value,
+                zipCode: zipEl?.value || "",
+                address: roadEl?.value || "",
+                detailAddress: detailEl?.value || "",
               };
-
-              // 필수값 검증 (프로젝트 정책에 맞게 추가/수정)
               if (!header.writeDate)
                 return toastr.error("작성일자를 입력하세요");
               if (!header.customerName)
@@ -732,23 +553,15 @@
                 return toastr.error("출하예정일을 입력하세요");
 
               const items = [];
-              gridOptions.api.forEachNode((n) => {
+              itemGridOptions.api.forEachNode((n) => {
                 const d = { ...n.data };
-                // 계산값 보정
                 computeRow(d);
                 items.push(d);
               });
-
-              if (items.length === 0)
+              if (!items.length)
                 return toastr.error("품목을 1개 이상 추가하세요");
 
-              const payload = { header, items };
-
-              // DB 등록처리
-              await axios.post("/api/biz/doinsert", payload, {
-                headers: { "Content-Type": "application/json" },
-              });
-
+              await axios.post("/api/biz/doinsert", { header, items });
               toastr.success("등록되었습니다");
             } catch (e) {
               console.error(e);
@@ -756,25 +569,177 @@
             }
           });
 
-          // ===== (선택) 품목 검색 예시 - 프로젝트에 맞게 교체 =====
-          document
-            .getElementById("btnFindProduct")
-            .addEventListener("click", async () => {
-              // 여기서는 간단히 데모 데이터 한 줄 추가
-              const demo = {
-                code: "A01",
-                name: "맛있는쿠키",
-                payType: "현금",
-                qty: 100,
-                price: 1000,
-              };
-              computeRow(demo);
-              gridOptions.api.applyTransaction({ add: [demo] });
-              updateSummary();
-            });
+          /*
 
-          // 최초 한 줄 넣어 편집 유도(선택)
-          btnAddRow.click();
+                        ======================== 품목코드 모달 ========================
+
+
+                  */
+          const productModalEl = document.getElementById("productcodeModal");
+          let productGridApi;
+          const productColumnDefs = [
+            { headerName: "", checkboxSelection: true, width: 50 },
+            { headerName: "품목코드", field: "productCode", width: 140 },
+            {
+              headerName: "품목명",
+              field: "productName",
+              flex: 1,
+              minWidth: 160,
+            },
+          ];
+          if (productModalEl) {
+            productModalEl.addEventListener("shown.bs.modal", () => {
+              const gridDiv = document.getElementById("productGrid");
+              if (!productGridApi) {
+                if (window.agGrid?.createGrid) {
+                  productGridApi = agGrid.createGrid(
+                    gridDiv,
+                    productGridOptions
+                  );
+                } else {
+                  productGridApi = productGridOptions.api;
+                }
+              }
+              fetchProductData();
+            });
+          }
+          const productGridOptions = {
+            columnDefs: productColumnDefs,
+            rowSelection: "multiple",
+            rowMultiSelectWithClick: true,
+            rowData: [],
+            defaultColDef: { sortable: true, resizable: true, filter: true },
+            onGridReady: (p) => {
+              productGridApi = p.api;
+            },
+          };
+
+          async function fetchProductData() {
+            if (!productGridApi) return;
+            try {
+              const { data } = await axios.get("/api/biz/productcode");
+              productGridApi.setRowData(data || []);
+            } catch (err) {
+              console.error("품목 데이터 조회 실패:", err);
+              alert("품목 데이터를 불러오는 데 실패했습니다.");
+            }
+          }
+
+          // 품목코드 모달의 가져오기 버튼 클릭 이벤트
+          const importProductBtn = document.getElementById("PrcImportBtn");
+          if (importProductBtn) {
+            importProductBtn.addEventListener("click", () => {
+              const selectedRows = productGridApi.getSelectedRows();
+              if (!selectedRows || selectedRows.length === 0) {
+                return alert("가져올 품목을 선택하세요.");
+              }
+
+              const newItems = selectedRows.map((row) => ({
+                productCode: row.productCode,
+                productName: row.productName,
+                unitPrice: row.unitPrice || null,
+                orderQty: null,
+                dcPrice: null,
+                notes: "",
+              }));
+
+              gridApi.applyTransaction({ add: newItems });
+              updatePinned();
+
+              const modal = bootstrap.Modal.getInstance(productModalEl);
+              modal?.hide();
+            });
+          } else {
+            console.warn(
+              "가져오기 버튼(#PrcImportBtn)을 modal HTML에 추가해주세요."
+            );
+          }
+        });
+
+        /*
+
+                        ======================== 거래처 모달 ========================
+
+
+                */
+        document.addEventListener("DOMContentLoaded", () => {
+          const customerCodeModalEl = document.getElementById("customermodal");
+          let customerCodeGridApi;
+          const customerCodeColumnDefs = [
+            { headerName: "", checkboxSelection: true, width: 50 },
+            { headerName: "거래처코드", field: "cusCode", width: 140 },
+            {
+              headerName: "거래처명",
+              field: "cusName",
+              flex: 1,
+              minWidth: 160,
+            },
+            { headerName: "신용등급", field: "creditGrade", width: 140 },
+            { headerName: "미수금", field: "leftPrice", width: 140 },
+          ];
+          async function fetchCustomerCodeData() {
+            if (!customerCodeGridApi) return;
+            try {
+              const { data } = await axios.get("/api/biz/customercode");
+              customerCodeGridApi.setRowData(data || []);
+              customerCodeGridApi.sizeColumnsToFit?.();
+            } catch (err) {
+              console.error("거래처조회 실패:", err);
+              alert("거래처 불러오는 데 실패했습니다.");
+            }
+          }
+          if (customerCodeModalEl) {
+            customerCodeModalEl.addEventListener("shown.bs.modal", () => {
+              const gridDiv = document.getElementById("customerGrid");
+              if (!customerCodeGridApi) {
+                if (window.agGrid?.createGrid) {
+                  customerCodeGridApi = agGrid.createGrid(
+                    gridDiv,
+                    customerCodeGridOptions
+                  );
+                } else {
+                  customerCodeGridApi = customerCodeGridOptions.api;
+                }
+              }
+              fetchCustomerCodeData();
+            });
+          }
+          const customerCodeGridOptions = {
+            columnDefs: customerCodeColumnDefs,
+            rowSelection: "single",
+            rowData: [],
+            defaultColDef: { sortable: true, resizable: true, filter: true },
+            onGridReady: (p) => {
+              customerCodeGridApi = p.api;
+            },
+          };
+
+          // 1) 거래처 선택 시 코드/이름 모두 세팅
+          function assignCustomerToForm(row) {
+            const cusNameEl = document.getElementById("customerName");
+            const cusCodeEl = document.getElementById("customerCode");
+            if (cusNameEl) cusNameEl.value = row.cusName ?? "";
+            if (cusCodeEl) cusCodeEl.value = row.cusCode ?? "";
+          }
+
+          // 거래처 모달의 선택 버튼 클릭 이벤트
+          const importCustomerCodeBtn = document.getElementById("CstImportBtn");
+          if (importCustomerCodeBtn) {
+            importCustomerCodeBtn.addEventListener("click", () => {
+              if (!customerCodeGridApi) return alert("목록을 먼저 불러오세요.");
+              const selected = customerCodeGridApi.getSelectedRows?.() || [];
+              if (!selected.length) return alert("거래처를 선택하세요.");
+
+              assignCustomerToForm(selected[0]);
+
+              const modal = bootstrap.Modal.getInstance(customerCodeModalEl);
+              modal?.hide();
+            });
+          } else {
+            console.warn(
+              "가져오기 버튼(#CstImportBtn)을 modal HTML에 추가해주세요."
+            );
+          }
         });
       </script>
     </th:block>
