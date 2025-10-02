@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,11 +21,13 @@ import com.yedam.erp.service.account.AccountService;
 import com.yedam.erp.service.account.InvoiceService;
 import com.yedam.erp.service.account.JournalCloseLogService;
 import com.yedam.erp.service.account.JournalService;
+import com.yedam.erp.service.account.PaymentService;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
 import com.yedam.erp.vo.account.InvoiceLineVO;
 import com.yedam.erp.vo.account.JournalCloseLogVO;
 import com.yedam.erp.vo.account.JournalVO;
+import com.yedam.erp.vo.account.PaymentLineVO;
 import com.yedam.erp.vo.account.accountVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderVO;
@@ -40,7 +43,8 @@ public class AccountController {
 	private final JournalService journalService;  
 	private final JournalCloseLogService logService;
 	private final InvoiceService invoiceService;
-	final private StockService stockService;
+	private final StockService stockService;
+	private final PaymentService paymentService;
 	
 	@GetMapping("/list")
 	public List<accountVO> list(Long companyCode){
@@ -226,6 +230,25 @@ public class AccountController {
 	    return stockService.getOrderDetailByOrderCode(orderCode);
 	}
 	
+	
+	
+	// 급여전표 라인 
+	 @GetMapping("/payment/lines")
+	   public Map<String, List<PaymentLineVO>> getPaymentLines(
+	            @RequestParam String yearMonth,@RequestParam String deptCode, Long companyCode) {
+	        companyCode = SessionUtil.companyId();
+	        List<PaymentLineVO> allLines = paymentService.getDeptJournalLines(yearMonth,deptCode ,companyCode);
+
+	        Map<String, List<PaymentLineVO>> result = new HashMap<>();
+	        result.put("debit", allLines.stream()
+	                                    .filter(l -> "D".equalsIgnoreCase(l.getDcType()))
+	                                    .toList());
+	        result.put("credit", allLines.stream()
+	                                     .filter(l -> "C".equalsIgnoreCase(l.getDcType()))
+	                                     .toList());
+
+	        return result;
+	    }
 	
 }
 

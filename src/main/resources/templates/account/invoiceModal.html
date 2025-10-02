@@ -10,10 +10,14 @@
 	rel="stylesheet" />
 <link rel="stylesheet"
 	href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" />
+<base>
 
 </head>
+
 <body>
+
 	<div th:fragment="invoiceModal">
+
 		<input class="form-control" id="compCode" name="compCode"
 			type="hidden">
 		<div class="modal fade" id="invoiceModal" tabindex="-1"
@@ -22,7 +26,7 @@
 				<div class="modal-content">
 
 					<div class="modal-header">
-						<h5 class="modal-title">매출/매입 전표</h5>
+						<h5 class="modal-title">매입/매입 전표</h5>
 						<button type="button" class="btn btn-light btn-sm border-0"
 							data-bs-dismiss="modal" aria-label="닫기">
 							<i class="fas fa-times"></i>
@@ -30,6 +34,13 @@
 					</div>
 
 					<div class="modal-body">
+
+						<div class="voucher-switch">
+							<span class="label purchase">매입</span> <label class="switch">
+								<input type="checkbox" id="voucherTypeSwitch"> <span
+								class="slider"></span>
+							</label> <span class="label sales">매출</span>
+						</div>
 						<!-- 전표 기본정보 -->
 						<div class="row mb-2">
 							<!-- 전표일자 -->
@@ -41,7 +52,7 @@
 
 							<!-- 주문서 -->
 							<div class="col-md-4">
-								<label class="form-label">발주서</label>
+								<label class="form-label" id="orderLabel">발주서</label>
 								<div class="input-group">
 									<input type="text" class="form-control"
 										th:value="${invoiceHeader?.orderCode}" readonly id="orderCode" />
@@ -83,7 +94,7 @@
 
 							<!-- 거래처 -->
 							<div class="col-md-8">
-								<label class="form-label">거래처</label>
+								<label id="cusLabel" class="form-label">거래처</label>
 								<div class="row mb-2">
 									<!-- 코드 (주문서와 같은 폭: col-md-4) -->
 									<div class="col-md-6">
@@ -164,16 +175,46 @@
 		<div th:replace="~{account/orderModal :: orderModal}"></div>
 		<div th:replace="~{stock/modals/productModal :: productModal}"></div>
 
-			<!--  매입매출 모달 -->
-			<script th:inline="none">
+		<!--  매입매출 모달 -->
+		<script th:inline="none">
 let invoiceGridApi = null;
 let invoiceGridCreated = false; // 전역에서 관리
 let selectedInvoiceRow = null; // ✅ 클릭한 그리드 행 저장
 let productGridApi = null;     // productModal 내부 grid api
 
+// 전표 타입 토글값
+function getVoucherType() {
+	  return document.getElementById("voucherTypeSwitch").checked ? "S" : "P";
+	}
+
 document.addEventListener("DOMContentLoaded", () => {
   const modalEl = document.getElementById('invoiceModal');
+  
+  // 토글
+  const toggle = document.getElementById("voucherTypeSwitch");
+  const cusLabel = document.getElementById("cusLabel");
+  const orderLabel = document.getElementById("orderLabel");
+  const cusNameInput = document.getElementById("cusNameInput");
 
+  function updateCustomerFields() {
+    if (toggle.checked) {
+      // 매출(S)
+      orderLabel.textContent = "주문서";
+      cusNameInput.placeholder = "고객사";
+      cusLabel.textContent = "고객사";
+
+    } else {
+      // 매입(P)
+      orderLabel.textContent = "발주서";
+      cusLabel.textContent = "구매처";
+      cusNameInput.placeholder = "구매처";
+    }
+  }
+
+  // 토글 변경될 때마다 실행
+  toggle.addEventListener("change", updateCustomerFields);
+  // 페이지 로드 시 초기 실행
+  updateCustomerFields();
   modalEl.addEventListener('shown.bs.modal', () => {
     const gridDiv = document.querySelector("#invoiceGrid");
 
@@ -294,6 +335,14 @@ document.addEventListener("DOMContentLoaded", () => {
       invoiceGridApi.resetRowHeights();
     }
   });
+  const dateInput = document.getElementById("invoiceDate");
+  if (dateInput && !dateInput.value) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+  }
 });
 // === productModal 내부 Grid 초기화 ===
 function initProductGrid() {
@@ -378,26 +427,27 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	  vatTotal += Number(node.data.vat) || 0;
 	});
 	
-	  try {
-	    // 📌 헤더 값 수집
+	try {
+	    const type = getVoucherType(); // ✅ 매출/매입 구분
 	    const header = {
-	    		invoiceDate: document.getElementById("invoiceDate").value,
-	    		  orderCode: document.getElementById("orderCode")?.value ,
-	    		  deptCode: null,
-	    		  deptName: document.getElementById("deptNameInput").value,
-	    		  cusCode: document.getElementById("cusCodeInput").value,
-	    		  cusName: document.getElementById("cusNameInput").value,
-	    		  vatType: document.querySelector(".form-select-invoice").value,
-	    		  payMethod: document.getElementById("payMethodInput").value,
-	    		  memo: document.getElementById("memoInput").value,
-	    		  bankCode: document.getElementById("bankNameInput").value,
-	    		  accountNo: document.getElementById("accountNoInput").value,
-	    		  type: "P",  // 대소문자 주의 (자바 VO랑 일치시켜야 함)
-	    		  subtotalAmt: subtotal,
-	    		  vatAmt: vatTotal,
-	    		  totalAmt: subtotal + vatTotal,
-	    		  lines: []
+	      invoiceDate: document.getElementById("invoiceDate").value,
+	      orderCode: document.getElementById("orderCode")?.value,
+	      deptCode: null,
+	      deptName: document.getElementById("deptNameInput").value,
+	      cusCode: document.getElementById("cusCodeInput").value,
+	      cusName: document.getElementById("cusNameInput").value,
+	      vatType: document.querySelector(".form-select-invoice").value,
+	      payMethod: document.getElementById("payMethodInput").value,
+	      memo: document.getElementById("memoInput").value,
+	      bankCode: document.getElementById("bankNameInput").value,
+	      accountNo: document.getElementById("accountNoInput").value,
+	      type: type,   // ✅ 동적으로 넣기
+	      subtotalAmt: subtotal,
+	      vatAmt: vatTotal,
+	      totalAmt: subtotal + vatTotal,
+	      lines: []
 	    };
+
 
 	    // 📌 라인 데이터 수집
 	    const lines = [];
@@ -419,15 +469,13 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	      return;
 	    }
 
-	    // 📌 서버 전송
-	    const res = await axios.post("/api/account/invoice", header, {
-	      withCredentials: true
-	    });
+	    // ✅ URL 분기
+	    const url = type === "S" ? "/api/account/sales" : "/api/account/invoice";
+	    const res = await axios.post(url, header, { withCredentials: true });
 
 	    if (res.data.success) {
-	      alert(`저장 완료! 전표번호: ${res.data.invoiceNo}`);
+	      alert(`저장 완료! 전표번호: ${res.data.invoiceNo || res.data.salesNo}`);
 	      bootstrap.Modal.getOrCreateInstance(document.getElementById("invoiceModal")).hide();
-	      // 저장 후 전표 목록 다시 로딩
 	      if (typeof loadAndRenderVoucher === "function") loadAndRenderVoucher();
 	    } else {
 	      alert("저장 실패: " + res.data.message);
@@ -439,23 +487,31 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	});
 </script>
 
-<script th:inline="none">
+		<script th:inline="none">
 let businessGridApi = null;
 
 
 async function loadBusinessData() {
-	const compCode = Number(document.getElementById('compCode').value);
-    try {
-        const res = await axios.get(`/api/v1/stock/cusList/${compCode}`, {
-            
-            withCredentials: true           // 세션 쿠키 포함
-        });
-        if (businessGridApi) {
-        	businessGridApi.setGridOption("rowData", res.data);
-        	businessGridApi.sizeColumnsToFit();
-        }
-    } catch (err) { console.error(err); }
-}
+	  const compCode = Number(document.getElementById('compCode').value);
+	  const type = document.getElementById("voucherTypeSwitch").checked ? "S" : "P";
+
+	  let url;
+	  if (type === "S") {
+	    url = `/api/v1/stock/cusList/${compCode}`;  // 고객 목록 API
+	  } else {
+	    url = `/api/v1/stock/cusList/${compCode}`;  // 공급자 목록 API
+	  }
+
+	  try {
+	    const res = await axios.get(url, { withCredentials: true });
+	    if (businessGridApi) {
+	      businessGridApi.setGridOption("rowData", res.data);
+	      businessGridApi.sizeColumnsToFit();
+	    }
+	  } catch (err) {
+	    console.error(err);
+	  }
+	}
 
 function initBusinessGrid() {
   const gridDiv = document.querySelector("#businessModal #myGrid") || document.querySelector("#myGrid");
@@ -542,18 +598,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
  });
-document.addEventListener("DOMContentLoaded", () => {
-	  const dateInput = document.getElementById("invoiceDate");
-	  if (dateInput && !dateInput.value) {
-	    const today = new Date();
-	    const yyyy = today.getFullYear();
-	    const mm = String(today.getMonth() + 1).padStart(2, "0");
-	    const dd = String(today.getDate()).padStart(2, "0");
-	    dateInput.value = `${yyyy}-${mm}-${dd}`;
-	  }
-	});
 
 </script>
-</div>
+	</div>
 </body>
 </html>
