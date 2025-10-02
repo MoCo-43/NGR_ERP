@@ -22,7 +22,7 @@ public class OrderVO {
 	private Long supAmt;
 	private String empId;
 	private String vatType;
-	@JsonFormat(pattern = "yyyy-MM-dd") // 이렇게 변환해도 시간정보 포함 00:00:00
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul") // 이렇게 변환해도 시간정보 포함 00:00:00
 	private Date dueDate;
 	private String xpCode;
 	private String companyCode;

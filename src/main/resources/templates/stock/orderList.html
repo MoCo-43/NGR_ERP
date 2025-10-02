@@ -74,7 +74,7 @@
   
   <div class="card shadow-sm mt-4">
   <div class="card-header bg-secondary text-white">
-    <h5 class="mb-0">발주 계획 목록</h5>
+    <h5 class="mb-0">발주 목록</h5>
   </div>
   <div class="card-body">
      
@@ -121,7 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const searchProduct = document.getElementById('productName');
 	const tableBody = document.querySelector('#orderItemsTable tbody');
 	let productGrid = null; // 전역 변수
- 
+ 	let compCode = null; // compCode
  	let gridOptions = null;
  	let gridCreated = false;
  	let gridApi = null;
@@ -168,6 +168,12 @@ document.addEventListener("DOMContentLoaded", () => {
  	    return { gridApi: gridOptions.api, gridOptions };
 	}// END OF FUNCTION
 
+	// 회사코드 불러오기
+	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+	  .then(res => { compCode = res.data; })
+	  .catch(err => console.error(err));
+	
+	
 // 발주 리스트 
 const orderListDiv = document.getElementById('orderListGrid');
 const orderListGrid = initGrid({
@@ -242,7 +248,7 @@ async function openProductModal() {
 	            ],
 	            onGridReady: async (event) => {
 	                try {
-	                    const res = await axios.get("/api/v1/stock/productList");
+	                    const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
 	                    event.api.setRowData(res.data);
 	                } catch (err) {
 	                    console.error("제품리스트 데이터 로드 실패:", err);

@@ -168,7 +168,7 @@ WHERE xp_code = #{xpCode}
 <select id="selectOrderByXpCode" resultType="OrderVO" parameterType="String">
     SELECT 
         om.XP_CODE AS xpCode,
-        om.CUS_CODE AS cusCode,
+        om.CUS_CODE AS businessCode,
         c.CUS_NAME AS cusName,
         om.due_DATE AS dueDate
     FROM order_req om
@@ -218,7 +218,7 @@ SELECT
        TEL, 
        EMAIL 
 FROM CUSTOMER 
-WHERE CUS_CODE = #{cusCode}
+WHERE CUS_CODE = #{businessCode}
 </select>
 
 <!-- 발주 조회 -->
@@ -236,7 +236,8 @@ SELECT
        SUM(ord.qty) AS qty,
        orr.due_date AS due_date,
        orr.vat_type AS vat_type,
-       sum(ord.sup_amt) AS sup_amt  
+       sum(ord.sup_amt) AS sup_amt,
+       orr.xp_code AS xp_code 
 FROM order_req orr
 JOIN order_detail ord
 ON orr.order_code = ord.order_code
@@ -246,7 +247,8 @@ GROUP BY
     orr.cus_code,
     orr.emp_id,
     orr.due_date,
-    orr.vat_type
+    orr.vat_type,
+    orr.xp_code
     
 ORDER BY TO_NUMBER(REGEXP_SUBSTR(orr.order_code, '\d+')) DESC
 
@@ -287,6 +289,7 @@ WHERE orr.order_code = #{orderCode}
 ORDER BY ord.od_no 
 </select>
 
+<!-- 발주 등록 - 마스터 테이블 -->
 <insert id="insertOrderReq" parameterType="OrderVO">
  <!-- BEFORE: insert 전에 orderCode 생성 -->
 <selectKey keyProperty="orderCode" resultType="string" order="BEFORE">
@@ -305,7 +308,7 @@ ORDER BY ord.od_no
     VALUES (
        #{orderCode}
        ,#{businessPartner}
-       ,#{cusCode}
+       ,#{businessCode}
        ,#{empId}
        ,#{vatType}
        ,TO_DATE(TO_CHAR(#{dueDate}, 'yyyy-MM-dd'), 'YYYY-MM-dd')
@@ -313,6 +316,8 @@ ORDER BY ord.od_no
        ,#{companyCode}
     )
 </insert>
+
+<!-- 발주 등록 - 디테일 테이블 -->
 <insert id="insertOrderDetail" parameterType="OrderDetailVO">
 INSERT INTO order_detail(
         OD_NO
@@ -343,9 +348,9 @@ VALUES (SEQ_ORDER_DETAIL.nextval
        ,#{orderCode}
        ,#{companyCode}
 )
-
-
 </insert>
+
+<!-- 결산 조회 - 마스터 -->
 <select id="getIcList" resultType="InvenVO" parameterType="Long">
 SELECT 
        IC_CODE, 
@@ -358,6 +363,7 @@ FROM INVENTORY_CLOSING
 WHERE COMPANY_CODE = #{companyCode}
 </select>
 
+<!-- 결산 조회 - 상세 -->
 <select id="getIcDetailList" resultType="InvenDetailVO">
 SELECT 
        product_code ,
@@ -370,6 +376,122 @@ WHERE COMPANY_CODE = #{companyCode}
 AND IC_CODE = #{icCode}
 
 </select>
+
+<!-- 입고 조회 -->
+<select id="getInboundList" resultType="InboundVO" parameterType="Long">
+SELECT
+       INBOUND_DATE ,
+       DUE_DATE ,
+       LOT_CODE ,
+       BUSINESS_PARTNER , 
+       BUSINESS_CODE 
+FROM INBOUND 
+WHERE COMPANY_CODE = #{compCode}
+</select>
+
+<!-- 입고 상세 조회 -->
+<select id="getInboundDetail" resultType="InboundVO" parameterType="String">
+SELECT
+       PRODUCT_CODE
+       ,PRODUCT_NAME
+       ,SPECIFICATION
+       ,BUSINESS_CODE
+       ,BUSINESS_PARTNER
+       ,QTY
+       ,DUE_DATE 
+FROM INBOUND 
+WHERE LOT_CODE = #{lotCode}
+
+</select>
+
+<!-- 입고등록용 발주 상세 조회 -->
+<select id="getOrderDetailListByOrderCode" resultType="OrderDetailVO" parameterType="String">
+SELECT 
+    d.product_code AS product_code,
+    d.product_name AS product_name,
+    d.specification AS specification,
+    COALESCE(stock_data.stock_qty, 0) AS stock,  -- 계산된 재고
+    SUM(d.qty) AS qty,  -- 발주 수량
+    d.company_code AS company_code 
+FROM order_detail d
+LEFT JOIN (
+<!-- 재고수량 조회 서브쿼리-->
+    SELECT product_code, SUM(stock_qty) AS stock_qty
+    FROM (
+        -- 입고 합계
+        SELECT product_code, SUM(qty) AS stock_qty
+        FROM inbound
+        GROUP BY product_code
+
+        UNION ALL
+
+        -- 출고 합계 (음수)
+        SELECT ob.product_code, -SUM(lo.lot_out_amt) AS stock_qty
+        FROM outbound ob
+        LEFT JOIN lot_outbound lo
+          ON ob.outbound_no = lo.outbound_no
+        GROUP BY ob.product_code
+    ) t
+    GROUP BY product_code
+) stock_data
+  ON d.product_code = stock_data.product_code
+WHERE d.order_code = #{orderCode}
+GROUP BY 
+    d.product_code, d.product_name, d.specification, 
+    d.company_code, stock_data.stock_qty
+ORDER BY d.product_code
+
+</select>
+<update id="insertInbound" parameterType="InboundVO">
+<!-- 
+ MERGE INTO INBOUND t
+    USING (SELECT #{orderCode} AS orderCode, #{businessCode} AS businessCode, #{productCode} AS productCode FROM dual) src
+    ON (t.orderCode = src.orderCode AND t.productCode = src.productCode AND t.businessCode = src.businessCode)
+    WHEN MATCHED THEN
+        UPDATE SET
+            t.qty = t.qty + #{qty}
+    WHEN NOT MATCHED THEN
+        INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, due_date, company_code, business_partner, cus_code)
+        VALUES (#{lotCode}, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode});
+ -->
+ BEGIN
+    DECLARE
+        v_seq NUMBER;
+        v_lotCode VARCHAR2(30);
+    BEGIN
+        -- 오늘 날짜 기준 시퀀스 조회
+        BEGIN
+            SELECT seq INTO v_seq
+            FROM LOT_SEQ_CONTROL
+            WHERE lot_date = TRUNC(SYSDATE)
+            FOR UPDATE;
+
+            -- 시퀀스 증가
+            UPDATE LOT_SEQ_CONTROL
+            SET seq = seq + 1
+            WHERE lot_date = TRUNC(SYSDATE);
+        EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+                -- 오늘 날짜 시퀀스 없으면 새로 생성
+                INSERT INTO LOT_SEQ_CONTROL(lot_date, seq) VALUES (TRUNC(SYSDATE), 1);
+                v_seq := 1;
+        END;
+
+        -- LOT 코드 생성
+        v_lotCode := TO_CHAR(SYSDATE, 'YYMMDD') || #{productCode} || '-' || v_seq;
+
+        -- MERGE 구문: 존재하면 qty 업데이트, 없으면 INSERT
+        MERGE INTO INBOUND t
+        USING (SELECT  #{businessCode} AS businessCode, #{productCode} AS productCode , TRUNC(SYSDATE) AS inboundDate FROM dual) src
+        ON (t.product_code = src.productCode AND t.business_code = src.businessCode AND TRUNC(t.inbound_date) = src.inboundDate)
+        WHEN MATCHED THEN
+            UPDATE SET t.qty = t.qty + #{qty}
+        WHEN NOT MATCHED THEN
+            INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, due_date, company_code, business_partner, business_code)
+            VALUES (v_lotCode, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode});
+    END;
+END;
+</update>
 
 
 </mapper>
