@@ -27,4 +27,5 @@ public class OrderDetailVO {
 	private String taxType;
 	
 	private String xpCode;
+	private String companyCode;
 }
