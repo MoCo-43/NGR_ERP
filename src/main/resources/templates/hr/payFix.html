@@ -1,4 +1,3 @@
-<!-- templates/hr/payFix.html -->
 <div id="payFix" th:fragment="payFix">
   <form id="payFixForm" onsubmit="return false;">
     <input type="hidden" id="pf_emp_id" name="emp_id" />
@@ -49,9 +48,10 @@
 
   <script>
   (function(){
+    // 포맷터: 숫자에 콤마(,) 찍어 보여주기
     const formatter = new Intl.NumberFormat('ko-KR');
 
-    // ✅ CSRF 메타에서 읽기
+    // CSRF 토큰을 <meta>에서 읽어서 요청 헤더에 넣기
     const CSRF_TOKEN  = document.querySelector('meta[name="_csrf"]')?.content;
     const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.content;
     const makeHeaders = () => {
@@ -60,90 +60,135 @@
       return h;
     };
 
-    function parseNumber(str){ if(!str) return 0; return Number(String(str).replace(/,/g,'')); }
-    function formatInput(el){ const val=parseNumber(el.value); el.value = val?formatter.format(val):''; }
-    function calcTotal(){
-      const g=id=>parseNumber(document.getElementById(id)?.value);
-      const total=g('pf_basePay')+g('pf_birthCare')+g('pf_familyAllow')+g('pf_mealAllow')+g('pf_annualAllow');
-      const out=document.getElementById('pf_total');
-      if(out) out.value=total?formatter.format(total):'';
+    // "1,234" 같은 입력을 숫자 1234로 바꾸기
+    function parseNumber(str){
+      if(!str) return 0;
+      return Number(String(str).replace(/,/g,''));
     }
-    function pick(obj,snake,camel){ return obj?.[snake] ?? obj?.[camel] ?? ''; }
 
-    window.__payFix={
+    // 입력창에 숫자 치면 실시간으로 콤마 붙여서 보기 좋게
+    function formatInput(el){
+      const val = parseNumber(el.value);
+      el.value = val ? formatter.format(val) : '';
+    }
+
+    // 다섯 항목 합쳐서 월정 금액 자동 계산
+    function calcTotal(){
+      const g = id => parseNumber(document.getElementById(id)?.value);
+      const total = g('pf_basePay') + g('pf_birthCare') + g('pf_familyAllow') + g('pf_mealAllow') + g('pf_annualAllow');
+      const out = document.getElementById('pf_total');
+      if(out) out.value = total ? formatter.format(total) : '';
+    }
+
+    // 객체에서 스네이크/카멜 키 둘 다 대응해서 값 꺼내기
+    function pick(obj,snake,camel){
+      return obj?.[snake] ?? obj?.[camel] ?? '';
+    }
+
+    // 외부에서 접근할 공개 API
+    window.__payFix = {
       setValues(v){
-        const set=(id,val)=>{const el=document.getElementById(id); if(el) el.value=(val||val===0)?formatter.format(val):'';};
-        const empId=v?.emp_id ?? v?.empId ?? '';
-        document.getElementById('pf_emp_id').value=empId;
-        set('pf_basePay',pick(v,'base_pay','basePay'));
-        set('pf_birthCare',pick(v,'birth_care','birthCare'));
+        const set = (id,val) => {
+          const el = document.getElementById(id);
+          if(el) el.value = (val || val === 0) ? formatter.format(val) : '';
+        };
+        const empId = v?.emp_id ?? v?.empId ?? '';
+        document.getElementById('pf_emp_id').value = empId;
+        set('pf_basePay',    pick(v,'base_pay','basePay'));
+        set('pf_birthCare',  pick(v,'birth_care','birthCare'));
         set('pf_familyAllow',pick(v,'family_allow','familyAllow'));
-        set('pf_mealAllow',pick(v,'meal_allow','mealAllow'));
+        set('pf_mealAllow',  pick(v,'meal_allow','mealAllow'));
         set('pf_annualAllow',pick(v,'annual_allow','annualAllow'));
         calcTotal();
       },
       getValues(){
-        const g=id=>parseNumber(document.getElementById(id)?.value);
+        const g = id => parseNumber(document.getElementById(id)?.value);
         return {
-          emp_id:(document.getElementById('pf_emp_id')?.value)||'',
-          base_pay:g('pf_basePay'),
-          birth_care:g('pf_birthCare'),
-          family_allow:g('pf_familyAllow'),
-          meal_allow:g('pf_mealAllow'),     // ✅ 오타 주의
-          annual_allow:g('pf_annualAllow')
+          emp_id:       (document.getElementById('pf_emp_id')?.value) || '',
+          base_pay:     g('pf_basePay'),
+          birth_care:   g('pf_birthCare'),
+          family_allow: g('pf_familyAllow'),
+          meal_allow:   g('pf_mealAllow'),
+          annual_allow: g('pf_annualAllow')
         };
       },
       clear(){
         ['pf_basePay','pf_birthCare','pf_familyAllow','pf_mealAllow','pf_annualAllow','pf_total']
-          .forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+          .forEach(id=>{
+            const el = document.getElementById(id);
+            if(el) el.value = '';
+          });
       },
       calcTotal
     };
 
+    // 금액 입력란에 이벤트 연결: 입력 시 콤마 포맷 + 합계 업데이트
     ['pf_basePay','pf_birthCare','pf_familyAllow','pf_mealAllow','pf_annualAllow'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el){ el.addEventListener('input', e=>{ formatInput(e.target); calcTotal(); }); }
+      const el = document.getElementById(id);
+      if(el){
+        el.addEventListener('input', e=>{
+          formatInput(e.target);
+          calcTotal();
+        });
+      }
     });
 
+    // 저장 버튼 클릭 시 실행: 신규면 POST, 존재하면 PUT
     async function onSave(){
-      // 저장 직전 emp_id 보정
-      const hid=document.getElementById('pf_emp_id');
-      if(hid && !hid.value){ hid.value = document.getElementById('f_emp_id')?.value || ''; }
+      const hid = document.getElementById('pf_emp_id');
+      if(hid && !hid.value){
+        hid.value = document.getElementById('f_emp_id')?.value || '';
+      }
 
-      const data=window.__payFix.getValues();
-      if(!data.emp_id){ alert('사번(emp_id)이 비었습니다.'); return; }
+      const data = window.__payFix.getValues();
+      if(!data.emp_id){
+        alert('사번(emp_id)이 비었습니다.');
+        return;
+      }
 
-      let method,url;
+      let method, url;
       if(await isExisting(data.emp_id)){
-        method='PUT'; url=`/api/v1/emps/${encodeURIComponent(data.emp_id)}/pay-fix`;
+        method = 'PUT';
+        url = `/api/v1/emps/${encodeURIComponent(data.emp_id)}/pay-fix`;
       }else{
-        method='POST'; url=`/api/v1/emps/${encodeURIComponent(data.emp_id)}/pay-fix`;
+        method = 'POST';
+        url = `/api/v1/emps/${encodeURIComponent(data.emp_id)}/pay-fix`;
       }
 
       try{
-        const res=await fetch(url,{method,headers:makeHeaders(),body:JSON.stringify(data)});
-        if(!res.ok){ throw new Error('저장 실패 ('+res.status+')'); }
-        await res.text(); // 응답 형태 무관
-       
-      }catch(err){ console.error(err); alert(err.message || '저장 중 오류'); }
+        const res = await fetch(url, {
+          method,
+          headers: makeHeaders(),
+          body: JSON.stringify(data)
+        });
+        if(!res.ok){
+          throw new Error('저장 실패 ('+res.status+')');
+        }
+      }catch(err){
+        console.error(err);
+        alert(err.message || '저장 중 오류');
+      }
     }
 
+    // 해당 사원의 급여 고정항목이 이미 있는지 확인
     async function isExisting(empId){
       try{
-        const res=await fetch(`/api/v1/emps/${encodeURIComponent(empId)}/pay-fix`, { headers: makeHeaders() });
-        if(res.status===404) return false;
+        const res = await fetch(`/api/v1/emps/${encodeURIComponent(empId)}/pay-fix`, { headers: makeHeaders() });
+        if(res.status === 404) return false;
         if(!res.ok) return false;
-        const obj=await res.json().catch(()=>null);
+        const obj = await res.json().catch(()=>null);
         return !!obj && !!(obj.emp_id ?? obj.empId);
-      }catch(e){ return false; }
+      }catch(e){
+        return false;
+      }
     }
+    // 버튼 => 저장
+    document.getElementById('pf_saveBtn')?.addEventListener('click', onSave);
 
-    document.getElementById('pf_saveBtn')?.addEventListener('click',onSave);
-
-    // ✅ 모달 공용 저장 버튼에서 사용할 수 있게 공개
+    // 모달 공용 저장에서도 같은 저장 함수를 쓰도록 연결
     window.__payFix.save = onSave;
 
-    // 닫기(옵션: data-bs-dismiss로 충분)
+    // 버튼 => 닫기 
     document.getElementById('pf_closeBtn')?.addEventListener('click', (e)=>{
       const modalEl = e.target.closest('.modal');
       try{

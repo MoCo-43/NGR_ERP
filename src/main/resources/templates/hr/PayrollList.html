@@ -1,96 +1,102 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-  layout:decorate="~{layout/base}">
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
 <head>
-  <title layout:fragment="title">급여대장 리스트</title>
+<title layout:fragment="title">급여대장 리스트</title>
 
-  <th:block layout:fragment="head_extra">
-    <!-- AG Grid -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
+<th:block layout:fragment="head_extra">
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
 
-    <style>
-      .toolbar-card .card-header { background:#fff; }
-      .toolbar { padding:1.0rem 1.0rem 0.25rem 1.0rem; }
-      .toolbar .form-control { height:40px; }
-      .toolbar .btn { height:40px; display:inline-flex; align-items:center; justify-content:center; border-radius:.5rem; }
-      .toolbar .row { --gap-x:.5rem; }
-      .toolbar .row>[class^="col-"] { padding-left:var(--gap-x); padding-right:var(--gap-x); }
-      .toolbar .actions { display:flex; gap:.5rem; justify-content:flex-end; align-items:stretch; width:100%; }
-      .btn-dark { background:#343a40; border:none; }
-      .btn-danger { background:#dc3545; border:none; }
+	<style>
+.toolbar {
+	padding: 1.0rem 1.0rem 0.25rem 1.0rem;
+}
 
-      #payrollGrid.ag-theme-quartz { height:32rem; width:100%; }
-      .ag-theme-quartz { --ag-row-height:42px; --ag-font-size:13px; }
-      .ag-header-cell-label { white-space:nowrap; }
+#payrollGrid.ag-theme-quartz {
+	height: 32rem;
+	width: 100%;
+}
+.status-wait {
+	color: red;
+	font-weight: bold;
+}
 
-      .status-wait { color:red; font-weight:bold; }
-      .status-confirm { color:blue; font-weight:bold; }
-
-      .page-actions { gap:.5rem; }
-      .card-footer.page-actions { background:#fff; }
-    </style>
-  </th:block>
+.status-confirm {
+	color: blue;
+	font-weight: bold;
+}
+</style>
+</th:block>
 </head>
 
 <body>
-<section layout:fragment="content">
+	<section layout:fragment="content">
 
-  <div class="card shadow mb-3">
-    <div class="card-header py-3">
-      <h6 class="m-0 font-weight-bold text-primary">급여대장 리스트</h6>
-    </div>
+		<div class="card shadow mb-3">
+			<div class="card-header py-3">
+				<h6 class="m-0 font-weight-bold text-primary">급여대장 리스트</h6>
+			</div>
 
-    <!-- 검색영역 -->
-    <div class="toolbar btn-bar">
-      <div class="row g-2 align-items-center">
-        <div class="col-12 col-sm-4 col-xl-3">
-          <input id="srchMonth" type="month" class="form-control" placeholder="귀속연월">
-        </div>
-        <div class="col-12 col-sm-4 col-xl-3">
-          <input id="srchDeptName" class="form-control" placeholder="부서명">
-        </div>
-        <div class="col-12 col-xl-auto">
-          <div class="actions">
-            <button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
-            <button id="btnReset" class="btn btn-danger btn-sm">초기화</button>
-          </div>
-        </div>
-      </div>
-    </div>
+			<div class="toolbar btn-bar">
+				<div class="row g-2 align-items-center">
+					<div class="col-12 col-sm-4 col-xl-3">
+						<input id="srchMonth" type="month" class="form-control"
+							placeholder="귀속연월">
+					</div>
+					<div class="col-12 col-sm-4 col-xl-3">
+						<input id="srchDeptName" class="form-control" placeholder="부서명">
+					</div>
+					<div class="col-12 col-xl-auto">
+						<div class="actions">
+							<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
+							<button id="btnReset" class="btn btn-danger btn-sm">초기화</button>
+						</div>
+					</div>
+				</div>
+			</div>
 
-    <div class="card-body pt-3">
-      <div id="payrollGrid" class="ag-theme-quartz"></div>
-    </div>
-  </div>
+			<div class="card-body pt-3">
+				<div id="payrollGrid" class="ag-theme-quartz"></div>
+			</div>
+		</div>
 
-  <th:block th:replace="~{hr/payrollModal :: payrollModal}"></th:block>
+		<th:block th:replace="~{hr/payrollModal :: payrollModal}"></th:block>
 
-</section>
+	</section>
 
-<th:block layout:fragment="body_extra">
-  <!-- ag-Grid / axios -->
-  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+	<th:block layout:fragment="body_extra">
 
-  <script th:inline="none">
+		<script
+			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+		<script
+			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+
+		<script>
     document.addEventListener('DOMContentLoaded', () => {
+      //DOM 요소 참조
       const gridDiv      = document.getElementById('payrollGrid');
       const btnSearch    = document.getElementById('btnSearch');
       const btnReset     = document.getElementById('btnReset');
       const srchMonth    = document.getElementById('srchMonth');
       const srchDeptName = document.getElementById('srchDeptName');
 
+      //그리드 핸들 + 원본 데이터 캐시
       let gridApi = null;
       let rowDataCache = [];
 
-      // 컬럼 정의
+      //날짜 포맷 유틸
+      const formatDate = (v) => v ? String(v).slice(0,10) : '';
+
+      //컬럼 정의
       const columnDefs = [
         { headerName:'귀속연월', field:'yearMonth', width:120 },
         { headerName:'대장 명칭', field:'title', flex:1, minWidth:220 },
-        { headerName:'부서', field:'deptName', width:140,
-          valueGetter:(p)=> p.data?.deptName || p.data?.dept_name || inferDeptName(p.data) },
+        { headerName:'부서', width:140,
+          valueGetter:(p)=> p.data?.deptName ?? p.data?.dept_name ?? '' },
         { headerName:'지급일', field:'payDate', width:140, valueFormatter:(p)=>formatDate(p.value) },
         { headerName:'인원수', field:'empCount', width:100 },
         { headerName:'상태', field:'status', width:100,
@@ -98,6 +104,8 @@
             ? '<span class="status-confirm">확정</span>'
             : '<span class="status-wait">대기</span>' },
         { headerName:'급여대장', width:100,
+            	
+          //보기 링크 클릭 시 상세 모달 오픈
           cellRenderer:(p)=> {
             const no = p.data?.payrollNo ?? p.data?.payroll_no;
             if (!no) return '';
@@ -106,73 +114,60 @@
             a.textContent = '보기';
             a.addEventListener('click', (e)=>{
               e.preventDefault();
-              try {
-                window.PayrollDetail?.open?.(Number(no));
-              } catch (err) {
-                console.warn('PayrollDetail.open 호출 실패', err);
-              }
+              window.PayrollDetail?.open?.(Number(no));
             });
             return a;
           } }
       ];
 
+      //그리드 옵션
       const gridOptions = {
         columnDefs,
         rowData: [],
         pagination: true,
         paginationPageSize: 10,
-        animateRows: true,
         defaultColDef: { sortable:true, resizable:true, filter:false, suppressMenu:true },
         onGridReady: (params) => { gridApi = params.api; initLoad(); }
       };
 
-      // 기존 방식만 사용 
+      //그리드 생성
       new agGrid.Grid(gridDiv, gridOptions);
 
-      // 초기 로드: 현재 월 기본 조회 
+      //초기 로드: 현재 월로 기본 조회
       async function initLoad(){
-        try{
-          const now = new Date();
-          const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-          srchMonth.value = ym;
-          await loadFromServer();
-        }catch(e){
-          console.error('initLoad 실패', e);
-          setRows([]);
-        }
+        const now = new Date();
+        srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+        await loadFromServer();
       }
 
-      // 서버 조회
+      //서버 조회 + 부서명 프런트 필터 적용
       async function loadFromServer(){
-        try{
-          const monthVal = srchMonth.value;
-          const yearMonth = monthVal ? monthVal.replace('-','') : '';
+        //월 값 → 'YYYYMM'로 변환해 쿼리 파라미터 구성
+        const monthVal  = srchMonth.value;
+        const yearMonth = monthVal ? monthVal.replace('-','') : '';
 
-          const params = new URLSearchParams();
-          if (yearMonth) params.append('yearMonth', yearMonth);
-          const url = `/api/hr/payroll${params.toString() ? ('?'+params.toString()) : ''}`;
+        const params = new URLSearchParams();
+        if (yearMonth) params.append('yearMonth', yearMonth);
+        const url = `/api/hr/payroll${params.toString() ? ('?'+params.toString()) : ''}`;
 
-          const { data } = await axios.get(url, { validateStatus:s=>s>=200&&s<500 });
-          rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
-          applyFrontFilter();
-        }catch(e){
-          console.error('서버 조회 실패', e);
-          setRows([]);
-        }
+        //API 호출
+        const { data } = await axios.get(url, { validateStatus:s=>s>=200&&s<500 });
+        rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
+
+        applyFrontFilter();
       }
 
-      // 부서명 프론트 필터
+      //부서명 입력값으로 화면 필터링만 수행
       function applyFrontFilter(){
-        const dept = (srchDeptName.value||'').trim().toLowerCase();
-        const filtered = rowDataCache.filter(r=>{
-          const name = (r.deptName || r.dept_name || inferDeptName(r) || '').toLowerCase();
-          return !dept || name.includes(dept);
-        });
+        const deptKw = (srchDeptName.value||'').trim().toLowerCase();
+        const filtered = deptKw
+          ? rowDataCache.filter(r => ((r.deptName ?? r.dept_name ?? '')+'').toLowerCase().includes(deptKw))
+          : rowDataCache;
         setRows(filtered);
         gridApi?.paginationGoToFirstPage?.();
       }
 
-      //초기화 
+      //초기화: 현재 월로 되돌리고 서버 재조회
       function doReset(){
         const now = new Date();
         srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -180,24 +175,17 @@
         loadFromServer();
       }
 
-      btnSearch.addEventListener('click', loadFromServer);
-      btnReset .addEventListener('click', doReset);
-
-      // Helper =
+      //행 데이터 교체
       function setRows(rows){
         if (!gridApi) return;
-        gridApi.setRowData?.(rows);
+        gridApi.setRowData(rows);
       }
-      function formatDate(v){ return v ? String(v).slice(0,10) : ''; }
-      function inferDeptName(row){
-        const t = row?.title || '';
-        const m = t.match(/^\d{4}\/\d{2}\s+(.+?)\s*급여$/);
-        return m ? m[1] : (row?.deptCode || row?.dept_code || '');
-      }
+
+      //버튼 이벤트
+      btnSearch.addEventListener('click', loadFromServer);
+      btnReset .addEventListener('click', doReset);
     });
   </script>
-
- 
-</th:block>
+	</th:block>
 </body>
 </html>
