@@ -16,4 +16,5 @@ public class JoinPoVO {
     private BigDecimal totalPrice; // 총 금액
     private String poStatus;     // 주문 상태
     private String notes;        // 비고
+    private Date exDate;        // 예상 납기일
 }
