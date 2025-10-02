@@ -65,23 +65,23 @@ public class WebSecurityConfig {
         return http.build();
     }
     
-    @Bean
-    public PersistentTokenRepository tokenRepository(DataSource dataSource) {
-        return new MyTokenRepository(dataSource); // 커스텀 Repository 사용
-    }
+//    @Bean
+//    public PersistentTokenRepository tokenRepository(DataSource dataSource) {
+//        return new MyTokenRepository(dataSource); // 커스텀 Repository 사용
+//    }
 
-				// 로그인 저장 -> 서버 재실행 로그인 유지
-				.rememberMe(remember -> remember.tokenRepository(tokenRepository(dataSource))
-						.tokenValiditySeconds(60 * 60 * 24 * 3) // 3일
-						.key("uniqueAndSecretKey").userDetailsService(customUserDetailsService))
-				.logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout")
-						.deleteCookies("JSESSIONID")
-//              .deleteCookies("JSESSIONID", "remember-me")// 로그아웃 시 쿠키 삭제
-				).headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()) // PDF 시큐리티 허가(모달로 띄우려면 무조건 필요)
-				);
-
-		return http.build();
-	}
+//				// 로그인 저장 -> 서버 재실행 로그인 유지
+//				.rememberMe(remember -> remember.tokenRepository(tokenRepository(dataSource))
+//						.tokenValiditySeconds(60 * 60 * 24 * 3) // 3일
+//						.key("uniqueAndSecretKey").userDetailsService(customUserDetailsService))
+//				.logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout")
+//						.deleteCookies("JSESSIONID")
+////              .deleteCookies("JSESSIONID", "remember-me")// 로그아웃 시 쿠키 삭제
+//				).headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()) // PDF 시큐리티 허가(모달로 띄우려면 무조건 필요)
+//				);
+//
+//		return http.build();
+//	}
 
 	@Bean
 	public PersistentTokenRepository tokenRepository(DataSource dataSource) {
