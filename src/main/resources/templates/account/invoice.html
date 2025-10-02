@@ -14,6 +14,74 @@
 	<link rel="stylesheet"
 		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
 	<style>
+#invoiceModal .voucher-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 700;
+  font-size: 1.1rem;  /* ✅ 글자 크기 키움 */
+  margin-bottom: 0.75rem;
+}
+
+#invoiceModal .voucher-switch .label {
+  min-width: 48px;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+#invoiceModal .voucher-switch .label.purchase { 
+  color: #1d4ed8;   /* 파랑 */
+}
+
+#invoiceModal .voucher-switch .label.sales { 
+  color: #b91c1c;   /* 빨강 */
+}
+
+/* ✅ 선택 상태일 때 색 더 진하게 */
+#invoiceModal .switch input:not(:checked) ~ .label.purchase {
+  color: #1d4ed8;
+}
+#invoiceModal .switch input:checked ~ .label.sales {
+  color: #dc2626;
+}
+
+#invoiceModal .switch {
+  position: relative;
+  display: inline-block;
+  width: 54px;   /* 스위치 약간 키움 */
+  height: 28px;
+}
+
+#invoiceModal .switch input { display: none; }
+
+#invoiceModal .slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #dbeafe;
+  border-radius: 28px;
+  transition: 0.3s;
+}
+
+#invoiceModal .slider::before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+/* 체크 시 매출 */
+#invoiceModal .switch input:checked + .slider {
+  background-color: #fee2e2;
+}
+#invoiceModal .switch input:checked + .slider::before {
+  transform: translateX(26px);
+}
 #voucherGrid.ag-theme-quartz {
 	height: 32rem;
 	width: 100%;
@@ -27,6 +95,12 @@
 }
 
 #invoiceGrid.ag-theme-quartz {
+	height: 20rem;
+	width: 100%;
+	margin-top: 1rem;
+}
+
+#salesGrid.ag-theme-quartz {
 	height: 20rem;
 	width: 100%;
 	margin-top: 1rem;
@@ -67,16 +141,13 @@
 		<div class="card shadow mb-3">
 			<div
 				class="card-header py-3 d-flex align-items-center justify-content-between">
-				<h6 class="m-0 font-weight-bold text-primary">매입 매출 전표</h6>
+				<h6 class="m-0 font-weight-bold text-primary">매출/매입 전표</h6>
 			</div>
 			<div class="card-body">
 				<!-- 버튼 영역 -->
 				<div class="btn-bar">
-					<button class="btn btn-danger btn-sm open-invoice"
-						data-bs-toggle="modal" data-bs-target="" data-type="S">매출</button>
-					<button class="btn btn-primary btn-sm open-invoice"
-						data-bs-toggle="modal" data-bs-target="#invoiceModal"
-						data-type="P">매입</button>
+					<button class="btn btn-primary btn-sm" data-bs-toggle="modal"
+						data-bs-target="#invoiceModal">등록</button>
 					<button id="openTaxInvoiceBtn" class="btn btn-success btn-sm">
 						전자세금</button>
 				</div>
@@ -92,8 +163,8 @@
 			</div>
 		</div>
 		<!-- ✅ 모달 fragment include -->
+
 		<div th:replace="~{account/invoiceModal :: invoiceModal}"></div>
-	
 		<div th:replace="~{account/taxInvoiceModal :: taxInvoiceModal}"></div>
 		<div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
 		<div th:replace="~{hr/codeLookup :: codeLookupModal}"></div>
@@ -108,6 +179,7 @@
 		<script th:inline="none">
   let voucherApi, detailApi;
   let selectedInvoice = null; // ✅ 현재 선택한 상단 전표행 저장
+  
   
   // compCode받아놓기
   axios.get("/api/v1/stock/getCompId", { withCredentials: true })
@@ -284,6 +356,8 @@ document.getElementById("btnRegisterDetail").addEventListener("click", async (da
 		<!-- 부서 모달 -->
 		<script th:inline="none">
 document.addEventListener('DOMContentLoaded', () => {
+	
+	
   const invoiceModalEl = document.getElementById('invoiceModal');
   const btn = invoiceModalEl?.querySelector('#btnDeptLookup');
   if (!btn) return;

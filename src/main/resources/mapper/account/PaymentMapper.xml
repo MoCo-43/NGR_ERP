@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.account.PaymentMapper">
+
+  <!-- 급여 확정건을 회계 전표라인으로 변환 -->
+ <select id="selectDeptJournalLines" resultType="com.yedam.erp.vo.account.PaymentLineVO">
+  <![CDATA[
+  WITH s AS (
+    SELECT dept_code, year_month, company_code, item_key, amount
+      FROM dept_payroll_sum
+      UNPIVOT (
+        amount FOR item_key IN (
+          base_pay_sum         AS 'BASE_PAY_SUM',
+          family_allow_sum     AS 'FAMILY_ALLOW_SUM',
+          meal_allow_sum       AS 'MEAL_ALLOW_SUM',
+          annual_allow_sum     AS 'ANNUAL_ALLOW_SUM',
+          income_tax_sum       AS 'INCOME_TAX_SUM',
+          resident_tax_sum     AS 'RESIDENT_TAX_SUM',
+          national_pension_sum AS 'NATIONAL_PENSION_SUM',
+          health_ins_sum       AS 'HEALTH_INS_SUM',
+          employ_ins_sum       AS 'EMPLOY_INS_SUM',
+          net_pay_sum          AS 'NET_PAY_SUM'
+        )
+      )
+  )
+  SELECT 
+      am.dc_type     AS dcType,     -- 차변/대변
+      am.acct_code   AS acctCode,   -- 계정코드
+      a.acct_name AS acctName,   -- 계정명
+      s.item_key     AS itemKey,    -- ex) BASE_PAY_SUM
+      am.item_label  AS itemLabel,
+      s.amount       AS amount
+  FROM s
+  JOIN acct_map am
+    ON am.item_key = s.item_key
+   AND am.company_code = #{companyCode}
+   AND am.use_yn = 'Y'
+  LEFT JOIN account a
+    ON a.acct_code = am.acct_code
+   AND a.company_code = #{companyCode}
+  WHERE s.year_month = #{yearMonth}
+    AND s.dept_code  = #{deptCode}
+    AND s.company_code = #{companyCode}
+    AND NVL(s.amount,0) <> 0
+  ]]>
+</select>
+
+</mapper>
