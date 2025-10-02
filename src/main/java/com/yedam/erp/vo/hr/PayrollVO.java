@@ -16,4 +16,6 @@ public class PayrollVO {
     private Long companyCode;      // 회사코드 
     private String deptName;       // 부서명
     private Long empCount;         // 인원수
+    private Date jrnDate;
+    private String jrnNo;
 }
