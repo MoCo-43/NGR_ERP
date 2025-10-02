@@ -1,3 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="mapper.main.SubPayMapper"></mapper>
+<mapper namespace="com.yedam.erp.mapper.main.SubPayMapper">
+    <insert id="insertPayLog" parameterType="subpayVO">
+        INSERT INTO pay_log (
+            pay_log_no, amount, pg_is_auto, transaction_no, pay_method, sub_code,
+            billing_key_no, excess_pee, reduction_fee, vat_amt
+        ) VALUES (
+            pay_log_seq.NEXTVAL, #{amount}, #{pgIsAuto}, #{transactionNo}, #{payMethod}, #{subCode},
+            #{billingKeyNo}, #{excessPee}, #{reductionFee}, #{vatAmt}
+        )
+    </insert>
+    
+    <!-- 1. 결제 준비 단계: PENDING 상태로 임시 저장 -->
+    <insert id="insertPayLogPending" parameterType="SubPayVO">
+        <!-- pay_log_no는 시퀀스 사용 가정 -->
+        INSERT INTO pay_log (
+            pay_log_no, amount,  mat_no,
+            excess_pee, reduction_fee,
+            status, order_id, sub_code
+        ) VALUES (
+            pay_log_seq.NEXTVAL, #{amount}, #{matNo},
+            #{excessPee}, #{reductionFee},
+            'PENDING', #{orderId}, #{orderId}  <!-- order_id와 sub_code에 임시로 orderId 저장 -->
+        )
+    </insert>
+
+    <!-- 2. 결제 승인 단계: PENDING 데이터를 찾아 최종 업데이트 -->
+    <update id="updatePayLogDone" parameterType="SubPayVO">
+        UPDATE pay_log
+        SET 
+            sub_status = 'DONE',
+            pg_is_auto = #{pgIsAuto},
+            transaction_no = #{transactionNo},
+            pay_method = #{payMethod},
+            billing_key_no = #{billingKeyNo},
+            vat_amt = #{vatAmt},
+            sub_code = #{subCode}  <!-- 트랜잭션 성공 후 service에서 생성된 최종 subCode로 업데이트 -->
+        WHERE 
+            order_id = #{orderId} 
+            AND sub_status = 'PENDING'
+    </update>
+
+    <!-- 3. orderId로 PENDING 상태의 임시 결제 정보 조회 -->
+    <select id="selectPayLogPendingByOrderId" parameterType="String" resultType="SubPayVO">
+        SELECT *
+        FROM pay_log
+        WHERE order_id = #{orderId} AND sub_status = 'PENDING'
+    </select>
+</mapper>

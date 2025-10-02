@@ -77,7 +77,12 @@ public class CustomUserDetails implements UserDetails {
         return empLoginVO.getEmpId();
     }
 
-
+    public String getEmpName() {
+        if(empLoginVO != null && empLoginVO.getEmpVO() != null) {
+            return empLoginVO.getEmpVO().getName();
+        }
+        return ""; // 로그인 안 된 경우도 안전하게 처리
+    }
     // 계정의 상태를 관리하는 메소드들
     // 이 메소드들이 false를 반환하면, 해당 사유에 맞는 AuthenticationException이 발생하여 로그인이 거부됩니다
     /**

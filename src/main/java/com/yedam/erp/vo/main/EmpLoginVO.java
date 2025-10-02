@@ -2,6 +2,8 @@ package com.yedam.erp.vo.main;
 
 import java.util.Date;
 
+import com.yedam.erp.vo.hr.EmpVO;
+
 import lombok.Data;
 
 @Data
@@ -21,6 +23,8 @@ public class EmpLoginVO {
 	private String twoStepMethod;
 	private String token;
 	private String empMobile;
-  private CompanyVO companyVO; 
+	private String name;
+	private EmpVO empVO; 
+    private CompanyVO companyVO; 
 
 }

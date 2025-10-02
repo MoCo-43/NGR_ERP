@@ -1,19 +1,29 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <body>
-<!-- 상단 탭: 헤더/사이드바 색상 통일 -->
-<div class="topbar" th:fragment="header">
-  <nav class="tabs" role="tablist">
-    <a href="#" class="tab active" data-tab="hr" role="tab" aria-selected="true">인사</a>
-    <a href="#" class="tab" data-tab="inventory" role="tab" aria-selected="false">재고</a>
-    <a href="#" class="tab" data-tab="sales" role="tab" aria-selected="false">영업</a>
-    <a href="#" class="tab" data-tab="accounting" role="tab" aria-selected="false">회계</a>
-  </nav>
-  <div class="right">
-	<a href="#" class="tab" data-tab="mains" role="tab" aria-selected="false">mypage</a>
-	<span>|</span>
-    <a href="#" aria-label="logout">로그아웃</a>
-  </div>
-</div>
+	<!-- 상단 탭: 헤더/사이드바 색상 통일 -->
+	<div class="topbar" th:fragment="header">
+		<nav class="tabs" role="tablist">
+			<a href="#" class="tab active" data-tab="hr" role="tab"
+				aria-selected="true">인사</a> <a href="#" class="tab"
+				data-tab="inventory" role="tab" aria-selected="false">재고</a> <a
+				href="#" class="tab" data-tab="sales" role="tab"
+				aria-selected="false">영업</a> <a href="#" class="tab"
+				data-tab="accounting" role="tab" aria-selected="false">회계</a>
+		</nav>
+		<div class="right">
+			<a href="#" class="tab" data-tab="mains" role="tab"
+				aria-selected="false">mypage</a> <span>|</span>
+
+			<!-- 로그인 O -->
+			<span sec:authorize="isAuthenticated()"> <span
+				th:text="${#authentication.principal.empLoginVO.name}"></span>님
+			</span> <a sec:authorize="isAuthenticated()" href="/logout"
+				aria-label="logout">로그아웃</a>
+
+			<!-- 로그인 X -->
+			<a sec:authorize="isAnonymous()" href="/login" aria-label="login">로그인</a>
+		</div>
+	</div>
 </body>
 </html>
