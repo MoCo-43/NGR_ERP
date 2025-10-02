@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.stock.InboundVO;
 import com.yedam.erp.vo.stock.InvenDetailVO;
 import com.yedam.erp.vo.stock.InvenVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
@@ -50,6 +51,7 @@ public interface StockMapper {
 	// 발주 조회
 	public List<OrderVO> getOrderList(Long compId);
 	public List<OrderDetailVO> getOrderDetailByOrderCode(String orderCode); 
+	public List<OrderDetailVO> getOrderDetailListByOrderCode(@Param("orderCode") String orderCode); // 입고등록용 발주 상세 조회
 	
 	// 발주 등록
 	public void insertOrderReq(OrderVO order); // 마스터
@@ -65,4 +67,10 @@ public interface StockMapper {
 	public void insertInvenClosing(InvenVO inven);// 마스터
 	public int insertInvenClosingDetail(InvenDetailVO item);// 상세
 	
+	// 입고조회
+	public List<InboundVO> getInboundList(@Param("compCode") Long companyCode);
+	public List<InboundVO> getInboundDetail(@Param("lotCode") String selectedRow);
+	
+	// 입고 등록
+	public void insertInbound(InboundVO inbound);
 }

@@ -52,22 +52,31 @@
 
 	<script>
     (function(){
-      const $=(id)=>document.getElementById(id);
-      const state={ empId:'' };
+      const $ = (id)=>document.getElementById(id); // id로 찾기 
 
+      const state = { empId:'' }; // 현재 사원 ID 저장
+
+      // 서버에서 자격증 목록 가져오기
       async function fetchCert(empId){
         const res = await fetch('/api/hr/cert?empId=' + encodeURIComponent(empId));
         if (!res.ok) throw new Error('자격증 조회 실패');
         return res.json();
       }
+
+      // 자격증 목록 테이블 렌더링
       function renderCert(list){
-        const tbody=$('certTbody'); const cnt=$('certRowCount');
+        const tbody = $('certTbody');
+        const cnt   = $('certRowCount');
         if (!tbody) return;
+
+        // 데이터 없으면 안내 행 표시
         if (!list?.length){
-          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">등록된 자격증이 없습니다.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary py-4">등록된 자격증이 없습니다.</td></tr>';
           if (cnt) cnt.textContent='0건';
           return;
         }
+
+        // 목록 행 구성: 자격번호/명/등급/발급기관/취득일/유효기간/삭제
         tbody.innerHTML = list.map(r=>`
           <tr data-id="${r.certNo ?? r.CERT_NO}">
             <td>${r.certNo ?? r.CERT_NO}</td>
@@ -76,55 +85,83 @@
             <td>${r.orgName ?? r.ORG_NAME ?? ''}</td>
             <td>${r.acquiredAt ?? r.ACQUIRED_AT ?? ''}</td>
             <td>${r.expiresAt  ?? r.EXPIRES_AT  ?? ''}</td>
-            <td>${r.remarks ?? r.REMARKS ?? ''}</td>
-            <td><button type="button" class="btn btn-sm btn-outline-danger cert-del">삭제</button></td>
+            <td>
+              <button type="button" class="btn btn-danger btn-sm cert-del">삭제</button>
+            </td>
           </tr>
         `).join('');
-        if (cnt) cnt.textContent = `${list.length}건`;
+
+        if (cnt) cnt.textContent = `${list.length}건`; // 총 건수 표시
       }
+
+      // 현재 사원ID 기준으로 목록 새로고침
       async function refresh(){
         if (!state.empId) return renderCert([]);
         renderCert(await fetchCert(state.empId));
       }
-      function clearForm(){ $('certFormDetail')?.reset(); $('certEmpId') && ( $('certEmpId').value = state.empId || '' ); }
 
-      // 삭제 버튼(행 내부)
+      // 폼 초기화
+      function clearForm(){
+        $('certFormDetail')?.reset();
+        if ($('certEmpId')) $('certEmpId').value = state.empId || '';
+      }
+
+      // 행 안의 삭제 버튼 
       document.addEventListener('click', async (e)=>{
-        const btn=e.target;
+        const btn = e.target;
         if (!(btn instanceof Element) || !btn.classList.contains('cert-del')) return;
-        const no = btn.closest('tr')?.dataset.id;
+        const no = btn.closest('tr')?.dataset.id; 
         if (!no) return;
         if (!confirm('삭제하시겠습니까?')) return;
         const res = await fetch('/api/hr/cert/' + no, { method:'DELETE' });
         if (!res.ok) return alert('삭제 실패');
-        refresh();
+        refresh(); // 삭제 후 재조회
       });
 
-      // 저장
+      // 저장 버튼
       $('btnCertSave')?.addEventListener('click', async (e)=>{
-        const form=$('certFormDetail');
-        const payload=Object.fromEntries(new FormData(form).entries());
+        const form = $('certFormDetail');
+        const payload = Object.fromEntries(new FormData(form).entries()); 
+
+        // 필수값 체크
         if (!payload.empId) return alert('사번이 없습니다.');
         if (!payload.certName){ form.certName.focus(); return; }
-        const btn=e.currentTarget; btn.disabled=true;
+
+        const btn = e.currentTarget;
+        btn.disabled = true; // 중복 클릭 방지
         try{
-          const res=await fetch('/api/hr/cert', {
-            method:'POST', headers:{'Content-Type':'application/json'},
+          const res = await fetch('/api/hr/cert', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
             body: JSON.stringify(payload)
           });
           if (!res.ok) throw new Error('저장 실패');
+
+          // 저장 성공 시 모달 닫고 목록 갱신
           (bootstrap.Modal.getInstance($('certFormModal')) || new bootstrap.Modal($('certFormModal'))).hide();
           await refresh();
           alert('저장되었습니다.');
-        }catch(err){ alert(err?.message || '저장 실패'); }
-        finally{ btn.disabled=false; }
+        }catch(err){
+          alert(err?.message || '저장 실패');
+        }finally{
+          btn.disabled = false;
+        }
       });
 
-      // === 공개 API ===
+      // 외부에서 사용하는 API
       window.CertForm = {
-        setEmpId(id){ state.empId=id||''; if ($('certEmpId')) $('certEmpId').value = state.empId; },
-        refresh, clear(){ clearForm(); renderCert([]); },
-        open(){ (new bootstrap.Modal($('certFormModal'))).show(); }
+        setEmpId(id){ // 사원 ID 설정
+          state.empId = id || '';
+          if ($('certEmpId')) $('certEmpId').value = state.empId;
+        },
+        refresh,                 // 목록 새로고침
+        clear(){                 // 폼+목록 초기화
+          clearForm();
+          renderCert([]);
+        },
+        open(){           
+          (new bootstrap.Modal($('certFormModal'))).show();
+        }
       };
     })();
   </script>

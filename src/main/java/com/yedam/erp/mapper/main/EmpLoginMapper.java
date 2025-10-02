@@ -11,6 +11,6 @@ public interface EmpLoginMapper {
     
     void updatePasswordByEmpIdNo(@Param("empIdNo") Long empIdNo, @Param("newPassword") String newPassword);
     
-    EmpLoginVO findByIdentityAndComCode(@Param("identity") String identity, @Param("comCode") String comCode);
+    EmpLoginVO findByIdentityAndComCode(@Param("empId") String empId, @Param("comCode") String comCode);
 
 }
