@@ -55,7 +55,8 @@
             dept_code,
             code_id,
             two_step_method,
-            token
+            token,
+            name
         FROM
             emp_login
         WHERE
@@ -78,7 +79,8 @@
             T1.code_id,
             T1.two_step_method,
             T1.token,
-            T1.emp_mobile
+            T1.emp_mobile,
+            T1.name
         FROM
             emp_login T1
         INNER JOIN

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.erp.mapper.main.SubLogMapper">
+    <insert id="insertSubLog" parameterType="SubLogVO">
+        INSERT INTO sub_log (
+            sub_log_no, sub_type, new_sub_plan, change_pay, start_date, end_date, sub_code
+        ) VALUES (
+            sub_log_seq.NEXTVAL, #{subType}, #{newSubPlan}, #{changePay}, #{startDate}, #{endDate}, #{subCode}
+        )
+    </insert>
+</mapper>

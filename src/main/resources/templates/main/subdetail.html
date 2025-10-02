@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>구독 상세</title>
+<script src="https://js.tosspayments.com/v2/standard"></script>
 <link
 	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
 	rel="stylesheet"
@@ -388,6 +389,8 @@ main {
 </style>
 </head>
 <body>
+	<input type="hidden" id="base-users-hidden"
+		th:text="${subPlan.baseSalary}">
 	<input type="hidden" id="max-users-hidden"
 		th:value="${subPlan.maxUsers}">
 	<input type="hidden" id="min-users-hidden"
@@ -727,11 +730,10 @@ main {
 			          // })
 			  // });
 			</script>
-<!-- https://docs.stripe.com/api/errors/https://docs.stripe.com/api/errors -->
+			<!-- https://docs.stripe.com/api/errors/https://docs.stripe.com/api/errors -->
 			<div id="step-4" class="step-section">
 				<div class="inner-layout">
 					<div class="main-form">
-
 						<div class="form-group">
 							<label class="form-section-label">최종 결제 정보</label>
 							<div class="summary-box">
@@ -744,7 +746,11 @@ main {
 										id="summary-user-count">50명</span>
 								</div>
 								<div class="summary-item">
-									<span class="item-label">기본 금액(사용자수)</span> <span class="price"
+									<span class="item-label">구독플랜 금액</span> <span class="price"
+										th:text="${subPlan.baseSalary}"></span></span>
+								</div>
+								<div class="summary-item">
+									<span class="item-label">기본 금액</span> <span class="price"
 										id="base-price-display" th:text="${subPlan.baseSalary}"></span></span>
 								</div>
 								<div class="summary-item">
@@ -753,8 +759,13 @@ main {
 								</div>
 								<div class="summary-item">
 									<span class="item-label">초과 금액</span> <span class="item-value"
-										id="summary-excess-price">0원</span>
+										id="summary-excess-price">+ 0원</span>
 								</div>
+								<div class="summary-item">
+									<span class="item-label">미만 금액</span> <span class="item-value"
+										id="summary-underage-price">- 0원</span>
+								</div>
+
 								<div class="summary-item total">
 									<span class="item-label">총 결제 금액</span> <span
 										class="item-value" id="summary-total-payment">0원</span>
@@ -786,7 +797,7 @@ main {
 							<button type="button" class="nav-btn prev-btn"
 								onclick="goToStep(3)">이전단계</button>
 							<button type="button" class="nav-btn next-btn"
-								id="payment-button" onclick="goToStep(5)">결제하기</button>
+								id="payment-button" onclick="">결제하기</button>
 						</div>
 
 					</div>
@@ -801,10 +812,10 @@ main {
 				</div>
 			</div>
 			<script>
-			document.getElementById("payment-button").addEventListener("click", () => {
-				location.href = '/subpay';
-			});
-			
+			//document.getElementById("payment-button").addEventListener("click", () => {
+				//location.href = '/subpay';
+			//});
+			//goToStep(5);
 			</script>
 			<!-- STEP 5: 결제 완료 -->
 			<div id="step-5" class="step-section">
@@ -835,68 +846,63 @@ main {
     //  1. 전역 변수 설정 
     // ------------------------------------
     let currentStep = 1;
-    let selectedDuration = 6; // 구독 기간 (숫자: 3, 6, 12)
-    let selectedDurationText = "6개월"; // 구독 기간 (텍스트)
-    let selectedUserCount = 0; // 사용자 수 (숫자)
-
-    //  DB에서 가져온 가격 및 인원 정보 (DOMContentLoaded에서 실제 값으로 초기화됨)
-    let basePriceFromDB = 0; // subPlan.baseSalary 값
-    let maxUsers = 0; // subPlan.maxUsers 값
-    let minUsers = 0; // subPlan.minUsers 값
-    const USER_UNIT_PRICE = 5000; // 초과/미만 인원당 추가/차감 비용
-
-    // 2. 결제 계산 함수 
-function calculatePayment() {
-    const duration = selectedDuration;
-    const userCount = parseInt(selectedUserCount) || 0;
-    const minCount = minUsers;
-    const maxCount = maxUsers;
-
-    // DB에서 가져온 기본 금액
-    let grossTotal = basePriceFromDB;
-
-    // 1️ 할인 계산 (12개월 선택 시만 10%)
-    let discount = 0;
-    if (duration === 12) {
-        discount = Math.round(grossTotal * 0.1);
-        console.log(`discount 할인`);
-    }
-
-    // 2️초과/미만 금액 계산
+    let selectedDuration = 6;
+    let selectedDurationText = "6개월";
+    let selectedUserCount = 0;
+    let basePriceFromDB = 0;
+    let maxUsers = 0;
+    let minUsers = 0;
+    const USER_UNIT_PRICE = 5000;
+    let finalPayment = 0;
     let adjustmentCharge = 0;
+    
+    // ======== [수정/추가] Toss Payments 전역 변수 (widgets is not defined 해결) ========
+    const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; 
+    const customerKey = "USER_ERP_1001"; // 실제 로그인한 사용자 고유 ID로 변경해야 함
+    let widgets; // 전역으로 widgets 객체를 선언
+    // ===========================================================================
+    
+    // 2. 결제 계산 함수 
+    function calculatePayment() {
+        const unitPricePerUser = basePriceFromDB;
+        const duration = selectedDuration;
+        const userCount = parseInt(selectedUserCount) || 0;
+        const maxCount = maxUsers;
 
-    if (userCount > maxCount) {
-        // 초과 금액: 1명당 5000원 * 기간
-        adjustmentCharge = (userCount - maxCount) * USER_UNIT_PRICE * duration;
-    	console.log(`adjustmentCharge 초과`);
-    } else if (userCount < minCount) {
-        // 미만 금액: 1명당 5000원 * 기간, 음수 처리
-        adjustmentCharge = -(minCount - userCount) * USER_UNIT_PRICE * duration;
-        console.log(`adjustmentCharge 미만`);
+        let baseUserInputPrice = unitPricePerUser * userCount * duration;
+        let adjustmentCharge = 0; 
+        
+        if (userCount > maxCount) {
+            adjustmentCharge = (userCount - maxCount) * USER_UNIT_PRICE * duration;
+        } else if (userCount < maxCount) {
+            adjustmentCharge = -(maxCount - userCount) * USER_UNIT_PRICE * duration;
+        }
+        
+        let discount = 0;
+        if (duration === 12) {
+            discount = Math.round(baseUserInputPrice * 0.1);
+        }
+        
+        finalPayment = baseUserInputPrice - discount + adjustmentCharge;
+        finalPayment = Math.max(0, finalPayment);
+
+        // 6. 계산 결과를 화면에 반영
+        document.getElementById('base-price-display').textContent = baseUserInputPrice.toLocaleString() + '원';
+        document.getElementById('summary-discount-price').textContent = '- ' + discount.toLocaleString() + '원';
+        
+        if (adjustmentCharge > 0) {
+            document.getElementById('summary-excess-price').textContent = '+' + adjustmentCharge.toLocaleString() + '원';
+            document.getElementById('summary-underage-price').textContent = '- 0원';
+        } else if (adjustmentCharge < 0) {
+            document.getElementById('summary-excess-price').textContent = '+ 0원';
+            document.getElementById('summary-underage-price').textContent = adjustmentCharge.toLocaleString() + '원';
+        } else {
+            document.getElementById('summary-excess-price').textContent = '+ 0원';
+            document.getElementById('summary-underage-price').textContent = '- 0원';
+        }
+        
+        document.getElementById('summary-total-payment').textContent = finalPayment.toLocaleString() + '원';
     }
-
-    // 3️ 최종 결제 금액
-    let finalPayment = grossTotal - discount + adjustmentCharge;
-    finalPayment = Math.max(0, finalPayment);
-    console.log(finalPayment);
-
-    // 4️ 화면에 반영
-    const discountPriceElement = document.getElementById('summary-discount-price');
-    const excessPriceElement = document.getElementById('summary-excess-price');
-    const totalPaymentElement = document.getElementById('summary-total-payment');
-
-    discountPriceElement.textContent = '- ' + discount.toLocaleString() + '원';
-
-    if (adjustmentCharge > 0) {
-        excessPriceElement.textContent = '+' + adjustmentCharge.toLocaleString() + '원';
-    } else if (adjustmentCharge < 0) {
-        excessPriceElement.textContent = adjustmentCharge.toLocaleString() + '원';
-    } else {
-        excessPriceElement.textContent = '0원';
-    }
-
-    totalPaymentElement.textContent = finalPayment.toLocaleString() + '원';
-}
 
 
     // 3. UI 업데이트 함수 
@@ -909,13 +915,44 @@ function calculatePayment() {
     
     function updateSummaryUserCount() {
         const userCountElements = document.querySelectorAll('#summary-user-count');
-        
         const count = parseInt(selectedUserCount) || 0;
         const formattedCount = count.toLocaleString() + "명"; 
 
         userCountElements.forEach(element => {
             element.textContent = formattedCount;
         });
+    }
+
+    // [추가] Toss Payments 위젯 초기화 및 렌더링 함수
+    async function initTossPaymentsWidgets() {
+        if (widgets) return; 
+
+        if (typeof TossPayments !== 'undefined') {
+            try {
+                const tossPayments = TossPayments(clientKey);
+                widgets = tossPayments.widgets({ customerKey }); 
+
+                // 1. 초기 금액 설정 (렌더링용)
+                await widgets.setAmount({
+                    currency: "KRW",
+                    value: 100, 
+                });
+
+                // 2. 결제 수단 및 약관 위젯 렌더링
+                await Promise.all([
+                    widgets.renderPaymentMethods({
+                        selector: "#payment-method-widget",
+                        variantKey: "DEFAULT",
+                    }),
+                    widgets.renderAgreement({ 
+                        selector: "#agreement-widget",
+                        variantKey: "AGREEMENT" 
+                    }),
+                ]);
+            } catch (error) {
+                console.error("Toss Payments 위젯 초기화 실패:", error);
+            }
+        }
     }
 
     function goToStep(stepNumber) {
@@ -925,14 +962,17 @@ function calculatePayment() {
         updateStepUI(stepNumber);
         currentStep = stepNumber;
         
-        // Step 2, 3, 4로 이동할 때 UI 및 결제 정보 업데이트 실행
         if (stepNumber >= 2 && stepNumber <= 4) {
             updateSummaryDuration();
             updateSummaryUserCount();
-            // DB 값이 로드된 후에만 계산 실행
             if (basePriceFromDB > 0) {
                 calculatePayment(); 
             }
+        }
+        
+        // [수정] Step 4로 이동 시 위젯 초기화 및 렌더링 호출
+        if (stepNumber === 4) {
+            initTossPaymentsWidgets();
         }
     }
 
@@ -961,12 +1001,11 @@ function calculatePayment() {
 
 
     //  4. DOMContentLoaded 이벤트 핸들러 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
         
-    	// DB 변수 초기화 (ID 'base-price-display'에서 값 읽기)
+    	// DB 변수 초기화 로직 유지
     	const basePriceElement = document.getElementById('base-price-display');
     	if (basePriceElement && basePriceElement.textContent) {
-    	    // textContent (예: "500,000원")에서 숫자만 추출
     	    const rawValue = basePriceElement.textContent.replace(/[^0-9]/g, '');
     	    basePriceFromDB = parseInt(rawValue, 10) || 0;
     	}
@@ -983,21 +1022,18 @@ function calculatePayment() {
         // 초기 활성 섹션 설정
         document.getElementById(`step-${currentStep}`).classList.add('active');
 
+        // ... (durationButtons 리스너 유지) ...
         const durationButtons = document.querySelectorAll('#duration-options .option-button');
         durationButtons.forEach(button => {
             button.addEventListener('click', () => {
                 durationButtons.forEach(btn => btn.classList.remove('selected'));
                 button.classList.add('selected');
-                
-                // 기간 텍스트와 숫자를 모두 저장하고 계산 로직 실행
                 selectedDurationText = button.getAttribute('data-duration'); 
                 selectedDuration = parseInt(selectedDurationText.replace(/[^0-9]/g, '')) || 1;
-                
-                calculatePayment(); // 기간 변경 시 즉시 계산
+                calculatePayment();
             });
         });
 
-        // 초기 로드 시 구독 기간 변수 초기화
         const initialSelectedDuration = document.querySelector('#duration-options .option-button.selected');
         if (initialSelectedDuration) {
             selectedDurationText = initialSelectedDuration.getAttribute('data-duration');
@@ -1007,26 +1043,69 @@ function calculatePayment() {
         // 사용자 수 입력 필드 값 변경 리스너
         const userCountInput = document.getElementById('user-count-input');
         if (userCountInput) {
-            // 초기 사용자 수 설정
             selectedUserCount = userCountInput.value.replace(/[^0-9]/g, '');
-            
-            // input 값이 변경될 때마다 변수 업데이트 및 계산 실행
             userCountInput.addEventListener('input', () => {
                 selectedUserCount = userCountInput.value.replace(/[^0-9]/g, '');
-                calculatePayment(); // 사용자 수 변경 시 즉시 계산
+                calculatePayment();
             });
         }
 
-        const paymentOptions = document.querySelectorAll('#payment-options .payment-option');
-        paymentOptions.forEach(option => {
+        // 결제 방식 선택 이벤트 핸들러
+        const paymentTypeOptions = document.querySelectorAll('#payment-type-options .payment-option');
+        paymentTypeOptions.forEach(option => {
             option.addEventListener('click', () => {
-                paymentOptions.forEach(opt => opt.classList.remove('selected'));
+                paymentTypeOptions.forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
             });
         });
         
-        // 페이지가 로드된 후, 초기 계산을 실행합니다.
+        // 초기 계산 실행
         calculatePayment(); 
+        
+        
+        // '결제하기' 버튼 이벤트 핸들러
+        const paymentButton = document.getElementById('payment-button');
+        paymentButton.addEventListener('click', async function () {
+            
+            // ReferenceError 방지
+            if (!widgets) {
+                console.error("결제 위젯이 초기화되지 않았습니다.");
+                alert("결제 위젯 로딩 중입니다. 잠시 후 다시 시도해 주세요.");
+                return; 
+            }
+        
+            const requestData = {
+                subPlanNo: 1, // 실제 선택한 플랜 번호로 변경 필요
+                userCount: selectedUserCount,
+                duration: selectedDuration,
+                finalAmount: finalPayment,
+                adjustmentCharge: adjustmentCharge
+            };
+        
+            try {
+                // 1. 최종 금액을 위젯에 업데이트
+                await widgets.setAmount({
+                    currency: "KRW",
+                    value: finalPayment, 
+                });
+                
+                // 2. 결제 준비 API 호출 ([경로 수정 적용])
+                const response = await axios.post('/payment/api/payment/prepare', requestData);
+                const { orderId, orderName, amount } = response.data;
+        
+                // 3. 결제 요청
+                await widgets.requestPayment({
+                    orderId: orderId,
+                    orderName: orderName,
+                    successUrl: window.location.origin + "/payment/success",
+                    failUrl: window.location.origin + "/payment/fail",
+                });
+        
+            } catch (error) {
+                console.error("결제 준비 중 오류 발생:", error);
+                alert("결제를 진행하는 중 문제가 발생했습니다. 콘솔을 확인해 주세요.");
+            }
+        });
     });
 </script>
 </body>

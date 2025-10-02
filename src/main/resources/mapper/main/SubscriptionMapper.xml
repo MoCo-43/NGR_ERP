@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.erp.mapper.main.SubscriptionMapper">
+<select id="getMaxComCode" resultType="string">
+        SELECT MAX(COM_CODE) FROM COMPANY
+        WHERE COM_CODE LIKE 'COM%'
+    </select>
+
+    <insert id="insertSubscription" parameterType="SubscriptionVO">
+        INSERT INTO SUBSCRIPTION (
+            SUB_CODE, START_DATE, END_DATE, TOTAL_USERS, SUB_STATUS, 
+            SUB_PLAN_NO, TOTAL_PAY, MAT_NO, MON, COM_CODE
+        ) VALUES (
+            #{subCode}, SYSDATE, ADD_MONTHS(SYSDATE, #{mon}), #{totalUsers}, #{subStatus}, 
+            #{subPlanNo}, #{TotalPay}, #{MatNo}, #{Mon}, #{comCode}
+        )
+    </insert>
+
+    <update id="updateCompanyComCode" parameterType="map">
+        UPDATE COMPANY
+        SET 
+            COM_CODE = #{comCode},
+           <if test="compName != null and compName !=''"> COMP_NAME = #{compName}, </if>
+            <if test="brm != null and brm !=''">BRM = #{brm},</if>
+            <if test="ceo != null and ceo !=''">CEO = #{ceo},</if>
+            SUB_DATE = SYSDATE 
+        WHERE MAT_NO = #{matNo}
+    </update>
+    
+    <select id="selectCompanyInfoByMatNo" parameterType="long" resultType="map">
+        SELECT 
+            MAT_NO, CEO, COMP_NAME, MAT_NAME, MAT_MAIL,
+            COMP_ADDR, COMP_DEL_ADDR, BRM, COM_CODE 
+        FROM COMPANY
+        WHERE MAT_NO = #{matNo}
+    </select>
+</mapper>
