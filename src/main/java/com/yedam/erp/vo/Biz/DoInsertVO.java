@@ -20,6 +20,8 @@ public class DoInsertVO {
     private String notes;        // 비고
     private Long companyCode;  // 회사코드
     private Date exDate;       // 납기일자
+    private String addr;         // 주소
+    private String zipCode;      // 우편번호
 
     // 자식 테이블 매핑
     private List<DoDetailVO> dodetails;
