@@ -99,52 +99,57 @@
       </div>
 
       <!-- 입력영역 (1~7,10) -->
+      <!-- 입력영역 (정렬 완료 버전) -->
       <div class="card shadow mb-4">
         <div class="card-body">
           <div class="rounded-box">
             <!-- 1 작성일자 / 2 거래처 -->
-            <div class="form-row align-items-center">
-              <div class="form-group col-md-3">
-                <label class="form-label">작성일자</label>
+            <div class="row g-3 align-items-end mb-2">
+              <div class="col-md-6">
+                <label for="poStart" class="form-label">작성일자</label>
                 <input id="poStart" type="date" class="form-control" />
               </div>
-
-              <div class="form-group col-md-5">
-                <label class="form-label">거래처</label>
+              <div class="col-md-6">
+                <label for="cusName" class="form-label">거래처</label>
                 <div class="input-group">
                   <input id="cusName" class="form-control" disabled />
-                  <div class="input-group-append">
-                    <button
-                      id="btnFindCustomer"
-                      type="button"
-                      class="btn btn-outline-secondary"
-                      data-bs-toggle="modal"
-                      data-bs-target="#customermodal"
-                    >
-                      조회
-                    </button>
-                  </div>
+                  <input
+                    type="hidden"
+                    id="cusCode"
+                    class="form-control"
+                    disabled
+                  />
+                  <button
+                    id="btnFindCustomer"
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#customermodal"
+                  >
+                    조회
+                  </button>
                 </div>
               </div>
             </div>
 
             <!-- 3 담당자 / 4 거래유형 -->
-            <div class="form-row align-items-center">
-              <div class="form-group col-md-4">
-                <label class="form-label">담당자</label>
-                <div class="input-group">
-                  <input
-                    id="creater"
-                    class="form-control"
-                    placeholder="세션로그인사용자"
-                    disabled
-                  />
-                </div>
+            <div class="row g-3 align-items-end mb-2">
+              <div class="col-md-6">
+                <label for="creater" class="form-label">담당자</label>
+                <input
+                  id="creater"
+                  class="form-control"
+                  placeholder="세션로그인사용자"
+                  disabled
+                />
               </div>
-
-              <div class="form-group col-md-4">
-                <label class="form-label">거래유형</label>
-                <select id="bizType" class="form-control">
+              <div class="col-md-6">
+                <label for="bizType" class="form-label">거래유형</label>
+                <select
+                  id="bizType"
+                  class="form-control"
+                  aria-label="Default select example"
+                >
                   <option value="VAT_INCLUDED">부가세율 적용</option>
                   <option value="VAT_EXEMPT">부가세율 미적용</option>
                 </select>
@@ -152,14 +157,13 @@
             </div>
 
             <!-- 5 납기일자 / 6 부가세유형 -->
-            <div class="form-row align-items-center">
-              <div class="form-group col-md-3">
-                <label class="form-label">납기일자</label>
+            <div class="row g-3 align-items-end mb-2">
+              <div class="col-md-6">
+                <label for="exDate" class="form-label">납기일자</label>
                 <input id="exDate" type="date" class="form-control" />
               </div>
-
-              <div class="form-group col-md-4">
-                <label class="form-label">부가세유형</label>
+              <div class="col-md-6">
+                <label for="vatDocType" class="form-label">부가세유형</label>
                 <select id="vatDocType" class="form-control">
                   <option value="TAX_INVOICE">세금계산서</option>
                   <option value="STATEMENT">명세서</option>
@@ -168,10 +172,10 @@
             </div>
 
             <!-- 7 지불방식 / 10 결제예정일 -->
-            <div class="form-row align-items-center">
-              <div class="form-group col-md-5">
-                <label class="form-label d-block">지불방식</label>
-                <div class="form-row">
+            <div class="row g-3 align-items-end mb-2">
+              <div class="col-md-6">
+                <label for="payMethod" class="form-label">지불방식</label>
+                <div class="row g-2">
                   <div class="col-auto">
                     <select id="payMethod" class="form-control">
                       <option value="CASH">현금</option>
@@ -180,7 +184,7 @@
                     </select>
                   </div>
                   <div id="billDates" class="col d-none">
-                    <div class="form-row">
+                    <div class="row g-2">
                       <div class="col">
                         <input
                           id="billStart"
@@ -201,17 +205,16 @@
                   </div>
                 </div>
               </div>
-
-              <div class="form-group col-md-4">
-                <label class="form-label">결제예정일</label>
+              <div class="col-md-6">
+                <label for="settleDue" class="form-label">결제예정일</label>
                 <input id="settleDue" type="date" class="form-control" />
               </div>
             </div>
 
-            <!-- 상태/비고(설계도 우측 설명영역은 주석 처리로 대체) -->
-            <div class="form-row">
-              <div class="form-group col-md-9">
-                <label class="form-label">비고</label>
+            <!-- 비고 (한 줄 전체) -->
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="notes" class="form-label">비고</label>
                 <input
                   id="notes"
                   class="form-control"
@@ -526,7 +529,7 @@
 
                 poDetails: details,
               };
-              console.log("cusCode은? ===>", payload.data.cusCode);
+              console.log("cusCode은? ===>", payload.cusCode);
               await axios.post("/api/biz/poinsert", payload, {
                 headers: { "Content-Type": "application/json" },
               });
@@ -819,7 +822,6 @@
             if (cusNameEl) cusNameEl.value = row.cusName ?? "";
             if (cusCodeEl) cusCodeEl.value = row.cusCode ?? "";
           }
-
           // 거래처 모달의 선택 버튼 클릭 이벤트
           const importCustomerCodeBtn = document.getElementById("CstImportBtn");
           if (importCustomerCodeBtn) {

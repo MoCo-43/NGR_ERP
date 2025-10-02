@@ -14,6 +14,7 @@
     <result property="payDate"     column="pay_date" />
     <result property="status"      column="status" />
     <result property="companyCode" column="company_code" />
+    <result property="jrnDate"     column="jrn_date"/>
     <!-- 조인/집계 -->
     <result property="deptName"    column="dept_name" />
     <result property="empCount"    column="emp_count" />
@@ -70,6 +71,8 @@
     p.status,
     p.company_code,
     d.dept_name,
+    p.jrn_date,
+    p.jrn_no,
     /* 부서 인원수(EMP 기준) */
     (
       SELECT COUNT(1)
