@@ -40,7 +40,7 @@
   <!-- 마스터 카드 -->
   <!-- <div class="card shadow-sm mb-4"> -->
     <div class="card-header py-3 d-flex align-items-center justify-content-between">
-      <h6 class="mb-0 font-weight-bold text-primary">발주 계획 조회 페이지</h5>
+      <h6 class="mb-0 font-weight-bold text-primary">입고 조회 페이지</h6>
     </div>
   <!-- </div>  -->
 
@@ -55,76 +55,63 @@
        </div>
     </div>
     
-      <form class="row g-3" id="searchOrderPlan" enctype="application/x-www-form-urlencoded">
-        <div class="col-md-4">
-         <label for="partnerName" class="form-label">거래처명</label>
-         <input type="text" class="form-control" id="partnerName" name="partnerName">
+      <form class="row g-3" id="searchList" enctype="application/x-www-form-urlencoded">
+        <div class="col-md-3">
+         <label for="productCode" class="form-label">제품코드</label>
+         <input type="text" class="form-control" id="productCode" name="productCode">
         </div>
-        <div class="col-md-4">
-          <label for="productName" class="form-label">제품명</label>
-          <input type="text" class="form-control" id="productName" name="productName">
+        <div class="col-md-3">
+         <label for="businessPartner" class="form-label">공급처명</label>
+         <input type="text" class="form-control" id="businessPartner" name="businessPartner">
         </div>
-      	<div class="col-4">
-         <label for="insDate" class="form-label">등록일자</label>
-         <input type="date" class="form-control" id="insDate" name="insDate">
+      	<div class="col-md-3">
+         <label for="inboundDate" class="form-label">입고일자</label>
+         <input type="date" class="form-control" id="inboundDate" name="inboundDate">
+        </div>
+        <div class="col-md-3">
+         <label for="dueDate" class="form-label">납기일자</label>
+         <input type="date" class="form-control" id="dueDate" name="dueDate">
         </div>
       </form>
     </div>
   <!-- </div>  -->
   
-  <div class="card shadow-sm mt-4">
-  <div class="card-header bg-secondary text-white">
-    <h5 class="mb-0">발주 계획 목록</h5>
-  </div>
+<div class="shadow-sm mt-4">
   <div class="card-body">
-  <!-- 
-    <table class="table table-bordered" id="orderItemsTable">
-      <thead class="table-light">
-        <tr style="text-align:center">
-          <th>No.</th>
-          <th>발주계획코드</th>
-          <th>거래처명</th>
-          <th>거래처코드</th>
-          <th>담당자</th>
-          <th>제품명</th>
-          <th>수량</th>
-          <th>공급가액</th>
-          <th>세율유형</th>
-          <th>최종합산금</th>
-          <th>발주서</th>
-        </tr>
-      </thead>
-      <tbody>
-        
-      </tbody>
-    </table>
-     -->
-     
-      <!-- AG Grid container -->
-    <div id="orderPlansGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
-     
-  </div>
-</div>
-  
-  
-  
-  
-  <!-- Toast (닫기 버튼 제거) -->
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
-  <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="toast-body" id="toastMessage">조회 성공!</div>
+    <div class="row">
+      <!-- 입고 목록 -->
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">입고 목록</h5>
+          </div>
+          <div class="card-body p-0">
+            <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 입고 상세 -->
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0">입고 상세</h5>
+          </div>
+          <div class="card-body p-0">
+            <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
   
   <!-- 컨테이너 종료 -->
 </div>
-
   <!-- 모달 include              경로             ::  div id 부분  -->   
   <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
    <!-- 모달 include              경로             ::  div id 부분  -->   
   <div th:replace="~{stock/modals/productModal :: productModal}"></div>
-  <!-- 모달 include              경로             ::  div id 부분  -->   
-  <div th:replace="~{stock/modals/requestOrderModal :: orderModal}"></div>
   
 </section>
   
@@ -150,14 +137,15 @@ document.addEventListener("DOMContentLoaded", () => {
 	 * @param {Function} [config.onGridReady] - grid ready 이벤트 핸들러
 	 * @returns {Object} { gridApi, gridOptions }
 	 */
-	const searchPartner = document.getElementById('partnerName');
-	const searchProduct = document.getElementById('productName');
-	const tableBody = document.querySelector('#orderItemsTable tbody');
+	const searchPartner = document.getElementById('businessPartner');
+	const searchProduct = document.getElementById('productCode');
+	let compCode = null; // 회사코드
 	let productGrid = null; // 전역 변수
- 	let compCode = null; // compCode
  	let gridOptions = null;
  	let gridCreated = false;
  	let gridApi = null;
+ 	let inDetailGridOptions = null;
+ 	let selectedRow = null; // 전역(이벤트 바깥)으로 선언
  	
  	// 공통 모달 호출 함수
  	function initGrid(config) {
@@ -199,84 +187,84 @@ document.addEventListener("DOMContentLoaded", () => {
 
  	    new agGrid.Grid(eGridDiv, gridOptions);
  	    return { gridApi: gridOptions.api, gridOptions };
-}// END OF FUNCTION
+	}// END OF FUNCTION
 
-// 회사코드 불러오기
-axios.get("/api/v1/stock/getCompId", { withCredentials: true })
-  .then(res => { compCode = res.data; })
-  .catch(err => console.error(err));
-
-
-// 발주 계획 리스트 
-const plansDiv = document.getElementById('orderPlansGrid');
-const orderPlansGrid = initGrid({
-    el: "orderPlansGrid",
+	// 회사코드 불러오기
+	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+	  .then(res => { compCode = res.data; })
+	  .catch(err => console.error(err));
+	
+	
+// 발주 리스트 
+const inListGrid = initGrid({
+    el: "inListGrid",
     columnDefs: [
         { headerName: "No.", valueGetter: "node.rowIndex + 1", width: 70 },
-        { headerName: "발주계획코드", field: "xpCode" },
-        { headerName: "등록일자", field: "insDate" },
-        { headerName: "거래처명", field: "businessPartner" },
-        { headerName: "거래처코드", field: "businessCode" },
-        { headerName: "담당자", field: "empId" },
-        { headerName: "제품명", field: "productName" },
-        { headerName: "수량", field: "amount", valueFormatter: (params) => {
-            if (params.value == null) return '';
-            return params.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-          } },
-        { headerName: "공급가액", field: "supAmt",valueFormatter: (params) => {
-            if (params.value == null) return '';
-            return params.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-          } },
-        { headerName: "세율유형", field: "taxType" },
-        {  field: "orderSheetLink",
-            cellRenderer: (params) => {
-            	const businessCode = params.data.businessCode;
-                const xpCode = params.data.xpCode;
-                const hasOrderSheet = params.data.orderSheetLink;
-                const button = document.createElement('button');
-                button.innerText = '조회';
-                button.className = 'btn btn-sm';
-                if (params.data.hasOrderSheet === 'Y') { // mapper.xml에서 Y/N로 가져오는 경우
-                    button.classList.add('btn-primary');
-                    button.addEventListener('click', () => {
-                        const xpCode = params.data.xpCode;
-                        const businessCode = params.data.businessCode;
-
-                        // PDF 모달 열기
-                        const iframe = document.querySelector('#orderModal iframe#pdfFrame');
-                        iframe.src = `/api/v1/stock/orderSheet/${xpCode}/${businessCode}`;
-                        const orderModal = new bootstrap.Modal(document.getElementById('orderModal'));
-                        orderModal.show();
-                    });
-                } else {
-                    button.classList.add('btn-secondary');
-                    button.disabled = true;
-                }
-
-                return button;
-            },
-            width: 100
-        }
+        { headerName: "입고일자", field: "inboundDate" },
+        { headerName: "LOT번호", field: "lotCode" },
+        { headerName: "공급처", field: "businessPartner" },
+        { headerName: "납기예정일자", field: "dueDate" }
     ],
     paginationPageSize: 20,
-    domLayout: "normal"
-});
-
-// 데이터 로드
-async function loadOrderPlans() {
-    try {
-        const res = await axios.get("/api/v1/stock/orderPlans");
-        orderPlansGrid.gridOptions.api.setRowData(res.data);
-        orderPlansGrid.gridOptions.api.sizeColumnsToFit();
-    } catch (err) {
-        console.error(err);
+    domLayout: "normal",
+    onRowClicked: async (event) => {
+        console.log("선택된 행 데이터(selectedRow):", event.data);
+        selectedRow = event.data.lotCode;
+        console.log("selectedRow : "+selectedRow);
+        await loadInDetailData(selectedRow); // 상세 그리드 데이터 로드
+        // 여기서 선택된 결산 상세를 불러오는 로직 추가 가능
+    },
+    onGridReady: async (event) => {
+        try {
+            const res = await axios.get('/api/v1/stock/inboundList', { withCredentials: true });
+            console.log(res.data);
+            event.api.setRowData(res.data); // 마스터 그리드에 데이터 뿌리기
+        } catch (err) {
+            console.error(err);
+            toastr.error('데이터 로드 실패');
+        }
     }
+});// END OF inListGrid
+
+const inDetailColumnDefs = [
+    { headerName: "No.",valueGetter: "node.rowIndex + 1", field: "no", width: 80},
+    { headerName: "제품코드", field: "productCode" },
+    { headerName: "제품명", field: "productName" },
+    { headerName: "규격", field: "specification"},
+    { headerName: "거래처코드", field: "businessCode"},
+    { headerName: "거래처명", field: "businessPartner"},
+    { headerName: "입고수량", field: "qty", type: 'numericColumn' },
+    { headerName: "납기일자", field: "dueDate"}
+]; // END OF COLUMN
+
+
+//그리드 초기화
+function initInboundGrid() {
+    const { gridOptions } = initGrid({
+        el: "inDetailGrid",
+        columnDefs: inDetailColumnDefs,
+        paginationPageSize: 10,
+        domLayout: "autoHeight"
+    });
+
+    inDetailGridOptions = gridOptions;
 }
 
-loadOrderPlans();
+async function loadInDetailData(){
+	try {
+	    const res = await axios.get(`/api/v1/stock/inDetailList/${selectedRow}`, { withCredentials: true });
+	    console.log("loadInDetailData: "+JSON.stringify(res.data, null, 2));
+	    if (inDetailGridOptions) {
+	      // rowData 세팅
+	      inDetailGridOptions.api.setRowData(res.data);
+	    }
+	  } catch (err) {
+	    console.error(err);
+	    toastr.error('데이터 로드 실패');
+	  }
+}// END OF loadInDetailData
 
-
-
+initInboundGrid(); // 그리드 초기화 실행 후 그리드에 그리기
 
 // 제품목록 조회 모달
 async function openProductModal() {
@@ -299,14 +287,14 @@ async function openProductModal() {
 	            },
 	            onRowDoubleClicked:  (event) => {
 	                // 모달 안에서 선택한 행의 제품명만 가져오기
-	                document.getElementById("productName").value = event.data.productName;
+	                document.getElementById("productCode").value = event.data.productCode;
 	                productModal.hide();
 	            }
 	        });
 	  } else {
 	        // 이미 초기화된 Grid이면 기존 Grid를 재사용
 	        try {
-	            const res = await axios.get("/api/v1/stock/productList");
+	            const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
 	            productGrid.gridOptions.api.setRowData(res.data);
 	            productGrid.gridOptions.api.sizeColumnsToFit();
 	        } catch (err) {
@@ -368,8 +356,7 @@ async function openProductModal() {
 	            minWidth: 100,     // 최소 너비
 	        },
 	        onRowDoubleClicked: (event) => {
-	        	document.getElementById("partnerName").value = event.data.cusName;
-	            
+	        	document.getElementById("businessPartner").value = event.data.cusName;
 	            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
 	        }
 	    };
@@ -378,7 +365,7 @@ async function openProductModal() {
 	// 거래처 데이터 로드
 	async function loadBusinessData() {
 	    try {
-	        const res = await axios.get("/api/v1/stock/cusList");
+	        const res = await axios.get(`/api/v1/stock/cusList/${compCode}`);
 	        if (gridApi) {
 	            gridApi.setRowData(res.data);
 	            gridApi.sizeColumnsToFit();
@@ -390,7 +377,7 @@ async function openProductModal() {
 	async function loadProductData() {
 	    if (!productGridApi) return;
 	    try {
-	        const res = await axios.get("/api/v1/stock/productList");
+	        const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
 	        productGridApi.setRowData(res.data);
 	    } catch(err) {
 	        console.error(err);
@@ -403,7 +390,7 @@ async function openProductModal() {
 	const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   	// CALL MODAL
 	//모달 데이터 로드 함수
-	async function loadModalData() {
+	/* async function loadModalData() {
 
 			const eGridDiv = document.querySelector('#myGrid'); // div 선택
 			if(!eGridDiv)  return console.error("myGrid div가 존재하지 않습니다!");
@@ -429,7 +416,7 @@ async function openProductModal() {
 		            
 		        },
 		        onRowDoubleClicked: function(event) {
-		            document.getElementById("businessCode").value = event.data.cusCode;  // 실제 데이터 필드명 확인 필요
+		           
 		            document.getElementById("businessPartner").value = event.data.cusName;
 		            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
 		            
@@ -441,7 +428,7 @@ async function openProductModal() {
 
 		// axios로 데이터 가져오기	  
 		try {
-				const res = await axios.get("/api/v1/stock/cusList");
+				const res = await axios.get(`/api/v1/stock/cusList/${compCode}`);
 				// gridApi가 준비되었는지 확인
 				if (gridApi) {
 					gridApi.setRowData(res.data);
@@ -452,16 +439,13 @@ async function openProductModal() {
 			} catch (err) {
 				 console.error(err);
 			}
-	}// end of loadModalData
+	}// end of loadModalData */
 	
 
 
   // Axios 등록 + Toast
 	const toastEl = document.getElementById('successToast');
-	const toast = new bootstrap.Toast(toastEl);
-
-	
-	
+	const toast = new bootstrap.Toast(toastEl);	
 
 });
 </script>

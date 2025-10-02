@@ -27,12 +27,12 @@ const MENUS = {
     content: "재고 대시보드",
     groups: [
       { title: "입고관리", items: [
-        ["입고조회","/inv/in/list"],
-        ["입고등록","/inv/in/new"],
+        ["입고조회","/stock/inbound/list"],
+        ["입고등록","/stock/inbound/insert"],
       ]},
       { title: "출고관리", items: [
-        ["출고조회","/inv/out/list"],
-        ["출고등록","/inv/out/new"],
+        ["출고조회","/stock/outbound/list"],
+        ["출고등록","/stock/outbound/insert"],
       ]},
       { title: "발주관리", items: [
         ["발주계획조회","/stock/plan/list"],
