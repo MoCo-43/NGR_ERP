@@ -1,5 +1,6 @@
 package com.yedam.erp.mapper.main;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -19,5 +20,6 @@ public interface CompanyMapper {
     Optional<CompanyVO> findByComCode(String comCode);
     
     Optional<CompanyVO> findByMatNo(Long matNo);
+    List<CompanyVO> companyList();
 
 }

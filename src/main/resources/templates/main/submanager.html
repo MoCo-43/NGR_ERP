@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<head>
+  <title layout:fragment="title">구독 관리 상세</title>
+
+  <th:block layout:fragment="head_extra">
+    <style>
+      /* 상세 박스 공통 스타일 */
+      .detail-box {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+        color: black;
+      }
+      
+      /* 시안에 따른 구독 상세 박스 스타일 (3단 레이아웃) */
+      .subscription-detail-container {
+        display: flex;
+        gap: 15px; /* 박스 간 간격 */
+        justify-content: space-between;
+        margin-top: 15px;
+      }
+      .subscription-box {
+        background-color: #ffffff;
+        border: 1px solid #dee2e6;
+        padding: 15px;
+        border-radius: 6px;
+        flex: 1; /* 동일한 너비로 분할 */
+      }
+      .subscription-box-header {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #0d6efd;
+        text-align: center;
+      }
+
+      /* 구독 패키지 스타일 */
+      .package-button {
+        display: block;
+        width: 100%;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 2px solid #0d6efd;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.3rem;
+        background-color: #e9f2ff;
+        color: #0d6efd;
+      }
+      .module-container {
+        display: flex;
+        gap: 10px;
+      }
+      .module-button {
+        flex: 1;
+        padding: 15px 10px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: 500;
+        background-color: #f8f9fa;
+      }
+
+      /* 계약 정보 스타일 */
+      .contract-info-item {
+        margin-bottom: 20px;
+      }
+      .contract-info-item label {
+        display: block;
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      .contract-info-field {
+        border: 1px solid #ced4da;
+        padding: 10px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        font-weight: 500;
+      }
+      .contract-date-group {
+        display: flex;
+        gap: 10px;
+      }
+      .contract-date-group > div {
+        flex: 1;
+      }
+
+      /* 문서 스타일 */
+      .document-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 5px 0;
+        border-bottom: 1px dashed #e9ecef;
+        font-weight: 500;
+      }
+      .document-buttons .btn {
+        margin-left: 5px;
+        font-size: 0.8rem;
+        padding: 5px 10px;
+        min-width: 60px;
+      }
+      .document-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+      }
+    </style>
+  </th:block>
+</head>
+
+<body>
+  <section layout:fragment="content" class="p-4">
+    <div id="detailBox" class="detail-box">
+      <h5 class="fw-bold mb-3">구독 내역</h5>
+
+      <div id="subscriptionDetail" class="subscription-detail-container">
+        
+        <div class="subscription-box">
+          <div class="subscription-box-header">구독 패키지 확인</div>
+          <div id="detailPackage" class="package-button">스탠다드</div>
+          <div class="module-container">
+            <div id="detailModule1" class="module-button">인사</div>
+            <div id="detailModule2" class="module-button">회계</div>
+          </div>
+        </div>
+
+        <div class="subscription-box">
+          <div class="subscription-box-header">계약 정보</div>
+          <div class="contract-info-item">
+            <label>기간</label>
+            <div id="detailDuration" class="contract-info-field">1년</div>
+          </div>
+          <div class="contract-date-group">
+            <div class="contract-info-item">
+              <label>구독 시작일</label>
+              <div id="detailStartDate" class="contract-info-field">2025-01-01</div>
+            </div>
+            <div class="contract-info-item">
+              <label>구독 종료일</label>
+              <div id="detailEndDate" class="contract-info-field">2025-12-31</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subscription-box">
+          <div class="subscription-box-header">문서</div>
+          <div class="document-item">
+            <span>계약서</span>
+            <div class="document-buttons">
+              <button class="btn btn-sm btn-outline-primary">미리보기</button>
+              <button class="btn btn-sm btn-danger">PDF</button>
+            </div>
+          </div>
+          <div class="document-item">
+            <span>세금계산서</span>
+            <div class="document-buttons">
+              <button class="btn btn-sm btn-outline-primary">미리보기</button>
+              <button class="btn btn-sm btn-danger">PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+  </section>
+
+  <th:block layout:fragment="body_extra">
+    <script>
+      // AG-Grid 관련 JavaScript 코드는 모두 제거되었으며,
+      // 상세 정보 박스에 표시할 데이터를 가져오고 업데이트하는 로직만 여기에 구현하면 됩니다.
+      
+      // 예시로 데이터 초기값을 설정해두었으므로, 이 스크립트는 비워둡니다.
+    </script>
+  </th:block>
+</body>
+</html>

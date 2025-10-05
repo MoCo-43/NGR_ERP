@@ -13,5 +13,6 @@ public class SubPlanVO {
 	private Long underMinFee;
 	private Long excessFee;
 	private String avaiModules;
+	private CompanyVO companyVO;
 
 }

@@ -37,4 +37,5 @@ public class SubPageController {
         model.addAttribute("subPlan", subPlan); // 구독 플랜 상세 데이터 전달
         return "main/subDetail"; // templates/main/subDetail.html
     }
+    
 }

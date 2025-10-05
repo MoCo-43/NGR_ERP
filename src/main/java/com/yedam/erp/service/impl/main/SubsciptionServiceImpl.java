@@ -171,6 +171,11 @@ public class SubsciptionServiceImpl implements SubscriptionService {
         return newComCode;
     }
 
+    @Override
+    public void insertSubscriptionLog(SubLogVO logVO) {
+        subLogMapper.insertSubLog(logVO);
+    }
+
 
 //    /**
 //     * [STEP 4-3 & 4-4] Toss 승인 및 DB 트랜잭션 처리 (핵심)

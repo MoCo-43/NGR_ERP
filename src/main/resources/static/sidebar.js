@@ -108,8 +108,8 @@ const MENUS = {
     title: "마이페이지",
     content: "마이페이지대시보드",
     groups: [
-      { title: "구독관리", items: [["구독관리", "/mypage/sub"]] },
-      { title: "계정관리", items: [["계정관리", "/acc/acct"]] },
+      { title: "구독관리", items: [["구독관리", "/admin/subList"]] },
+      { title: "계정관리", items: [["계정관리", "/admin/hrmanager"]] },
     ],
   },
 };

@@ -111,7 +111,6 @@ public class LoginController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
         }
     }
-
     // Step 2: 인증번호 검증
 //    @PostMapping("/findpw/verify-token")
 //    @ResponseBody

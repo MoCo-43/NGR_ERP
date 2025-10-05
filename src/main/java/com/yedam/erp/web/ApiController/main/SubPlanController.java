@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
 
 import com.yedam.erp.service.main.CompanyService;
 import com.yedam.erp.service.main.SubPlanService;
@@ -31,7 +32,7 @@ public class SubPlanController {
     @GetMapping("/api/subDetail")  
     public ResponseEntity<Map<String, Object>> subDetail() {
         // 예시: comCode "C001" 기준 조회
-        CompanyVO company = companyService.getCompanyByComCode("n001");
+        CompanyVO company = companyService.getCompanyByComCode("COM001");
         List<SubPlanVO> plans = subPlanService.selectSubPlan();
 
         if (company == null) {
@@ -42,5 +43,15 @@ public class SubPlanController {
             "company", company,
             "plans", plans
         ));
+    }
+    @GetMapping("/sal/salList")
+    public ModelAndView allSubscriptionsView() {
+        List<SubPlanVO> subscriptions = subPlanService.sallerList();
+
+        ModelAndView mav = new ModelAndView();
+        mav.setViewName("main/salList");  // 보여줄 뷰 이름
+        mav.addObject("subscriptions", subscriptions); // 뷰로 전달할 데이터
+
+        return mav;
     }
 }

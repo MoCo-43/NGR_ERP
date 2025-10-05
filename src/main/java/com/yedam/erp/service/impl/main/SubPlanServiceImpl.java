@@ -21,5 +21,9 @@ public class SubPlanServiceImpl implements SubPlanService {
 	public SubPlanVO selectSubPlanById(Long subPlanNo) {
 		return subPlanMapper.selectSubPlanById(subPlanNo);
 	}
+	@Override
+	public List<SubPlanVO> sallerList() {
+		return subPlanMapper.sallerList();
+	}
 
 }

@@ -1,10 +1,9 @@
 package com.yedam.erp.web.ApiController.main;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,6 +44,10 @@ public class CompanyController {
         companyService.registerCompanyAndAdmin(company, admin);
 
         return "success";
+    }
+    @GetMapping("/api/companyList")
+    public List<CompanyVO> getCompanyList() {
+        return companyService.getAllCompanies();
     }
     
 //    @GetMapping("/api/company-info")

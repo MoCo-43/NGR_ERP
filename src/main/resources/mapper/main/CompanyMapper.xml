@@ -68,4 +68,8 @@
         FROM company
         WHERE username = #{username}
     </select>
+    
+    <select id="companyList" resultType="companyVO">
+    	select * from company
+    </select>
 </mapper>

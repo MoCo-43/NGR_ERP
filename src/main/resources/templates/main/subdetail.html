@@ -9,10 +9,16 @@
 	rel="stylesheet"
 	integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
 	crossorigin="anonymous">
+<link
+	href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+	rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+	rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script
 	src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <style>
+
 /* 기본 스타일 */
 body {
 	font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
@@ -390,7 +396,7 @@ main {
 </head>
 <body>
 	<input type="hidden" id="base-users-hidden"
-		th:text="${subPlan.baseSalary}">
+		th:value="${subPlan.baseSalary}">
 	<input type="hidden" id="max-users-hidden"
 		th:value="${subPlan.maxUsers}">
 	<input type="hidden" id="min-users-hidden"
@@ -560,7 +566,6 @@ main {
 				</div>
 				<script>
 				   document.addEventListener('DOMContentLoaded', function() {
-				       // 이 fetch 호출에서 문제가 발생했을 가능성이 높습니다.
 				      fetch('/api/subDetail?planId=' + '[[${subPlanNo}]]')
 				           .then(response => {
 							    return response.json(); // 유효한 응답일 때만 JSON 파싱 시도
@@ -576,7 +581,7 @@ main {
 				               document.getElementById('matName').value = data.company.matName;
 				               document.getElementById('matMail').value = data.company.matMail;
 				           })
-				           //.catch(error => console.error('Error fetching company info:', error));
+				           .catch(error => console.error('Error fetching company info:', error));
 				   });
 				</script>
 			</div>

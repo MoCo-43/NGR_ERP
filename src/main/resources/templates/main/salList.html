@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>판매리스트 & 구독 리스트</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<!-- ag-Grid 스타일 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+
+<!-- 부트스트랩 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+#companyGrid.ag-theme-quartz {
+    width: 100%;
+    height: 520px;
+}
+.selected-row { background-color: #cce0ff !important; }
+.detail-box {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+.search-box input { max-width: 250px; }
+table { width: 100%; border-collapse: collapse; }
+table, th, td { border: 1px solid #dee2e6; }
+th, td { padding: 8px; text-align: left; }
+</style>
+</head>
+<body>
+<div th:replace="~{layout/main_header :: headerFragment}"></div>
+
+<main>
+    <section class="p-4">
+        <!-- 검색 -->
+        <div class="d-flex mb-3 search-box">
+            <input type="text" id="searchInput" placeholder="담당자명" class="form-control me-2" />
+            <button class="btn btn-outline-primary" id="searchBtn">
+                <i class="bi bi-search"></i> 검색
+            </button>
+        </div>
+
+        <!-- ag-Grid -->
+        <div id="companyGrid" class="ag-theme-quartz"></div>
+
+        <!-- 상세정보 박스 -->
+        <div id="detailBox" class="detail-box" style="display: none;">
+            <h5 class="fw-bold mb-3">회사상세정보</h5>
+            <div class="row mb-2">
+                <div class="col-md-6"><strong>회사코드 :</strong> <span id="comCode"></span></div>
+                <div class="col-md-6"><strong>회사명 :</strong> <span id="compName"></span></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-6"><strong>대표자 :</strong> <span id="ceo"></span></div>
+                <div class="col-md-6"><strong>담당자 :</strong> <span id="matName"></span></div>
+            </div>
+
+            <hr>
+            <h6 class="fw-bold">고객사 맺은 구독내역</h6>
+            <table>
+                <thead>
+                    <tr>
+                        <th>구독 코드</th>
+                        <th>플랜명</th>
+                        <th>시작일</th>
+                        <th>종료일</th>
+                        <th>상태</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{layout/main_footer :: footerFragment}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const columnDefs = [
+        { headerName: '', checkboxSelection: true, headerCheckboxSelection: true, maxWidth: 50, pinned: 'left' },
+        { field: 'comCode', headerName: '회사코드', minWidth: 100 },
+        { field: 'compName', headerName: '회사명', minWidth: 100, flex: 1 },
+        { field: 'compAddr', headerName: '도로명주소', minWidth: 100 },
+        { field: 'ceo', headerName: '대표자', minWidth: 100 },
+        { field: 'matName', headerName: '담당자', minWidth: 100 },
+        { field: 'subDate', headerName: '등록일', minWidth: 100 },
+        { 
+            field: 'subStatus', 
+            headerName: '상태', 
+            minWidth: 100,
+            cellRenderer: p => {
+                const span = document.createElement('span');
+                span.className = 'badge ' + (p.value === '계약' ? 'bg-primary' : 'bg-secondary');
+                span.innerText = p.value;
+                return span;
+            }
+        },
+    ];
+
+    const gridOptions = {
+        columnDefs,
+        rowData: null,
+        rowSelection: 'single',
+        pagination: true,
+        paginationPageSize: 5,
+        animateRows: true,
+        defaultColDef: {
+            filter: true,
+            resizable: true,
+        },
+        onRowClicked: event => {
+            const data = event.data;
+            document.getElementById('comCode').innerText = data.comCode;
+            document.getElementById('compName').innerText = data.compName;
+            document.getElementById('ceo').innerText = data.ceo;
+            document.getElementById('matName').innerText = data.matName;
+            document.getElementById('detailBox').style.display = 'block';
+
+            // 구독내역 조회
+            axios.get(`/api/subDetail?comCode=${data.comCode}`)
+                .then(res => {
+                    const tbody = document.querySelector('#detailBox table tbody');
+                    tbody.innerHTML = '';
+                    res.data.forEach(sub => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${sub.subCode}</td>
+                            <td>${sub.companyVO?.comCode || ''}</td>
+                            <td>${sub.planName}</td>
+                            <td>${sub.startDate}</td>
+                            <td>${sub.endDate}</td>
+                            <td>${sub.subStatus}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                });
+        }
+    };
+
+    const gridDiv = document.getElementById('companyGrid');
+    new agGrid.Grid(gridDiv, gridOptions);
+
+    // 회사 리스트 로딩
+    axios.get('/api/companyList')
+        .then(res => gridOptions.api.setRowData(res.data));
+
+    // 검색
+    document.getElementById('searchBtn').addEventListener('click', () => {
+        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        gridOptions.api.setQuickFilter(keyword);
+    });
+});
+</script>
+</body>
+</html>

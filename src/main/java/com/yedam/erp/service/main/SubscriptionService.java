@@ -1,10 +1,7 @@
 package com.yedam.erp.service.main;
 import java.util.Map;
 
-import com.yedam.erp.vo.main.SubscriptionVO;
-import org.apache.ibatis.annotations.Mapper;
-
-import java.util.Map;
+import com.yedam.erp.vo.main.SubLogVO;
 
 public interface SubscriptionService {
 
@@ -22,4 +19,8 @@ public interface SubscriptionService {
      * 결제 완료 후 DB 저장 및 회사코드 반환
      */
     String completePaymentTransaction(String paymentKey, String orderId, Long amount);
+    
+    //구독이력
+    void insertSubscriptionLog(SubLogVO logVO);
+
 }
