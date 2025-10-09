@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -29,10 +30,9 @@ public class SubPlanController {
     }
 
     // 회사 정보 + 구독 계획 함께 반환
-    @GetMapping("/api/subDetail")  
-    public ResponseEntity<Map<String, Object>> subDetail() {
-        // 예시: comCode "C001" 기준 조회
-        CompanyVO company = companyService.getCompanyByComCode("COM001");
+    @GetMapping("/api/subDetail")
+    public ResponseEntity<Map<String, Object>> subDetail(@RequestParam String comCode) {
+        CompanyVO company = companyService.getCompanyByComCode(comCode);
         List<SubPlanVO> plans = subPlanService.selectSubPlan();
 
         if (company == null) {

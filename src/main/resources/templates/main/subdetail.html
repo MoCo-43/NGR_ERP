@@ -503,34 +503,38 @@ main {
 						<h3 class="form-section-title">회사 정보 (자동 입력)</h3>
 						<div class="form-group">
 							<label for="company-name" class="form-section-label">회사명</label>
-							<input type="text" id="compName" class="input-field" readonly>
+							<input type="text" id="compName" class="input-field"
+								th:value="${company.compName}" readonly>
 						</div>
 						<div class="form-group">
 							<label for="biz-reg-number" class="form-section-label">사업자
-								등록번호</label> <input type="text" id="brm" class="input-field" readonly>
+								등록번호</label> <input type="text" id="brm" class="input-field"
+								th:value="${company.brm}" readonly>
 						</div>
 						<div class="form-group">
 							<label for="ceo-name" class="form-section-label">대표자명</label> <input
-								type="text" id="ceo" class="input-field" readonly>
+								type="text" id="ceo" class="input-field"
+								th:value="${company.ceo}" readonly>
 						</div>
 						<div class="form-group">
 							<label class="form-section-label">회사 주소</label> <input
 								type="text" id="compAddr" class="form-control"
-								placeholder="도로명주소" readonly> <input type="text"
-								id="compDelAddr" class="form-control" placeholder="상세주소"
-								readonly>
+								placeholder="도로명주소" th:value="${company.compAddr}" readonly>
+							<input type="text" id="compDelAddr" class="form-control"
+								placeholder="상세주소" th:value="${company.compDelAddr}" readonly>
 						</div>
 
 						<h3 class="form-section-title" style="margin-top: 48px;">관리자
 							정보 (자동 입력)</h3>
 						<div class="form-group">
 							<label for="admin-name" class="form-section-label">관리자 이름</label>
-							<input type="text" id="matName" class="input-field" readonly>
+							<input type="text" id="matName" class="input-field"
+								th:value="${company.matName}" readonly>
 						</div>
 						<div class="form-group">
 							<label for="admin-email" class="form-section-label">관리자
 								이메일 (ID)</label> <input type="email" id="matMail" class="input-field"
-								readonly>
+								th:value="${company.matMail}" readonly>
 						</div>
 
 						<div class="form-navigation">
@@ -554,7 +558,7 @@ main {
 							</div>
 							<div class="summary-item total">
 								<span class="item-label">기본 결제금액</span> <span class="price"
-									th:text="${subPlan.baseSalary}"></span></span>
+									th:text="${subPlan.baseSalary}"></span>
 							</div>
 						</div>
 						<h3 style="margin-top: 24px;">안내</h3>
@@ -564,9 +568,9 @@ main {
 						</ul>
 					</aside>
 				</div>
-				<script>
+			<script>
 				   document.addEventListener('DOMContentLoaded', function() {
-				      fetch('/api/subDetail?planId=' + '[[${subPlanNo}]]')
+					   fetch('/api/subDetail?comCode=' + companyCode)
 				           .then(response => {
 							    return response.json(); // 유효한 응답일 때만 JSON 파싱 시도
 							})

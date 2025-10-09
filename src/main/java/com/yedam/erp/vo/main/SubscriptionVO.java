@@ -12,9 +12,10 @@ public class SubscriptionVO {
 	private Long totalUsers;
 	private String subStatus;
 	private Long subPlanNo;
-	private Long TotalPay;
-	private Long MatNo;
-	private Long Mon;
+	private Long totalPay;
+	private Long matNo;
+	private Long mon;
 	private String comCode;
+	private SubPlanVO subPlan; 
 }
 

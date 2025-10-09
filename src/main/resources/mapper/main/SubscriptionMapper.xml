@@ -34,4 +34,48 @@
         FROM COMPANY
         WHERE MAT_NO = #{matNo}
     </select>
+    <select id="findSubscriptionsByComCode" parameterType="String" resultType="com.yedam.erp.vo.main.SubscriptionVO">
+    SELECT
+        s.sub_code,
+        s.start_date,
+        s.end_date,
+        s.sub_status,
+        p.plan_name AS planName
+    FROM
+        subscription s
+    JOIN
+        sub_plan p ON s.sub_plan_no = p.sub_plan_no
+    WHERE
+        s.com_code = #{comCode}
+    ORDER BY
+        s.start_date DESC
+</select>
+    <resultMap id="SubscriptionWithPlanResult" type="com.yedam.erp.vo.main.SubscriptionVO">
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="mon" column="mon"/>
+           <result property="totalPay" column="total_pay"/>
+           <result property="subPlanNo" column="sub_plan_no"/>
+        <association property="subPlan" javaType="com.yedam.erp.vo.main.SubPlanVO">
+            <result property="planName" column="planName"/>
+            <result property="avaiModules" column="modules"/>
+        </association>
+    </resultMap>
+
+    <select id="findLatestSubscriptionByComCode" parameterType="String" resultMap="SubscriptionWithPlanResult">
+        SELECT *
+        FROM (
+            SELECT 
+                s.start_date,
+                s.end_date,
+                s.mon,
+                p.plan_name AS planName,
+                p.avai_modules AS modules
+            FROM subscription s
+            JOIN sub_plan p ON s.sub_plan_no = p.sub_plan_no
+            WHERE s.com_code = #{comCode}
+            ORDER BY s.start_date DESC
+        )
+        WHERE ROWNUM = 1
+    </select>
 </mapper>

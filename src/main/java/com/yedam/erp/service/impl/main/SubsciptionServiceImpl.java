@@ -2,6 +2,7 @@ package com.yedam.erp.service.impl.main;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -175,6 +176,17 @@ public class SubsciptionServiceImpl implements SubscriptionService {
     public void insertSubscriptionLog(SubLogVO logVO) {
         subLogMapper.insertSubLog(logVO);
     }
+
+	@Override
+	public List<SubscriptionVO> findSubscriptionsByComCode(String comCode) {
+		return subscriptionMapper.findSubscriptionsByComCode(comCode);
+	}
+
+	@Override
+	public SubscriptionVO findLatestSubscriptionByComCode(String comCode) {
+	    log.info("DB 조회를 위해 전달된 comCode: [{}]", comCode); // 로그 추가
+		return subscriptionMapper.findLatestSubscriptionByComCode(comCode);
+	}
 
 
 //    /**

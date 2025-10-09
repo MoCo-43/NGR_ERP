@@ -121,67 +121,98 @@
 </head>
 
 <body>
-  <section layout:fragment="content" class="p-4">
-    <div id="detailBox" class="detail-box">
-      <h5 class="fw-bold mb-3">구독 내역</h5>
+<section layout:fragment="content" class="p-4">
+  <div class="detail-box">
+    <h5 class="fw-bold mb-3">구독 내역</h5>
 
-      <div id="subscriptionDetail" class="subscription-detail-container">
-        
-        <div class="subscription-box">
-          <div class="subscription-box-header">구독 패키지 확인</div>
-          <div id="detailPackage" class="package-button">스탠다드</div>
-          <div class="module-container">
-            <div id="detailModule1" class="module-button">인사</div>
-            <div id="detailModule2" class="module-button">회계</div>
-          </div>
-        </div>
-
-        <div class="subscription-box">
-          <div class="subscription-box-header">계약 정보</div>
-          <div class="contract-info-item">
-            <label>기간</label>
-            <div id="detailDuration" class="contract-info-field">1년</div>
-          </div>
-          <div class="contract-date-group">
-            <div class="contract-info-item">
-              <label>구독 시작일</label>
-              <div id="detailStartDate" class="contract-info-field">2025-01-01</div>
-            </div>
-            <div class="contract-info-item">
-              <label>구독 종료일</label>
-              <div id="detailEndDate" class="contract-info-field">2025-12-31</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="subscription-box">
-          <div class="subscription-box-header">문서</div>
-          <div class="document-item">
-            <span>계약서</span>
-            <div class="document-buttons">
-              <button class="btn btn-sm btn-outline-primary">미리보기</button>
-              <button class="btn btn-sm btn-danger">PDF</button>
-            </div>
-          </div>
-          <div class="document-item">
-            <span>세금계산서</span>
-            <div class="document-buttons">
-              <button class="btn btn-sm btn-outline-primary">미리보기</button>
-              <button class="btn btn-sm btn-danger">PDF</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      </div>
-  </section>
-
-  <th:block layout:fragment="body_extra">
-    <script>
-      // AG-Grid 관련 JavaScript 코드는 모두 제거되었으며,
-      // 상세 정보 박스에 표시할 데이터를 가져오고 업데이트하는 로직만 여기에 구현하면 됩니다.
+    <div class="subscription-detail-container">
       
-      // 예시로 데이터 초기값을 설정해두었으므로, 이 스크립트는 비워둡니다.
-    </script>
-  </th:block>
+      <div class="subscription-box">
+        <div class="subscription-box-header">구독 패키지 확인</div>
+        <div id="detailPackage" class="package-button"></div>
+        <div class="module-container">
+          <div id="detailModule1" class="module-button"></div>
+          <div id="detailModule2" class="module-button"></div>
+        </div>
+      </div>
+
+      <div class="subscription-box">
+        <div class="subscription-box-header">계약 정보</div>
+        <div class="contract-info-item">
+          <label>기간</label>
+          <div id="mon" class="contract-info-field"></div>
+        </div>
+        <div class="contract-date-group">
+          <div class="contract-info-item">
+            <label>구독 시작일</label>
+            <div id="startDate" class="contract-info-field"></div>
+          </div>
+          <div class="contract-info-item">
+            <label>구독 종료일</label>
+            <div id="endDate" class="contract-info-field"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subscription-box">
+        <div class="subscription-box-header">문서</div>
+        <div class="document-item">
+          <span>계약서</span>
+          <div class="document-buttons">
+            <button class="btn btn-sm btn-outline-primary">미리보기</button>
+            <button class="btn btn-sm btn-danger">PDF</button>
+          </div>
+        </div>
+        <div class="document-item">
+          <span>세금계산서</span>
+          <div class="document-buttons">
+            <button class="btn btn-sm btn-outline-primary">미리보기</button>
+            <button class="btn btn-sm btn-danger">PDF</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script th:inline="javascript">
+  /**
+   * 서버에서 전달된 'subscription' 객체를 유효한 JSON으로 변환하여 
+   * JavaScript 변수 'subscription'에 할당합니다.
+   * 이렇게 하면 'subscription.subPlan'과 같은 복잡한 접근도 안전합니다.
+   */
+   const subscription = [[${subscription}]];  
+  console.log("Loaded Subscription:", subscription); 
+
+  // 구독 패키지
+  // 'subscription' 객체가 존재하고, 'subPlan' 객체가 존재할 경우에만 처리
+  if(subscription && subscription.subPlan) {
+      document.getElementById('detailPackage').innerText = subscription.subPlan.planName || '';
+
+      // 모듈 버튼 동적 생성
+      const moduleContainer = document.querySelector('.module-container');
+      // 기존 모듈 버튼 초기화
+      moduleContainer.innerHTML = ''; 
+      
+      // avaiModules는 콤마(,)로 구분된 문자열이라고 가정
+      const modules = subscription.subPlan.avaiModules ? subscription.subPlan.avaiModules.split(',') : [];
+
+      modules.forEach(moduleName => {
+          if(moduleName.trim()) { // 공백 제거 후 유효한 모듈 이름인 경우
+              const div = document.createElement('div');
+              div.className = 'module-button';
+              div.innerText = moduleName.trim();
+              moduleContainer.appendChild(div);
+          }
+      });
+  }
+              console.log("JS Loaded Subscription Data:", subscription); 
+
+  // 계약 정보
+  document.getElementById('mon').innerText = subscription?.mon || '';
+  document.getElementById('startDate').innerText = subscription?.startDate || '';
+  document.getElementById('endDate').innerText = subscription?.endDate || '';
+</script>
 </body>
 </html>

@@ -127,23 +127,30 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('detailBox').style.display = 'block';
 
             // 구독내역 조회
-            axios.get(`/api/subDetail?comCode=${data.comCode}`)
-                .then(res => {
-                    const tbody = document.querySelector('#detailBox table tbody');
-                    tbody.innerHTML = '';
-                    res.data.forEach(sub => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${sub.subCode}</td>
-                            <td>${sub.companyVO?.comCode || ''}</td>
-                            <td>${sub.planName}</td>
-                            <td>${sub.startDate}</td>
-                            <td>${sub.endDate}</td>
-                            <td>${sub.subStatus}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+            axios.get(`/sub/api/subscriptions?comCode=${data.comCode}`)
+            .then(res => {
+                const tbody = document.querySelector('#detailBox table tbody');
+                tbody.innerHTML = '';
+                
+                // 이제 res.data는 올바른 구독 내역 배열입니다.
+                res.data.forEach(sub => {
+                    const tr = document.createElement('tr');
+                    
+                    // 날짜 형식을 'YYYY-MM-DD'로 예쁘게 변환합니다.
+                    const startDate = sub.startDate ? new Date(sub.startDate).toLocaleDateString('ko-KR') : '';
+                    const endDate = sub.endDate ? new Date(sub.endDate).toLocaleDateString('ko-KR') : '';
+
+                    // 올바른 데이터 필드를 사용해 테이블 행을 만듭니다.
+                    tr.innerHTML = `
+                        <td>${sub.subCode}</td>
+                        <td>${sub.planName}</td>
+                        <td>${startDate}</td>
+                        <td>${endDate}</td>
+                        <td>${sub.subStatus}</td>
+                    `;
+                    tbody.appendChild(tr);
                 });
+            });
         }
     };
 

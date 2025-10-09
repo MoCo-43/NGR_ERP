@@ -3,10 +3,124 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 <head>
-<meta charset="UTF-8">
-<title layout:fragment="title">사원계정관리</title>
+    <title layout:fragment="title">사원계정관리</title>
+
+    <!-- ✅ AG Grid & Axios CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-quartz.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+    </style>
 </head>
+
 <body>
-	
+<th:block layout:fragment="content">
+    <div class="container">
+        <h4 class="mb-3">사원 계정 관리</h4>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <select id="dept-filter" class="form-select d-inline-block w-auto">
+                    <option value="">전체 부서</option>
+                    <option value="인사">인사</option>
+                    <option value="재고">재고</option>
+                    <option value="회계">회계</option>
+                </select>
+                <button id="search-btn" class="btn btn-primary">검색</button>
+            </div>
+            <div>
+                <button id="create-btn" class="btn btn-success">생성</button>
+                <button id="send-btn" class="btn btn-info">초기 비번 전송</button>
+            </div>
+        </div>
+
+        <div id="employee-grid" class="ag-theme-quartz" style="height: 600px;"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gridDiv = document.querySelector('#employee-grid');
+
+            const columnDefs = [
+                { headerName: '', checkboxSelection: true, headerCheckboxSelection: true, maxWidth: 50 },
+                { field: 'name', headerName: '사원이름' },
+                { field: 'empId', headerName: '사번 (로그인ID)' },
+                { field: 'deptName', headerName: '부서' },
+                { field: 'email', headerName: '이메일' }
+            ];
+
+            const gridOptions = {
+                columnDefs: columnDefs,
+                rowData: [],
+                rowSelection: 'multiple',
+                defaultColDef: { sortable: true, filter: true, resizable: true },
+                pagination: true,
+                paginationPageSize: 20,
+                overlayLoadingTemplate: '<span class="ag-overlay-loading-center">불러오는 중...</span>',
+                overlayNoRowsTemplate: '<span class="ag-overlay-no-rows-center">데이터가 없습니다.</span>'
+            };
+
+            new agGrid.Grid(gridDiv, gridOptions);
+
+            function loadEmployees(deptName = '') {
+                gridOptions.api.showLoadingOverlay();
+                axios.get(`/api/admin/employees?deptName=${deptName}`)
+                    .then(response => {
+                        if (response.data.length === 0) {
+                            gridOptions.api.showNoRowsOverlay();
+                        } else {
+                            gridOptions.api.setRowData(response.data);
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        gridOptions.api.showNoRowsOverlay();
+                        alert('데이터 로딩 중 오류가 발생했습니다.');
+                    });
+            }
+
+            document.getElementById('search-btn').addEventListener('click', () => {
+                const selectedDept = document.getElementById('dept-filter').value;
+                loadEmployees(selectedDept);
+            });
+
+            document.getElementById('send-btn').addEventListener('click', () => {
+                const selectedNodes = gridOptions.api.getSelectedNodes();
+                if (selectedNodes.length === 0) {
+                    alert('비밀번호를 전송할 사원을 선택해주세요.');
+                    return;
+                }
+
+                const selectedEmpIds = selectedNodes.map(node => node.data.empId);
+
+                if(confirm(`선택된 ${selectedEmpIds.length}명의 사원에게 초기 비밀번호를 전송하시겠습니까?`)) {
+                    axios.post('/api/admin/employees/reset-passwords', selectedEmpIds)
+                        .then(response => {
+                            alert(response.data);
+                            gridOptions.api.deselectAll();
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            alert('오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
+                        });
+                }
+            });
+
+            loadEmployees();
+        });
+    </script>
+</th:block>
 </body>
 </html>

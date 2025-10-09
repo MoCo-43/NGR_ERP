@@ -92,4 +92,12 @@
     <insert id="insertVO">
     
     </insert>
+        <update id="updatePasswordAndFlag">
+        UPDATE EMP_LOGIN
+        SET
+            EMP_PW = #{encodedPassword},
+            MUST_CHANGE_PASSWORD = #{mustChangePassword}
+        WHERE
+            EMP_ID = #{empId}
+    </update>
 </mapper>
