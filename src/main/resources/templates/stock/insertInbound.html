@@ -329,6 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const toast = new bootstrap.Toast(toastEl);
 	
 	submitBtn.addEventListener('click', async (event) => {
+		console.log(event.data);
 		event.preventDefault(); // 페이지 새로고침 방지
 	        // confirm 먼저
 	        const res = await cuteAlert({
@@ -349,12 +350,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	            orderDetailGridApi.forEachNode((node) => {
 	                details.push({
 	 			    businessPartner: document.getElementById('businessPartnerInput').value,
-	 			   	businessCode: document.getElementById('businessCodeInput').value,
+	 			    cusCode: document.getElementById('businessCodeInput').value,
 	 			    dueDate: document.getElementById('dueDate').value,
 	                productCode: node.data.productCode,
 	                productName: node.data.productName,
 	                specification: node.data.specification,
 	                qty: Number(node.data.qty) || 0,
+	                orderPrice: Number(node.data.orderPrice),
 	                note: node.data.note || '',
 	                companyCode: Number(document.getElementById('compCode').value) || 0
 	                });

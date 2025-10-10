@@ -220,9 +220,12 @@ public class StockController {
 	public ResponseEntity<String> insertOrderReq(@RequestBody  OrderVO order){
 		//service.insertOrderReq(order);
 		try {
+			// advice - error 메세지관리자도 따로 만들수 있으니 되도록 스프링부트에서는 
+			//                try ~ catch 사용을 지양하자
 	        service.insertOrderReq(order);
 	        return ResponseEntity.ok("등록 성공");
 	    } catch(Exception e) {
+	    	e.printStackTrace();// 스택을 찍어주지 않아서 콘솔창에 에러메세지가 나오지 않음
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 	                             .body("등록 실패: " + e.getMessage());
 	    }
