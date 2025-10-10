@@ -15,73 +15,78 @@
 		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
 	<style>
 #invoiceModal .voucher-switch {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-weight: 700;
-  font-size: 1.1rem;  /* ✅ 글자 크기 키움 */
-  margin-bottom: 0.75rem;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	font-weight: 700;
+	font-size: 1.1rem; /* ✅ 글자 크기 키움 */
+	margin-bottom: 0.75rem;
 }
 
 #invoiceModal .voucher-switch .label {
-  min-width: 48px;
-  text-align: center;
-  transition: color 0.3s ease;
+	min-width: 48px;
+	text-align: center;
+	transition: color 0.3s ease;
 }
 
-#invoiceModal .voucher-switch .label.purchase { 
-  color: #1d4ed8;   /* 파랑 */
+#invoiceModal .voucher-switch .label.purchase {
+	color: #1d4ed8; /* 파랑 */
 }
 
-#invoiceModal .voucher-switch .label.sales { 
-  color: #b91c1c;   /* 빨강 */
+#invoiceModal .voucher-switch .label.sales {
+	color: #b91c1c; /* 빨강 */
 }
 
 /* ✅ 선택 상태일 때 색 더 진하게 */
 #invoiceModal .switch input:not(:checked) ~ .label.purchase {
-  color: #1d4ed8;
+	color: #1d4ed8;
 }
+
 #invoiceModal .switch input:checked ~ .label.sales {
-  color: #dc2626;
+	color: #dc2626;
 }
 
 #invoiceModal .switch {
-  position: relative;
-  display: inline-block;
-  width: 54px;   /* 스위치 약간 키움 */
-  height: 28px;
+	position: relative;
+	display: inline-block;
+	width: 54px; /* 스위치 약간 키움 */
+	height: 28px;
 }
 
-#invoiceModal .switch input { display: none; }
+#invoiceModal .switch input {
+	display: none;
+}
 
 #invoiceModal .slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: #dbeafe;
-  border-radius: 28px;
-  transition: 0.3s;
+	position: absolute;
+	cursor: pointer;
+	inset: 0;
+	background-color: #dbeafe;
+	border-radius: 28px;
+	transition: 0.3s;
 }
 
 #invoiceModal .slider::before {
-  position: absolute;
-  content: "";
-  height: 22px;
-  width: 22px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  border-radius: 50%;
-  transition: 0.3s;
+	position: absolute;
+	content: "";
+	height: 22px;
+	width: 22px;
+	left: 3px;
+	bottom: 3px;
+	background-color: white;
+	border-radius: 50%;
+	transition: 0.3s;
 }
 
 /* 체크 시 매출 */
-#invoiceModal .switch input:checked + .slider {
-  background-color: #fee2e2;
+#invoiceModal .switch input:checked+.slider {
+	background-color: #fee2e2;
 }
-#invoiceModal .switch input:checked + .slider::before {
-  transform: translateX(26px);
+
+#invoiceModal .switch input:checked+.slider::before {
+	transform: translateX(26px);
 }
+
 #voucherGrid.ag-theme-quartz {
 	height: 32rem;
 	width: 100%;
@@ -146,6 +151,11 @@
 			<div class="card-body">
 				<!-- 버튼 영역 -->
 				<div class="btn-bar">
+					<input type="date" class="form-control form-control-sm"
+						id="fromDate" style="max-width: 180px" /> <span class="mx-1">~</span>
+					<input type="date" class="form-control form-control-sm" id="toDate"
+						style="max-width: 180px" />
+					<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
 					<button class="btn btn-primary btn-sm" data-bs-toggle="modal"
 						data-bs-target="#invoiceModal">등록</button>
 					<button id="openTaxInvoiceBtn" class="btn btn-success btn-sm">
@@ -190,13 +200,29 @@
     
   // === 전표 데이터 불러오기 ===
   async function loadAndRenderVoucher() {
-    try {
-      const { data } = await axios.get("/api/account/headers");
-      voucherApi.setGridOption("rowData", Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-      alert("전표 데이터를 불러오지 못했습니다.");
-    }
+	  try {
+		    const fromDate = document.getElementById("fromDate").value;
+		    const toDate   = document.getElementById("toDate").value;
+
+		    const { data } = await axios.get("/api/account/headers");
+		    let rows = Array.isArray(data) ? data : [];
+
+		    // ✅ 기간 필터 적용
+		    if (fromDate) {
+		      const from = new Date(fromDate);
+		      rows = rows.filter(r => new Date(r.invoiceDate) >= from);
+		    }
+		    if (toDate) {
+		      const to = new Date(toDate);
+		      rows = rows.filter(r => new Date(r.invoiceDate) <= to);
+		    }
+
+		    voucherApi.setGridOption("rowData", rows);
+		    voucherApi.refreshClientSideRowModel('sort');
+		  } catch (err) {
+		    console.error(err);
+		    alert("전표 데이터를 불러오지 못했습니다.");
+		  }
   }
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -282,8 +308,8 @@
 
       return details;
     }
+    document.getElementById("btnSearch").addEventListener("click", loadAndRenderVoucher);
 
-    loadAndRenderVoucher();
   });
   
 

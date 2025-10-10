@@ -190,7 +190,7 @@
   </select>
 
 
-   <!-- 전표 상세 (라인 역할) -->
+   <!-- 마감 전표 상세 (라인 역할) -->
   <select id="selectJournalDetailClose" parameterType="map" resultType="com.yedam.erp.vo.account.JournalNamesVO">
     SELECT 
         j.jrn_no,
@@ -198,6 +198,7 @@
         j.jrn_date,
         j.acct_code,
         a.acct_name,
+        j.created_by,
         j.dc_type,
   		CASE WHEN j.dc_type = 'D' THEN j.amount END AS debit,
      	CASE WHEN j.dc_type = 'C' THEN j.amount END AS credit,

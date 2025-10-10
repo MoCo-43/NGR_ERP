@@ -52,7 +52,7 @@
 
 							<!-- 주문서 -->
 							<div class="col-md-4">
-								<label class="form-label" id="orderLabel">발주서</label>
+								<label class="form-label" id="orderLabel">입고</label>
 								<div class="input-group">
 									<input type="text" class="form-control"
 										th:value="${invoiceHeader?.orderCode}" readonly id="orderCode" />
@@ -177,7 +177,7 @@
 
 		<!--  매입매출 모달 -->
 		<script th:inline="none">
-let invoiceGridApi = null;
+window.invoiceGridApi = null; 
 let invoiceGridCreated = false; // 전역에서 관리
 let selectedInvoiceRow = null; // ✅ 클릭한 그리드 행 저장
 let productGridApi = null;     // productModal 내부 grid api
@@ -199,13 +199,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateCustomerFields() {
     if (toggle.checked) {
       // 매출(S)
-      orderLabel.textContent = "주문서";
+      orderLabel.textContent = "출고";
       cusNameInput.placeholder = "고객사";
       cusLabel.textContent = "고객사";
 
     } else {
       // 매입(P)
-      orderLabel.textContent = "발주서";
+      orderLabel.textContent = "입고";
       cusLabel.textContent = "구매처";
       cusNameInput.placeholder = "구매처";
     }
@@ -260,13 +260,9 @@ document.addEventListener("DOMContentLoaded", () => {
     			      let price = Number(params.data.price) || 0;
     			      let qty = Number(params.data.qty) || 0;
     			      let supply = price * qty;
-
+    			      const vat = Math.floor(supply * getVatRate());
     			      // 부가세 유형 체크
-    			      let vatType = vatTypeSelect.value;
-    			      let vat = 0;
-    			      if (vatType === "과세") {
-    			        vat = Math.floor(supply * 0.1);
-    			      }
+    			   
 
     			      params.node.setData({
     			        ...params.data,
@@ -309,18 +305,14 @@ document.addEventListener("DOMContentLoaded", () => {
     			    });
 
     			    invoiceGridApi.setPinnedBottomRowData([{
-    			      supply: "합계",
-    			      vat: subtotal + vatTotal,
+    			    	   productName: "합계",
+    			    	  supply: subtotal,
+    			    	  vat: vatTotal
+    			     }]);
     			    
-    			    }]);
     			  },
         defaultColDef: { resizable: true, filter:true },
-        pinnedBottomRowData: [
-          {
-        	  supply: "합계",
-        	  vat: /*[[${invoiceHeader?.subtotalAmt}]]*/ +/*[[${invoiceHeader?.vatAmt}]]*/+ "원" ,
-          }
-        ]
+        pinnedBottomRowData: [{ productName: "합계", supply: 0, vat: 0 }]
       };
       new agGrid.Grid(gridDiv, gridOptions);
       invoiceGridApi = gridOptions.api;  // 여기서 api를 꺼내야 함
@@ -330,8 +322,15 @@ document.addEventListener("DOMContentLoaded", () => {
       invoiceGridApi.applyTransaction({
         add: [{ productCode:"", productName:"", price:null, qty:null, supply:null, vat:null, note:"" }]
       });
+      updateTotals();
+      
+        if (vatTypeSelect && !vatTypeSelect.dataset.bound) {
+          vatTypeSelect.addEventListener("change", recalcVatForAllRows);
+           vatTypeSelect.dataset.bound = "1";
+        }
     } else {
       // 기존 그리드만 refresh
+      
       invoiceGridApi.resetRowHeights();
     }
   });
@@ -485,6 +484,51 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	    alert("저장 중 오류 발생");
 	  }
 	});
+	
+function getVatRate() {
+	  const sel = document.querySelector(".form-select-invoice");
+	  if (!sel) return 0;
+	  return sel.value === "과세" ? 0.1 : 0.0;
+	}
+
+	// 합계(공급가+부가세) 갱신
+	function updateTotals() {
+	  let subtotal = 0;
+	  let vatTotal = 0;
+	  if (!invoiceGridApi) return;
+
+	  invoiceGridApi.forEachNode(node => {
+	    subtotal += Number(node.data?.supply) || 0;
+	    vatTotal += Number(node.data?.vat) || 0;
+	  });
+
+	  invoiceGridApi.setPinnedBottomRowData([{
+	    productName: "합계",
+	    supply: subtotal,
+	    vat: vatTotal
+	  }]);
+	}
+
+	// (부가세 유형 바뀌었을 때) 모든 행 재계산
+	function recalcVatForAllRows() {
+	  if (!invoiceGridApi) return;
+	  const rate = getVatRate();
+
+	  invoiceGridApi.forEachNode(node => {
+	    const d = node.data || {};
+	    const price = Number(d.price) || 0;
+	    const qty   = Number(d.qty)   || 0;
+	    const supply = price * qty;
+	    const vat = Math.floor(supply * rate);
+
+	    // 비어있는 빈행은 유지
+	    if (!d.productCode && !d.productName && !price && !qty) return;
+
+	    node.setData({ ...d, supply, vat });
+	  });
+
+	  updateTotals();
+	}
 </script>
 
 		<script th:inline="none">

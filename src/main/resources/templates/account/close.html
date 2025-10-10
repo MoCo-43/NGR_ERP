@@ -59,6 +59,7 @@
 .voucher-right .ag-theme-quartz {
 	flex: 1;
 }
+
 .badge-status-open {
 	background: #dcfce7; /* 연한 초록 */
 	color: #15803d; /* 진한 초록 */
@@ -74,20 +75,21 @@
 	border-radius: 8px;
 	padding: 2px 8px;
 }
+
 .badge-status-submit {
-  background: #fef9c3; /* 연노랑 */
-  color: #ca8a04;      /* 진한 노랑/주황 */
-  font-weight: 600;
-  border-radius: 8px;
-  padding: 2px 8px;
+	background: #fef9c3; /* 연노랑 */
+	color: #ca8a04; /* 진한 노랑/주황 */
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
 }
 
 .badge-status-reverse {
-  background: #dbeafe; /* 연한 파랑 */
-  color: #1d4ed8;      /* 진한 파랑 */
-  font-weight: 600;
-  border-radius: 8px;
-  padding: 2px 8px;
+	background: #dbeafe; /* 연한 파랑 */
+	color: #1d4ed8; /* 진한 파랑 */
+	font-weight: 600;
+	border-radius: 8px;
+	padding: 2px 8px;
 }
 </style>
 </th:block>
@@ -169,6 +171,14 @@
 		<script
 			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+		</script>
+		<script th:inline="javascript">
+    // ✅ 로그인 사용자 이름/ID 전역 변수로 선언
+    const loginId = /*[[${#authentication.principal.empLoginVO.empId}]]*/ "";
+    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+    console.log(loginName);
+  </script>
 		<script>
     let voucherApi, detailApi, logApi;
     let selected = null;
@@ -204,7 +214,7 @@
         rowData: [],
         rowSelection: 'multiple',
         defaultColDef: { sortable: true, filter: true, resizable: true },
-        onRowClicked: e =>loadDetail(e.data.jrnNo),  //console.log(e.data)
+        onRowClicked: e =>loadDetail(e.data.jrnNo),  //
         onGridReady: loadVoucherList // ✅ 초기 로드
       });
 
@@ -251,10 +261,13 @@
               valueFormatter: p => p.value ? Number(p.value).toLocaleString() : 0 
             },
           { headerName: '작성자', field: 'createdBy', flex: 1 },
-          { headerName: '상태', field: 'status', flex: 1 }
+          { headerName: '상태', field: 'actionType', flex: 1 }
         ],
         rowData: [],
-        defaultColDef: { resizable:true }
+        defaultColDef: { resizable:true },
+        onRowClicked:(data)=>{
+        	console.log(data);	
+        }
       });
 
       // 조회 버튼
@@ -290,8 +303,9 @@
    async function loadDetail(jrnNo) {
   try {
     const { data } = await axios.get(`/api/account/journalClose/${jrnNo}`);
+    console.log(data);
     document.getElementById('detailNo').value     = data?.[0]?.jrnNo || '';
-    document.getElementById('detailWriter').value = data?.[0]?.writer || '';
+    document.getElementById('detailWriter').value = data?.[0]?.createdBy|| '';
     document.getElementById('detailDate').value   = data?.[0]?.jrnDate?.substring(0,10) || '';
     document.getElementById('detailDesc').value   = data?.[0]?.remarks || '';
 
@@ -350,7 +364,7 @@
       }
 
       const jrnNoList = selected.map(r => r.jrnNo);
-      await axios.put('/api/account/journal/status', { jrnNoList, status: 'submit' });
+      await axios.put('/api/account/journal/status', { jrnNoList, status: 'submit', loginName: loginName });
 
       alert("제출 완료되었습니다.");
       loadVoucherList();

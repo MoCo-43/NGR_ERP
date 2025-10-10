@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}">
+<head>
+<title layout:fragment="title">월별 손익계산서</title>
+<th:block layout:fragment="head_extra">
+
+  <!-- AG Grid -->
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+
+  <style>
+h2 { margin: 0 0 .75rem; }
+.btn-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+.btn { padding: .35rem .7rem; border: 1px solid #111827; background: #111827; color: #fff; border-radius: 8px; cursor: pointer; }
+.btn-outline { background: #fff; color: #111827; }
+
+.note { color: #9ca3af; font-size: .85rem; }
+#profitGrid.ag-theme-quartz { height: 38rem; width: 100%; }
+
+/* 그리드 스타일 */
+.row-header { background: #e5e7eb !important; font-weight: 800; }
+.row-subtotal { background: #f8fafc !important; font-weight: 700; }
+.row-total { background: #374151 !important; color: #fff; font-weight: 800; border-top: 2px solid #111827; }
+
+.indent-0 { padding-left: 0; }
+.indent-1 { padding-left: 16px; }
+.indent-2 { padding-left: 32px; }
+
+.code-badge {
+  font-variant-numeric: tabular-nums;
+  background: #eef2ff; color: #3730a3;
+  padding: .05rem .35rem; border-radius: 6px; margin-left: .4rem; font-size: .72rem;
+}
+  </style>
+</th:block>
+</head>
+<body>
+<section layout:fragment="content">
+  <!-- jsPDF & AutoTable -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
+  <div class="card shadow mb-3">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">월별 손익계산서</h6>
+    </div>
+
+    <div class="card-body">
+      <!-- 툴바 -->
+      <div class="btn-bar">
+        <label class="form-label">기준</label>
+        <input type="month" id="srchMonth"
+          class="form-control form-control-sm" style="max-width: 180px"
+          placeholder="귀속연월">
+        <button id="btnRecalc" class="btn btn-sm">조회</button>
+        <button id="btnCsv" class="btn btn-outline btn-sm">CSV</button>
+        <button id="btnPdf" class="btn btn-outline btn-sm" style="border-color:#b91c1c;color:#b91c1c;">PDF</button>
+      </div>
+
+      <!-- 손익계산서 그리드 -->
+      <div id="profitGrid" class="ag-theme-quartz"></div>
+    </div>
+  </div>
+
+</section>
+
+<th:block layout:fragment="body_extra">
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
+
+  <script th:inline="none">
+  // ===== 한글 폰트 (NotoSansKR) Base64 로드/캐시 =====
+  let __krFontBase64 = null;
+  const KR_FONT_URL = '/fonts/NotoSansKR-Regular.ttf'; // 정적 경로 (예: /static/fonts/...)
+
+  async function fetchAsBase64(url) {
+    const res = await fetch(url, { cache: 'force-cache' });
+    if (!res.ok) throw new Error('Font fetch failed: ' + res.status);
+    const buf = await res.arrayBuffer();
+    let binary = '';
+    const bytes = new Uint8Array(buf);
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
+  async function ensureKoreanFont() {
+    if (__krFontBase64) return __krFontBase64;
+    __krFontBase64 = await fetchAsBase64(KR_FONT_URL);
+    return __krFontBase64;
+  }
+
+  // ===== 유틸 =====
+  const fmt = n => (n ?? n===0) ? n.toLocaleString() : "";
+  const sum = arr => arr.reduce((a,b)=>a+b,0);
+  const monthLabel = (ym) => {
+    // ym: '2025-10' 형태 → '2025-10 말'
+    if (!ym) return '기준없음';
+    return ym + ' 말';
+  };
+
+  // ===== 더미 데이터 =====
+  const book = {
+    sales: { product:{ code:'02', cur:82000000, label:'(1) 제품매출' }, merch:{ code:'03', cur:32832772, label:'(2) 상품매출' } },
+    cogs: {
+      goodsCost:{
+        code:'10', label:'(1) 상품매출원가 (①+②-③+④)',
+        openInv:{ code:'11', cur:0, label:'① 기초재고액' },
+        purchase:{ code:'12', cur:904200, label:'② 당기매입액' },
+        closeInv:{ code:'13', cur:904195, label:'③ 기말재고액' },
+        transfer:{ code:'14', cur:0, label:'④ 타계정대체액' },
+      },
+      mfgEtc:{ code:'15', cur:0, label:'(2) 제조·공사·분양·기타원가' }
+    },
+    sga: {
+      salary:{ code:'21', cur:22500000, label:'(1) 급여' },
+      welfare:{ code:'22', cur:3200000, label:'(2) 복리후생비' },
+      rental:{ code:'23', cur:4500000, label:'(3) 임차료' },
+      adv:{ code:'24', cur:1900000, label:'(4) 광고선전비' },
+      comm:{ code:'25', cur:900000, label:'(5) 통신비' },
+      depr:{ code:'26', cur:4350000, label:'(6) 감가상각비' },
+      etc:{ code:'27', cur:2950000, label:'(7) 기타' }
+    },
+    nonOpIncome:{ interest:{ code:'61', cur:2000000, label:'(1) 이자수익' } },
+    nonOpExpense:{ fxLoss:{ code:'83', cur:1200000, label:'(1) 외환손실' } },
+    tax:{ corporate:{ code:'90', cur:8000000, label:'법인세 등' } }
+  };
+
+  function buildRows(b, label){
+    const sales = sum(Object.values(b.sales).map(x=>x.cur));
+    const g=b.cogs.goodsCost;
+    const cogs = g.openInv.cur + g.purchase.cur - g.closeInv.cur + g.transfer.cur + b.cogs.mfgEtc.cur;
+    const sga = sum(Object.values(b.sga).map(x=>x.cur));
+    const gp = sales - cogs;
+    const op = gp - sga;
+    const noi = sum(Object.values(b.nonOpIncome).map(x=>x.cur));
+    const noe = sum(Object.values(b.nonOpExpense).map(x=>x.cur));
+    const ordinary = op + noi - noe;
+    const net = ordinary - b.tax.corporate.cur;
+
+    const rows=[];
+    rows.push({rowType:'header',label:'영업 수익',level:0});
+    rows.push({code:'01',label:'Ⅰ. 매출액',amount:sales,level:0,rowType:'subtotal'});
+    Object.values(b.sales).forEach(it=>rows.push({code:it.code,label:it.label,amount:it.cur,level:1}));
+
+    rows.push({rowType:'header',label:'영업 비용',level:0});
+    rows.push({code:'09',label:'Ⅱ. 매출원가',amount:cogs,level:0,rowType:'subtotal'});
+    rows.push({code:'10',label:g.label,amount:(g.openInv.cur + g.purchase.cur - g.closeInv.cur + g.transfer.cur),level:1});
+    Object.values(g).filter(x=>x.code).forEach(it=>rows.push({code:it.code,label:it.label,amount:it.cur,level:2}));
+    rows.push({code:b.cogs.mfgEtc.code,label:b.cogs.mfgEtc.label,amount:b.cogs.mfgEtc.cur,level:1});
+
+    rows.push({code:'20',label:'Ⅲ. 판매비와관리비',amount:sga,level:0,rowType:'subtotal'});
+    Object.values(b.sga).forEach(it=>rows.push({code:it.code,label:it.label,amount:it.cur,level:1}));
+
+    rows.push({code:'30',label:'Ⅳ. 영업이익 (Ⅰ-Ⅱ-Ⅲ)',amount:op,level:0,rowType:'subtotal'});
+
+    rows.push({rowType:'header',label:'영업 외',level:0});
+    rows.push({code:'60',label:'Ⅴ. 영업외수익',amount:noi,level:0,rowType:'subtotal'});
+    Object.values(b.nonOpIncome).forEach(it=>rows.push({code:it.code,label:it.label,amount:it.cur,level:1}));
+
+    rows.push({code:'80',label:'Ⅵ. 영업외비용',amount:noe,level:0,rowType:'subtotal'});
+    Object.values(b.nonOpExpense).forEach(it=>rows.push({code:it.code,label:it.label,amount:it.cur,level:1}));
+
+    rows.push({code:'95',label:'Ⅶ. 법인세차감전순이익 (Ⅳ+Ⅴ-Ⅵ)',amount:ordinary,level:0,rowType:'subtotal'});
+    rows.push({code:b.tax.corporate.code,label:b.tax.corporate.label,amount:b.tax.corporate.cur,level:1});
+
+    rows.push({code:'99',label:'Ⅷ. 당기순손익',amount:net,level:0,rowType:'total',note:`기준: ${label}`});
+    return rows;
+  }
+
+  let gridApi;
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    const columnDefs=[
+      { headerName:'계정과목', field:'label', flex:2,
+        cellRenderer:p=>{
+          const code=p.data?.code?`<span class="code-badge">${p.data.code}</span>`:"";
+          const note=p.data?.note?` <span class="note">(${p.data.note})</span>`:"";
+          return `<span class="indent-${p.data.level||0}">${p.value}</span>${code}${note}`;
+        }},
+      { headerName:'금액', field:'amount', flex:1, valueFormatter:p=>fmt(p.value), cellStyle:{ textAlign:'right' } }
+    ];
+
+    const gridOptions={
+      columnDefs,
+      rowData:buildRows(book, monthLabel(document.getElementById('srchMonth').value || '2025-12')),
+      getRowClass:p=>{
+        if(p.data?.rowType==="header")return"row-header";
+        if(p.data?.rowType==="subtotal")return"row-subtotal";
+        if(p.data?.rowType==="total")return"row-total";
+      },
+      defaultColDef:{resizable:true}
+    };
+
+    gridApi=agGrid.createGrid(document.getElementById('profitGrid'),gridOptions);
+
+    // 조회
+    document.getElementById('btnRecalc').addEventListener('click',()=>{
+      const ym = document.getElementById('srchMonth').value; // yyyy-MM
+      gridApi.setGridOption('rowData', buildRows(book, monthLabel(ym)));
+    });
+
+    // CSV
+    document.getElementById('btnCsv').addEventListener('click',()=>{
+      gridApi.exportDataAsCsv({fileName:`월별_손익계산서_${Date.now()}.csv`});
+    });
+
+    // PDF
+    document.getElementById('btnPdf').addEventListener('click', async ()=>{
+      const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      if (!jsPDFCtor) { alert('jsPDF가 로드되지 않았습니다.'); return; }
+      if (!('autoTable' in (jsPDFCtor.API || {}))) { alert('jspdf-autotable이 로드되지 않았습니다.'); return; }
+
+      const ym = document.getElementById('srchMonth').value || '2025-12';
+      const label = monthLabel(ym);
+      const rows = buildRows(book, label);
+
+      // AG-Grid → 테이블 배열
+      const table = rows.map(r => [
+        `${'　'.repeat(r.level || 0)}${r.label}`,
+        r.amount ? Number(r.amount).toLocaleString() : ''
+      ]);
+
+      const doc = new jsPDFCtor({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+
+      try {
+        // 한글 폰트 세팅
+        const base64 = await ensureKoreanFont();
+        doc.addFileToVFS('NotoSansKR-Regular.ttf', base64);
+        doc.addFont('NotoSansKR-Regular.ttf', 'NotoSansKR', 'normal');
+        doc.setFont('NotoSansKR');
+
+        // 제목
+        doc.setFontSize(14);
+        doc.text(`월별 손익계산서 (${label})`, 40, 40);
+
+        // 표
+        doc.setFontSize(10);
+        doc.autoTable({
+          startY: 60,
+          head: [['계정과목', '금액']],
+          body: table,
+          theme: 'striped',
+          styles: { font: 'NotoSansKR', fontSize: 9, cellPadding: 4 },
+          headStyles: { font: 'NotoSansKR', fillColor: [55,65,81], textColor: 255 },
+          bodyStyles: { font: 'NotoSansKR' },
+          columnStyles: { 0: { cellWidth: 320 }, 1: { halign: 'right' } }
+        });
+
+        // 저장
+        const yymm = ym.replace('-', '');
+        doc.save(`월별_손익계산서_${yymm}.pdf`);
+      } catch (e) {
+        console.error(e);
+        alert('한글 폰트를 불러오지 못했습니다. 정적 경로(/fonts/...)와 네트워크를 확인하세요.');
+      }
+    });
+  });
+  </script>
+</th:block>
+</body>
+</html>

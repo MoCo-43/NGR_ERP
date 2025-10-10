@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -137,12 +138,13 @@ public class AccountController {
         @SuppressWarnings("unchecked")
         List<String> jrnNoList = (List<String>) req.get("jrnNoList");
         String status = (String) req.get("status");
+        String createdBy = (String) req.get("loginName");
 
         if (jrnNoList == null || jrnNoList.isEmpty()) {
             return ResponseEntity.badRequest().body("전표번호가 없습니다.");
         }
 
-        int updated = journalService.updateStatusBatch(jrnNoList, status);
+        int updated = journalService.updateStatusBatch(jrnNoList, status, createdBy);
         return ResponseEntity.ok(updated + "건 상태 변경 완료");
     }
  // ✅ 역분개 전용 엔드포인트
@@ -155,8 +157,8 @@ public class AccountController {
         journalService.reverseJournalCsv(companyCode, originJrnNos, createdBy);
         return ResponseEntity.ok(Map.of("success", true));
     }
+    
     // 마감로그
-
 	@GetMapping("/journalClose/logs/{jrnNo}")
 	public List<JournalCloseLogVO> getLogsByJrn(@PathVariable String jrnNo) {
 	    Long companyCode = SessionUtil.companyId();

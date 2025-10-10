@@ -33,7 +33,7 @@ public interface JournalService {
     List<JournalVO> selectJournalDetailClose(String jrnNo, Long companyCode);
     
     // 마감 버튼 => 상태변경
-    int updateStatusBatch(List<String> jrnNoList, String status);
+    int updateStatusBatch(List<String> jrnNoList, String status,String createdBy);
     
     // ✅ 역분개
     void reverseJournalCsv(Long companyCode, String originJrnNos, String createdBy);

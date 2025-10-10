@@ -106,8 +106,9 @@
         clearSignCanvas();
       }, { once: true });
       bootstrap.Modal.getOrCreateInstance(modalEl).show();
-      document.getElementById("btnSignSave")?.removeEventListener("click",saveSignature);	
-      document.getElementById("btnSignSave")?.addEventListener("click", ()=>{saveSignature(callback)});
+      const btn = document.getElementById("btnSignSave");
+      // ✅ 기존 onclick 덮어쓰기 (중복 없음)
+      btn.onclick = () => { saveSignature(callback); };
 	}
 
     // ===== 저장 (승인/역분개 공통) =====
