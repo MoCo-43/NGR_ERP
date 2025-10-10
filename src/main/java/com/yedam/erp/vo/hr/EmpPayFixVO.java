@@ -4,10 +4,21 @@ import lombok.Data;
 
 @Data
 public class EmpPayFixVO {
-    private String emp_id;       // PK
-    private Long   base_pay;     // 기본급
-    private Long   birth_care;   // 출산/보육 수당
-    private Long   family_allow; // 부양가족수당
-    private Long   meal_allow;   // 식대
-    private Long   annual_allow; // 연차수당
+    // PK
+    private Long payFixNo;
+
+    // 사번
+    private String empId;
+
+    // 수당 코드
+    private String empAllowCode;
+
+    // 수당명
+    private String empAllowLabel;
+
+    // 금액
+    private Long empAllowPay;
+
+    // 회사코드
+    private Long companyCode;
 }
