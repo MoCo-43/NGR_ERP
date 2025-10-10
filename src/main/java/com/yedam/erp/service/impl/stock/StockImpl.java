@@ -1,6 +1,7 @@
 package com.yedam.erp.service.impl.stock;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,9 +38,8 @@ public class StockImpl implements StockService{
 
 
 	@Override
-	public List<PartnerVO> customerAll(Long compCode) {
-		// TODO Auto-generated method stub
-		return mapper.customerAll(compCode);
+	public List<PartnerVO> customerAll(Map<String, Object> params) {
+	    return mapper.customerAll(params);
 	}
 
 	@Transactional

@@ -30,7 +30,7 @@ VALUES(CONCAT('P',LPAD(seq_product.nextval,5,'0')),
 
 </insert>
 
-<select id="customerAll" resultType="PartnerVO" parameterType="Long">
+<select id="customerAll" resultType="PartnerVO" parameterType="map">
 SELECT 
        emp_name, 
        cus_name,
@@ -43,6 +43,18 @@ SELECT
 FROM customer
 WHERE gbn = '구매처'
 AND company_code = #{compCode}
+<if test="cusKw != null and cusKw != ''">
+    AND cus_name LIKE '%' || #{cusKw} || '%'
+</if>
+<if test="empKw != null and empKw != ''">
+    AND emp_name LIKE '%' || #{empKw} || '%'
+</if>
+<if test="btKw != null and btKw != ''">
+    AND biz_type LIKE '%' || #{btKw} || '%'
+</if>
+<if test="bcKw != null and bcKw != ''">
+    AND biz_category LIKE '%' || #{bcKw} || '%'
+</if>
 </select>
 
 <select id="productAll" resultType="ProductVO" parameterType="Long">
@@ -412,7 +424,8 @@ SELECT
     d.specification AS specification,
     COALESCE(stock_data.stock_qty, 0) AS stock,  -- 계산된 재고
     SUM(d.qty) AS qty,  -- 발주 수량
-    d.company_code AS company_code 
+    d.company_code AS company_code
+    ,d.order_price AS order_price -- 구매단가
 FROM order_detail d
 LEFT JOIN (
 <!-- 재고수량 조회 서브쿼리-->
@@ -438,7 +451,7 @@ LEFT JOIN (
 WHERE d.order_code = #{orderCode}
 GROUP BY 
     d.product_code, d.product_name, d.specification, 
-    d.company_code, stock_data.stock_qty
+    d.company_code, stock_data.stock_qty , d.order_price 
 ORDER BY d.product_code
 
 </select>

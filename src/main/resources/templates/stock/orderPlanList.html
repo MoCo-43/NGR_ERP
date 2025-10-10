@@ -153,6 +153,18 @@ document.addEventListener("DOMContentLoaded", () => {
 	const searchPartner = document.getElementById('partnerName');
 	const searchProduct = document.getElementById('productName');
 	const tableBody = document.querySelector('#orderItemsTable tbody');
+	//
+	const searchBtn = document.getElementById("searchBtn"); // 검색폼 검색버튼
+	const cusInput = document.getElementById("keyword"); // 검색 키워드 (거래처명)
+	const empInput = document.getElementById("empId"); // 검색 키워드 (담당자명)
+	const bizTypeInput = document.getElementById("bizType"); // 검색 키워드 (업태)
+	const bizCateInput = document.getElementById("bizCategory"); // 검색 키워드 (종목)
+	//
+	const searchPrdBtn = document.getElementById("searchProdBtn"); // 검색폼 제품검색버튼
+	const prdInput = document.getElementById("productKw"); // 검색폼 제품명검색
+	const prdEmpInput = document.getElementById("productEmpId"); // 검색폼 제품담당자명
+	const noteInput = document.getElementById("note"); // 검색폼 비고
+	//
 	let productGrid = null; // 전역 변수
  	let compCode = null; // compCode
  	let gridOptions = null;
@@ -203,7 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // 회사코드 불러오기
 axios.get("/api/v1/stock/getCompId", { withCredentials: true })
-  .then(res => { compCode = res.data; })
+  .then(res => { compCode = res.data; console.log(compCode);})
   .catch(err => console.error(err));
 
 
@@ -316,6 +328,11 @@ async function openProductModal() {
     productModal.show();
 }
  	
+ 	// 제품 모달창 조회 필터링
+	searchPrdBtn?.addEventListener('click',async()=>{
+		
+	});
+ 	
  	
  	
 	
@@ -378,7 +395,7 @@ async function openProductModal() {
 	// 거래처 데이터 로드
 	async function loadBusinessData() {
 	    try {
-	        const res = await axios.get("/api/v1/stock/cusList");
+	        const res = await axios.get(`/api/v1/stock/cusList/${compCode}`);
 	        if (gridApi) {
 	            gridApi.setRowData(res.data);
 	            gridApi.sizeColumnsToFit();
@@ -398,6 +415,64 @@ async function openProductModal() {
 	}
 
 
+	// 거래처 조회 버튼 클릭 시 (검색폼 키워드)
+	searchBtn?.addEventListener("click", async () => {
+		console.log(compCode);
+	    const cusKw = cusInput.value.trim();
+	    const empKw = empInput.value.trim();
+	    const btKw = bizTypeInput.value.trim();
+	    const bcKw = bizCateInput.value.trim();
+	    
+	    // await filterBusinessData({cusKw , empKw , btKw , bcKw});
+	      if (!cusKw && !empKw && !btKw && !bcKw) {
+    		    await loadBusinessData(); // 전체 데이터 로드
+    		} else {
+        		await filterBusinessData({cusKw, empKw, btKw, bcKw});
+	    	}
+	    
+	    
+	});
+	
+	[cusInput, empInput, bizTypeInput, bizCateInput].forEach(input => {
+	    input.addEventListener("input", async () => {
+	        const cusKw = cusInput.value.trim();
+	        const empKw = empInput.value.trim();
+	        const btKw = bizTypeInput.value.trim();
+	        const bcKw = bizCateInput.value.trim();
+
+	        if (!cusKw && !empKw && !btKw && !bcKw) {
+	            await loadBusinessData(); // 전체 데이터 재조회
+	        }
+	    });
+	});
+	
+	
+	// 거래처 필터링 함수
+	async function filterBusinessData({ cusKw, empKw, btKw, bcKw }) {
+    try {
+        let url = `/api/v1/stock/cusList/${compCode}`;
+        const params = new URLSearchParams();
+
+        // 값이 있을 때만 쿼리스트링에 추가
+        if (cusKw) params.append("cusKw", cusKw);
+        if (empKw) params.append("empKw", empKw);
+        if (btKw)  params.append("btKw", btKw);
+        if (bcKw)  params.append("bcKw", bcKw);
+
+        const query = params.toString();
+        if (query) url += `?${query}`;
+
+        const res = await axios.get(url);
+        if (gridApi) {
+            gridApi.setRowData(res.data);
+            gridApi.sizeColumnsToFit();
+        }
+    } catch (err) {
+        console.error("거래처 다중 필터링 실패:", err);
+        toastr.error("거래처 조회 중 오류 발생");
+    }
+  } // END OF FUNC
+	
 
 	const modalEl = document.getElementById("businessModal");
 	const modal = bootstrap.Modal.getOrCreateInstance(modalEl);

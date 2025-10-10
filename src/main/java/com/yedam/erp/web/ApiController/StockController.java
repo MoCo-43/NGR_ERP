@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -243,9 +245,20 @@ public class StockController {
 		return service.productAll(compCode);
 	}
 	
+	 @ResponseBody
 	 @GetMapping("/cusList/{compCode}") // 거래처리스트 모달
-	 public List<PartnerVO> cutList(@PathVariable Long compCode){
-		 return service.customerAll(compCode);
+	 public List<PartnerVO> cutList(@PathVariable Long compCode,
+			 @RequestParam(required = false) String cusKw,
+			    @RequestParam(required = false) String empKw,
+			    @RequestParam(required = false) String btKw,
+			    @RequestParam(required = false) String bcKw){
+		 Map<String, Object> params = new HashMap<>();
+		    params.put("compCode", compCode);
+		    params.put("cusKw", cusKw);
+		    params.put("empKw", empKw);
+		    params.put("btKw", btKw);
+		    params.put("bcKw", bcKw);
+		 return service.customerAll(params);
 	 }
 	
 	 @Value("${file.upload.dir}")

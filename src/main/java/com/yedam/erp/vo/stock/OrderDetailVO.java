@@ -31,4 +31,5 @@ public class OrderDetailVO {
 	private Long stock;
 	private String xpCode;
 	private String companyCode;
+	
 }

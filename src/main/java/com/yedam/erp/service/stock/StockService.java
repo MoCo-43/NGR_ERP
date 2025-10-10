@@ -1,6 +1,7 @@
 package com.yedam.erp.service.stock;
 
 import java.util.List;
+import java.util.Map;
 
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
@@ -21,7 +22,8 @@ public interface StockService {
 	public List<ProductVO> productAll(Long CompCode);
 		
 	// 거래처 조회
-	public List<PartnerVO> customerAll(Long CompCode);
+	//public List<PartnerVO> customerAll(Long CompCode);
+	public List<PartnerVO> customerAll(Map<String, Object> params);
 	
 	// 발주계획 등록
 	public void insertOrderPlan(OrderPlanVO orderPlan); // 마스터
