@@ -5,81 +5,95 @@
 
 <mapper namespace="com.yedam.erp.mapper.hr.EmpPayFixMapper">
 
-  <!-- resultMap -->
+  <!-- VO 매핑 -->
   <resultMap id="EmpPayFixMap" type="com.yedam.erp.vo.hr.EmpPayFixVO">
-    <id     column="EMP_ID"        property="emp_id"/>
-    <result column="BASE_PAY"      property="base_pay"/>
-    <result column="BIRTH_CARE"    property="birth_care"/>
-    <result column="FAMILY_ALLOW"  property="family_allow"/>
-    <result column="MEAL_ALLOW"    property="meal_allow"/>
-    <result column="ANNUAL_ALLOW"  property="annual_allow"/>
+    <id     property="payFixNo"      column="pay_fix_no"/>
+    <result property="empId"         column="emp_id"/>
+    <result property="empAllowCode"  column="emp_allow_code"/>
+    <result property="empAllowLabel" column="emp_allow_label"/>
+    <result property="empAllowPay"   column="emp_allow_pay"/>
+    <result property="companyCode"   column="company_code"/>
   </resultMap>
 
-  <!-- 단건 조회 -->
+  <!-- 단건 조회 (미사용) -->
   <select id="selectByEmpId" parameterType="string" resultMap="EmpPayFixMap">
-    SELECT EMP_ID, BASE_PAY, BIRTH_CARE, FAMILY_ALLOW, MEAL_ALLOW, ANNUAL_ALLOW
-    FROM EMP_PAY_FIX
-    WHERE EMP_ID = #{empId}
+    SELECT f.pay_fix_no,
+           f.emp_id,
+           f.emp_allow_code,
+           COALESCE(f.emp_allow_label, c.allow_name) AS emp_allow_label,
+           f.emp_allow_pay,
+           f.company_code
+      FROM emp_pay_fix f
+      JOIN pay_allow_code c
+        ON c.allow_code   = f.emp_allow_code
+       AND c.company_code = f.company_code
+     WHERE f.emp_id = #{empId}
+       AND c.use_yn = 'Y'
+       AND c.pay_type = '고정'
+       AND ROWNUM = 1
   </select>
 
-  <!-- 신규 (동적 INSERT: null 컬럼 생략하여 DEFAULT 0 적용) -->
+  <!-- 코드표(고정/사용Y) + 사번 보유값 LEFT JOIN -->
+  <select id="selectFixedItems" resultMap="EmpPayFixMap">
+    SELECT
+      f.pay_fix_no,
+      #{empId} AS emp_id,
+      c.allow_code AS emp_allow_code,
+      COALESCE(f.emp_allow_label, c.allow_name) AS emp_allow_label,
+      NVL(f.emp_allow_pay, 0) AS emp_allow_pay,
+      c.company_code AS company_code
+      FROM pay_allow_code c
+      LEFT JOIN emp_pay_fix f
+        ON f.emp_allow_code = c.allow_code
+       AND f.company_code   = c.company_code
+       AND f.emp_id         = #{empId}
+     WHERE c.company_code = #{companyCode}
+       AND c.use_yn = 'Y'
+       AND c.pay_type = '고정'
+     ORDER BY c.allow_code
+  </select>
+
+  <!-- 등록 -->
   <insert id="insert" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
-    INSERT INTO EMP_PAY_FIX
-    <trim prefix="(" suffix=")" suffixOverrides=",">
-      EMP_ID
-      <if test="base_pay != null">, BASE_PAY</if>
-      <if test="birth_care != null">, BIRTH_CARE</if>
-      <if test="family_allow != null">, FAMILY_ALLOW</if>
-      <if test="meal_allow != null">, MEAL_ALLOW</if>
-      <if test="annual_allow != null">, ANNUAL_ALLOW</if>
-    </trim>
-    <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
-      #{emp_id}
-      <if test="base_pay != null">, #{base_pay}</if>
-      <if test="birth_care != null">, #{birth_care}</if>
-      <if test="family_allow != null">, #{family_allow}</if>
-      <if test="meal_allow != null">, #{meal_allow}</if>
-      <if test="annual_allow != null">, #{annual_allow}</if>
-    </trim>
+    INSERT INTO emp_pay_fix (
+      pay_fix_no, emp_id, emp_allow_code, emp_allow_label, emp_allow_pay, company_code
+    ) VALUES (
+      SEQ_EMP_PAY_FIX_NO.NEXTVAL,
+      #{empId}, #{empAllowCode}, #{empAllowLabel}, #{empAllowPay}, #{companyCode}
+    )
   </insert>
 
   <!-- 수정 -->
   <update id="update" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
-    UPDATE EMP_PAY_FIX
-       SET BASE_PAY     = #{base_pay},
-           BIRTH_CARE   = #{birth_care},
-           FAMILY_ALLOW = #{family_allow},
-           MEAL_ALLOW   = #{meal_allow},
-           ANNUAL_ALLOW = #{annual_allow}
-     WHERE EMP_ID = #{emp_id}
+    UPDATE emp_pay_fix
+       SET emp_allow_label = #{empAllowLabel},
+           emp_allow_pay   = #{empAllowPay}
+     WHERE emp_id         = #{empId}
+       AND emp_allow_code = #{empAllowCode}
+       AND company_code   = #{companyCode}
   </update>
 
-  <!-- UPSERT (MERGE) : NULL 방어 (NVL) + NOT NULL 위반 방지 -->
+  <!-- 업서트 (Oracle MERGE) -->
   <update id="upsert" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
-    MERGE INTO EMP_PAY_FIX t
-    USING (SELECT
-             #{emp_id}       AS EMP_ID,
-             #{base_pay}     AS BASE_PAY,
-             #{birth_care}   AS BIRTH_CARE,
-             #{family_allow} AS FAMILY_ALLOW,
-             #{meal_allow}   AS MEAL_ALLOW,
-             #{annual_allow} AS ANNUAL_ALLOW
-           FROM dual) s
-       ON (t.EMP_ID = s.EMP_ID)
+    MERGE INTO emp_pay_fix t
+    USING (
+      SELECT
+        #{empId}         AS emp_id,
+        #{empAllowCode}  AS emp_allow_code,
+        #{empAllowLabel} AS emp_allow_label,
+        #{empAllowPay}   AS emp_allow_pay,
+        #{companyCode}   AS company_code
+      FROM dual
+    ) s
+       ON (t.emp_id = s.emp_id
+           AND t.emp_allow_code = s.emp_allow_code
+           AND t.company_code = s.company_code)
      WHEN MATCHED THEN
-       UPDATE SET t.BASE_PAY      = NVL(s.BASE_PAY, t.BASE_PAY),
-                  t.BIRTH_CARE    = NVL(s.BIRTH_CARE, t.BIRTH_CARE),
-                  t.FAMILY_ALLOW  = NVL(s.FAMILY_ALLOW, t.FAMILY_ALLOW),
-                  t.MEAL_ALLOW    = NVL(s.MEAL_ALLOW, t.MEAL_ALLOW),
-                  t.ANNUAL_ALLOW  = NVL(s.ANNUAL_ALLOW, t.ANNUAL_ALLOW)
+       UPDATE SET t.emp_allow_label = s.emp_allow_label,
+                  t.emp_allow_pay   = s.emp_allow_pay
      WHEN NOT MATCHED THEN
-       INSERT (EMP_ID, BASE_PAY, BIRTH_CARE, FAMILY_ALLOW, MEAL_ALLOW, ANNUAL_ALLOW)
-       VALUES ( s.EMP_ID,
-                NVL(s.BASE_PAY,      0),
-                NVL(s.BIRTH_CARE,    0),
-                NVL(s.FAMILY_ALLOW,  0),
-                NVL(s.MEAL_ALLOW,    0),
-                NVL(s.ANNUAL_ALLOW,  0) )
+       INSERT (pay_fix_no, emp_id, emp_allow_code, emp_allow_label, emp_allow_pay, company_code)
+       VALUES (SEQ_EMP_PAY_FIX_NO.NEXTVAL, s.emp_id, s.emp_allow_code, s.emp_allow_label, s.emp_allow_pay, s.company_code)
   </update>
 
 </mapper>

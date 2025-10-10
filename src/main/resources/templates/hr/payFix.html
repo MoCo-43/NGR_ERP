@@ -3,42 +3,20 @@
     <input type="hidden" id="pf_emp_id" name="emp_id" />
 
     <div class="container-fluid">
-      <div class="row g-3">
+      <div class="row g-3" id="pf_row">
         <div class="col-12">
           <div class="fw-bold small text-secondary">고정 수당</div>
         </div>
 
-        <div class="col-md-6">
-          <label for="pf_basePay" class="form-label">기본급</label>
-          <input type="text" id="pf_basePay" name="base_pay" class="form-control" placeholder="예: 3,000,000">
-        </div>
-
-        <div class="col-md-6">
-          <label for="pf_birthCare" class="form-label">출산 보육수당</label>
-          <input type="text" id="pf_birthCare" name="birth_care" class="form-control">
-        </div>
-
-        <div class="col-md-6">
-          <label for="pf_familyAllow" class="form-label">부양 가족수당</label>
-          <input type="text" id="pf_familyAllow" name="family_allow" class="form-control">
-        </div>
-
-        <div class="col-md-6">
-          <label for="pf_mealAllow" class="form-label">식대</label>
-          <input type="text" id="pf_mealAllow" name="meal_allow" class="form-control">
-        </div>
-
-        <div class="col-md-6">
-          <label for="pf_annualAllow" class="form-label">연차 수당</label>
-          <input type="text" id="pf_annualAllow" name="annual_allow" class="form-control">
-        </div>
+        <!-- 동적 필드가 여기 삽입됨 -->
 
         <div class="col-md-6">
           <label for="pf_total" class="form-label fw-bold">월정 금액</label>
           <input type="text" id="pf_total" class="form-control" readonly>
         </div>
 
-        <div class="modal-footer" id="empModalFooter">
+        <!-- ⚠️ 모달 푸터 ID 중복 방지: empModalFooter 사용 금지 -->
+        <div class="modal-footer" id="pf_footer">
           <button type="button" class="btn btn-success" id="pf_saveBtn">저장</button>
           <button type="button" class="btn btn-secondary" id="pf_closeBtn" data-bs-dismiss="modal">닫기</button>
         </div>
@@ -48,153 +26,174 @@
 
   <script>
   (function(){
-    // 포맷터: 숫자에 콤마(,) 찍어 보여주기
+    // 숫자 포맷
     const formatter = new Intl.NumberFormat('ko-KR');
 
-    // CSRF 토큰을 <meta>에서 읽어서 요청 헤더에 넣기
+    // CSRF
     const CSRF_TOKEN  = document.querySelector('meta[name="_csrf"]')?.content;
     const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.content;
-    const makeHeaders = () => {
-      const h = { 'Content-Type':'application/json' };
+    const hdr = () => {
+      const h = { 'Content-Type': 'application/json' };
       if (CSRF_TOKEN && CSRF_HEADER) h[CSRF_HEADER] = CSRF_TOKEN;
       return h;
     };
 
-    // "1,234" 같은 입력을 숫자 1234로 바꾸기
-    function parseNumber(str){
-      if(!str) return 0;
-      return Number(String(str).replace(/,/g,''));
-    }
+    const toNum = (s)=> Number(String(s||'').replace(/,/g,'')) || 0;
 
-    // 입력창에 숫자 치면 실시간으로 콤마 붙여서 보기 좋게
-    function formatInput(el){
-      const val = parseNumber(el.value);
-      el.value = val ? formatter.format(val) : '';
-    }
-
-    // 다섯 항목 합쳐서 월정 금액 자동 계산
     function calcTotal(){
-      const g = id => parseNumber(document.getElementById(id)?.value);
-      const total = g('pf_basePay') + g('pf_birthCare') + g('pf_familyAllow') + g('pf_mealAllow') + g('pf_annualAllow');
+      let sum = 0;
+      document.querySelectorAll('#payFixForm input[data-allow-code]').forEach(el=>{
+        sum += toNum(el.value);
+      });
       const out = document.getElementById('pf_total');
-      if(out) out.value = total ? formatter.format(total) : '';
+      if(out) out.value = sum ? formatter.format(sum) : '';
     }
 
-    // 객체에서 스네이크/카멜 키 둘 다 대응해서 값 꺼내기
-    function pick(obj,snake,camel){
-      return obj?.[snake] ?? obj?.[camel] ?? '';
-    }
-
-    // 외부에서 접근할 공개 API
-    window.__payFix = {
-      setValues(v){
-        const set = (id,val) => {
-          const el = document.getElementById(id);
-          if(el) el.value = (val || val === 0) ? formatter.format(val) : '';
-        };
-        const empId = v?.emp_id ?? v?.empId ?? '';
-        document.getElementById('pf_emp_id').value = empId;
-        set('pf_basePay',    pick(v,'base_pay','basePay'));
-        set('pf_birthCare',  pick(v,'birth_care','birthCare'));
-        set('pf_familyAllow',pick(v,'family_allow','familyAllow'));
-        set('pf_mealAllow',  pick(v,'meal_allow','mealAllow'));
-        set('pf_annualAllow',pick(v,'annual_allow','annualAllow'));
+    function attachNumeric(el){
+      el.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+      el.addEventListener('input', e => {
+        e.target.value = toNum(e.target.value) ? formatter.format(toNum(e.target.value)) : '';
         calcTotal();
-      },
-      getValues(){
-        const g = id => parseNumber(document.getElementById(id)?.value);
-        return {
-          emp_id:       (document.getElementById('pf_emp_id')?.value) || '',
-          base_pay:     g('pf_basePay'),
-          birth_care:   g('pf_birthCare'),
-          family_allow: g('pf_familyAllow'),
-          meal_allow:   g('pf_mealAllow'),
-          annual_allow: g('pf_annualAllow')
-        };
-      },
-      clear(){
-        ['pf_basePay','pf_birthCare','pf_familyAllow','pf_mealAllow','pf_annualAllow','pf_total']
-          .forEach(id=>{
-            const el = document.getElementById(id);
-            if(el) el.value = '';
-          });
-      },
-      calcTotal
-    };
+      });
+      el.addEventListener('blur', e => {
+        e.target.value = toNum(e.target.value) ? formatter.format(toNum(e.target.value)) : '';
+      });
+    }
 
-    // 금액 입력란에 이벤트 연결: 입력 시 콤마 포맷 + 합계 업데이트
-    ['pf_basePay','pf_birthCare','pf_familyAllow','pf_mealAllow','pf_annualAllow'].forEach(id=>{
-      const el = document.getElementById(id);
-      if(el){
-        el.addEventListener('input', e=>{
-          formatInput(e.target);
-          calcTotal();
-        });
+    // ✅ 고정 코드 조회 (백엔드에서 세션의 회사코드(String, 예: COM001)로 필터링되어야 함)
+    async function fetchFixedCodes(){
+      const res = await fetch('/api/v1/pay-allow-codes/fixed', { headers: hdr() });
+      if (!res.ok) {
+        const msg = `코드 조회 실패 (HTTP ${res.status})`;
+        throw new Error(msg);
       }
-    });
+      return res.json(); // [{allowCode, allowName, ...}]
+    }
 
-    // 저장 버튼 클릭 시 실행: 신규면 POST, 존재하면 PUT
-    async function onSave(){
-      const hid = document.getElementById('pf_emp_id');
-      if(hid && !hid.value){
-        hid.value = document.getElementById('f_emp_id')?.value || '';
-      }
+    async function fetchEmpItems(empId){
+      if (!empId) return [];
+      const url = `/api/v1/emps/${encodeURIComponent(empId)}/pay-fix/items`;
+      const res = await fetch(url, { headers: hdr() });
+      if (!res.ok) return [];
+      return res.json(); // [{empAllowCode, empAllowPay, ...}]
+    }
 
-      const data = window.__payFix.getValues();
-      if(!data.emp_id){
-        alert('사번(emp_id)이 비었습니다.');
+    function badge(kind, text){
+      const div = document.createElement('div');
+      div.className = 'col-12';
+      div.dataset.dynamic = 'payfix';
+      div.innerHTML = `<div class="alert alert-${kind} py-2 mb-0 small">${text}</div>`;
+      return div;
+    }
+
+    async function renderFields(){
+      const row = document.getElementById('pf_row');
+      const footer = document.getElementById('pf_footer');
+      // 기존 동적 요소 제거
+      row.querySelectorAll('[data-dynamic="payfix"]').forEach(el => el.remove());
+
+      const loading = badge('secondary','코드 불러오는 중…');
+      row.insertBefore(loading, footer);
+
+      let codes = [];
+      try {
+        codes = await fetchFixedCodes();
+      } catch (e) {
+        console.error(e);
+        loading.replaceWith(badge('danger', e.message || '코드 조회 실패'));
         return;
       }
 
-      let method, url;
-      if(await isExisting(data.emp_id)){
-        method = 'PUT';
-        url = `/api/v1/emps/${encodeURIComponent(data.emp_id)}/pay-fix`;
-      }else{
-        method = 'POST';
-        url = `/api/v1/emps/${encodeURIComponent(data.emp_id)}/pay-fix`;
+      loading.remove();
+
+      if (!Array.isArray(codes) || codes.length === 0) {
+        row.insertBefore(badge('warning','표시할 고정 수당 코드가 없습니다.'), footer);
+        return;
       }
 
-      try{
-        const res = await fetch(url, {
-          method,
-          headers: makeHeaders(),
-          body: JSON.stringify(data)
+      codes.forEach(c => {
+        const code  = c.allowCode || c.allow_code;
+        const label = (c.allowLabel || c.allowName || c.allow_name || code || '').trim();
+        const col = document.createElement('div');
+        col.className = 'col-md-6';
+        col.dataset.dynamic = 'payfix';
+        col.innerHTML = `
+          <label for="pf_${code}" class="form-label">${label}</label>
+          <input type="text"
+                 id="pf_${code}"
+                 class="form-control"
+                 data-allow-code="${code}"
+                 data-allow-label="${label}">
+        `;
+        row.insertBefore(col, footer);
+        attachNumeric(col.querySelector('input'));
+      });
+
+      calcTotal();
+    }
+
+    async function fillValues(empId){
+      try {
+        const items = await fetchEmpItems(empId);
+        const map = new Map(items.map(it => [String(it.empAllowCode), Number(it.empAllowPay || 0)]));
+        document.querySelectorAll('#payFixForm input[data-allow-code]').forEach(el=>{
+          const v = map.get(el.dataset.allowCode) || 0;
+          el.value = v ? formatter.format(v) : '';
         });
-        if(!res.ok){
-          throw new Error('저장 실패 ('+res.status+')');
+        calcTotal();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function saveAll(){
+      const hid = document.getElementById('pf_emp_id');
+      if (hid && !hid.value) hid.value = document.getElementById('f_emp_id')?.value || '';
+      const empId = hid?.value || '';
+      if (!empId) return alert('사번이 없습니다.');
+
+      const items = Array.from(document.querySelectorAll('#payFixForm input[data-allow-code]')).map(el => ({
+        empId,
+        empAllowCode:  el.dataset.allowCode,
+        empAllowLabel: el.dataset.allowLabel || '',
+        empAllowPay:   toNum(el.value)
+      }));
+
+      const url = `/api/v1/emps/${encodeURIComponent(empId)}/pay-fix/items`;
+      const res = await fetch(url, { method:'PUT', headers: hdr(), body: JSON.stringify(items) });
+      if (!res.ok) throw new Error(`저장 실패 (HTTP ${res.status})`);
+    }
+
+    // 외부에서 쓰는 API
+    window.__payFix = {
+      async init(empId){
+        const finalId = empId || (document.getElementById('f_emp_id')?.value || '');
+        (document.getElementById('pf_emp_id')).value = finalId;
+        await renderFields();
+        await fillValues(finalId);
+      },
+      clear(){
+        document.querySelectorAll('#payFixForm input[data-allow-code], #pf_total')
+          .forEach(el => el.value = '');
+      },
+      async save(){
+        try{
+          await saveAll();
+          alert('저장되었습니다.');
+        }catch(e){
+          console.error(e);
+          alert(e.message || '저장 중 오류');
         }
-      }catch(err){
-        console.error(err);
-        alert(err.message || '저장 중 오류');
       }
-    }
+    };
 
-    // 해당 사원의 급여 고정항목이 이미 있는지 확인
-    async function isExisting(empId){
-      try{
-        const res = await fetch(`/api/v1/emps/${encodeURIComponent(empId)}/pay-fix`, { headers: makeHeaders() });
-        if(res.status === 404) return false;
-        if(!res.ok) return false;
-        const obj = await res.json().catch(()=>null);
-        return !!obj && !!(obj.emp_id ?? obj.empId);
-      }catch(e){
-        return false;
-      }
-    }
-    // 버튼 => 저장
-    document.getElementById('pf_saveBtn')?.addEventListener('click', onSave);
-
-    // 모달 공용 저장에서도 같은 저장 함수를 쓰도록 연결
-    window.__payFix.save = onSave;
-
-    // 버튼 => 닫기 
+    document.getElementById('pf_saveBtn')?.addEventListener('click', ()=>window.__payFix.save());
     document.getElementById('pf_closeBtn')?.addEventListener('click', (e)=>{
       const modalEl = e.target.closest('.modal');
-      try{
+      try {
         const inst = (window.bootstrap && bootstrap.Modal.getInstance(modalEl)) || (modalEl ? new bootstrap.Modal(modalEl) : null);
         inst?.hide();
-      }catch(_){}
+      } catch {}
     });
   })();
   </script>
