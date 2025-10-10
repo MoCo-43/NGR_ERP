@@ -320,10 +320,10 @@ ORDER BY ord.od_no
     VALUES (
        #{orderCode}
        ,#{businessPartner}
-       ,#{businessCode}
+       ,#{cusCode}
        ,#{empId}
        ,#{vatType}
-       ,TO_DATE(TO_CHAR(#{dueDate}, 'yyyy-MM-dd'), 'YYYY-MM-dd')
+       ,#{dueDate}
        ,#{xpCode}
        ,#{companyCode}
     )
@@ -340,9 +340,7 @@ INSERT INTO order_detail(
        ,ORDER_PRICE
        ,SUP_AMT
        ,VAT_AMT
-       <if test="note != null">
        ,NOTE
-       </if>
        ,ORDER_CODE
        ,COMPANY_CODE
 )
@@ -354,9 +352,7 @@ VALUES (SEQ_ORDER_DETAIL.nextval
        ,#{orderPrice}
        ,#{supAmt}
        ,#{vatAmt}
-       <if test="note != null">
        ,#{note}
-       </if>
        ,#{orderCode}
        ,#{companyCode}
 )
@@ -498,10 +494,10 @@ ORDER BY d.product_code
         USING (SELECT  #{businessCode} AS businessCode, #{productCode} AS productCode , TRUNC(SYSDATE) AS inboundDate FROM dual) src
         ON (t.product_code = src.productCode AND t.business_code = src.businessCode AND TRUNC(t.inbound_date) = src.inboundDate)
         WHEN MATCHED THEN
-            UPDATE SET t.qty = t.qty + #{qty}
+            UPDATE SET t.qty = t.qty + #{qty} 
         WHEN NOT MATCHED THEN
-            INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, due_date, company_code, business_partner, business_code)
-            VALUES (v_lotCode, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode});
+            INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, due_date, company_code, business_partner, business_code,purchase_price)
+            VALUES (v_lotCode, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode}, #{orderPrice});
     END;
 END;
 </update>

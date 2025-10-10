@@ -26,6 +26,6 @@ public class InboundVO {
 	private String companyCode; // 회사코드
 	private String businessCode; // 거래처코드
 	private String productCode; // 제품코드
-	
+	private Long orderPrice; // 제품 단가
 	private String orderCode; // 발주 코드
 }
