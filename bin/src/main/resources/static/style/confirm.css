@@ -1,0 +1,78 @@
+@charset "UTF-8";
+ .ag-theme-quartz .ag-cell {
+	padding-left: 8px;
+  	padding-right: 8px;
+}
+/* 기본 모달 스타일 */
+.cute-alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right:0;
+    bottom:0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.cute-alert-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.cute-alert-box {
+    background: #fff;
+    border-radius: 10px;
+    width: 350px;
+    max-width: 90%;
+    text-align: center;
+    padding: 20px;
+    position: relative;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    animation: scaleIn 0.3s ease forwards;
+}
+
+@keyframes scaleIn {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.cute-alert-icon {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 10px;
+}
+
+.cute-alert-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.cute-alert-message {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.cute-alert-buttons button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 5px;
+    margin: 0 5px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.cute-alert-buttons .confirm-btn {
+    background-color: #4CAF50;
+    color: #fff;
+}
+
+.cute-alert-buttons .cancel-btn {
+    background-color: #f44336;
+    color: #fff;
+}

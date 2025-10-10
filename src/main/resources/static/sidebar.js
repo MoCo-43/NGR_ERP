@@ -78,8 +78,7 @@ const MENUS = {
         title: "영업관리현황",
         items: [
           ["거래명세서", "/sales/statement"],
-          ["주문서현황", "/sales/order/status"],
-          ["출하지시서현황", "/sales/shipping/status"],
+          ["거래장부", "/sales/order/status"],
         ],
       },
     ],

@@ -1,52 +1,131 @@
-<div class="modal fade" id="certFormModal" tabindex="-1" aria-hidden="true" th:fragment="certFormModal">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content">
+<div class="modal fade" id="certFormModal" tabindex="-1"
+	aria-hidden="true" th:fragment="certFormModal">
+	<div class="modal-dialog modal-lg modal-dialog-scrollable">
+		<div class="modal-content">
 
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold">사원 자격증 등록</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
-      </div>
+			<div class="modal-header">
+				<h5 class="modal-title fw-bold">사원 자격증 등록</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"
+					aria-label="닫기"></button>
+			</div>
 
-      <div class="modal-body">
-        <form id="certFormDetail" onsubmit="return false;">
-          <input type="hidden" name="empId" id="certEmpId"/>
+			<div class="modal-body">
+				<form id="certFormDetail" onsubmit="return false;">
+					<input type="hidden" name="empId" id="certEmpId" />
+					<div class="row g-3">
+						<div class="col-12">
+							<label class="form-label">자격증명 <span class="text-danger">*</span></label>
+							<input type="text" name="certName" class="form-control"
+								placeholder="예) 지게차 운전 기능사" required>
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">등급</label> <input type="text"
+								name="grade" class="form-control" placeholder="예) 1급/기사/기능사 등">
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">발급기관</label> <input type="text"
+								name="orgName" class="form-control" placeholder="예) 한국산업인력공단">
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">취득일</label> <input type="date"
+								name="acquiredAt" class="form-control">
+						</div>
+						<div class="col-md-6">
+							<label class="form-label">유효기간</label> <input type="date"
+								name="expiresAt" class="form-control">
+						</div>
+						<div class="col-12">
+							<label class="form-label">비고</label>
+							<textarea name="remarks" class="form-control" rows="3"></textarea>
+						</div>
+					</div>
+				</form>
+			</div>
 
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label">자격증명 <span class="text-danger">*</span></label>
-              <input type="text" name="certName" class="form-control" placeholder="예) 지게차 운전 기능사" required>
-            </div>
+			<div class="modal-footer">
+				<button type="button" id="btnCertSave" class="btn btn-primary">저장</button>
+				<button type="button" class="btn btn-secondary"
+					data-bs-dismiss="modal">닫기</button>
+			</div>
+		</div>
+	</div>
 
-            <div class="col-md-6">
-              <label class="form-label">등급</label>
-              <input type="text" name="grade" class="form-control" placeholder="예) 1급/기사/기능사 등">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">발급기관</label>
-              <input type="text" name="orgName" class="form-control" placeholder="예) 한국산업인력공단">
-            </div>
+	<script>
+    (function(){
+      const $=(id)=>document.getElementById(id);
+      const state={ empId:'' };
 
-            <div class="col-md-6">
-              <label class="form-label">취득일</label>
-              <input type="date" name="acquiredAt" class="form-control">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">유효기간</label>
-              <input type="date" name="expiresAt" class="form-control">
-            </div>
+      async function fetchCert(empId){
+        const res = await fetch('/api/hr/cert?empId=' + encodeURIComponent(empId));
+        if (!res.ok) throw new Error('자격증 조회 실패');
+        return res.json();
+      }
+      function renderCert(list){
+        const tbody=$('certTbody'); const cnt=$('certRowCount');
+        if (!tbody) return;
+        if (!list?.length){
+          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">등록된 자격증이 없습니다.</td></tr>';
+          if (cnt) cnt.textContent='0건';
+          return;
+        }
+        tbody.innerHTML = list.map(r=>`
+          <tr data-id="${r.certNo ?? r.CERT_NO}">
+            <td>${r.certNo ?? r.CERT_NO}</td>
+            <td class="flex-grow-2">${r.certName ?? r.CERT_NAME ?? ''}</td>
+            <td>${r.grade ?? r.GRADE ?? ''}</td>
+            <td>${r.orgName ?? r.ORG_NAME ?? ''}</td>
+            <td>${r.acquiredAt ?? r.ACQUIRED_AT ?? ''}</td>
+            <td>${r.expiresAt  ?? r.EXPIRES_AT  ?? ''}</td>
+            <td>${r.remarks ?? r.REMARKS ?? ''}</td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger cert-del">삭제</button></td>
+          </tr>
+        `).join('');
+        if (cnt) cnt.textContent = `${list.length}건`;
+      }
+      async function refresh(){
+        if (!state.empId) return renderCert([]);
+        renderCert(await fetchCert(state.empId));
+      }
+      function clearForm(){ $('certFormDetail')?.reset(); $('certEmpId') && ( $('certEmpId').value = state.empId || '' ); }
 
-            <div class="col-12">
-              <label class="form-label">비고</label>
-              <textarea name="remarks" class="form-control" rows="3"></textarea>
-            </div>
-          </div>
-        </form>
-      </div>
+      // 삭제 버튼(행 내부)
+      document.addEventListener('click', async (e)=>{
+        const btn=e.target;
+        if (!(btn instanceof Element) || !btn.classList.contains('cert-del')) return;
+        const no = btn.closest('tr')?.dataset.id;
+        if (!no) return;
+        if (!confirm('삭제하시겠습니까?')) return;
+        const res = await fetch('/api/hr/cert/' + no, { method:'DELETE' });
+        if (!res.ok) return alert('삭제 실패');
+        refresh();
+      });
 
-      <div class="modal-footer">
-        <button type="button" id="btnCertSave" class="btn btn-primary">저장</button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-      </div>
-    </div>
-  </div>
+      // 저장
+      $('btnCertSave')?.addEventListener('click', async (e)=>{
+        const form=$('certFormDetail');
+        const payload=Object.fromEntries(new FormData(form).entries());
+        if (!payload.empId) return alert('사번이 없습니다.');
+        if (!payload.certName){ form.certName.focus(); return; }
+        const btn=e.currentTarget; btn.disabled=true;
+        try{
+          const res=await fetch('/api/hr/cert', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error('저장 실패');
+          (bootstrap.Modal.getInstance($('certFormModal')) || new bootstrap.Modal($('certFormModal'))).hide();
+          await refresh();
+          alert('저장되었습니다.');
+        }catch(err){ alert(err?.message || '저장 실패'); }
+        finally{ btn.disabled=false; }
+      });
+
+      // === 공개 API ===
+      window.CertForm = {
+        setEmpId(id){ state.empId=id||''; if ($('certEmpId')) $('certEmpId').value = state.empId; },
+        refresh, clear(){ clearForm(); renderCert([]); },
+        open(){ (new bootstrap.Modal($('certFormModal'))).show(); }
+      };
+    })();
+  </script>
 </div>

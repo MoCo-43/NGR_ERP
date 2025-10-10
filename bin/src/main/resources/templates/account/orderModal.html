@@ -1,0 +1,143 @@
+
+
+<div th:fragment="orderModal">
+  <div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">발주서 조회</h5>
+          <button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- AG Grid -->
+          <div id="orderGrid" class="ag-theme-quartz"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+<style>
+  #orderGrid.ag-theme-quartz {
+  height: 400px;
+  width: 100%;
+}
+</style>
+<script>
+let orderModal;
+let orderGridApi = null;
+
+// ✅ 발주서 데이터 로드
+async function loadOrderData() {
+  try {
+    const compCode = Number(document.getElementById("compCode")?.value); 
+    const res = await axios.get('/api/account/orders', { withCredentials: true });
+    if (orderGridApi) {
+      orderGridApi.setRowData(res.data || []);
+      orderGridApi.sizeColumnsToFit();
+    }
+  } catch (err) {
+    console.error("발주서 데이터 조회 실패", err);
+    alert("발주서 데이터를 불러올 수 없습니다.");
+  }
+}
+
+function initOrderGrid() {
+  const gridDiv = document.querySelector("#orderModal #orderGrid");
+  if (!gridDiv) return;
+	
+  const gridOptions = {
+    columnDefs: [
+        { headerName: "발주코드", field: "orderCode" },
+        { headerName: "거래처명", field: "businessPartner" },
+        { headerName: "거래처코드", field: "cusCode" },
+        { headerName: "제품명", field: "productName" },
+        { headerName: "발주수량", field: "amount" },
+        { headerName: "공급가액", field: "supAmt" },
+        { headerName: "세율유형", field: "vatType" },
+    ],
+    rowData: [],   // ✅ 더미데이터 제거
+    rowSelection: "single",
+    defaultColDef: { resizable: true, sortable: true },
+    onGridReady: e => {
+      orderGridApi = e.api;
+      orderGridApi.sizeColumnsToFit();
+      loadOrderData();   // ✅ Grid 준비되면 데이터 불러오기
+    },
+    onRowDoubleClicked: async e => {
+      // 선택값 반영
+      document.getElementById("orderCode").value = e.data.orderCode ?? "";
+      document.getElementById("cusCodeInput").value = e.data.cusCode ?? "";
+      document.getElementById("cusNameInput").value = e.data.businessPartner ?? "";
+      
+      try {
+    	    const res = await axios.get(`/api/account/orders/${e.data.orderCode}/details`, {
+    	      withCredentials: true
+    	    });
+
+    	    // ✅ invoiceGrid에 반영
+    	    if (invoiceGridApi) {
+    	      invoiceGridApi.setRowData(res.data.map(d => ({
+    	        productCode: d.productCode,
+    	        productName: d.productName,
+    	        price: d.orderPrice,
+    	        qty: d.qty,
+    	        supply: d.supAmt,
+    	        vat: d.vatAmt,
+    	        note: ""   // 발주에는 없음 → 공란
+    	      })));
+
+    	      // pinned 합계 다시 세팅
+    	      let subtotal = 0;
+    	      let vatTotal = 0;
+    	      res.data.forEach(item => {
+    	        subtotal += Number(item.supAmt) || 0;
+    	        vatTotal += Number(item.vatAmt) || 0;
+    	      });
+
+    	      invoiceGridApi.setPinnedBottomRowData([{
+    	        supply: "합계",
+    	        vat: subtotal + vatTotal
+    	      }]);
+    	    }
+    	  } catch (err) {
+    	    console.error("발주 상세 불러오기 실패", err);
+    	    alert("발주 상세 불러오기 실패");
+    	  }
+      
+      
+      // 모달 닫고 → 전표 모달 다시 열기
+      orderModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("orderModal"));
+      orderModal.hide();
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("invoiceModal")).show();
+    }
+  };
+
+  new agGrid.Grid(gridDiv, gridOptions);
+}
+
+// DOM 이벤트 연결
+document.addEventListener("DOMContentLoaded", () => {
+  const orderModalEl = document.getElementById("orderModal");
+  if (!orderModalEl) return;
+
+  orderModal = bootstrap.Modal.getOrCreateInstance(orderModalEl);
+
+  document.getElementById("btnOrderLookup").addEventListener("click", () => {
+    orderModal.show();
+  });
+
+  orderModalEl.addEventListener("shown.bs.modal", () => {
+    if (!orderGridApi) initOrderGrid();
+    else {
+      orderGridApi.sizeColumnsToFit();
+      loadOrderData(); // ✅ 다시 열릴 때마다 최신 데이터
+    }
+  });
+});
+</script>
+</div>
+

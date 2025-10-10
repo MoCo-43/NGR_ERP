@@ -135,9 +135,9 @@ ORDER BY d.DO_CREATED DESC
       (DO_NO, CUS_CODE, PO_ID, DO_CODE, EMP_NO, NAME, DO_CREATED,
        TOTAL_QTY, DO_STATUS, NOTES, COMPANY_CODE, EX_DATE, ADDR, ZIP_CODE)
     VALUES
-      (DO_NO_SEQ.NEXTVAL, #{cusCode}, #{poId}, FN_DO_CODE(),
-       #{empNo}, #{name}, TO_DATE(#{doCreated}, 'YYYY-MM-DD'),
-       #{totalQty}, #{doStatus}, #{notes}, #{companyCode}, TO_DATE(#{exDate}, 'YYYY-MM-DD'),
+      (DO_NO_SEQ.NEXTVAL, #{cusCode}, 11, FN_DO_CODE(),
+       #{empNo}, #{name}, #{doCreated},
+       #{totalQty}, #{doStatus}, #{notes}, #{companyCode}, #{exDate},
        #{addr}, #{zipCode})
 
     <foreach collection="dodetails" item="dod">

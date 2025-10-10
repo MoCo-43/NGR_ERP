@@ -56,11 +56,9 @@
 	background: #dbeafe;
 	color: #1d4ed8;
 } /* 매입(P) 파랑 */
-
-#btnRegisterDetail{
+#btnRegisterDetail {
 	display: none;
 }
-
 </style>
 </th:block>
 </head>
@@ -75,19 +73,17 @@
 				<!-- 버튼 영역 -->
 				<div class="btn-bar">
 					<button class="btn btn-danger btn-sm open-invoice"
-						data-bs-toggle="modal" data-bs-target="#invoiceModal"
-						data-type="S">매출</button>
+						data-bs-toggle="modal" data-bs-target="" data-type="S">매출</button>
 					<button class="btn btn-primary btn-sm open-invoice"
 						data-bs-toggle="modal" data-bs-target="#invoiceModal"
 						data-type="P">매입</button>
-					<button class="btn btn-success btn-sm open-taxinvoice"
-						data-bs-toggle="modal" data-bs-target="#taxInvoiceModal">전자세금</button>
+					<button id="openTaxInvoiceBtn" class="btn btn-success btn-sm">
+						전자세금</button>
 				</div>
 
 				<!-- 전표 목록 Grid -->
 				<div id="voucherGrid" class="ag-theme-quartz"></div>
-				<div id="actionBar" class="d-flex justify-content-end gap-2 my-2"
-					>
+				<div id="actionBar" class="d-flex justify-content-end gap-2 my-2">
 					<button id="btnRegisterDetail" type="button"
 						class="btn btn-primary btn-sm">등록</button>
 				</div>
@@ -97,6 +93,7 @@
 		</div>
 		<!-- ✅ 모달 fragment include -->
 		<div th:replace="~{account/invoiceModal :: invoiceModal}"></div>
+	
 		<div th:replace="~{account/taxInvoiceModal :: taxInvoiceModal}"></div>
 		<div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
 		<div th:replace="~{hr/codeLookup :: codeLookupModal}"></div>
@@ -111,10 +108,18 @@
 		<script th:inline="none">
   let voucherApi, detailApi;
   let selectedInvoice = null; // ✅ 현재 선택한 상단 전표행 저장
+  
+  // compCode받아놓기
+  axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+  .then(res => {
+  		document.getElementById("compCode").value = res.data;
+  	})
+    .catch(err => console.error(err));
+    
   // === 전표 데이터 불러오기 ===
   async function loadAndRenderVoucher() {
     try {
-      const { data } = await axios.get("/api/account/invoice");
+      const { data } = await axios.get("/api/account/headers");
       voucherApi.setGridOption("rowData", Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
@@ -127,6 +132,7 @@
     const voucherColumnDefs = [
       { headerName: "월", valueGetter: p => p.data?.invoiceDate ? new Date(p.data.invoiceDate).getMonth() + 1 : "", flex: .5 },
       { headerName: "일", valueGetter: p => p.data?.invoiceDate ? new Date(p.data.invoiceDate).getDate() : "", flex: .5 },
+      { headerName: "전표번호", field: "invoiceNo", flex: 1 },
 
       // ✅ 유형 컬럼만 배지로 렌더링
       {
@@ -141,8 +147,6 @@
         }
       },
 
-      { headerName: "전표번호", field: "invoiceNo", flex: 1 },
-      { headerName: "사업자번호", field: "bizNo", flex: 1 },
       { headerName: "거래처명", field: "cusName", flex: 1 },
       { headerName: "공급가액", field: "subtotalAmt", valueFormatter: p => p.value ? p.value.toLocaleString() : "", flex: 1 },
       { headerName: "부가세", field: "vatAmt", valueFormatter: p => p.value ? p.value.toLocaleString() : "", flex: 1 },
@@ -164,6 +168,7 @@
         detailApi.setGridOption("rowData", details);
         document.getElementById("detailGrid").style.display = "block";
         document.getElementById("btnRegisterDetail").style.display = "block";
+     
       }
     });
 
@@ -174,8 +179,8 @@
       { headerName: "계정과목", field: "acctName", flex: 1 },
       { headerName: "거래처코드", field: "partnerCode", flex: 1 },
       { headerName: "거래처", field: "partner", flex: 1 },
-      { headerName: "차변(출금)", field: "debit", flex: 1 },
-      { headerName: "대변(입금)", field: "credit", flex: 1 },
+      { headerName: "차변(출금)", field: "debit", flex: 1,valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
+      { headerName: "대변(입금)", field: "credit", flex: 1,valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
       { headerName: "적요", field: "note", flex: 1 }
     ];
 
@@ -210,27 +215,6 @@
   });
   
 
-//✅ 초기화 버튼 동작
-document.getElementById("resetInvoiceBtn")?.addEventListener("click", () => {
- const modalEl = document.getElementById("invoiceModal");
-
- // 모든 input, textarea, select 초기화
- modalEl.querySelectorAll("input, textarea, select").forEach(el => {
-   if (el.type === "date") {
-     el.value = ""; // 날짜는 공백 처리
-   } else if (el.tagName === "SELECT") {
-     el.selectedIndex = 0; // 첫번째 옵션으로
-   } else {
-     el.value = "";
-   }
- });
-
- // ag-grid 초기화
- const gridDiv = document.getElementById("invoiceGrid");
- if (gridDiv && gridDiv.api) {
-   gridDiv.api.setRowData([]); // 행 비우기
- }
-});
 
 // 오늘 날짜
 const todayStr = () => {
@@ -241,8 +225,6 @@ const todayStr = () => {
 	};
 
 // 디테일 그리드 등록 버튼 -> 일반 전표
-
- 
 document.getElementById("btnRegisterDetail").addEventListener("click", async (data) => {
 	 if (selectedInvoice?.postedFlag === 'Y') {
 		    alert("이미 등록된 전표입니다.");
@@ -280,7 +262,15 @@ document.getElementById("btnRegisterDetail").addEventListener("click", async (da
   }));
   try {
 	    await axios.post("/api/account/journalList", payload);
+
+	    // ✅ 전표 상태 업데이트 (posted_flag -> Y)
+	    await axios.put(`/api/account/invoice/${selectedInvoice.invoiceCode}/posted`, {
+	      postedFlag: "Y"
+	    });
+
 	    alert("저장 완료!");
+	    // 화면도 리프레시
+	    loadAndRenderVoucher();
 	  } catch (err) {
 	    console.error(err);
 	    alert("저장 실패");
@@ -291,8 +281,8 @@ document.getElementById("btnRegisterDetail").addEventListener("click", async (da
 
 </script>
 
-	<!-- 부서 모달 -->
-<script th:inline="none">
+		<!-- 부서 모달 -->
+		<script th:inline="none">
 document.addEventListener('DOMContentLoaded', () => {
   const invoiceModalEl = document.getElementById('invoiceModal');
   const btn = invoiceModalEl?.querySelector('#btnDeptLookup');
@@ -315,8 +305,92 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+	  const invoiceModalEl = document.getElementById('invoiceModal');
+	  const btn = invoiceModalEl?.querySelector('#btnBankLookup');
+	  if (!btn) return;
+
+	  // 중복 바인딩 방지
+	  if (btn.dataset.bound === '1') return;
+	  btn.dataset.bound = '1';
+
+	  btn.addEventListener('click', (e) => {
+	    e.preventDefault();
+	    e.stopPropagation();
+
+	    CodeLookup.open({
+	      groupId: 'BK',
+	      title:  '은행 선택',
+	      // 필요한대로 지정
+	      // targetId: 'deptCodeInput',
+	      targetNameId: 'bankNameInput',
+	    });
+	  });
+	});
+	
+	
+	// 모달 오픈 버튼
+	document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async () => {
+  if (!selectedInvoice) {
+    alert("전표를 선택하세요.");
+    return;
+  }
+
+  const invoiceCode = selectedInvoice.invoiceCode;
+
+  try {
+    const res = await axios.get(`/api/account/invoice/${invoiceCode}`);
+    const { header, lines } = res.data;
+    
+	if(header.type === "P"){
+	 // ✅ 헤더 정보 세팅
+	    document.getElementById("tiApprovalNo").textContent = header.bizNo || "-";
+	    document.getElementById("tiWriteDate").value = header.invoiceDate?.substring(0,10);
+		
+	    // 공급자
+	    document.getElementById("tiSuppBizNo").value = header.cusCode || "";
+	    document.getElementById("tiSuppName").value  = header.cusName || "";
+	    document.getElementById("tiSuppCeo").value  = header.buyerCeoName || "";
+	    document.getElementById("tiSuppAddr").value  = header.buyerAddr || "";
+	    document.getElementById("tiSuppType").value  = header.buyerBizType || "";
+	    document.getElementById("tiSuppBiz").value  = header.buyerBizCategory || "";
+	    document.getElementById("tiSuppEmail").value  = header.buyerEmail || "";
+	    // ✅ 합계
+	    document.getElementById("tiTotalAmt").value  = header.totalAmt || 0;
+	    document.getElementById("tiClaim").value     = header.totalAmt || 0;
+	 // ✅ 라인 세팅
+	    const tbody = document.getElementById("tiLines");
+	    tbody.innerHTML = "";
+	
+	    (lines || []).forEach(line => {
+	      const tr = document.createElement("tr");
+	      tr.innerHTML = `
+	        <td class="center">${new Date(header.invoiceDate).getMonth()+1}</td>
+	        <td class="center">${new Date(header.invoiceDate).getDate()}</td>
+	        <td>${line.productName || ""}</td>
+	        <td>${line.specification || ""}</td>
+	        <td class="right"><input type="number" value="${line.qty || 0}" style="width:100%;border:none;text-align:right"></td>
+	        <td class="right"><input type="number" value="${line.unitPrice || 0}" style="width:100%;border:none;text-align:right"></td>
+	        <td class="right ti-sup">${(line.supAmt || 0).toLocaleString()}</td>
+	        <td class="right ti-vat">${(line.vatAmt || 0).toLocaleString()}</td>
+	        <td>${line.note || ""}</td>
+	      `;
+	      tbody.appendChild(tr);
+	    });
+	}//end if
+	
+	
+    // ✅ 데이터 세팅 끝난 후 모달 열기
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("taxInvoiceModal")).show();
+
+  } catch (err) {
+    console.error("세금계산서 데이터 조회 실패", err);
+    alert("세금계산서 조회 실패");
+  }
+});
 </script>
 
-</th:block>
+	</th:block>
 </body>
 </html>

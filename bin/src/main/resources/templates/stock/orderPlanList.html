@@ -213,8 +213,14 @@ const orderPlansGrid = initGrid({
         { headerName: "거래처코드", field: "businessCode" },
         { headerName: "담당자", field: "empId" },
         { headerName: "제품명", field: "productName" },
-        { headerName: "수량", field: "amount" },
-        { headerName: "공급가액", field: "supAmt" },
+        { headerName: "수량", field: "amount", valueFormatter: (params) => {
+            if (params.value == null) return '';
+            return params.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          } },
+        { headerName: "공급가액", field: "supAmt",valueFormatter: (params) => {
+            if (params.value == null) return '';
+            return params.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          } },
         { headerName: "세율유형", field: "taxType" },
         {  field: "orderSheetLink",
             cellRenderer: (params) => {

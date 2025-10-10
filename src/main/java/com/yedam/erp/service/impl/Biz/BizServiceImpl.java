@@ -65,7 +65,7 @@ public class BizServiceImpl implements BizService {
 	// 출하지시서 등록
 	@Override
 	public int insertDO(DoInsertVO dovo) {
-		return bizMapper.insertDo(dovo);
+		return bizMapper.insertDO(dovo);
 	}	
 	
 }

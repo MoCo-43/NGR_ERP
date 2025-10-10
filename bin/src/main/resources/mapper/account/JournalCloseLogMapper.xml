@@ -15,7 +15,8 @@
         debit_sum,
         credit_sum,
         created_by,
-        remarks
+        remarks,
+        status
     ) VALUES (
         seq_journal_close_log.NEXTVAL,
         #{companyCode},
@@ -24,7 +25,8 @@
         #{debitSum},
         #{creditSum},
         #{createdBy},
-        #{remarks}
+        #{remarks},
+        'closed'
     )
   </insert>
 

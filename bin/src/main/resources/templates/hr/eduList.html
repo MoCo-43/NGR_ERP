@@ -1,80 +1,115 @@
 <div id="eduList" th:fragment="eduList">
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <div class="edu-section compact">
-        <div class="edu-toolbar d-flex justify-content-between align-items-center">
-          <div class="fw-bold small text-secondary mb-0">사원 교육 리스트</div>
-          <button type="button"
-                  class="btn btn-primary btn-sm"
-                  id="btnEduAdd"
-                  data-bs-toggle="modal"
-                  data-bs-target="#eduFormModal">등록</button>
-        </div>
+	<div class="card shadow-sm">
+		<div class="card-body">
+			<div class="edu-section compact">
+				<div
+					class="edu-toolbar d-flex justify-content-between align-items-center">
+					<div class="fw-bold small text-secondary mb-0">사원 교육 리스트</div>
+					<button type="button" class="btn btn-primary btn-sm" id="btnEduAdd"
+						data-bs-toggle="modal" data-bs-target="#eduFormModal">등록</button>
+				</div>
 
-        <div class="table-responsive edu-scroll">
-          <table class="table table-hover table-sm align-middle edu-table w-100">
-            <colgroup>
-              <col style="width: 8%;"  />
-              <col style="width: 28%;" />
-              <col style="width: 10%;" />
-              <col style="width: 10%;" />
-              <col style="width: 8%;"  />
-              <col style="width: 12%;" />
-              <col style="width: 12%;" />
-              <col style="width: 12%;" />
-            </colgroup>
-            <thead class="table-light">
-              <tr>
-                <th class="sticky-th">번호</th>
-                <th class="sticky-th">교육명</th>
-                <th class="sticky-th">종류</th>
-                <th class="sticky-th">결과</th>
-                <th class="sticky-th">점수</th>
-                <th class="sticky-th">수료일</th>
-                <th class="sticky-th">유효기간</th>
-                <th class="sticky-th">삭제</th>
-              </tr>
-            </thead>
-            <tbody id="eduTbody"></tbody>
-          </table>
-        </div>
+				<div class="table-responsive edu-scroll">
+					<table
+						class="table table-hover table-sm align-middle edu-table w-100">
+						<colgroup>
+							<col style="width: 8%" />
+							<col style="width: 28%" />
+							<col style="width: 10%" />
+							<col style="width: 10%" />
+							<col style="width: 8%" />
+							<col style="width: 12%" />
+							<col style="width: 12%" />
+							<col style="width: 12%" />
+						</colgroup>
+						<thead class="table-light">
+							<tr>
+								<th class="sticky-th">번호</th>
+								<th class="sticky-th">교육명</th>
+								<th class="sticky-th">종류</th>
+								<th class="sticky-th">결과</th>
+								<th class="sticky-th">점수</th>
+								<th class="sticky-th">수료일</th>
+								<th class="sticky-th">유효기간</th>
+								<th class="sticky-th">삭제</th>
+							</tr>
+						</thead>
+						<tbody id="eduTbody"></tbody>
+					</table>
+				</div>
 
-        <div class="d-flex justify-content-end small text-secondary">
-          <span id="eduRowCount">0건</span>
-        </div>
-      </div>
-    </div>
-  </div>
+				<div class="d-flex justify-content-end small text-secondary">
+					<span id="eduRowCount">0건</span>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 
 <style>
-  .edu-section{display:flex;flex-direction:column}
-  .edu-section.compact{row-gap:4px}
-  .edu-toolbar{margin:0!important;padding:0!important}
+.edu-section {
+	display: flex;
+	flex-direction: column
+}
 
-  .edu-scroll{
-    max-height:360px;overflow:auto;margin:0!important;padding:0!important;
-    scrollbar-gutter:stable both-edges
-  }
+.edu-section.compact {
+	row-gap: 4px
+}
 
-  .edu-table{
-    table-layout:fixed;margin:0!important;border-collapse:separate;border-spacing:0;
-    font-size:.925rem
-  }
+.edu-toolbar {
+	margin: 0;
+	padding: 0
+}
 
-  .edu-table th,.edu-table td{
-    box-sizing:border-box;padding:.45rem .5rem;vertical-align:middle;
-    overflow:hidden;text-overflow:ellipsis;
-    text-align:left; /* 전체 기본 왼쪽 정렬 */
-  }
+.edu-scroll {
+	max-height: 360px;
+	overflow: auto;
+	margin: 0;
+	padding: 0;
+	scrollbar-gutter: stable both-edges
+}
 
-  .edu-table td:nth-child(2){
-    white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-    line-height:1.28;max-height:calc(1.28em*2)
-  }
-  .edu-table td:not(:nth-child(2)){white-space:nowrap}
+.edu-table {
+	table-layout: fixed;
+	margin: 0;
+	border-collapse: separate;
+	border-spacing: 0;
+	font-size: .925rem
+}
 
-  .sticky-th{position:sticky;top:0;z-index:2;background:#f8f9fa;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+.edu-table th, .edu-table td {
+	box-sizing: border-box;
+	padding: .45rem .5rem;
+	vertical-align: middle;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: left
+}
 
-  .btn-edu-del{padding:2px 8px;line-height:1.2}
+/* 교육명: 2줄까지만 보이기 */
+.edu-table td:nth-child(2) {
+	white-space: normal;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	line-height: 1.28;
+	max-height: calc(1.28em * 2)
+}
+
+.edu-table td:not(:nth-child(2)) {
+	white-space: nowrap
+}
+
+.sticky-th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background: #f8f9fa;
+	box-shadow: 0 1px 0 rgba(0, 0, 0, .06)
+}
+
+.btn-edu-del {
+	padding: 2px 8px;
+	line-height: 1.2
+}
 </style>
