@@ -15,7 +15,7 @@
           <input type="text" id="pf_total" class="form-control" readonly>
         </div>
 
-        <!-- ⚠️ 모달 푸터 ID 중복 방지: empModalFooter 사용 금지 -->
+        <!-- 모달 푸터: 바깥 모달 푸터와 ID 중복 방지 -->
         <div class="modal-footer" id="pf_footer">
           <button type="button" class="btn btn-success" id="pf_saveBtn">저장</button>
           <button type="button" class="btn btn-secondary" id="pf_closeBtn" data-bs-dismiss="modal">닫기</button>
@@ -27,9 +27,10 @@
   <script>
   (function(){
     // 숫자 포맷
-    const formatter = new Intl.NumberFormat('ko-KR');
+    const nf = new Intl.NumberFormat('ko-KR');
+    const toNum = (s)=> Number(String(s||'').replace(/,/g,'')) || 0;
 
-    // CSRF
+    // CSRF 헤더(있으면 붙임)
     const CSRF_TOKEN  = document.querySelector('meta[name="_csrf"]')?.content;
     const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.content;
     const hdr = () => {
@@ -38,46 +39,29 @@
       return h;
     };
 
-    const toNum = (s)=> Number(String(s||'').replace(/,/g,'')) || 0;
-
+    // 합계
     function calcTotal(){
       let sum = 0;
       document.querySelectorAll('#payFixForm input[data-allow-code]').forEach(el=>{
         sum += toNum(el.value);
       });
       const out = document.getElementById('pf_total');
-      if(out) out.value = sum ? formatter.format(sum) : '';
+      if (out) out.value = sum ? nf.format(sum) : '';
     }
 
-    function attachNumeric(el){
-      el.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
-      el.addEventListener('input', e => {
-        e.target.value = toNum(e.target.value) ? formatter.format(toNum(e.target.value)) : '';
+    // 금액 입력 이벤트
+    function bindMoneyInput(el){
+      el.addEventListener('keydown', e=>{ if (e.key === 'Enter') e.preventDefault(); });
+      el.addEventListener('input',  e=>{
+        e.target.value = toNum(e.target.value) ? nf.format(toNum(e.target.value)) : '';
         calcTotal();
       });
-      el.addEventListener('blur', e => {
-        e.target.value = toNum(e.target.value) ? formatter.format(toNum(e.target.value)) : '';
+      el.addEventListener('blur',   e=>{
+        e.target.value = toNum(e.target.value) ? nf.format(toNum(e.target.value)) : '';
       });
     }
 
-    // ✅ 고정 코드 조회 (백엔드에서 세션의 회사코드(String, 예: COM001)로 필터링되어야 함)
-    async function fetchFixedCodes(){
-      const res = await fetch('/api/v1/pay-allow-codes/fixed', { headers: hdr() });
-      if (!res.ok) {
-        const msg = `코드 조회 실패 (HTTP ${res.status})`;
-        throw new Error(msg);
-      }
-      return res.json(); // [{allowCode, allowName, ...}]
-    }
-
-    async function fetchEmpItems(empId){
-      if (!empId) return [];
-      const url = `/api/v1/emps/${encodeURIComponent(empId)}/pay-fix/items`;
-      const res = await fetch(url, { headers: hdr() });
-      if (!res.ok) return [];
-      return res.json(); // [{empAllowCode, empAllowPay, ...}]
-    }
-
+    // 안내 배지
     function badge(kind, text){
       const div = document.createElement('div');
       div.className = 'col-12';
@@ -86,34 +70,56 @@
       return div;
     }
 
-    async function renderFields(){
+    // 동적 필드 초기화
+    function clearDynamic(){
+      const row = document.getElementById('pf_row');
+      row?.querySelectorAll('[data-dynamic="payfix"]').forEach(el => el.remove());
+    }
+
+    // 단일 엔드포인트에서 코드+값 받아 필드 렌더
+    async function renderFromItems(empId){
       const row = document.getElementById('pf_row');
       const footer = document.getElementById('pf_footer');
-      // 기존 동적 요소 제거
-      row.querySelectorAll('[data-dynamic="payfix"]').forEach(el => el.remove());
+      clearDynamic();
 
-      const loading = badge('secondary','코드 불러오는 중…');
-      row.insertBefore(loading, footer);
-
-      let codes = [];
-      try {
-        codes = await fetchFixedCodes();
-      } catch (e) {
-        console.error(e);
-        loading.replaceWith(badge('danger', e.message || '코드 조회 실패'));
+      if (!empId) {
+        // 신규 사원: 사번 아직 없으면 안내만
+        row.insertBefore(badge('info','사번을 먼저 저장한 뒤 급여지급사항을 등록하세요.'), footer);
+        document.getElementById('pf_saveBtn')?.setAttribute('disabled','disabled');
+        document.getElementById('pf_total').value = '';
         return;
       }
+      document.getElementById('pf_saveBtn')?.removeAttribute('disabled');
 
+      // 로딩
+      const loading = badge('secondary','항목 불러오는 중…');
+      row.insertBefore(loading, footer);
+
+      // 호출 (⭐ 이 엔드포인트 하나만 사용)
+      const url = `/api/v1/emps/${encodeURIComponent(empId)}/pay-fix/items`;
+      let items = [];
+      try{
+        const res = await fetch(url, { headers: hdr() });
+        if (!res.ok) throw new Error(`조회 실패 (HTTP ${res.status})`);
+        items = await res.json(); // [{empAllowCode, empAllowLabel, empAllowPay, ...}]
+      }catch(e){
+        console.error(e);
+        loading.replaceWith(badge('danger', e.message || '항목 조회 실패'));
+        return;
+      }
       loading.remove();
 
-      if (!Array.isArray(codes) || codes.length === 0) {
+      if (!Array.isArray(items) || items.length === 0){
         row.insertBefore(badge('warning','표시할 고정 수당 코드가 없습니다.'), footer);
         return;
       }
 
-      codes.forEach(c => {
-        const code  = c.allowCode || c.allow_code;
-        const label = (c.allowLabel || c.allowName || c.allow_name || code || '').trim();
+      // 필드 렌더
+      items.forEach(it=>{
+        const code  = String(it.empAllowCode ?? it.allowCode ?? '').trim();
+        const label = String(it.empAllowLabel ?? it.allowName ?? code).trim();
+        const val   = Number(it.empAllowPay ?? 0);
+
         const col = document.createElement('div');
         col.className = 'col-md-6';
         col.dataset.dynamic = 'payfix';
@@ -123,34 +129,22 @@
                  id="pf_${code}"
                  class="form-control"
                  data-allow-code="${code}"
-                 data-allow-label="${label}">
+                 data-allow-label="${label}"
+                 value="${val ? nf.format(val) : ''}">
         `;
         row.insertBefore(col, footer);
-        attachNumeric(col.querySelector('input'));
+        bindMoneyInput(col.querySelector('input'));
       });
 
       calcTotal();
     }
 
-    async function fillValues(empId){
-      try {
-        const items = await fetchEmpItems(empId);
-        const map = new Map(items.map(it => [String(it.empAllowCode), Number(it.empAllowPay || 0)]));
-        document.querySelectorAll('#payFixForm input[data-allow-code]').forEach(el=>{
-          const v = map.get(el.dataset.allowCode) || 0;
-          el.value = v ? formatter.format(v) : '';
-        });
-        calcTotal();
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
+    // 저장
     async function saveAll(){
       const hid = document.getElementById('pf_emp_id');
       if (hid && !hid.value) hid.value = document.getElementById('f_emp_id')?.value || '';
       const empId = hid?.value || '';
-      if (!empId) return alert('사번이 없습니다.');
+      if (!empId) throw new Error('사번이 없습니다. 기본사항을 먼저 저장하세요.');
 
       const items = Array.from(document.querySelectorAll('#payFixForm input[data-allow-code]')).map(el => ({
         empId,
@@ -164,36 +158,37 @@
       if (!res.ok) throw new Error(`저장 실패 (HTTP ${res.status})`);
     }
 
-    // 외부에서 쓰는 API
+    // 공개 API
     window.__payFix = {
       async init(empId){
         const finalId = empId || (document.getElementById('f_emp_id')?.value || '');
         (document.getElementById('pf_emp_id')).value = finalId;
-        await renderFields();
-        await fillValues(finalId);
+        await renderFromItems(finalId); // ✅ 이 한 방으로 렌더+값 채움
       },
       clear(){
-        document.querySelectorAll('#payFixForm input[data-allow-code], #pf_total')
-          .forEach(el => el.value = '');
+        clearDynamic();
+        document.querySelector('#pf_total')?.value = '';
       },
       async save(){
-        try{
-          await saveAll();
-          alert('저장되었습니다.');
-        }catch(e){
-          console.error(e);
-          alert(e.message || '저장 중 오류');
-        }
+        await saveAll(); // 알림은 버튼/모달 쪽에서
       }
     };
 
-    document.getElementById('pf_saveBtn')?.addEventListener('click', ()=>window.__payFix.save());
+    // 버튼
+    document.getElementById('pf_saveBtn')?.addEventListener('click', async ()=>{
+      try{
+        await window.__payFix.save();
+        alert('저장되었습니다.');
+      }catch(e){
+        alert(e?.message || '저장 중 오류');
+      }
+    });
     document.getElementById('pf_closeBtn')?.addEventListener('click', (e)=>{
       const modalEl = e.target.closest('.modal');
-      try {
+      try{
         const inst = (window.bootstrap && bootstrap.Modal.getInstance(modalEl)) || (modalEl ? new bootstrap.Modal(modalEl) : null);
         inst?.hide();
-      } catch {}
+      }catch(_){}
     });
   })();
   </script>
