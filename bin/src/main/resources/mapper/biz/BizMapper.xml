@@ -32,12 +32,13 @@ LEFT JOIN
 LEFT JOIN
     PO_DETAIL pod ON p.PO_ID = pod.PO_ID
 LEFT JOIN
-    (SELECT PO_ID, COUNT(*) as cnt FROM PO_DETAIL GROUP BY PO_ID) pd_counts
+    (SELECT PO_ID, COUNT(*) as cnt 
+     FROM PO_DETAIL 
+     GROUP BY PO_ID)pd_counts
 ON
     p.PO_ID = pd_counts.PO_ID
-WHERE p.COMPANY_CODE = #{companyCode}
-ORDER BY
-    p.PO_START DESC
+WHERE c.COMPANY_CODE = #{companyCode} AND p.COMPANY_CODE = #{companyCode} AND pod.COMPANY_CODE = #{companyCode}
+ORDER BY PO_START DESC
 </select>
 
 
@@ -45,11 +46,11 @@ ORDER BY
 <insert id="insertPO" parameterType="PoInsertVO">
   INSERT ALL
     INTO purchase_order (
-      PO_ID, COMPANY_CODE, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
+      PO_ID, COMPANY_CODE, PO_CODE, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
       TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
     )
     VALUES (
-      PO_ID_SEQ.NEXTVAL, #{companyCode},
+      PO_ID_SEQ.NEXTVAL, #{companyCode}, FN_PO_CODE(#{poStart}),
       #{cusCode}, #{cusName}, #{creater}, #{poStart}, #{exDate}, #{poDate},
       #{totalPrice}, '작성완료',
       #{payMethod}, #{notes}, #{vatType}, #{poType}
@@ -109,6 +110,7 @@ SELECT
     d.TOTAL_QTY,
     d.EX_DATE,
     d.DO_STATUS
+
 FROM DELIVERY_ORDER d
 JOIN CUSTOMER c
   ON d.CUS_CODE = c.CUS_CODE
@@ -116,10 +118,34 @@ JOIN DO_DETAIL dd
   ON d.DO_NO = dd.DO_NO
 JOIN PRODUCT p
   ON dd.PRODUCT_CODE = p.PRODUCT_CODE
-WHERE d.COMPANY_CODE = #{companyCode} AND dd.COMPANY_CODE = #{companyCode} AND p.COMPANY_CODE = #{companyCode} AND c.COMPANY_CODE = #{companyCode}
+
+WHERE d.COMPANY_CODE = #{companyCode}
+
 GROUP BY
     d.DO_CODE, d.DO_CREATED, c.CUS_CODE, c.CUS_NAME,
     d.TOTAL_QTY, d.EX_DATE, d.DO_STATUS
 ORDER BY d.DO_CREATED DESC
 </select>
+
+<!-- 출하지시서 등록 -->
+<insert id="insertDO" parameterType="DoInsertVO">
+  INSERT ALL
+    INTO DELIVERY_ORDER
+      (DO_NO, CUS_CODE, PO_ID, DO_CODE, EMP_NO, NAME, DO_CREATED,
+       TOTAL_QTY, DO_STATUS, NOTES, COMPANY_CODE, EX_DATE)
+    VALUES
+      (DO_NO_SEQ.NEXTVAL, #{cusCode}, #{poId}, FN_DO_CODE(),
+       #{empNo}, #{name}, TO_DATE(#{doCreated}, 'YYYY-MM-DD'),
+       #{totalQty}, #{doStatus}, #{notes}, #{companyCode}, TO_DATE(#{exDate}, 'YYYY-MM-DD'))
+
+    <foreach collection="dodetails" item="dod">
+      INTO DO_DETAIL
+        (DOD_NO, DO_NO, PRODUCT_CODE, QTY, UNIT_PRICE, SUP_AMT, VAT_AMT, DC_PRICE, COMPANY_CODE)
+      VALUES
+        (DOD_NO_SEQ.NEXTVAL, DO_NO_SEQ.CURRVAL, #{dod.productCode}, #{dod.qty},
+         #{dod.unitPrice}, #{dod.supAmt}, #{dod.vatAmt}, #{dod.dcPrice}, #{dod.companyCode})
+    </foreach>
+  SELECT 1 FROM DUAL
+</insert>
+
 </mapper>

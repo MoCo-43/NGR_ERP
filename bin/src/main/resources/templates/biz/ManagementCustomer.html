@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title layout:fragment="title">거래처 조회</title>
+
+    <th:block layout:fragment="head_extra">
+      <!-- Bootstrap -->
+      <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        crossorigin="anonymous"
+      />
+      <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+        rel="stylesheet"
+      />
+
+      <!-- AG Grid -->
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
+      />
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
+      />
+
+      <!-- Toastr -->
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"
+      />
+
+      <style>
+        .card-header h5 {
+          font-weight: 700;
+        }
+        .btn-slim {
+          padding: 0.375rem 0.75rem;
+          min-width: 96px;
+        }
+        .filter-card {
+          border: 1px solid #e5e7eb;
+          background: #fafafa;
+        }
+        .filter-label {
+          font-weight: 600;
+        }
+        #customerGrid.ag-theme-quartz {
+          height: 430px;
+          width: 100%;
+        }
+        .hint {
+          font-size: 12px;
+          color: #6b7280;
+        }
+        .badge-num {
+          background: #e5e7eb;
+          color: #111827;
+          border-radius: 6px;
+          padding: 0.1rem 0.45rem;
+          font-weight: 600;
+        }
+      </style>
+    </th:block>
+  </head>
+
+  <body>
+    <section layout:fragment="content">
+      <div class="card shadow">
+        <!-- 헤더 -->
+        <div
+          class="card-header d-flex align-items-center justify-content-between"
+        >
+          <h5 class="mb-0">거래처 조회</h5>
+          <div class="d-flex gap-2">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-slim"
+              id="btnReset"
+            >
+              <i class="bi bi-arrow-counterclockwise me-1"></i>초기화
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-slim"
+              id="btnSearch"
+            >
+              <i class="bi bi-search me-1"></i>등록
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- (1)(2)(3) 필터 영역 -->
+          <div class="card filter-card p-3 mb-3">
+            <div class="d-flex align-items-center mb-2">
+              <span class="badge-num me-2">1</span>
+              <span class="filter-label">사용여부</span>
+            </div>
+            <div class="row g-3 align-items-center mb-3">
+              <div class="col-auto">
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="useYn"
+                    id="useAll"
+                    value=""
+                    checked
+                  />
+                  <label class="form-check-label" for="useAll">전체</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="useYn"
+                    id="useY"
+                    value="Y"
+                  />
+                  <label class="form-check-label" for="useY">Y</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="useYn"
+                    id="useN"
+                    value="N"
+                  />
+                  <label class="form-check-label" for="useN">N</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center mb-2">
+              <span class="badge-num me-2">2</span>
+              <span class="filter-label">상세조건</span>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">상호</label>
+                <input
+                  type="text"
+                  id="qName"
+                  class="form-control"
+                  placeholder="거래처명(상호)"
+                />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">대표자명</label>
+                <input
+                  type="text"
+                  id="qRep"
+                  class="form-control"
+                  placeholder="대표자명"
+                />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">사업자번호</label>
+                <input
+                  type="text"
+                  id="qBizNo"
+                  class="form-control"
+                  placeholder="000-00-00000"
+                />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">종목</label>
+                <input
+                  type="text"
+                  id="qType"
+                  class="form-control"
+                  placeholder="업종/종목"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- (4) 목록 그리드 -->
+          <div class="d-flex align-items-center mb-2">
+            <span class="badge-num me-2">4</span>
+            <span class="filter-label">거래처 리스트</span>
+          </div>
+          <div id="customerGrid" class="ag-theme-quartz"></div>
+        </div>
+      </div>
+
+      <!-- Toast -->
+      <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
+        <div
+          id="successToast"
+          class="toast align-items-center text-bg-success border-0"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          <div class="toast-body" id="toastMessage">완료되었습니다.</div>
+        </div>
+      </div>
+    </section>
+
+    <th:block layout:fragment="body_extra">
+      <script
+        src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"
+      ></script>
+      <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      ></script>
+      <script
+        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"
+      ></script>
+      <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"
+      ></script>
+
+      <script th:inline="none">
+        document.addEventListener("DOMContentLoaded", () => {
+          // ====== 그리드 정의 ======
+          const columnDefs = [
+            {
+              headerName: "거래처코드",
+              field: "cusCode",
+              width: 130,
+              pinned: "left",
+            },
+            {
+              headerName: "거래처명",
+              field: "cusName",
+              minWidth: 160,
+              flex: 1,
+            },
+            { headerName: "대표자명", field: "repName", width: 110 },
+            { headerName: "전화번호", field: "tel", width: 140 },
+            { headerName: "주소", field: "addr", minWidth: 220, flex: 1 },
+            {
+              headerName: "사용여부",
+              field: "useYn",
+              width: 100,
+              cellClass: "text-center",
+              valueFormatter: (p) =>
+                p.value === "Y" ? "Y" : p.value === "N" ? "N" : "",
+            },
+            { headerName: "비고", field: "remark", minWidth: 140, flex: 1 },
+          ];
+
+          const gridOptions = {
+            columnDefs,
+            rowData: [],
+            defaultColDef: { sortable: true, resizable: true },
+            animateRows: true,
+            rowSelection: "single",
+            onGridReady: (e) => e.api.sizeColumnsToFit(),
+          };
+
+          const gridDiv = document.getElementById("customerGrid");
+          new agGrid.Grid(gridDiv, gridOptions);
+
+          // ====== DOM ======
+          const qName = document.getElementById("qName");
+          const qRep = document.getElementById("qRep");
+          const qBizNo = document.getElementById("qBizNo");
+          const qType = document.getElementById("qType");
+          const btnSearch = document.getElementById("btnSearch");
+          const btnReset = document.getElementById("btnReset");
+
+          // 사용여부
+          const useRadio = () =>
+            document.querySelector('input[name="useYn"]:checked')?.value ?? "";
+
+          // ====== 동작 ======
+          btnSearch.addEventListener("click", search);
+          btnReset.addEventListener("click", () => {
+            document.getElementById("useAll").checked = true;
+            qName.value = "";
+            qRep.value = "";
+            qBizNo.value = "";
+            qType.value = "";
+            gridOptions.api.setRowData([]);
+          });
+
+          async function search() {
+            try {
+              const params = {
+                useYn: useRadio(),
+                name: qName.value?.trim() || "",
+                rep: qRep.value?.trim() || "",
+                bizNo: qBizNo.value?.trim() || "",
+                type: qType.value?.trim() || "",
+              };
+              // 백엔드에 맞게 URL/파라미터 수정
+              const res = await axios.get("/api/sales/customers", {
+                params,
+                withCredentials: true,
+              });
+              const rows = Array.isArray(res.data) ? res.data : [];
+
+              // 이 부분에서 필드 매핑을 맞춰줘 (예: 서버 응답 키 → 화면 키)
+              const mapped = rows.map((r) => ({
+                cusCode: r.cusCode ?? r.code ?? "",
+                cusName: r.cusName ?? r.name ?? "",
+                repName: r.repName ?? r.ceo ?? "",
+                tel: r.tel ?? r.phone ?? "",
+                addr:
+                  r.addr ?? [r.addr1, r.addr2].filter(Boolean).join(" ") ?? "",
+                useYn: r.useYn ?? r.enabled ?? "",
+                remark: r.remark ?? r.note ?? "",
+              }));
+
+              gridOptions.api.setRowData(mapped);
+              toastr.success("조회가 완료되었습니다");
+            } catch (e) {
+              console.error(e);
+              toastr.error("조회 중 오류가 발생했습니다");
+            }
+          }
+
+          // 첫 진입 시 전체 조회가 필요하면 주석 해제
+          // search();
+        });
+      </script>
+    </th:block>
+  </body>
+</html>

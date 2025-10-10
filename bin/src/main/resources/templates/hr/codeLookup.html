@@ -1,4 +1,3 @@
-<!-- templates/hr/codeLookup.html -->
 <th:block th:fragment="codeLookupModal">
 	<!-- 공통코드 선택 모달 -->
 	<div class="modal fade" id="codeLookupModal" tabindex="-1"
@@ -14,15 +13,11 @@
 				</div>
 
 				<div class="modal-body p-2">
-					<!-- ag-Grid 컨테이너 -->
 					<div id="lookupGrid" class="ag-theme-quartz"
 						style="height: 300px; width: 100%;"></div>
 				</div>
 
 				<div class="modal-footer">
-					<small class="text-secondary me-auto">행을 <b>더블클릭</b>하면
-						선택됩니다.
-					</small>
 					<button type="button" class="btn btn-secondary"
 						data-bs-dismiss="modal">닫기</button>
 				</div>
@@ -31,70 +26,73 @@
 		</div>
 	</div>
 
-<style>
-
-.code-lookup-dialog {
-  max-width: 360px !important;  
-}
-
+	<style>
 #lookupGrid.ag-theme-quartz {
-  --ag-row-height: 28px;
-  --ag-header-height: 30px;
-  font-size: 12px;
+	--ag-row-height: 28px;
+	--ag-header-height: 30px;
+	font-size: 12px;
 }
 </style>
 
-
 	<script>
-    // 전역 네임스페이스
+    // 전역 네임스페이스 유지 
     window.CodeLookup = (function () {
-      let bsModal;
-      let gridApi;
-      let gridInitialized = false;
+      let bsModal = null;
+      let gridApi  = null;
 
-      // 현재 컨텍스트: groupId=RK/PO/BK, targetId(코드ID 넣을 인풋), targetNameId(코드명 넣을 인풋)
-      let current = { groupId:'RK', title:'공통코드 선택', targetId:null, targetNameId:null };
+      const MODAL_ID = 'codeLookupModal';
+      const GRID_ID  = 'lookupGrid';
+      const API_COMMON = '/api/common-codes';
+      const API_DEPT   = '/api/hr/dept';
 
-      // ====== 외부에서 호출: CodeLookup.open({...}) ======
-    async function open(opts = {}) {
-  current.groupId      = opts.groupId      || current.groupId;
-  current.source       = opts.source       || null;   
-  current.title        = opts.title        || titleByGroup(current.groupId);
-  current.targetId     = opts.targetId     || null;
-  current.targetNameId = opts.targetNameId || null;
+      // 현재 컨텍스트
+      const current = {
+        groupId: 'RK',   
+        source:  null,   
+        title:   '공통코드 선택',
+        targetId: null,
+        targetNameId: null
+      };
 
-        // 제목 세팅
+      async function open(opts = {}) {
+        current.groupId      = opts.groupId      || current.groupId;
+        current.source       = opts.source       || null;
+        current.title        = opts.title        || titleByGroup(current.groupId);
+        current.targetId     = opts.targetId     || null;
+        current.targetNameId = opts.targetNameId || null;
+
         const titleEl = document.getElementById('codeLookupTitle');
         if (titleEl) titleEl.textContent = current.title;
 
-        // 모달 준비 및 표시
-        const modalEl = document.getElementById('codeLookupModal');
-        bsModal = bsModal || new bootstrap.Modal(modalEl);
+        const modalEl = document.getElementById(MODAL_ID);
+        if (!bsModal) bsModal = new bootstrap.Modal(modalEl);
         bsModal.show();
 
         await refresh();
       }
 
-      // ====== 유틸: 그룹별 기본 타이틀 ======
-      function titleByGroup(gid){
-        if(gid === 'RK') return '직급 선택';
-        if(gid === 'PO') return '직책 선택';
-        if(gid === 'BK') return '은행 선택';
-        return '공통코드 선택';
+      // 그룹별 기본 타이틀
+      function titleByGroup(gid) {
+        switch (gid) {
+          case 'RK': return '직급 선택';
+          case 'PO': return '직책 선택';
+          case 'BK': return '은행 선택';
+          default:   return '공통코드 선택';
+        }
       }
 
-      // ====== 그리드 초기화 / 재생성 ======
-      function initGrid(rows){
-        const gridDiv = document.getElementById('lookupGrid');
+      // 그리드 초기화
+      function initGrid(rows) {
+        const gridDiv = document.getElementById(GRID_ID);
 
-        // 컬럼: 기본(코드ID/코드명/사용), BK(은행명만)
         const defaultCols = [
-          { headerName:'코드(ID)', field:'codeId', width:120 },
+          { headerName:'코드(ID)', field:'codeId',   width:120 },
           { headerName:'코드명',   field:'codeName', flex:1, minWidth:200 },
-          { headerName:'사용',     field:'useYn', width:100 }
+          { headerName:'사용',     field:'useYn',    width:100 }
         ];
         const bankCols = [
-          { headerName:'은행명', field:'codeName', flex:1, minWidth:240 }
+          { headerName:'은행코드', field:'codeId', width:120 },
+          { headerName:'은행명',   field:'codeName', flex:1, minWidth:240 }
         ];
         const columnDefs = (current.groupId === 'BK') ? bankCols : defaultCols;
 
@@ -105,30 +103,27 @@
           paginationPageSize: 10,
           animateRows: true,
           defaultColDef: { resizable:true, sortable:true },
-          onRowDoubleClicked: (p)=> pick(p.data)
+          onRowDoubleClicked: (p) => pick(p.data)
         };
 
-        // 이전 인스턴스 있으면 정리
-        if (gridApi && typeof gridApi.destroy === 'function') {
+        if (gridApi?.destroy) {
           gridApi.destroy();
           gridApi = null;
         }
 
-        // ag-Grid v31+: createGrid, 구버전: new Grid
-        if (window.agGrid && typeof window.agGrid.createGrid === 'function') {
+        // ag-Grid
+        if (window.agGrid?.createGrid) {
           gridApi = window.agGrid.createGrid(gridDiv, gridOptions);
         } else {
           new agGrid.Grid(gridDiv, gridOptions);
           gridApi = gridOptions.api;
         }
-        gridInitialized = true;
       }
 
-      // ====== 선택 처리 (더블클릭) ======
-      function pick(row){
+      // 더블클릭 선택
+      function pick(row) {
         if (!row) return;
 
-        // 코드ID(예: BK는 숫자코드), 코드명(예: 신한은행/과장/팀장)
         if (current.targetId) {
           const t = document.getElementById(current.targetId);
           if (t) { t.value = row.codeId ?? ''; t.dispatchEvent(new Event('change')); }
@@ -138,32 +133,33 @@
           if (n) { n.value = row.codeName ?? ''; n.dispatchEvent(new Event('change')); }
         }
 
-        // 외부에서 필요하면 이벤트 구독
-        window.dispatchEvent(new CustomEvent('code-picked', { detail: { ...row, ...current }}));
-
+        window.dispatchEvent(new CustomEvent('code-picked', { detail: { ...row, ...current } }));
         if (bsModal) bsModal.hide();
       }
 
-      async function refresh(){
-    	  let rows = [];
-    	  if (current.source === 'dept') {
-    	    const res = await fetch('/api/hr/dept');
-    	    const raw = res.ok ? await res.json() : [];
-    	    rows = raw.map(r => ({
-    	      codeId:   r.dept_code,
-    	      codeName: r.dept_name,
-    	      useYn:    r.use_yn
-    	    }));
-    	  } else {
-    	    const url = '/api/common-codes?groupId=' + encodeURIComponent(current.groupId);
-    	    const res = await fetch(url);
-    	    rows = res.ok ? await res.json() : [];
-    	  }
-
-    	  // ✅ 꼭 필요
-    	  initGrid(rows);
-    	}
-      
+      // 데이터 로드
+      async function refresh() {
+        try {
+          if (current.source === 'dept') {
+            const res = await fetch(API_DEPT);
+            const raw = res.ok ? await res.json() : [];
+            const rows = Array.isArray(raw) ? raw.map(r => ({
+              codeId:   r.dept_code,
+              codeName: r.dept_name,
+              useYn:    r.use_yn
+            })) : [];
+            initGrid(rows);
+          } else {
+            const url = `${API_COMMON}?groupId=${encodeURIComponent(current.groupId)}`;
+            const res = await fetch(url);
+            const rows = res.ok ? await res.json() : [];
+            initGrid(rows);
+          }
+        } catch (e) {
+          console.error('code lookup load error:', e);
+          initGrid([]);
+        }
+      }
 
       return { open };
     })();

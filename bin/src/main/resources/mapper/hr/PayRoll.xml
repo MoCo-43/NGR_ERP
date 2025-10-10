@@ -5,8 +5,6 @@
 
 <mapper namespace="com.yedam.erp.mapper.hr.PayrollMapper">
 
-  <!-- ======================== ResultMaps ======================== -->
-
   <!-- 급여대장 기본 정보 -->
   <resultMap id="PayrollBaseMap" type="com.yedam.erp.vo.hr.PayrollVO">
     <id     property="payrollNo"   column="payroll_no" />
@@ -304,7 +302,7 @@
       VALUES (s.payroll_no, s.emp_id, s.deduct_code, s.deduct_amount)
   </insert>
 
-  <!-- 부서 확정 합계 업서트 (CONFIRM 시 호출) -->
+  <!-- 부서 확정 합계 업서트 -->
   <insert id="insertDeptPayrollSum" parameterType="com.yedam.erp.vo.hr.PayrollDeptSumVO">
     MERGE INTO DEPT_PAYROLL_SUM d
     USING (

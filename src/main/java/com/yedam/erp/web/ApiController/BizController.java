@@ -14,6 +14,7 @@ import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.Biz.BizService;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
+import com.yedam.erp.vo.Biz.DoDetailVO;
 import com.yedam.erp.vo.Biz.DoInsertVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
 import com.yedam.erp.vo.Biz.PoDetailVO;
@@ -96,6 +97,11 @@ public class BizController {
     // 세션에서 회사코드 꺼내오기
     Long companyCode = SessionUtil.companyId();
     dovo.setCompanyCode(companyCode);
+    
+    // Detail테이블 settings
+    for(DoDetailVO detail : dovo.getDodetails()) {
+    	detail.setCompanyCode(companyCode);
+    }
 
     int result = service.insertDO(dovo);
     return ResponseEntity.ok(result);

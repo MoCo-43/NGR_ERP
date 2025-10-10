@@ -1,29 +1,35 @@
 <!-- 승인/역분개 서명 모달 -->
 <div th:fragment="signModal">
-  <div class="modal fade" id="signModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header py-2">
-          <h6 class="modal-title">전자결재 서명</h6>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-2 small text-muted">마우스(또는 터치)로 박스 안에 서명해 주세요.</div>
-          <div class="border rounded position-relative" style="height:280px;">
-            <canvas id="signCanvas" style="width:100%;height:100%;display:block;"></canvas>
-          </div>
-        </div>
-        <div class="modal-footer py-2">
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnSignClear">지우기</button>
-          <div class="flex-grow-1"></div>
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">취소</button>
-          <button type="button" class="btn btn-primary btn-sm" id="btnSignSave">저장</button>
-        </div>
-      </div>
-    </div>
-  </div>
+	<div class="modal fade" id="signModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header py-2">
+					<h6 class="modal-title">전자결재 서명</h6>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="닫기"></button>
+				</div>
+				<div class="modal-body">
+					<div class="mb-2 small text-muted">마우스(또는 터치)로 박스 안에 서명해 주세요.</div>
+					<div class="border rounded position-relative"
+						style="height: 280px;">
+						<canvas id="signCanvas"
+							style="width: 100%; height: 100%; display: block;"></canvas>
+					</div>
+				</div>
+				<div class="modal-footer py-2">
+					<button type="button" class="btn btn-outline-secondary btn-sm"
+						id="btnSignClear">지우기</button>
+					<div class="flex-grow-1"></div>
+					<button type="button" class="btn btn-secondary btn-sm"
+						data-bs-dismiss="modal">취소</button>
+					<button type="button" class="btn btn-primary btn-sm"
+						id="btnSignSave">저장</button>
+				</div>
+			</div>
+		</div>
+	</div>
 
-  <script th:inline="javascript">
+	<script th:inline="javascript">
     let signCanvas, signCtx;
     let signDrawing = false;
     let lastX = 0, lastY = 0;
@@ -85,10 +91,9 @@
     }
 
     // ===== 모달 열기 =====
-    function openSignModal(mode, idList) {
+  	window.openSignModal = function(mode, callback) {
       signMode = mode;
-      pendingIds = idList.slice();
-
+	
       if (!signCanvas) {
         signCanvas = document.getElementById('signCanvas');
         signCtx = signCanvas.getContext('2d');
@@ -100,17 +105,13 @@
         resizeSignCanvas();
         clearSignCanvas();
       }, { once: true });
-
       bootstrap.Modal.getOrCreateInstance(modalEl).show();
-    }
+      document.getElementById("btnSignSave")?.removeEventListener("click",saveSignature);	
+      document.getElementById("btnSignSave")?.addEventListener("click", ()=>{saveSignature(callback)});
+	}
 
     // ===== 저장 (승인/역분개 공통) =====
-    async function saveSignature() {
-      if (!pendingIds.length) {
-        alert(signMode === "approve" ? "승인 대상이 없습니다." : "역분개 대상이 없습니다.");
-        return;
-      }
-
+    async function saveSignature(callback) {
       const blob = await new Promise(res => signCanvas.toBlob(res, 'image/png', 1.0));
       const form = new FormData();
       form.append("file", blob, `signature_${Date.now()}.png`);
@@ -121,33 +122,20 @@
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         signPath = uploadRes?.data?.path || null;
+        callback(signPath);
+
       } catch (e) {
         console.error(e);
         alert('서명 업로드 실패');
         return;
       }
-
-      try {
-        if (signMode === "approve") {
-          await axios.put('/api/approval/journal/approve', { ids: pendingIds, signPath });
-          alert('승인 완료');
-        } else if (signMode === "reverse") {
-          await axios.post('/api/account/journal/reverse', { jrnNos: pendingIds, signPath });
-          alert('역분개 완료');
-        }
-
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('signModal')).hide();
-        loadVoucherList();
-      } catch (e) {
-        console.error(e);
-        alert('처리 실패');
-      }
     }
+
 
     // ===== 버튼 이벤트 =====
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("btnSignClear")?.addEventListener("click", clearSignCanvas);
-      document.getElementById("btnSignSave")?.addEventListener("click", saveSignature);
+  
     });
   </script>
 </div>

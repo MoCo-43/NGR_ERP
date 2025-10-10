@@ -328,10 +328,11 @@
         const shipDateEl = document.getElementById("shipDate");
         const addrEL = document.getElementById("sample4_roadAddress");
         const zipCodeEL = document.getElementById("sample4_postcode");
+
         document.addEventListener("DOMContentLoaded", () => {
           /* ==============================
-     [1] 유틸 함수
-     ============================== */
+             [1] 유틸 함수
+             ============================== */
           const parseNum = (v) =>
             Number(String(v ?? "").replace(/,/g, "")) || 0;
           const computeRow = (d) => {
@@ -341,8 +342,8 @@
           };
 
           /* ==============================
-     [2] 메인 품목 그리드 정의
-     ============================== */
+             [2] 메인 품목 그리드 정의
+             ============================== */
           let itemGridApi = null; // 전역 변수로 API 보관
 
           const itemColumnDefs = [
@@ -428,8 +429,8 @@
           new agGrid.Grid(document.getElementById("itemGrid"), itemGridOptions);
 
           /* ==============================
-     [3] 합계 처리
-     ============================== */
+             [3] 합계 처리
+             ============================== */
           const sumQty = document.getElementById("sumQty"),
             sumSupply = document.getElementById("sumSupply"),
             sumVat = document.getElementById("sumVat");
@@ -451,8 +452,8 @@
           window.updateSummary = updateSummary; // 모달에서도 호출 가능하도록 등록
 
           /* ==============================
-     [4] 버튼 이벤트 (행조작)
-     ============================== */
+             [4] 버튼 이벤트 (행조작)
+             ============================== */
           document.getElementById("btnAddRow").onclick = () => {
             itemGridApi.applyTransaction({
               add: [
@@ -496,9 +497,10 @@
           };
 
           /* ==============================
-     [5] 저장 버튼 (서버 전송)
-     ============================== */
+             [5] 저장 버튼 (서버 전송)
+             ============================== */
           document.getElementById("btnSave").onclick = async () => {
+            // === 헤더 영역 ===
             const header = {
               writeDate: writeDateEl.value,
               customerCode: customerCodeEl.value,
@@ -510,12 +512,15 @@
               zipCode: zipCodeEL.value,
               notes: document.getElementById("notes")?.value || "",
             };
+
+            // === 유효성 검사 ===
             if (!header.writeDate) return toastr.error("작성일자를 입력하세요");
             if (!header.customerName)
               return toastr.error("거래처를 입력하세요");
             if (!header.shipDate)
               return toastr.error("출하예정일을 입력하세요");
 
+            // === 품목 데이터 추출 ===
             const lineItems = [];
             itemGridApi.forEachNode((n) =>
               lineItems.push(computeRow({ ...n.data }))
@@ -523,11 +528,30 @@
             if (!lineItems.length)
               return toastr.error("품목을 1개 이상 추가하세요");
 
+            // === 서버로 보낼 JSON을 VO 구조에 맞게 변환 ===
+            const payload = {
+              cusCode: header.customerCode,
+              name: header.managerName,
+              doCreated: header.writeDate,
+              exDate: header.shipDate,
+              addr: header.addr,
+              zipCode: header.zipCode,
+              notes: header.notes ?? "",
+              companyCode: 1, // 세션에서 넣는다면 생략 가능
+              dodetails: lineItems.map((it) => ({
+                productCode: it.code,
+                qty: it.qty ?? 0,
+                unitPrice: it.price ?? 0,
+                supAmt: it.supplyAmt ?? 0,
+                vatAmt: it.vat ?? 0,
+                dcPrice: 0,
+                companyCode: "1", // detail에도 필수라면 넣기
+              })),
+            };
+
+            // === axios 전송 ===
             try {
-              await axios.post("/api/biz/doinsert", {
-                header,
-                items: lineItems,
-              });
+              await axios.post("/api/biz/doinsert", payload);
               toastr.success("등록되었습니다");
             } catch (e) {
               console.error(e);
@@ -537,10 +561,10 @@
         });
         /*
 
-                                        ======================== 품목코드 모달 ========================
+                                                ======================== 품목코드 모달 ========================
 
 
-                                  */
+                                          */
         const productModalEl = document.getElementById("productcodeModal");
         let productGridApi;
 
@@ -633,10 +657,10 @@
 
         /*
 
-         ======================== 거래처 모달 ========================
+                 ======================== 거래처 모달 ========================
 
 
-        */
+                */
         const customerModalEl = document.getElementById("customermodal");
         let customerGridApi = null;
 
@@ -706,10 +730,10 @@
 
         /*
 
-                        ======================== 주문서조회 모달 ========================
+                                ======================== 주문서조회 모달 ========================
 
 
-                        */
+                                */
         const poHistoryModalEl = document.getElementById("PoHistoryModal");
         let poHistoryGridApi;
         const poHistoryColumnDefs = [

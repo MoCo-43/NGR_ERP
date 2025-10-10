@@ -30,5 +30,5 @@ public interface BizMapper {
   // 출하지시서 조회
   List<DeliveryOrderVO> selectDo(Long companyCode);
   // 출하지시서 등록
-  int insertDo(DoInsertVO dovo);
+  int insertDO(DoInsertVO dovo);
 }

@@ -53,8 +53,7 @@
 
 	<!-- 전표번호 생성 (DB 함수 호출) -->
 	<select id="selectNextJrnNo" resultType="string">
-		SELECT
-		FN_NEXT_JRN_NO(SYSDATE) FROM dual
+		  SELECT FN_NEXT_VOUCHER_NO('J', SYSDATE) FROM dual
 	</select>
 
 	<insert id="insertJournal"

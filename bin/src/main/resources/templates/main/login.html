@@ -39,13 +39,13 @@
     <form th:action="@{/login}" method="post">
       <input type="hidden" name="role" id="role-input" value="USER">
       <div class="input-field">
-        <input type="text" name="comCode" placeholder="회사아이디" required>
+        <input type="text" name="comCode" placeholder="회사아이디" required value="n001">
       </div>
       <div class="input-field">
-        <input type="text" name="empId" placeholder="아이디" required>
+        <input type="text" name="empId" placeholder="아이디" required value="kim_user">
       </div>
       <div class="input-field">
-        <input type="password" name="empPw" placeholder="비밀번호" required>
+        <input type="password" name="empPw" placeholder="비밀번호" required value="1234">
       </div>
       <div class="input-field">
         <label>
@@ -53,12 +53,12 @@
         </label>
       </div>
 
-      <!-- Google reCAPTCHA -->
+      <!-- Google reCAPTCHA
       <div id="recaptcha-section" class="input-field">
         <div class="g-recaptcha" th:attr="data-sitekey=${@environment.getProperty('recaptcha.key.site')}"></div>
-      </div>
+      </div> -->
 
-      <!-- Naver CAPTCHA -->
+      <!-- Naver CAPTCHA 
       <div id="naver-captcha-section" class="input-field" style="display:none;">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <img id="captchaImage" alt="CAPTCHA" class="captcha-img" style="width: 150px; height: 50px;">
@@ -66,7 +66,7 @@
         </div>
         <input type="hidden" name="captchaKey" id="captchaKey">
         <input type="text" name="captchaValue" placeholder="보안문자 입력" style="margin-top: 10px;">
-      </div>
+      </div>-->
 
       <button type="submit" class="btn-primary">로그인</button>
     </form>
