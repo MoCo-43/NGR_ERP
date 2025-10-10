@@ -28,5 +28,4 @@ public class EmpLoginVO {
 	private String mustChangePw;
 	private EmpVO empVO; 
     private CompanyVO companyVO; 
-
 }

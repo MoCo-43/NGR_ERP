@@ -22,5 +22,7 @@ public interface SubscriptionService {
     void insertSubscriptionLog(SubLogVO logVO);
     //구독 내역
     List<SubscriptionVO> findSubscriptionsByComCode(String comCode);
-    SubscriptionVO findLatestSubscriptionByComCode(@Param("comCode") String comCode);
+    //SubscriptionVO findLatestSubscriptionByComCode(@Param("comCode") String comCode);
+    SubscriptionVO findLatestSubscriptionByMatNo(@Param("matNo") Long matNo);
+
 }

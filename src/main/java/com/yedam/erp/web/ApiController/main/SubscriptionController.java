@@ -131,15 +131,21 @@ public class SubscriptionController {
     public List<SubscriptionVO> getSubscriptionsForCompany(@RequestParam String comCode) {
         return subscriptionService.findSubscriptionsByComCode(comCode);
     }
-    @GetMapping("/sub/subList")
-    public String subList(@RequestParam String comCode, Model model) {
-        log.info("======> 컨트롤러 실행됨. 전달받은 comCode: {}", comCode);
+    @GetMapping("/admin/subList{matNo}")
+    // public String subList(@RequestParam(required = false) String comCode, Model model) { // 기존
+    public String subList(@RequestParam(required = false) Long matNo, Model model) { // Long matNo로 변경
+        log.info("======> 컨트롤러 실행됨. 전달받은 matNo: {}", matNo); // 로그 메시지 변경
 
-        // 1. 서비스에 comCode를 전달하여 가장 최신 구독 정보 1개를 요청합니다.
-        SubscriptionVO subscription = subscriptionService.findLatestSubscriptionByComCode(comCode);
-        // 2. 서비스로부터 받은 결과(SubscriptionVO 객체 또는 null)를 "subscription"이라는 이름으로 모델에 담습니다.
+        SubscriptionVO subscription = null;
+        if (matNo != null) { // matNo null 체크
+            // Service에 findLatestSubscriptionByMatNo(Long matNo)가 있으므로 바로 호출
+            subscription = subscriptionService.findLatestSubscriptionByMatNo(matNo);
+            log.info("======> 조회된 구독 정보: {}", subscription);
+        } else {
+            log.warn("matNo가 전달되지 않았습니다. 기본 페이지를 표시합니다.");
+        }
+
         model.addAttribute("subscription", subscription);
-        // 3. Spring에게 'main/submanager.html' 뷰 파일을 렌더링하라고 지시합니다.
-        return "main/submanager"; 
+        return "main/submanager";
     }
    }

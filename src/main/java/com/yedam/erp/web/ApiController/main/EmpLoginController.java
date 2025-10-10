@@ -26,7 +26,7 @@ public class EmpLoginController {
      * 사원 목록을 조회합니다. (부서별 검색 기능 포함)
      * hrmanager.html의 '검색' 버튼이 이 API를 호출합니다.
      */
-    @GetMapping
+    @GetMapping("/hrLists")
     public List<EmpVO> getEmployees(@RequestParam(required = false) String deptCode) {
         // 사원 정보 조회는 EmpService의 책임입니다.
         return empLoginService.findEmployeesByDept(deptCode);

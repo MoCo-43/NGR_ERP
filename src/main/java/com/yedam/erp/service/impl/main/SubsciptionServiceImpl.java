@@ -183,9 +183,9 @@ public class SubsciptionServiceImpl implements SubscriptionService {
 	}
 
 	@Override
-	public SubscriptionVO findLatestSubscriptionByComCode(String comCode) {
-	    log.info("DB 조회를 위해 전달된 comCode: [{}]", comCode); // 로그 추가
-		return subscriptionMapper.findLatestSubscriptionByComCode(comCode);
+	public SubscriptionVO findLatestSubscriptionByMatNo(Long matNo) {
+	    log.info("DB 조회를 위해 전달된 matNo: [{}]", matNo); // 로그 추가
+	    return subscriptionMapper.findLatestSubscriptionByMatNo(matNo);
 	}
 
 

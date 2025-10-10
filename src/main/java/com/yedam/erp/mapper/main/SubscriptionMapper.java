@@ -25,5 +25,5 @@ public interface SubscriptionMapper {
     //구독 내역
     List<SubscriptionVO> findSubscriptionsByComCode(String comCode);
     //구독최신내역 
-    SubscriptionVO findLatestSubscriptionByComCode(@Param("comCode") String comCode);
+    SubscriptionVO findLatestSubscriptionByMatNo(@Param("matNo") Long matNo);
 }

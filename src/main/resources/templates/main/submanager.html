@@ -4,7 +4,7 @@
       layout:decorate="~{layout/base}">
 
 <head>
-  <title layout:fragment="title">구독 관리 상세</title>
+  <title layout:fragment="title">구독 계정관리</title>
 
   <th:block layout:fragment="head_extra">
     <style>
@@ -129,27 +129,40 @@
       
       <div class="subscription-box">
         <div class="subscription-box-header">구독 패키지 확인</div>
-        <div id="detailPackage" class="package-button"></div>
-        <div class="module-container">
-          <div id="detailModule1" class="module-button"></div>
-          <div id="detailModule2" class="module-button"></div>
-        </div>
+        <div class="package-button" th:text="${subscription != null && subscription.subPlan != null} ? ${subscription.subPlan.planName} : '-'"></div>
+
+        <!--  <div class="module-container">
+          <div th:if="${subscription != null and subscription.subPlan != null and not #strings.isEmpty(subscription.subPlan.avaiModules)}">
+            
+            <th:block th:with="safeModules=${#strings.replace(#strings.trim(subscription.subPlan.avaiModules), ',\s*$', '')}">
+              
+              <div th:each="mod : ${#strings.split(safeModules, ',')}" 
+                   class="module-button" 
+                   th:text="${#strings.trim(mod)}"></div>
+            </th:block>
+            
+          </div>
+          <div th:if="${subscription == null || subscription.subPlan == null || #strings.isEmpty(subscription.subPlan.avaiModules)}" 
+               class="module-button">
+            사용 가능한 모듈이 없습니다.
+          </div>
+        </div>-->
       </div>
 
       <div class="subscription-box">
         <div class="subscription-box-header">계약 정보</div>
         <div class="contract-info-item">
           <label>기간</label>
-          <div id="mon" class="contract-info-field"></div>
+          <div class="contract-info-field" th:text="${subscription != null} ? ${subscription.mon} + '개월' : '-'"></div>
         </div>
         <div class="contract-date-group">
           <div class="contract-info-item">
             <label>구독 시작일</label>
-            <div id="startDate" class="contract-info-field"></div>
+            <div class="contract-info-field" th:text="${subscription != null} ? ${#dates.format(subscription.startDate, 'yyyy-MM-dd')} : '-'"></div>
           </div>
           <div class="contract-info-item">
             <label>구독 종료일</label>
-            <div id="endDate" class="contract-info-field"></div>
+            <div class="contract-info-field" th:text="${subscription != null} ? ${#dates.format(subscription.endDate, 'yyyy-MM-dd')} : '-'"></div>
           </div>
         </div>
       </div>
@@ -175,30 +188,5 @@
     </div>
   </div>
 </section>
-
-<script th:inline="javascript">
-  const subscription = /*[[${subscription}]]*/ {};
-  
-  if(subscription?.subPlan) {
-      document.getElementById('detailPackage').innerText = subscription.subPlan.planName || '-';
-
-      const moduleContainer = document.querySelector('.module-container');
-      moduleContainer.innerHTML = '';
-      const modules = subscription.subPlan.avaiModules?.split(',') || [];
-      modules.forEach(moduleName => {
-          if(moduleName.trim()) {
-              const div = document.createElement('div');
-              div.className = 'module-button';
-              div.innerText = moduleName.trim();
-              moduleContainer.appendChild(div);
-          }
-      });
-  }
-
-  document.getElementById('mon').innerText = subscription?.mon || '-';
-  document.getElementById('startDate').innerText = subscription?.startDate || '-';
-  document.getElementById('endDate').innerText = subscription?.endDate || '-';
-</script>
-
 </body>
 </html>
