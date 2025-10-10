@@ -115,7 +115,8 @@
 			</div>
 			 <input class="form-control" id="compCode" name="compCode" type="hidden">
 		</div>
-         
+         <input id="detailWriter" th:value="${#authentication.principal.empLoginVO.name}"
+									class="form-control form-control-sm" readonly type="hidden" />
 		<!-- 거래처 모달 fragment include -->
 		<div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
 		<div th:replace="~{account/accountModal :: accountModal}"></div>
@@ -126,7 +127,13 @@
 			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
 		<script
 			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
-		<script th:inline="none">
+ <script th:inline="javascript">
+    // ✅ 로그인 사용자 이름/ID 전역 변수로 선언
+    const loginId = /*[[${#authentication.principal.empLoginVO.empId}]]*/ "";
+    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+    console.log(loginName);
+  </script>
+<script th:inline="none">
 
 let gvApi;
 let selectedRowNode = null;
@@ -270,7 +277,7 @@ async function saveRow(data){
     currentJrnNo = newNo;
   }
   data.jrnNo = currentJrnNo;
-
+ 
   const payload = {
     jrnCode: data.jrnCode || null,   // ✅ jrnCode 추가
     jrnNo: data.jrnNo,
@@ -281,7 +288,7 @@ async function saveRow(data){
     amount: toNumber(data.amount),
     remarks: data.remarks || "",
     status: data.status || "open",
-    createdBy: data.createdBy || "",
+    createdBy: loginName || "",
     cusCode: data.cusCode || "",
     closeNo: data.closeNo ?? null
   };

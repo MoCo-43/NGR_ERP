@@ -16,4 +16,5 @@ public class JournalCloseLogVO {
     private String status;      // active/inactive
     private String createdBy;
     private String remarks;
+    private String jrnNo;
 }

@@ -406,7 +406,8 @@ SELECT
        ,BUSINESS_CODE
        ,BUSINESS_PARTNER
        ,QTY
-       ,DUE_DATE 
+       ,DUE_DATE
+       ,PURCHASE_PRICE 	
 FROM INBOUND 
 WHERE LOT_CODE = #{lotCode}
 

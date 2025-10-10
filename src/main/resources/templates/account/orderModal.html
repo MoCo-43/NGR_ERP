@@ -1,143 +1,177 @@
-
-
 <div th:fragment="orderModal">
-  <div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
+	<div class="modal fade" id="orderModal" tabindex="-1"
+		aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
 
-        <div class="modal-header">
-          <h5 class="modal-title">발주서 조회</h5>
-          <button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
+				<div class="modal-header">
+					<h5 class="modal-title">입고 조회</h5>
+					<button type="button" class="btn btn-light btn-sm border-0"
+						data-bs-dismiss="modal">
+						<i class="fas fa-times"></i>
+					</button>
+				</div>
 
-        <div class="modal-body">
-          <!-- AG Grid -->
-          <div id="orderGrid" class="ag-theme-quartz"></div>
-        </div>
+				<div class="modal-body">
+					<!-- AG Grid -->
+					<div id="orderListGrid" class="ag-theme-quartz mb-2"
+						style="height: 250px;"></div>
+					<div id="orderDetailGrid" class="ag-theme-quartz"
+						style="height: 200px;"></div>
+				</div>
 
-      </div>
-    </div>
-  </div>
-<style>
-  #orderGrid.ag-theme-quartz {
-  height: 400px;
-  width: 100%;
+			</div>
+		</div>
+	</div>
+
+	<style>
+#orderListGrid.ag-theme-quartz {
+	width: 100%;
+	height: 260px; /* 목록 */
+}
+
+#orderDetailGrid.ag-theme-quartz {
+	width: 100%;
+	height: 220px; /* 상세 */
+	margin-top: 8px;
 }
 </style>
-<script>
-let orderModal;
-let orderGridApi = null;
 
-// ✅ 발주서 데이터 로드
-async function loadOrderData() {
-  try {
-    const compCode = Number(document.getElementById("compCode")?.value); 
-    const res = await axios.get('/api/account/orders', { withCredentials: true });
-    if (orderGridApi) {
-      orderGridApi.setRowData(res.data || []);
-      orderGridApi.sizeColumnsToFit();
-    }
-  } catch (err) {
-    console.error("발주서 데이터 조회 실패", err);
-    alert("발주서 데이터를 불러올 수 없습니다.");
+	<script th:inline="none">
+//====== orderModal ←→ invoiceModal 연결용 전역 ======
+  let orderModal;        // bootstrap modal instance
+  let orderGridApi;      // 목록(list) 그리드 API (id: #orderListGrid)
+  let orderDetailApi;    // 상세(detail) 그리드 API (id: #orderDetailGrid)
+  let selectedOrderCode; // 입고번호(inboundCode)
+
+  // ====== 그리드 초기화 (모달 내부) ======
+  function initOrderGrid() {
+    const listDiv   = document.getElementById("orderListGrid");
+    const detailDiv = document.getElementById("orderDetailGrid");
+    if (!listDiv || !detailDiv) return;
+
+    const listOptions = {
+      columnDefs: [
+    	  { headerName: "No.", valueGetter: "node.rowIndex + 1", width: 70 },
+          { headerName: "입고일자", field: "inboundDate" },
+          { headerName: "LOT번호", field: "lotCode" },
+          { headerName: "공급처", field: "businessPartner" },
+          { headerName: "납기예정일자", field: "dueDate" }
+      ],
+      rowSelection: "single",
+      pagination: true,
+      paginationPageSize: 10,
+      onRowClicked: async (e) => {
+        selectedOrderCode = e.data?.lotCode;
+        if (selectedOrderCode) await loadOrderDetail(selectedOrderCode);
+      },
+      onRowDoubleClicked: async (e) => {
+        selectedOrderCode = e.data?.lotCode;
+        if (!selectedOrderCode) return;
+
+        const res = await axios.get(`/api/v1/stock/inDetailList/${selectedOrderCode}`, { withCredentials: true });
+
+        // ✅ invoiceModal로 반영
+        console.log(res.data);
+        applyOrderToInvoiceModal(e.data, res.data);
+
+        // 닫기
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("orderModal")).hide();
+      },
+      onGridReady: (e) => {
+        orderGridApi = e.api;
+        loadOrderData(); // 최초 로드
+      },
+      defaultColDef: { resizable: true, sortable: true, minWidth: 100 },
+    };
+
+    const detailOptions = {
+      columnDefs: [
+        { headerName: "제품코드", field: "productCode",   flex: 1 },
+        { headerName: "제품명",   field: "productName",   flex: 1 },
+        { headerName: "규격",     field: "specification", flex: 1 },
+        { headerName: "입고수량", field: "qty",           flex: 1 },
+      ],
+      pagination: false,
+      onGridReady: (e) => (orderDetailApi = e.api),
+      defaultColDef: { resizable: true, sortable: true, minWidth: 100 },
+    };
+
+    new agGrid.Grid(listDiv, listOptions);
+    new agGrid.Grid(detailDiv, detailOptions);
   }
-}
 
-function initOrderGrid() {
-  const gridDiv = document.querySelector("#orderModal #orderGrid");
-  if (!gridDiv) return;
-	
-  const gridOptions = {
-    columnDefs: [
-        { headerName: "발주코드", field: "orderCode" },
-        { headerName: "거래처명", field: "businessPartner" },
-        { headerName: "거래처코드", field: "cusCode" },
-        { headerName: "제품명", field: "productName" },
-        { headerName: "발주수량", field: "amount" },
-        { headerName: "공급가액", field: "supAmt" },
-        { headerName: "세율유형", field: "vatType" },
-    ],
-    rowData: [],   // ✅ 더미데이터 제거
-    rowSelection: "single",
-    defaultColDef: { resizable: true, sortable: true },
-    onGridReady: e => {
-      orderGridApi = e.api;
+  // 목록 재로딩(입고 헤더)
+  async function loadOrderData() {
+    if (!orderGridApi) return;
+    try {
+      const res = await axios.get("/api/v1/stock/inboundList", { withCredentials: true });
+      orderGridApi.setRowData(Array.isArray(res.data) ? res.data : []);
       orderGridApi.sizeColumnsToFit();
-      loadOrderData();   // ✅ Grid 준비되면 데이터 불러오기
-    },
-    onRowDoubleClicked: async e => {
-      // 선택값 반영
-      document.getElementById("orderCode").value = e.data.orderCode ?? "";
-      document.getElementById("cusCodeInput").value = e.data.cusCode ?? "";
-      document.getElementById("cusNameInput").value = e.data.businessPartner ?? "";
-      
-      try {
-    	    const res = await axios.get(`/api/account/orders/${e.data.orderCode}/details`, {
-    	      withCredentials: true
-    	    });
-
-    	    // ✅ invoiceGrid에 반영
-    	    if (invoiceGridApi) {
-    	      invoiceGridApi.setRowData(res.data.map(d => ({
-    	        productCode: d.productCode,
-    	        productName: d.productName,
-    	        price: d.orderPrice,
-    	        qty: d.qty,
-    	        supply: d.supAmt,
-    	        vat: d.vatAmt,
-    	        note: ""   // 발주에는 없음 → 공란
-    	      })));
-
-    	      // pinned 합계 다시 세팅
-    	      let subtotal = 0;
-    	      let vatTotal = 0;
-    	      res.data.forEach(item => {
-    	        subtotal += Number(item.supAmt) || 0;
-    	        vatTotal += Number(item.vatAmt) || 0;
-    	      });
-
-    	      invoiceGridApi.setPinnedBottomRowData([{
-    	        supply: "합계",
-    	        vat: subtotal + vatTotal
-    	      }]);
-    	    }
-    	  } catch (err) {
-    	    console.error("발주 상세 불러오기 실패", err);
-    	    alert("발주 상세 불러오기 실패");
-    	  }
-      
-      
-      // 모달 닫고 → 전표 모달 다시 열기
-      orderModal = bootstrap.Modal.getOrCreateInstance(document.getElementById("orderModal"));
-      orderModal.hide();
-      bootstrap.Modal.getOrCreateInstance(document.getElementById("invoiceModal")).show();
+    } catch (err) {
+      console.error("입고 목록 로드 실패", err);
     }
-  };
+  }
 
-  new agGrid.Grid(gridDiv, gridOptions);
-}
-
-// DOM 이벤트 연결
-document.addEventListener("DOMContentLoaded", () => {
-  const orderModalEl = document.getElementById("orderModal");
-  if (!orderModalEl) return;
-
-  orderModal = bootstrap.Modal.getOrCreateInstance(orderModalEl);
-
-  document.getElementById("btnOrderLookup").addEventListener("click", () => {
-    orderModal.show();
-  });
-
-  orderModalEl.addEventListener("shown.bs.modal", () => {
-    if (!orderGridApi) initOrderGrid();
-    else {
-      orderGridApi.sizeColumnsToFit();
-      loadOrderData(); // ✅ 다시 열릴 때마다 최신 데이터
+  // 상세 로딩(입고 상세)
+  async function loadOrderDetail(orderCode) {
+    if (!orderDetailApi) return;
+    try {
+      const res = await axios.get(`/api/v1/stock/inDetailList/${orderCode}`, { withCredentials: true });
+      orderDetailApi.setRowData(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("입고 상세 로드 실패", err);
     }
+  }
+
+  // invoiceModal에 적용 (이름/ID/변수 모두 order 그대로 유지)
+  function applyOrderToInvoiceModal(header, detailList) {
+    try {
+      // 헤더 반영
+      document.getElementById("orderCode").value   = header?.inboundCode ?? "";
+      document.getElementById("invoiceDate").value = header?.inboundDate ?? "";
+      document.getElementById("cusCodeInput").value = header?.businessCode ?? "";
+      document.getElementById("cusNameInput").value = header?.businessPartner ?? "";
+
+
+      // 라인 반영
+      if (window.invoiceGridApi && Array.isArray(detailList)) {
+        const rows = detailList.map(d => ({
+          productCode: d.productCode,
+          productName: d.productName,
+          qty:         d.qty,
+          price: d.purchasePrice,
+          supply: d.qty * d.purchasePrice,
+          vat: d.qty * d.purchasePrice * 0.1,
+        }));
+        window.invoiceGridApi.setRowData(rows);
+      }
+    } catch (err) {
+      console.error("invoiceModal 적용 중 오류", err);
+    }
+  }
+
+ 
+  document.addEventListener("DOMContentLoaded", () => {
+    const orderModalEl = document.getElementById("orderModal");
+    if (!orderModalEl) return;
+
+    orderModal = bootstrap.Modal.getOrCreateInstance(orderModalEl);
+
+    const openBtn = document.getElementById("btnOrderLookup");
+    if (openBtn && !openBtn.dataset.bound) {
+      openBtn.dataset.bound = "1"; // 중복 바인딩 방지
+      openBtn.addEventListener("click", () => orderModal.show());
+    }
+
+    orderModalEl.addEventListener("shown.bs.modal", () => {
+      if (!orderGridApi) {
+        initOrderGrid();  // 최초 초기화
+      } else {
+        orderGridApi.sizeColumnsToFit();
+        loadOrderData();  // ✅ 다시 열릴 때마다 최신 데이터
+      }
+    });
   });
-});
-</script>
+  </script>
 </div>
-

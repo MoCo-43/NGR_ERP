@@ -93,7 +93,7 @@ public class JournalServiceImpl implements JournalService {
     // 마감 제출 버튼
     @Override
     @Transactional
-    public int updateStatusBatch(List<String> jrnNoList, String status) {
+    public int updateStatusBatch(List<String> jrnNoList, String status,String createdBy) {
         Map<String, Object> params = new HashMap<>();
         params.put("jrnNoList", jrnNoList);
         params.put("status", status);
@@ -105,7 +105,7 @@ public class JournalServiceImpl implements JournalService {
                 SessionUtil.companyId(),
                 jrnNoList,
                 "closed", // ✅ "approve" 또는 "closed" 그대로 저장
-                SessionUtil.empId(),
+                createdBy,
                 "전표 승인"
             );
         return result;

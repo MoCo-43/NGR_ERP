@@ -100,8 +100,8 @@ const MENUS = {
           ["전표 마감", "/close"],
         ],
       },
-      { title: "손익계산서", items: [["손익계산서", "/acc/pl"]] },
-      { title: "재무상태표", items: [["재무상태표", "/acc/bs"]] },
+      { title: "손익계산서", items: [["손익계산서", "/income"]] },
+      { title: "재무상태표", items: [["재무상태표", "/balanceSheet"]] },
     ],
   },
   mains: {
