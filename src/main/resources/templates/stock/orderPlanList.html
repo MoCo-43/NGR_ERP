@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const searchProduct = document.getElementById('productName');
 	const tableBody = document.querySelector('#orderItemsTable tbody');
 	let productGrid = null; // 전역 변수
- 
+ 	let compCode = null; // compCode
  	let gridOptions = null;
  	let gridCreated = false;
  	let gridApi = null;
@@ -200,6 +200,12 @@ document.addEventListener("DOMContentLoaded", () => {
  	    new agGrid.Grid(eGridDiv, gridOptions);
  	    return { gridApi: gridOptions.api, gridOptions };
 }// END OF FUNCTION
+
+// 회사코드 불러오기
+axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+  .then(res => { compCode = res.data; })
+  .catch(err => console.error(err));
+
 
 // 발주 계획 리스트 
 const plansDiv = document.getElementById('orderPlansGrid');
@@ -285,7 +291,7 @@ async function openProductModal() {
 	            ],
 	            onGridReady: async (event) => {
 	                try {
-	                    const res = await axios.get("/api/v1/stock/productList");
+	                    const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
 	                    event.api.setRowData(res.data);
 	                } catch (err) {
 	                    console.error("제품리스트 데이터 로드 실패:", err);

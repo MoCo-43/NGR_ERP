@@ -2,7 +2,6 @@ package com.yedam.erp.service.impl.stock;
 
 import java.util.List;
 
-import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +9,7 @@ import com.yedam.erp.mapper.stock.StockMapper;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.stock.InboundVO;
 import com.yedam.erp.vo.stock.InvenDetailVO;
 import com.yedam.erp.vo.stock.InvenVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
@@ -140,6 +140,35 @@ public class StockImpl implements StockService{
 		// TODO Auto-generated method stub
 		
 	}
+
+
+	@Override
+	public List<InboundVO> getInboundList(Long companyCode) {
+		// TODO Auto-generated method stub
+		return mapper.getInboundList(companyCode);
+	}
+
+
+	@Override
+	public List<InboundVO> getInboundDetail(String selectedRow) {
+		// TODO Auto-generated method stub
+		return mapper.getInboundDetail(selectedRow);
+	}
+
+
+	@Override
+	public List<OrderDetailVO> getOrderDetailByXpCode(String orderCode) {
+		// TODO Auto-generated method stub
+		return mapper.getOrderDetailListByOrderCode(orderCode);
+	}
+
+	@Transactional
+	@Override
+	public void insertInbound(List<InboundVO> details) {
+        for (InboundVO detail : details) {
+            mapper.insertInbound(detail); // 단일 INSERT
+        }
+    }
 
 
 

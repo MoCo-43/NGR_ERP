@@ -69,7 +69,6 @@ public class WebSecurityConfig {
 //    public PersistentTokenRepository tokenRepository(DataSource dataSource) {
 //        return new MyTokenRepository(dataSource); // 커스텀 Repository 사용
 //    }
-//
 //				// 로그인 저장 -> 서버 재실행 로그인 유지
 //				.rememberMe(remember -> remember.tokenRepository(tokenRepository(dataSource))
 //						.tokenValiditySeconds(60 * 60 * 24 * 3) // 3일

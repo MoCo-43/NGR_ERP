@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.sql.DataSource;
@@ -33,6 +34,7 @@ import com.yedam.erp.service.JasperService;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.stock.InboundVO;
 import com.yedam.erp.vo.stock.InvenDetailVO;
 import com.yedam.erp.vo.stock.InvenVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
@@ -75,20 +77,43 @@ public class StockController {
 	        return empName;
 	}
 	
-	@GetMapping("/icList")
+	@GetMapping("/icList") // 결산 리스트
 	public List<InvenVO> getIcList(){
 		Long companyCode = SessionUtil.companyId();
 		System.out.println(companyCode);
 		return service.getIcList(companyCode);
 	}
 	
-	@GetMapping("/icDetailList/{selectedRow}")
+	@GetMapping("/icDetailList/{selectedRow}") // 결산 상세 리스트
 	public List<InvenDetailVO> getIcDetailList(@PathVariable String selectedRow){
 		Long companyCode = SessionUtil.companyId();
 		System.out.println(companyCode);
 		return service.getIcDetailList(companyCode,selectedRow);
 	}
 	
+	@GetMapping("/inboundList") // 입고 조회
+	public List<InboundVO> getInboundList(){
+		Long companyCode = SessionUtil.companyId();
+		System.out.println(companyCode);
+		return service.getInboundList(companyCode);
+	}
+	
+	@GetMapping("/inDetailList/{selectedRow}")
+	public List<InboundVO> getInDetail(@PathVariable String selectedRow) {
+		return service.getInboundDetail(selectedRow);
+	}
+	
+	@GetMapping("/orderDetail/{orderCode}")
+	public List<OrderDetailVO> getOrderDetailList(@PathVariable String orderCode){
+		return service.getOrderDetailByXpCode(orderCode);
+	}
+	
+	@PostMapping("/inboundInsert")
+	public ResponseEntity<?> insertInbound(@RequestBody Map<String, List<InboundVO>> payload) {
+	    List<InboundVO> details = payload.get("details"); // JS에서 보낸 배열
+	    service.insertInbound(details);
+	    return ResponseEntity.ok("등록 성공");
+	}
 	
 	
 //	@PostMapping("/requestOrderInsert")
