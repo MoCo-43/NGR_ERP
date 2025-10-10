@@ -24,7 +24,8 @@ public class EmpLoginVO {
 	private String token;
 	private String empMobile;
 	private String name;
+	private String email;
+	private String mustChangePw;
 	private EmpVO empVO; 
     private CompanyVO companyVO; 
-
 }

@@ -9,4 +9,29 @@
     FROM sub_plan
     WHERE sub_plan_no = #{subPlanNo}
 </select>
+<!-- 전체회사 구독내역 조회 -->
+<select id="sallerList" resultType="SubPlanVO">
+	  SELECT s.sub_code,
+           s.mat_no,
+           c.comp_name,
+           s.start_date,
+           s.end_date,
+           s.sub_status
+      FROM subscription s
+      LEFT JOIN company c ON s.mat_no = c.mat_no
+     ORDER BY s.start_date DESC
+</select>
+
+
+
+<resultMap id="subPlanResultMap" type="com.yedam.erp.vo.main.SubPlanVO">
+    <id property="subPlanNo" column="sub_plan_no"/>
+    <result property="planName" column="plan_name"/>
+    <result property="planBody" column="plan_body"/>
+    <result property="baseSalary" column="base_salary"/>
+    <association property="companyVO" javaType="com.yedam.erp.vo.main.CompanyVO">
+        <result property="comCode" column="com_code"/>
+        <result property="comName" column="com_name"/>
+    </association>
+</resultMap>
 </mapper>

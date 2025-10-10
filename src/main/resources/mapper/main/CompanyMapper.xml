@@ -68,4 +68,16 @@
         FROM company
         WHERE username = #{username}
     </select>
+        <select id="findByMatNo" parameterType="long" resultType="com.yedam.erp.vo.main.CompanyVO">
+        SELECT
+            mat_no, ceo, comp_name, mat_name, mat_mail,
+            comp_addr, comp_del_addr, jibun_address, com_code, brm, com_tel
+        FROM
+            company
+        WHERE
+            mat_no = #{matNo}
+    </select>
+    <select id="companyList" resultType="companyVO">
+    	select * from company
+    </select>
 </mapper>

@@ -1,9 +1,11 @@
 package com.yedam.erp.mapper.main;
 
+import java.util.List;
 import java.util.Map;
 
-import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
+import org.springframework.data.repository.query.Param;
+
 import com.yedam.erp.vo.main.SubscriptionVO;
 
 @Mapper
@@ -20,4 +22,8 @@ public interface SubscriptionMapper {
 
     // 사업자번호로 회사 정보 조회
     Map<String, Object> selectCompanyInfoByMatNo(Long matNo);
+    //구독 내역
+    List<SubscriptionVO> findSubscriptionsByComCode(String comCode);
+    //구독최신내역 
+    SubscriptionVO findLatestSubscriptionByMatNo(@Param("matNo") Long matNo);
 }

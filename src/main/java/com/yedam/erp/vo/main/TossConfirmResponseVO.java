@@ -9,5 +9,5 @@ public class TossConfirmResponseVO {
     private String paymentKey;
     private String orderId;
     private Long totalAmount;
-    // ... 필요한 다른 필드들을 추가할 수 있습니다. (예: 카드 정보, 가상계좌 정보 등)
+    //필요한 다른 필드들을 추가가능. (예: 카드 정보, 가상계좌 정보 등)
 }

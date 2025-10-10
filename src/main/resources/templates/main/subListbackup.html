@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<head>
+  <title layout:fragment="title">관리</title>
+
+  <th:block layout:fragment="head_extra">
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+    <style>
+      #companyGrid.ag-theme-quartz {
+        width: 100%;
+        height: 520px;
+      }
+      .selected-row {
+        background-color: #cce0ff !important;
+      }
+      .detail-box {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+      .search-box input {
+        max-width: 250px;
+      }
+    </style>
+  </th:block>
+</head>
+
+<body>
+  <section layout:fragment="content" class="p-4">
+    <h4 class="mb-3 fw-bold">회사목록</h4>
+
+    <!-- 검색 -->
+    <div class="d-flex mb-3 search-box">
+      <input type="text" id="searchInput" placeholder="담당자명" class="form-control me-2" />
+      <button class="btn btn-outline-primary" id="searchBtn">
+        <i class="bi bi-search"></i> 검색
+      </button>
+    </div>
+
+    <!-- ag-Grid -->
+    <div id="companyGrid" class="ag-theme-quartz"></div>
+
+    <!-- 상세정보 박스 -->
+    <div id="detailBox" class="detail-box" style="display: none;">
+      <h5 class="fw-bold mb-3">회사상세정보</h5>
+      <div class="row mb-2">
+        <div class="col-md-6"><strong>회사코드 :</strong> <span id="detailCode"></span></div>
+        <div class="col-md-6"><strong>회사명 :</strong> <span id="detailName"></span></div>
+      </div>
+      <div class="row mb-2">
+        <div class="col-md-6"><strong>대표자 :</strong> <span id="detailCeo"></span></div>
+        <div class="col-md-6"><strong>담당자 :</strong> <span id="detailManager"></span></div>
+      </div>
+      <hr>
+      <h6 class="fw-bold">고객사 맺은 구독내역</h6>
+      <div class="mt-2">
+        <p class="text-muted">구독내역이 여기에 표시됩니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <th:block layout:fragment="body_extra">
+    <script defer
+      src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+
+    <script>
+      const rowData = [
+        { code: 'co-001', name: '예담', ceo: '서강중', manager: '김유미', regDate: '2025-09-15', status: '계약' },
+        { code: 'co-002', name: '에코그린', ceo: '홍길동', manager: '이민지', regDate: '2025-08-10', status: '만료' },
+        // 실제 데이터는 axios로 가져오면 됩니다
+      ];
+
+      const columnDefs = [
+        {
+          headerName: '',
+          checkboxSelection: true,
+          headerCheckboxSelection: true,
+          maxWidth: 50,
+          pinned: 'left'
+        },
+        { field: 'code', headerName: '회사코드', minWidth: 100 },
+        { field: 'name', headerName: '회사명', minWidth: 150, flex: 1 },
+        { field: 'ceo', headerName: '대표자', minWidth: 120 },
+        { field: 'manager', headerName: '담당자', minWidth: 120 },
+        { field: 'regDate', headerName: '등록일', minWidth: 120 },
+        { 
+          field: 'status', 
+          headerName: '상태', 
+          minWidth: 100,
+          cellRenderer: p => {
+            const span = document.createElement('span');
+            span.className = 'badge ' + (p.value === '계약' ? 'bg-primary' : 'bg-secondary');
+            span.innerText = p.value;
+            return span;
+          }
+        },
+      ];
+
+      const gridOptions = {
+        columnDefs,
+        rowData,
+        rowSelection: 'single',
+        pagination: true,
+        paginationPageSize: 5,
+        animateRows: true,
+        onRowClicked: event => {
+          const data = event.data;
+          document.getElementById('detailCode').innerText = data.code;
+          document.getElementById('detailName').innerText = data.name;
+          document.getElementById('detailCeo').innerText = data.ceo;
+          document.getElementById('detailManager').innerText = data.manager;
+          document.getElementById('detailBox').style.display = 'block';
+        },
+        defaultColDef: {
+          filter: true,
+          resizable: true,
+        },
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const gridDiv = document.getElementById('companyGrid');
+        new agGrid.Grid(gridDiv, gridOptions);
+
+        // 검색
+        document.getElementById('searchBtn').addEventListener('click', () => {
+          const keyword = document.getElementById('searchInput').value.toLowerCase();
+          gridOptions.api.setQuickFilter(keyword);
+        });
+      });
+    </script>
+  </th:block>
+</body>
+</html>

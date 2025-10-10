@@ -87,9 +87,78 @@
             company T2 ON T1.mat_no = T2.mat_no  WHERE
             T1.emp_id = #{empId} 
         AND 
-            T2.com_code = #{comCode}  </select>
+            T2.com_code = #{comCode}      
+    </select>
     
-    <insert id="insertVO">
     
+ <!-- 사원정보 조회 -->
+<select id="findEmployeesByDept" parameterType="String" resultType="com.yedam.erp.vo.hr.EmpVO">
+    SELECT
+        EMP_ID,
+        NAME,
+        DEPT_CODE,
+        EMAIL
+    FROM
+        EMP
+    <where>
+        <if test="deptCode != null and !deptCode.equals('')">
+            DEPT_CODE = #{deptCode}
+        </if>
+    </where>
+    ORDER BY NAME
+</select>    
+    
+<!-- 신규 아이디 계정 생성 -->
+<insert id="insertNewEmployeeLogin" parameterType="com.yedam.erp.vo.main.EmpLoginVO">
+        
+        <selectKey keyProperty="empIdNo" resultType="long" order="BEFORE">
+            SELECT SEQ_EMP_LOGIN_ID_NO.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO EMP_LOGIN (
+            EMP_ID_NO,         
+            EMP_ID,             
+            EMP_PW,             
+            EMP_NO,            
+            MAT_NO,            
+            CREATE_AT,          
+            IS_USED,            
+            IS_LOCKED,          
+            FAILED_LOGIN_ATT,   
+            MUST_CHANGE_PW 
+        ) VALUES (
+            #{empIdNo},
+            #{empId},
+            #{empPw},
+            #{empNo},
+            #{matNo},
+            SYSDATE,
+            'Y',
+            'N',
+            0,
+            'Y'
+        )
     </insert>
+    <!-- 초기 비밀번호 업데이트 -->
+    <update id="updatePasswordAndFlag">
+        UPDATE EMP_LOGIN
+        SET
+            EMP_PW = #{empPw},
+            MUST_CHANGE_PW = #{mustChangePw}
+        WHERE
+            EMP_ID = #{empId}
+    </update>
+
+  <select id="findEmployeeById" parameterType="String" resultType="com.yedam.erp.vo.hr.EmpVO">
+    SELECT
+        EMP_ID,
+        NAME,
+        DEPT_CODE,
+        EMAIL
+    FROM
+        EMP
+    WHERE
+        EMP_ID = #{empId}
+</select>
+    
 </mapper>

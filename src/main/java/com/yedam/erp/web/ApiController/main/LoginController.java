@@ -40,7 +40,11 @@ public class LoginController {
         // 관리자 버튼 클릭 시만 CAPTCHA 생성되므로 초기 로드 시 생성하지 않음
         return "main/login";
     }
-
+    @GetMapping("/sal/salLogin")
+    public String sallogin() {
+        // 관리자 버튼 클릭 시만 CAPTCHA 생성되므로 초기 로드 시 생성하지 않음
+        return "main/salLogin";
+    }
     @GetMapping("/captcha")
     @ResponseBody
     public String handleCaptchaRequest() {
@@ -111,7 +115,6 @@ public class LoginController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(result);
         }
     }
-
     // Step 2: 인증번호 검증
 //    @PostMapping("/findpw/verify-token")
 //    @ResponseBody

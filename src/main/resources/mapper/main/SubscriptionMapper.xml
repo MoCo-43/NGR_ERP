@@ -34,4 +34,53 @@
         FROM COMPANY
         WHERE MAT_NO = #{matNo}
     </select>
+    <select id="findSubscriptionsByComCode" parameterType="String" resultType="com.yedam.erp.vo.main.SubscriptionVO">
+    SELECT
+        s.sub_code,
+        s.start_date,
+        s.end_date,
+        s.sub_status,
+        p.plan_name AS planName
+    FROM
+        subscription s
+    JOIN
+        sub_plan p ON s.sub_plan_no = p.sub_plan_no
+    WHERE
+        s.com_code = #{comCode}
+    ORDER BY
+        s.start_date DESC
+</select>
+   <!-- 전체 컬럼 포함, SubPlanVO nested 매핑 -->
+    <resultMap id="SubscriptionWithPlanResult" type="com.yedam.erp.vo.main.SubscriptionVO">
+        <result property="subCode" column="sub_code"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="totalUsers" column="total_users"/>
+        <result property="subStatus" column="sub_status"/>
+        <result property="subPlanNo" column="sub_plan_no"/>
+        <result property="totalPay" column="total_pay"/>
+        <result property="matNo" column="mat_no"/>
+        <result property="mon" column="mon"/>
+        <result property="comCode" column="com_code"/>
+        <association property="subPlan" javaType="com.yedam.erp.vo.main.SubPlanVO">
+            <result property="planName" column="planName"/>
+            <result property="avaiModules" column="modules"/>
+            <result property="subPlanNo" column="sub_plan_no"/>
+        </association>
+    </resultMap>
+
+<select id="findLatestSubscriptionByMatNo" 
+        resultMap="SubscriptionWithPlanResult"  parameterType="Long">
+    SELECT *
+    FROM (
+        SELECT s.sub_code, s.start_date, s.end_date, s.total_users, s.sub_status, 
+               s.sub_plan_no, s.total_pay, s.mat_no, s.mon, s.com_code,
+               p.plan_name AS planName, p.avai_modules AS modules
+        FROM subscription s
+        JOIN sub_plan p ON s.sub_plan_no = p.sub_plan_no
+        WHERE s.mat_no = #{matNo}
+        ORDER BY s.start_date DESC
+    )
+    WHERE ROWNUM = 1
+</select>
 </mapper>

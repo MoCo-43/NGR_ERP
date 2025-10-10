@@ -12,4 +12,6 @@ public interface SubPlanService {
 
 	List<SubPlanVO> selectSubPlan();
 	SubPlanVO  selectSubPlanById( Long subPlanNo);
+	//전체구독내역리스트
+	List<SubPlanVO> sallerList();
 }

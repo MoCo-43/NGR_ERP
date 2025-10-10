@@ -12,5 +12,6 @@ public interface SubPlanMapper {
 	
 	//모듈조회
 	SubPlanVO  selectSubPlanById(@Param("subPlanNo") Long subPlanNo);
-	
+	//전체 구독 리스트 조회
+	List<SubPlanVO> sallerList();	
 }

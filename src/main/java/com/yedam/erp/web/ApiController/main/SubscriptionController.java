@@ -1,6 +1,7 @@
 package com.yedam.erp.web.ApiController.main;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Controller;
@@ -13,23 +14,26 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.yedam.erp.security.SessionUtil;
+import com.yedam.erp.service.main.CompanyService;
 import com.yedam.erp.service.main.SubscriptionService;
+import com.yedam.erp.vo.main.CompanyVO;
 import com.yedam.erp.vo.main.SubPlanVO;
+import com.yedam.erp.vo.main.SubscriptionVO;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 
 @Controller
 @RequestMapping({"/sub", "/payment"})
 @RequiredArgsConstructor
-@Slf4j
+@Log4j2
 public class SubscriptionController {
     
     private final SubscriptionService subscriptionService;
-    
+    private final CompanyService companyService;
     private Long getLoggedInMatNo() {
-        // [주의] 실제 구현 시 Spring Security Context에서 사용자 정보를 가져와야 합니다.
-        return 1001L; 
+        return SessionUtil.companyId();
     }
 
     /**
@@ -90,11 +94,20 @@ public class SubscriptionController {
      */
     @GetMapping("/complete")
     public String paymentComplete(@RequestParam(required = false) String comCode, Model model) {
+
+        CompanyVO company = null;
+        if (comCode != null && !comCode.isEmpty()) {
+            // comCode를 사용해 DB에서 회사 정보를 조회합니다.
+            company = companyService.getCompanyByComCode(comCode);
+        }
+        // 조회한 company 객체를 "company"라는 이름으로 모델에 추가합니다.
+        model.addAttribute("company", company);
+
         model.addAttribute("comCode", comCode);
-        model.addAttribute("targetStep", 5); 
-        model.addAttribute("subPlan",new SubPlanVO());
-        
-        return "main/subDetail"; 
+        model.addAttribute("targetStep", 5);
+        model.addAttribute("subPlan", new SubPlanVO());
+
+        return "main/subDetail";
     }
     
     /**
@@ -112,4 +125,27 @@ public class SubscriptionController {
         mav.addObject("orderId", orderId);
         return mav;
     }
-}
+    // 특정 회사의 구독 내역을 조회하는 새로운 API
+    @GetMapping("/api/subscriptions")
+    @ResponseBody
+    public List<SubscriptionVO> getSubscriptionsForCompany(@RequestParam String comCode) {
+        return subscriptionService.findSubscriptionsByComCode(comCode);
+    }
+    @GetMapping("/admin/subList{matNo}")
+    // public String subList(@RequestParam(required = false) String comCode, Model model) { // 기존
+    public String subList(@RequestParam(required = false) Long matNo, Model model) { // Long matNo로 변경
+        log.info("======> 컨트롤러 실행됨. 전달받은 matNo: {}", matNo); // 로그 메시지 변경
+
+        SubscriptionVO subscription = null;
+        if (matNo != null) { // matNo null 체크
+            // Service에 findLatestSubscriptionByMatNo(Long matNo)가 있으므로 바로 호출
+            subscription = subscriptionService.findLatestSubscriptionByMatNo(matNo);
+            log.info("======> 조회된 구독 정보: {}", subscription);
+        } else {
+            log.warn("matNo가 전달되지 않았습니다. 기본 페이지를 표시합니다.");
+        }
+
+        model.addAttribute("subscription", subscription);
+        return "main/submanager";
+    }
+   }
