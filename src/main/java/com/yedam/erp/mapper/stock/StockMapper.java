@@ -1,6 +1,7 @@
 package com.yedam.erp.mapper.stock;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -26,8 +27,7 @@ public interface StockMapper {
 	public List<ProductVO> productAll(Long CompCode);
 	
 	// 거래처 조회
-	public List<PartnerVO> customerAll(Long compCode);
-	
+	public List<PartnerVO> customerAll(Map<String, Object> params);
 	// 발주계획 등록
 	public void insertOrderPlan(OrderPlanVO orderPlan); // 마스터
 	public int insertOrderPlanDetail(OrderPlanDetailVO item); // 상세

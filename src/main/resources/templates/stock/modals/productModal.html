@@ -31,7 +31,7 @@
             <div class="modal-body">
               <!-- 버튼 영역: 카드 밖, 오른쪽 상단 고정 -->
               <div class="d-flex justify-content-end mb-2 gap-2">
-                <button type="submit" form="searchForm" class="btn btn-primary">
+                <button type="button" form="searchForm" class="btn btn-primary" id="searchProdBtn">
                   검색
                 </button>
                 <button type="reset" form="searchForm" class="btn btn-danger">
@@ -52,7 +52,7 @@
                     <label for="keyword" class="form-label">제품명</label>
                     <input
                       type="text"
-                      id="keyword"
+                      id="productkw"
                       name="keyword"
                       class="form-control"
                       placeholder="제품명 입력"
@@ -64,7 +64,7 @@
                     <label for="empId" class="form-label">등록자명</label>
                     <input
                       type="text"
-                      id="empId"
+                      id="productEmpId"
                       name="empId"
                       class="form-control"
                     />
