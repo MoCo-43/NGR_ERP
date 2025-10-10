@@ -177,29 +177,16 @@
 </section>
 
 <script th:inline="javascript">
-  /**
-   * 서버에서 전달된 'subscription' 객체를 유효한 JSON으로 변환하여 
-   * JavaScript 변수 'subscription'에 할당합니다.
-   * 이렇게 하면 'subscription.subPlan'과 같은 복잡한 접근도 안전합니다.
-   */
-   const subscription = [[${subscription}]];  
-  console.log("Loaded Subscription:", subscription); 
+  const subscription = /*[[${subscription}]]*/ {};
+  
+  if(subscription?.subPlan) {
+      document.getElementById('detailPackage').innerText = subscription.subPlan.planName || '-';
 
-  // 구독 패키지
-  // 'subscription' 객체가 존재하고, 'subPlan' 객체가 존재할 경우에만 처리
-  if(subscription && subscription.subPlan) {
-      document.getElementById('detailPackage').innerText = subscription.subPlan.planName || '';
-
-      // 모듈 버튼 동적 생성
       const moduleContainer = document.querySelector('.module-container');
-      // 기존 모듈 버튼 초기화
-      moduleContainer.innerHTML = ''; 
-      
-      // avaiModules는 콤마(,)로 구분된 문자열이라고 가정
-      const modules = subscription.subPlan.avaiModules ? subscription.subPlan.avaiModules.split(',') : [];
-
+      moduleContainer.innerHTML = '';
+      const modules = subscription.subPlan.avaiModules?.split(',') || [];
       modules.forEach(moduleName => {
-          if(moduleName.trim()) { // 공백 제거 후 유효한 모듈 이름인 경우
+          if(moduleName.trim()) {
               const div = document.createElement('div');
               div.className = 'module-button';
               div.innerText = moduleName.trim();
@@ -207,12 +194,11 @@
           }
       });
   }
-              console.log("JS Loaded Subscription Data:", subscription); 
 
-  // 계약 정보
-  document.getElementById('mon').innerText = subscription?.mon || '';
-  document.getElementById('startDate').innerText = subscription?.startDate || '';
-  document.getElementById('endDate').innerText = subscription?.endDate || '';
+  document.getElementById('mon').innerText = subscription?.mon || '-';
+  document.getElementById('startDate').innerText = subscription?.startDate || '-';
+  document.getElementById('endDate').innerText = subscription?.endDate || '-';
 </script>
+
 </body>
 </html>
