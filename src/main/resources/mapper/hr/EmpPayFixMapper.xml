@@ -5,7 +5,7 @@
 
 <mapper namespace="com.yedam.erp.mapper.hr.EmpPayFixMapper">
 
-  <!-- VO 매핑 -->
+  <!-- ResultMap: 컬럼 → EmpPayFixVO 필드 매핑 -->
   <resultMap id="EmpPayFixMap" type="com.yedam.erp.vo.hr.EmpPayFixVO">
     <id     property="payFixNo"      column="pay_fix_no"/>
     <result property="empId"         column="emp_id"/>
@@ -15,85 +15,52 @@
     <result property="companyCode"   column="company_code"/>
   </resultMap>
 
-  <!-- 단건 조회 (미사용) -->
-  <select id="selectByEmpId" parameterType="string" resultMap="EmpPayFixMap">
-    SELECT f.pay_fix_no,
-           f.emp_id,
-           f.emp_allow_code,
-           COALESCE(f.emp_allow_label, c.allow_name) AS emp_allow_label,
-           f.emp_allow_pay,
-           f.company_code
-      FROM emp_pay_fix f
-      JOIN pay_allow_code c
-        ON c.allow_code   = f.emp_allow_code
-       AND c.company_code = f.company_code
-     WHERE f.emp_id = #{empId}
-       AND c.use_yn = 'Y'
-       AND c.pay_type = '고정'
-       AND ROWNUM = 1
-  </select>
-
-  <!-- 코드표(고정/사용Y) + 사번 보유값 LEFT JOIN -->
-  <select id="selectFixedItems" resultMap="EmpPayFixMap">
+  <!-- 활성 수당 목록 + 사원 저장값(없으면 0/라벨은 기본명) -->
+  <select id="selectAllowList" resultMap="EmpPayFixMap">
     SELECT
-      f.pay_fix_no,
-      #{empId} AS emp_id,
-      c.allow_code AS emp_allow_code,
-      COALESCE(f.emp_allow_label, c.allow_name) AS emp_allow_label,
-      NVL(f.emp_allow_pay, 0) AS emp_allow_pay,
-      c.company_code AS company_code
-      FROM pay_allow_code c
-      LEFT JOIN emp_pay_fix f
-        ON f.emp_allow_code = c.allow_code
-       AND f.company_code   = c.company_code
-       AND f.emp_id         = #{empId}
-     WHERE c.company_code = #{companyCode}
-       AND c.use_yn = 'Y'
-       AND c.pay_type = '고정'
-     ORDER BY c.allow_code
+        e.pay_fix_no,
+        e.emp_id,
+        a.allow_code                                     AS emp_allow_code,
+        COALESCE(e.emp_allow_label, a.allow_name)        AS emp_allow_label,
+        NVL(e.emp_allow_pay, 0)                          AS emp_allow_pay,
+        a.company_code                                   AS company_code
+    FROM pay_allow_code a
+    LEFT JOIN emp_pay_fix e
+      ON e.company_code   = a.company_code
+     AND e.emp_id         = #{empId}
+     AND e.emp_allow_code = a.allow_code
+    WHERE a.use_yn = 'Y'
+      AND a.company_code = #{companyCode}
+    ORDER BY a.allow_code
   </select>
 
-  <!-- 등록 -->
-  <insert id="insert" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
+  <!-- 사원 수당 등록 (INSERT) -->
+  <insert id="insertEmpPayFix" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
     INSERT INTO emp_pay_fix (
-      pay_fix_no, emp_id, emp_allow_code, emp_allow_label, emp_allow_pay, company_code
+        pay_fix_no,
+        emp_id,
+        emp_allow_code,
+        emp_allow_label,
+        emp_allow_pay,
+        company_code
     ) VALUES (
-      SEQ_EMP_PAY_FIX_NO.NEXTVAL,
-      #{empId}, #{empAllowCode}, #{empAllowLabel}, #{empAllowPay}, #{companyCode}
+        SEQ_EMP_PAY_FIX.NEXTVAL,      <!-- 필요 시 CLOUD.SEQ_EMP_PAY_FIX.NEXTVAL -->
+        #{empId},
+        #{empAllowCode},
+        #{empAllowLabel},
+        #{empAllowPay},
+        #{companyCode}
     )
   </insert>
 
-  <!-- 수정 -->
-  <update id="update" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
+  <!-- 사원 수당 수정 (UPDATE) -->
+  <update id="updateEmpPayFix" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
     UPDATE emp_pay_fix
        SET emp_allow_label = #{empAllowLabel},
            emp_allow_pay   = #{empAllowPay}
-     WHERE emp_id         = #{empId}
-       AND emp_allow_code = #{empAllowCode}
-       AND company_code   = #{companyCode}
-  </update>
-
-  <!-- 업서트 (Oracle MERGE) -->
-  <update id="upsert" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
-    MERGE INTO emp_pay_fix t
-    USING (
-      SELECT
-        #{empId}         AS emp_id,
-        #{empAllowCode}  AS emp_allow_code,
-        #{empAllowLabel} AS emp_allow_label,
-        #{empAllowPay}   AS emp_allow_pay,
-        #{companyCode}   AS company_code
-      FROM dual
-    ) s
-       ON (t.emp_id = s.emp_id
-           AND t.emp_allow_code = s.emp_allow_code
-           AND t.company_code = s.company_code)
-     WHEN MATCHED THEN
-       UPDATE SET t.emp_allow_label = s.emp_allow_label,
-                  t.emp_allow_pay   = s.emp_allow_pay
-     WHEN NOT MATCHED THEN
-       INSERT (pay_fix_no, emp_id, emp_allow_code, emp_allow_label, emp_allow_pay, company_code)
-       VALUES (SEQ_EMP_PAY_FIX_NO.NEXTVAL, s.emp_id, s.emp_allow_code, s.emp_allow_label, s.emp_allow_pay, s.company_code)
+     WHERE emp_id          = #{empId}
+       AND emp_allow_code  = #{empAllowCode}
+       AND company_code    = #{companyCode}
   </update>
 
 </mapper>
