@@ -10,67 +10,17 @@
 		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
 	<link rel="stylesheet"
 		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
-
 	<style>
 .toolbar {
 	padding: 1rem 1rem .25rem 1rem;
-}
-
-.toolbar .form-control {
-	height: 40px;
-}
-
-.toolbar .btn {
-	height: 40px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: .5rem;
-}
-
-.toolbar .row {
-	--gap-x: .5rem;
-}
-
-.toolbar .row>[class^="col-"] {
-	padding-left: var(--gap-x);
-	padding-right: var(--gap-x);
-}
-
-.toolbar .actions {
-	display: flex;
-	gap: .5rem;
-	justify-content: flex-end;
-	align-items: stretch;
-	width: 100%;
-}
-
-.btn-bar {
-	display: flex;
-	gap: .5rem;
-	margin-bottom: .75rem;
 }
 
 #empGrid.ag-theme-quartz {
 	height: 32rem;
 	width: 100%;
 }
-
-.ag-theme-quartz {
-	--ag-row-height: 42px;
-	--ag-font-size: 13px;
-}
-
-.ag-header-cell-label {
-	white-space: nowrap;
-}
-
-@media ( max-width : 1200px) {
-	.toolbar .actions {
-		justify-content: stretch;
-	}
-}
 </style>
+
 </th:block>
 </head>
 
@@ -80,8 +30,7 @@
 			<div class="card-header py-3">
 				<h6 class="m-0 font-weight-bold text-primary">사원 목록</h6>
 			</div>
-
-			<div class="toolbar btn-bar">
+			<div class="toolbar">
 				<div class="row g-2 align-items-center">
 					<div class="col-12 col-sm-4 col-xl-3">
 						<input id="keyword" class="form-control" placeholder="사번/성명 검색">
@@ -96,7 +45,7 @@
 						<input id="srchTitle" class="form-control" placeholder="직책">
 					</div>
 					<div class="col-12 col-xl-auto">
-						<div class="actions">
+						<div>
 							<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
 							<button id="btnReset" class="btn btn-danger btn-sm">초기화</button>
 						</div>
@@ -113,7 +62,7 @@
 				<button id="btnEditOpen" class="btn btn-success" disabled>수정</button>
 			</div>
 
-			<!-- 프래그먼트들 (경로/레이아웃 변경 없음) -->
+			<!-- 프래그먼트-->
 			<div th:replace="~{hr/empModal :: empModal}"></div>
 			<div th:replace="~{hr/eduForm  :: eduFormModal}"></div>
 			<div th:replace="~{hr/certForm :: certFormModal}"></div>
@@ -126,90 +75,96 @@
 		<script defer
 			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 
-		<script th:inline="none">
-    document.addEventListener('DOMContentLoaded', () => {
-      const $ = (id)=>document.getElementById(id);
+		<script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const $ = (id)=>document.getElementById(id);
 
-      // === Grid 정의 ===
-      const columnDefs = [
-        { headerName:'선택', width:70, checkboxSelection:true, headerCheckboxSelection:false, filter:false, suppressMenu:true, pinned:'left' },
-        { headerName:'사번', field:'emp_id', width:130 },
-        { headerName:'성명', field:'name', width:140 },
-        { headerName:'부서', field:'dept_name', width:160 },
-        { headerName:'직급', field:'position', width:120 },
-        { headerName:'직책', field:'title', width:160 },
-        { headerName:'전화번호', field:'phone', width:160 },
-        { headerName:'이메일', field:'email', flex:1, minWidth:220 },
-        { headerName:'주소', field:'address', flex:1, minWidth:220 },
-        { headerName:'입사일자', field:'joinDate', width:140, valueFormatter:(p)=>p.value?String(p.value).slice(0,10):'' }
-      ];
+        // 컬럼 정의 
+        const columnDefs = [
+          { headerName:'선택', width:70, checkboxSelection:true, headerCheckboxSelection:false, filter:false, suppressMenu:true, pinned:'left' },
+          { headerName:'사번', field:'emp_id', width:130 },
+          { headerName:'성명', field:'name', width:140 },
+          { headerName:'부서', field:'dept_name', width:160 },
+          { headerName:'직급', field:'position', width:120 },
+          { headerName:'직책', field:'title', width:160 },
+          { headerName:'전화번호', field:'phone', width:160 },
+          { headerName:'이메일', field:'email', flex:1, minWidth:220 },
+          { headerName:'주소', field:'address', flex:1, minWidth:220 },
+          { headerName:'입사일자', field:'joinDate', width:140, valueFormatter:(p)=>p.value?String(p.value).slice(0,10):'' }
+        ];
 
-      let gridApi=null, rowDataCache=[];
-      const gridOptions={
-        columnDefs, rowData:[], rowSelection:'single', pagination:true, paginationPageSize:10,
-        defaultColDef:{ sortable:true, resizable:true, filter:false, suppressMenu:true },
-        onGridReady:(p)=>{ gridApi=p.api; initLoad(); },
-        onSelectionChanged:()=>{ const sel=gridApi?.getSelectedRows?.()||[]; $('btnEditOpen').disabled = sel.length===0; },
-        onRowDoubleClicked:(e)=>openEdit(e.data)
-      };
+        let gridApi=null, rowDataCache=[];
+        const gridOptions={
+          columnDefs, rowData:[], rowSelection:'single', pagination:true, paginationPageSize:10,
+          defaultColDef:{ sortable:true, resizable:true, filter:false, suppressMenu:true },
+          onGridReady:(p)=>{ gridApi=p.api; initLoad(); },
+          onSelectionChanged:()=>{ const sel=gridApi?.getSelectedRows?.()||[]; $('btnEditOpen').disabled = sel.length===0; },
+          onRowDoubleClicked:(e)=>openEdit(e.data)
+        };
 
-      const gridDiv=$('empGrid');
-      if (window.agGrid?.createGrid) gridApi=window.agGrid.createGrid(gridDiv, gridOptions);
-      else { new agGrid.Grid(gridDiv, gridOptions); gridApi=gridOptions.api; }
+        // 그리드 생성
+        const gridDiv=$('empGrid');
+        if (window.agGrid?.createGrid) gridApi=window.agGrid.createGrid(gridDiv, gridOptions);
+        else { new agGrid.Grid(gridDiv, gridOptions); gridApi=gridOptions.api; }
 
-      async function initLoad(){
-        try{
-          const {data}=await axios.get('/api/v1/emps');
-          rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
-          setRows(rowDataCache);
-        }catch(e){ console.error(e); alert('사원 목록 조회 중 오류가 발생했습니다.'); setRows([]); }
-        gridApi?.deselectAll?.(); $('btnEditOpen').disabled=true;
-      }
-      function setRows(rows){
-        if (!gridApi) return;
-        if (gridApi.setGridOption) gridApi.setGridOption('rowData', rows);
-        else gridApi.setRowData?.(rows);
-      }
+        // API 초기 로드 
+        async function initLoad(){
+          try{
+            const {data}=await axios.get('/api/v1/emps');
+            rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
+            setRows(rowDataCache);
+          }catch(e){
+            console.error(e);
+            alert('사원 목록 조회 중 오류가 발생했습니다.');
+            setRows([]);
+          }
+          gridApi?.deselectAll?.(); $('btnEditOpen').disabled=true;
+        }
+        function setRows(rows){
+          if (!gridApi) return;
+          if (gridApi.setGridOption) gridApi.setGridOption('rowData', rows);
+          else gridApi.setRowData?.(rows);
+        }
 
-      // 조회/초기화
-      function applyFrontFilter(){
-        const kw=($('keyword').value||'').trim().toLowerCase();
-        const dept=($('srchDept').value||'').trim().toLowerCase();
-        const pos=($('srchPosition').value||'').trim().toLowerCase();
-        const tit=($('srchTitle').value||'').trim().toLowerCase();
-        const filtered=rowDataCache.filter(r=>{
-          const mKw=!kw||(String(r.emp_id||'').toLowerCase().includes(kw)||String(r.name||'').toLowerCase().includes(kw));
-          const mDept=!dept||String(r.dept_name||'').toLowerCase().includes(dept);
-          const mPos=!pos||String(r.position||'').toLowerCase().includes(pos);
-          const mTit=!tit||String(r.title||'').toLowerCase().includes(tit);
-          return mKw&&mDept&&mPos&&mTit;
+        // 조회,초기화
+        function applyFrontFilter(){
+          const kw=($('keyword').value||'').trim().toLowerCase();
+          const dept=($('srchDept').value||'').trim().toLowerCase();
+          const pos=($('srchPosition').value||'').trim().toLowerCase();
+          const tit=($('srchTitle').value||'').trim().toLowerCase();
+          const filtered=rowDataCache.filter(r=>{
+            const mKw=!kw||(String(r.emp_id||'').toLowerCase().includes(kw)||String(r.name||'').toLowerCase().includes(kw));
+            const mDept=!dept||String(r.dept_name||'').toLowerCase().includes(dept);
+            const mPos=!pos||String(r.position||'').toLowerCase().includes(pos);
+            const mTit=!tit||String(r.title||'').toLowerCase().includes(tit);
+            return mKw&&mDept&&mPos&&mTit;
+          });
+          setRows(filtered); gridApi?.paginationGoToFirstPage?.();
+        }
+        function doReset(){
+          ['keyword','srchDept','srchPosition','srchTitle'].forEach(id=>{$(id).value='';});
+          setRows(rowDataCache); gridApi?.paginationGoToFirstPage?.(); gridApi?.deselectAll?.(); $('btnEditOpen').disabled=true;
+        }
+        $('btnSearch').addEventListener('click', applyFrontFilter);
+        $('btnReset').addEventListener('click', doReset);
+        ['keyword','srchDept','srchPosition','srchTitle'].forEach(id=>{
+          $(id).addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); applyFrontFilter(); } });
         });
-        setRows(filtered); gridApi?.paginationGoToFirstPage?.();
-      }
-      function doReset(){
-        ['keyword','srchDept','srchPosition','srchTitle'].forEach(id=>{$(id).value='';});
-        setRows(rowDataCache); gridApi?.paginationGoToFirstPage?.(); gridApi?.deselectAll?.(); $('btnEditOpen').disabled=true;
-      }
-      $('btnSearch').addEventListener('click', applyFrontFilter);
-      $('btnReset').addEventListener('click', doReset);
-      ['keyword','srchDept','srchPosition','srchTitle'].forEach(id=>{
-        $(id).addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); applyFrontFilter(); } });
+
+        // 모달 열기
+        function openCreate(){ window.EmpModal?.openCreate?.(); }
+        async function openEdit(row){
+          const r=row || (gridApi?.getSelectedRows?.()[0]);
+          if (!r) return alert('수정할 사원을 선택하세요.');
+          await window.EmpModal?.openEdit?.(r);
+        }
+        $('btnCreateOpen').addEventListener('click', openCreate);
+        $('btnEditOpen').addEventListener('click', ()=>openEdit());
+
+        // 저장 후 재조회 
+        document.addEventListener('emp:saved', ()=>{ initLoad(); });
       });
-
-      // 모달 열기 API (empModal의 공개 API 사용)
-      function openCreate(){ window.EmpModal?.openCreate?.(); }
-      async function openEdit(row){
-        const r=row || (gridApi?.getSelectedRows?.()[0]);
-        if (!r) return alert('수정할 사원을 선택하세요.');
-        await window.EmpModal?.openEdit?.(r);
-      }
-      $('btnCreateOpen').addEventListener('click', openCreate);
-      $('btnEditOpen').addEventListener('click', ()=>openEdit());
-
-      // 저장 후 재조회
-      document.addEventListener('emp:saved', ()=>{ initLoad(); });
-    });
-  </script>
+    </script>
 	</th:block>
 </body>
 </html>

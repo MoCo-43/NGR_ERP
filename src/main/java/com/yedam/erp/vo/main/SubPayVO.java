@@ -17,6 +17,6 @@ public class SubPayVO {
 	private String billingKeyNo;
 	private Date endPayDay;
 	private Long excessPee;
-	private Long reductionPee;
+	private Long reductionFee;
 	private Long vatAmt;	
 }

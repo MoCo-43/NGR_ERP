@@ -1,7 +1,9 @@
 package com.yedam.erp.vo.hr;
 
 import java.util.Date;
+
 import org.springframework.format.annotation.DateTimeFormat;
+
 import lombok.Data;
 
 @Data
@@ -16,4 +18,6 @@ public class PayrollVO {
     private Long companyCode;      // 회사코드 
     private String deptName;       // 부서명
     private Long empCount;         // 인원수
+    private Date jrnDate;
+    private String jrnNo;
 }

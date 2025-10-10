@@ -1,13 +1,10 @@
 package com.yedam.erp.web.ApiController.hr;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
+import org.springframework.web.bind.annotation.*;
+
+import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.hr.EmpPayFixService;
 import com.yedam.erp.vo.hr.EmpPayFixVO;
 
@@ -20,33 +17,49 @@ public class EmpPayFixApiController {
 
     private final EmpPayFixService service;
 
-    // 조회
-    @GetMapping("/{emp_id}/pay-fix")
-    public EmpPayFixVO get(@PathVariable("emp_id") String empId) {
+    // 고정 수당
+    @GetMapping("/{empId}/pay-fix/items")
+    public List<EmpPayFixVO> getFixedItems(@PathVariable String empId) {
+        Long companyCode = SessionUtil.companyId();   // 숫자 PK (예: 1001)
+        return service.getFixedItems(empId, companyCode);
+    }
+
+    // 고정 수당 저장
+    @PutMapping("/{empId}/pay-fix/items")
+    public boolean saveFixedItems(@PathVariable String empId,
+                                  @RequestBody List<EmpPayFixVO> items) {
+        Long companyCode = SessionUtil.companyId();
+        return service.saveFixedItems(empId, companyCode, items);
+    }
+
+   
+    @Deprecated
+    @GetMapping("/{empId}/pay-fix")
+    public EmpPayFixVO getOne(@PathVariable String empId) {
         return service.get(empId);
     }
 
-    // 등록 
-    @PostMapping("/{emp_id}/pay-fix")
-    public boolean create(@PathVariable("emp_id") String empId,
-                          @RequestBody EmpPayFixVO vo) {
-        vo.setEmp_id(empId);
+    @Deprecated
+    @PostMapping("/{empId}/pay-fix")
+    public boolean create(@PathVariable String empId, @RequestBody EmpPayFixVO vo) {
+        vo.setEmpId(empId);
+        vo.setCompanyCode(SessionUtil.companyId());
         return service.insert(vo);
     }
 
-    // 수정
-    @PutMapping("/{emp_id}/pay-fix")
-    public boolean update(@PathVariable("emp_id") String empId,
-                          @RequestBody EmpPayFixVO vo) {
-        vo.setEmp_id(empId);
+    @Deprecated
+    @PutMapping("/{empId}/pay-fix")
+    public boolean update(@PathVariable String empId, @RequestBody EmpPayFixVO vo) {
+        vo.setEmpId(empId);
+        vo.setCompanyCode(SessionUtil.companyId());
         return service.update(vo);
     }
 
-    // upsert
-    @PutMapping("/{emp_id}/pay-fix:upsert")
-    public boolean upsert(@PathVariable("emp_id") String empId,
-                          @RequestBody EmpPayFixVO vo) {
-        vo.setEmp_id(empId);
+    @Deprecated
+    @PutMapping("/{empId}/pay-fix:upsert")
+    public boolean upsert(@PathVariable String empId, @RequestBody EmpPayFixVO vo) {
+        vo.setEmpId(empId);
+        vo.setCompanyCode(SessionUtil.companyId());
         return service.upsert(vo);
     }
 }

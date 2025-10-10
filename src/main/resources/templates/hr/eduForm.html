@@ -8,7 +8,6 @@
 				<button type="button" class="btn-close" data-bs-dismiss="modal"
 					aria-label="닫기"></button>
 			</div>
-
 			<div class="modal-body">
 				<form id="eduFormDetail" onsubmit="return false;">
 					<input type="hidden" name="empId" id="eduEmpId" />
@@ -54,83 +53,113 @@
 		</div>
 	</div>
 
-	<script>
-    (function(){
-      const $=(id)=>document.getElementById(id);
+<script>
+(function(){
+  const $ = (id)=>document.getElementById(id);  // id로 가져오는 함수
 
-      const state={ empId:'' };
+  const state = { empId:'' };  // 현재 선택된 사원 ID 저장
 
-      async function fetchEdu(empId){
-        const res = await fetch('/api/hr/edu?empId=' + encodeURIComponent(empId));
-        if (!res.ok) throw new Error('교육 조회 실패');
-        return res.json();
-      }
-      function renderEdu(list){
-        const tbody=$('eduTbody'); const cnt=$('eduRowCount');
-        if (!tbody) return;
-        if (!list?.length){
-          tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">등록된 교육이 없습니다.</td></tr>';
-          if (cnt) cnt.textContent='0건';
-          return;
-        }
-        tbody.innerHTML = list.map(r=>`
-          <tr data-id="${r.eduNo ?? r.EDU_NO}">
-            <td>${r.eduNo ?? r.EDU_NO}</td>
-            <td>${r.eduName ?? r.EDU_NAME ?? ''}</td>
-            <td>${r.eduType ?? r.EDU_TYPE ?? ''}</td>
-            <td>${r.result  ?? r.RESULT   ?? ''}</td>
-            <td class="text-end">${r.score ?? r.SCORE ?? ''}</td>
-            <td>${r.completeAt ?? r.COMPLETE_AT ?? ''}</td>
-            <td>${r.expiresAt  ?? r.EXPIRES_AT  ?? ''}</td>
-            <td><button type="button" class="btn btn-sm btn-outline-danger edu-del">삭제</button></td>
-          </tr>
-        `).join('');
-        if (cnt) cnt.textContent = `${list.length}건`;
-      }
-      async function refresh(){
-        if (!state.empId) return renderEdu([]);
-        renderEdu(await fetchEdu(state.empId));
-      }
-      function clearForm(){ $('eduFormDetail')?.reset(); $('eduEmpId') && ( $('eduEmpId').value = state.empId || '' ); }
+  // 해당 사원의 교육 이력 조회
+  async function fetchEdu(empId){
+    const res = await fetch('/api/hr/edu?empId=' + encodeURIComponent(empId));
+    if (!res.ok) throw new Error('교육 조회 실패');
+    return res.json();
+  }
 
-      // 삭제 버튼(행 내부)
-      document.addEventListener('click', async (e)=>{
-        const btn = e.target;
-        if (!(btn instanceof Element) || !btn.classList.contains('edu-del')) return;
-        const no = btn.closest('tr')?.dataset.id;
-        if (!no) return;
-        if (!confirm('삭제하시겠습니까?')) return;
-        const res = await fetch('/api/hr/edu/' + no, { method:'DELETE' });
-        if (!res.ok) return alert('삭제 실패');
-        refresh();
+  // 조회된 교육 데이터를 테이블에 표시
+  function renderEdu(list){
+    const tbody = $('eduTbody'); 
+    const cnt   = $('eduRowCount');
+    if (!tbody) return;
+
+    // 등록된 교육 없을 때
+    if (!list?.length){
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-secondary py-4">등록된 교육이 없습니다.</td></tr>';
+      if (cnt) cnt.textContent='0건';
+      return;
+    }
+
+    // 교육 목록
+    tbody.innerHTML = list.map(r=>`
+      <tr data-id="${r.eduNo ?? r.EDU_NO}">
+        <td>${r.eduNo ?? r.EDU_NO}</td>
+        <td>${r.eduName ?? r.EDU_NAME ?? ''}</td>
+        <td>${r.eduType ?? r.EDU_TYPE ?? ''}</td>
+        <td>${r.result  ?? r.RESULT   ?? ''}</td>
+        <td class="text-end">${r.score ?? r.SCORE ?? ''}</td>
+        <td>${r.completeAt ?? r.COMPLETE_AT ?? ''}</td>
+        <td>${r.expiresAt  ?? r.EXPIRES_AT  ?? ''}</td>
+        <td><button type="button" class="btn btn-sm btn-danger edu-del">삭제</button></td>
+      </tr>
+    `).join('');
+
+    if (cnt) cnt.textContent = `${list.length}건`; // 총 건수 표시
+  }
+
+  // 교육 목록 새로 불러오기
+  async function refresh(){
+    if (!state.empId) return renderEdu([]);
+    renderEdu(await fetchEdu(state.empId));
+  }
+
+  // 입력 폼 초기화
+  function clearForm(){ 
+    $('eduFormDetail')?.reset(); 
+    if ($('eduEmpId')) $('eduEmpId').value = state.empId || ''; 
+  }
+
+  //삭제 버튼 클릭
+  document.addEventListener('click', async (e)=>{
+    const btn = e.target;
+    if (!(btn instanceof Element) || !btn.classList.contains('edu-del')) return;
+    const no = btn.closest('tr')?.dataset.id;  // 행의 data-id 가져오기
+    if (!no) return;
+    if (!confirm('삭제하시겠습니까?')) return; // 사용자 확인
+    const res = await fetch('/api/hr/edu/' + no, { method:'DELETE' });
+    if (!res.ok) return alert('삭제 실패');
+    refresh(); // 삭제 후 목록 새로고침
+  });
+
+  // 저장 버튼
+  $('btnEduSave')?.addEventListener('click', async (e)=>{
+    const form = $('eduFormDetail');
+    const payload = Object.fromEntries(new FormData(form).entries()); 
+
+    // 필수값 체크
+    if (!payload.empId) return alert('사번이 없습니다.');
+    if (!payload.eduName){ form.eduName.focus(); return; }
+
+    const btn = e.currentTarget; 
+    btn.disabled=true; // 중복 클릭 방지
+    try{
+      const res = await fetch('/api/hr/edu', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
       });
+      if (!res.ok) throw new Error('저장 실패');
 
-      // 저장 버튼
-      $('btnEduSave')?.addEventListener('click', async (e)=>{
-        const form = $('eduFormDetail');
-        const payload = Object.fromEntries(new FormData(form).entries());
-        if (!payload.empId) return alert('사번이 없습니다.');
-        if (!payload.eduName){ form.eduName.focus(); return; }
-        const btn = e.currentTarget; btn.disabled=true;
-        try{
-          const res = await fetch('/api/hr/edu', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify(payload)
-          });
-          if (!res.ok) throw new Error('저장 실패');
-          (bootstrap.Modal.getInstance($('eduFormModal')) || new bootstrap.Modal($('eduFormModal'))).hide();
-          await refresh();
-          alert('저장되었습니다.');
-        }catch(err){ alert(err?.message || '저장 실패'); }
-        finally{ btn.disabled=false; }
-      });
+      // 저장 후 모달 닫기
+      (bootstrap.Modal.getInstance($('eduFormModal')) || new bootstrap.Modal($('eduFormModal'))).hide();
+      await refresh();  // 목록 다시 불러오기
+      alert('저장되었습니다.');
+    }catch(err){ 
+      alert(err?.message || '저장 실패'); 
+    }
+    finally{ 
+      btn.disabled=false; 
+    }
+  });
 
-      // === 공개 API ===
-      window.EduForm = {
-        setEmpId(id){ state.empId=id||''; if ($('eduEmpId')) $('eduEmpId').value = state.empId; },
-        refresh, clear(){ clearForm(); renderEdu([]); },
-        open(){ (new bootstrap.Modal($('eduFormModal'))).show(); }
-      };
-    })();
-  </script>
+  // 외부에서 사용할 수 있는 함수 모음 
+  window.EduForm = {
+    setEmpId(id){ 
+      state.empId=id||''; 
+      if ($('eduEmpId')) $('eduEmpId').value = state.empId; 
+    },
+    refresh, // 목록 새로고침
+    clear(){ clearForm(); renderEdu([]); }, // 폼+목록 초기화
+    open(){ (new bootstrap.Modal($('eduFormModal'))).show(); } // 모달 열기
+  };
+})();
+</script>
 </div>

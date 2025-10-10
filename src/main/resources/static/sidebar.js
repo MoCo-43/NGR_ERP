@@ -70,7 +70,7 @@ const MENUS = {
       {
         title: "거래처",
         items: [
-          ["거래처관리", "/sales/accounts"],
+          ["거래처관리", "/biz/mngcus"],
           ["여신관리", "/sales/credit"],
         ],
       },
@@ -95,8 +95,8 @@ const MENUS = {
         items: [
           ["매출매입전표", "/invoice"],
           ["일반전표", "/journal"],
-          ["자금전표", "/acc/voucher/fund"],
-          ["급여전표", "payment"],
+          ["자금전표", "/moneyInvoice"],
+          ["급여전표", "/payment"],
           ["전표 마감", "/close"],
         ],
       },
@@ -104,13 +104,13 @@ const MENUS = {
       { title: "재무상태표", items: [["재무상태표", "/acc/bs"]] },
     ],
   },
-  mains:{
-	title:"마이페이지",
-	content:"마이페이지대시보드",
-	groups:[
-		{title:"구독관리",items:[["구독관리","/mypage/sub"]]},
-	    {title: "계정관리", items:[["계정관리", "/acc/acct"]] },
-	],
+  mains: {
+    title: "마이페이지",
+    content: "마이페이지대시보드",
+    groups: [
+      { title: "구독관리", items: [["구독관리", "/mypage/sub"]] },
+      { title: "계정관리", items: [["계정관리", "/acc/acct"]] },
+    ],
   },
 };
 

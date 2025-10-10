@@ -24,7 +24,8 @@ SELECT
     c.BIZ_TYPE,
     p.TOTAL_PRICE,
     p.PO_STATUS,
-    p.NOTES
+    p.NOTES,
+    p.EX_DATE
 FROM
     CUSTOMER c
 LEFT JOIN
@@ -77,7 +78,7 @@ ORDER BY PO_START DESC
 <select id="getPOHistory" resultType="PoHistoryVO">
 SELECT po.PO_START, po.CUS_NAME, po.creater, po.EX_DATE, pd.UNIT_PRICE, pd.PRODUCT_NAME
 FROM PURCHASE_ORDER po
-LEFT JOIN PO_DETAIL pd ON pd.PO_ID = po.PO_ID
+JOIN PO_DETAIL pd ON pd.PO_ID = po.PO_ID
 WHERE po.COMPANY_CODE = #{companyCode}
 </select>
 
@@ -132,11 +133,12 @@ ORDER BY d.DO_CREATED DESC
   INSERT ALL
     INTO DELIVERY_ORDER
       (DO_NO, CUS_CODE, PO_ID, DO_CODE, EMP_NO, NAME, DO_CREATED,
-       TOTAL_QTY, DO_STATUS, NOTES, COMPANY_CODE, EX_DATE)
+       TOTAL_QTY, DO_STATUS, NOTES, COMPANY_CODE, EX_DATE, ADDR, ZIP_CODE)
     VALUES
       (DO_NO_SEQ.NEXTVAL, #{cusCode}, #{poId}, FN_DO_CODE(),
        #{empNo}, #{name}, TO_DATE(#{doCreated}, 'YYYY-MM-DD'),
-       #{totalQty}, #{doStatus}, #{notes}, #{companyCode}, TO_DATE(#{exDate}, 'YYYY-MM-DD'))
+       #{totalQty}, #{doStatus}, #{notes}, #{companyCode}, TO_DATE(#{exDate}, 'YYYY-MM-DD'),
+       #{addr}, #{zipCode})
 
     <foreach collection="dodetails" item="dod">
       INTO DO_DETAIL
@@ -146,6 +148,19 @@ ORDER BY d.DO_CREATED DESC
          #{dod.unitPrice}, #{dod.supAmt}, #{dod.vatAmt}, #{dod.dcPrice}, #{dod.companyCode})
     </foreach>
   SELECT 1 FROM DUAL
+</insert>
+
+<!-- 거래처 조회-->
+<select id="selectCustomers" resultType="java.util.List" parameterType="String">
+  SELECT CUS_CODE, CUS_NAME, CEO_NAME, TEL, ADDR, ACTIVE_STATUS, GBN
+  FROM CUSTOMER
+  WHERE COMPANY_CODE = #{companyCode}
+</select>
+
+<!-- 거래처 등록 -->
+<insert id="insertCustomer" parameterType="CusModalVO">
+  INSERT INTO CUSTOMER (CUS_NO, CUS_CODE, CUS_NAME, CREDIT_GRADE, LEFT_PRICE, COMPANY_CODE)
+  VALUES (CUS_NO_SEQ.NEXTVAL, #{cusCode}, #{cusName}, #{creditGrade}, #{leftPrice}, #{companyCode})
 </insert>
 
 </mapper>

@@ -1,76 +1,75 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/base}">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 <head>
-<title layout:fragment="title">공제 등록</title>
-<th:block layout:fragment="head_extra">
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
-	<style>
-#deductGrid.ag-theme-quartz {
-	height: 44rem;
-	width: 100%;
-	margin-top: .5rem;
-}
+  <title layout:fragment="title">공제 등록</title>
 
-.btn-use {
-	padding: .2rem .6rem;
-	font-size: 12px;
-}
-</style>
-</th:block>
+  <!-- (보안 사용 시) Spring Security CSRF 메타 -->
+  <meta name="_csrf" th:content="${_csrf?.token}">
+  <meta name="_csrf_header" th:content="${_csrf?.headerName}">
+
+  <th:block layout:fragment="head_extra">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
+    <style>
+      #deductGrid.ag-theme-quartz { height: 44rem; width: 100%; margin-top: .5rem; }
+      .btn-use { padding: .2rem .6rem; font-size: 12px; }
+    </style>
+  </th:block>
 </head>
 <body>
-	<section layout:fragment="content">
-		<div class="card shadow mb-3">
-			<div
-				class="card-header py-3 d-flex align-items-center justify-content-between">
-				<h6 class="m-0 font-weight-bold text-primary">공제 등록</h6>
-			</div>
-			<div class="card-body">
-				<div id="deductGrid" class="ag-theme-quartz"></div>
-			</div>
-		</div>
-	</section>
+<section layout:fragment="content">
+  <div class="card shadow mb-3">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">공제 등록</h6>
+    </div>
+    <div class="card-body">
+      <div id="deductGrid" class="ag-theme-quartz"></div>
+    </div>
+  </div>
+</section>
 
-	<th:block layout:fragment="body_extra">
-		<script
-			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-		<script
-			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
-		<script th:inline="none">
+<th:block layout:fragment="body_extra">
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+<script th:inline="none">
 (() => {
   let gridApi;
-
   const API_BASE = '/api/hr/deduct-codes';
 
-  // 응답 성공 처리
-  const isOk = (res) => res?.status === 200 || res?.status === 201 || res?.data?.success === true || res?.data === 1 || res?.data === true;
+  // ===== CSRF 헤더 기본 설정 (있으면 자동첨부) =====
+  (function initCsrf(){
+    try{
+      const token  = document.querySelector('meta[name="_csrf"]')?.content;
+      const header = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+      if (token) axios.defaults.headers.common[header] = token;
+    }catch(e){ /* no-op */ }
+  })();
 
-  // 유틸
+  // ===== 응답 성공 판정(유연하게) =====
+  const isOk = (res) => {
+    const s = res?.status ?? 0;
+    if (s >= 200 && s < 300) return true;      // 2xx 전부 OK(200/201/204 등)
+    const d = res?.data;
+    return d === 1 || d === '1' || d === true || d?.success === true;
+  };
+
+  // ===== 유틸 =====
   const trim = (v) => (v ?? '').toString().trim();
   const isBlank = (v) => trim(v) === '';
 
   function newInputRow(){
     return { _isInput:true, deductCode:'', deductName:'', formulaTxt:'', methodDesc:'', useYn:'Y' };
   }
-  function isInsertSavable(r){ return r?._isInput && !isBlank(r.deductCode) && !isBlank(r.deductName); }
-  function isUpdateSavable(r){ return !r?._isInput && !isBlank(r.deductCode) && !isBlank(r.deductName); }
+  const isInsertSavable = (r) => r?._isInput && !isBlank(r.deductCode) && !isBlank(r.deductName);
+  const isUpdateSavable = (r) => !r?._isInput && !isBlank(r.deductCode) && !isBlank(r.deductName);
 
-  // API 
+  // ===== API =====
   async function fetchList(){
-    try{
-      const res = await axios.get(API_BASE, { validateStatus:s=>s>=200&&s<500 });
-      if (res.status !== 200) return [];
-      const data = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
-      return data;
-    }catch(err){
-      console.error('목록 조회 실패', err);
-      return [];
-    }
+    const res = await axios.get(API_BASE, { validateStatus:s=>s>=200&&s<500 });
+    if (!isOk(res)) return [];
+    return Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
   }
   async function insertRow(r){
     const payload = {
@@ -100,7 +99,7 @@
     return isOk(res);
   }
 
-  // 사용/중지 버튼
+  // 사용/중지 토글 렌더러(입력행에는 버튼 안 보임)
   function useToggleRenderer(p){
     if (p.data?._isInput) return document.createTextNode('');
     const btn = document.createElement('button');
@@ -122,19 +121,20 @@
         const ok = await patchUseYn(row.deductCode, next);
         if(!ok) throw new Error('useYn patch fail');
       }catch(e){
-        // 실패 시 원복
-        console.error('사용여부 변경 실패', e);
+        // 실패 시 원복 + 안내
         const prev = next === 'Y' ? 'N' : 'Y';
         row.useYn = prev;
         btn.className = 'btn btn-sm btn-use ' + (prev === 'Y' ? 'btn-success' : 'btn-danger');
         btn.textContent = (prev === 'Y' ? '사용' : '중지');
+        console.error('사용여부 변경 실패', e);
+        alert('사용여부 변경 실패');
       }
     });
 
     return btn;
   }
 
-  // 정렬 후에도 입력행을 항상 마지막으로 유지
+  // 정렬 후 입력행을 항상 마지막으로 유지
   function keepInputRowAtEnd(params){
     const nodes = params.nodes;
     const inputNodes = [];
@@ -160,7 +160,7 @@
       { headerName:'산출 방법', field:'methodDesc', minWidth:260, flex:1.5, editable:true,
         valueSetter:(p)=>{ p.data.methodDesc = trim(p.newValue); return true; } },
       { headerName:'사용 여부', field:'useYn', width:120,
-        editable:(p)=> p.data?._isInput === true, 
+        editable:(p)=> p.data?._isInput === true,
         cellEditor:'agSelectCellEditor', cellEditorParams:{ values:['Y','N'] },
         cellRenderer: useToggleRenderer },
     ];
@@ -177,7 +177,12 @@
       sortModel:[{ colId:'deductCode', sort:'asc' }],
       postSortRows: keepInputRowAtEnd,
 
-      // 행 편집 종료 → 자동 저장
+      // Enter로 편집 종료 → 저장 트리거
+      onCellKeyDown: (ev) => {
+        if (ev.event?.key === 'Enter') ev.api.stopEditing();
+      },
+
+      // 행 편집 종료 시 자동 저장
       onRowValueChanged: async (ev) => {
         const d = ev.data;
         try {
@@ -186,24 +191,31 @@
             if(!ok) throw new Error('insert fail');
             const rows = await fetchList();
             gridApi.setRowData([...rows, newInputRow()]);
+            alert('등록되었습니다.');
           } else if (isUpdateSavable(d)) {
             const ok = await updateRow(d);
             if(!ok) throw new Error('update fail');
             gridApi.refreshClientSideRowModel('sort');
+            alert('수정되었습니다.');
+          } else {
+            if (d?._isInput) alert('코드와 항목명을 입력하세요.');
           }
         } catch(e){
           console.error('저장 실패', e);
+          alert('저장 실패: 네트워크/서버 응답을 확인하세요.');
         }
       },
 
-      onGridReady: async () => {
-        gridApi = gridOptions.api;
+      // ✅ gridApi는 여기서 params로 받아야 합니다!
+      onGridReady: async (params) => {
+        gridApi = params.api;
         try{
           const rows = await fetchList();
           gridApi.setRowData([...rows, newInputRow()]);
         }catch(e){
           console.error('초기 로딩 실패', e);
           gridApi.setRowData([newInputRow()]);
+          alert('목록 조회 실패');
         }
       }
     };
@@ -212,6 +224,6 @@
   });
 })();
 </script>
-	</th:block>
+</th:block>
 </body>
 </html>

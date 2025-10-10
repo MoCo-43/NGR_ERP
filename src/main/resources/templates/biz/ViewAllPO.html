@@ -220,21 +220,30 @@
           // ===== API 호출 =====
           async function search(override = {}) {
             try {
-              const { data } = await axios.get("/api/biz/polist");
-              // 방어적 매핑: 응답 키가 달라도 그리드 필드에 맞춰 변환
-              const mapped = (Array.isArray(data) ? data : []).map((r) => ({
-                poStart: r.poStart ?? r.createdDate ?? r.orderDate ?? null,
-                cusName: r.cusName ?? r.customerName ?? "",
-                creater: r.creater ?? r.manager ?? "",
-                prdName: r.prdName ?? r.productName ?? "",
-                exDate: r.exDate ?? r.dueDate ?? null,
-                totalPrice: r.totalPrice ?? r.orderAmount ?? 0,
-                poStatus: r.poStatus ?? r.status ?? "",
+              const { data } = await axios.get("/api/biz/polist", {
+                params: override,
+              });
+
+              const rows = (Array.isArray(data) ? data : []).map((r) => ({
+                poStart:
+                  r.poStart ??
+                  r.createdDate ??
+                  r.orderDate ??
+                  r.PO_START ??
+                  null,
+                cusName: r.cusName ?? r.customerName ?? r.CUS_NAME ?? "",
+                creater: r.creater ?? r.manager ?? r.CREATER ?? "",
+                prdName: r.prdName ?? r.productName ?? r.PRD_NAME ?? "",
+                exDate: r.exDate || null,
+                totalPrice: r.totalPrice ?? r.orderAmount ?? r.TOTAL_PRICE ?? 0,
+                poStatus: r.poStatus ?? r.status ?? r.PO_STATUS ?? "",
               }));
-              setRows(mapped);
+
+              console.log("EX_DATE 결과는 => :", rows);
+              setRows(rows);
               updatePinnedTotals();
-            } catch (e) {
-              console.error("주문서 조회 실패:", e);
+            } catch (err) {
+              console.error(err);
               setRows([]);
               setPinnedBottom([{ prdName: "에러", totalPrice: 0 }]);
             }
@@ -265,10 +274,10 @@
         });
         /*
 
-  ======================== 거래처 모달 ========================
+          ======================== 거래처 모달 ========================
 
 
-*/
+        */
         document.addEventListener("DOMContentLoaded", () => {
           const customerCodeModalEl = document.getElementById("customermodal");
           let customerCodeGridApi;
