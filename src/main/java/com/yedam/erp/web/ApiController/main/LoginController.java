@@ -69,13 +69,13 @@ public class LoginController {
         @RequestParam("matMail") String matMail,
         RedirectAttributes redirectAttributes) {
 
-        // 1. DTO 객체 생성 및 데이터 설정
-        PasswordResetRequestVO requestDto = new PasswordResetRequestVO();
-        requestDto.setComCode(comCode);
-        requestDto.setEmpId(empId);
+        // 1.  객체 생성 및 데이터 설정
+        PasswordResetRequestVO requestVO = new PasswordResetRequestVO();
+        requestVO.setComCode(comCode);
+        requestVO.setEmpId(empId);
         
         // 2. UserService 호출하여 SMS 발송 로직 실행
-        ResponseEntity<String> response = userService.sendSmsForPasswordReset(requestDto);
+        ResponseEntity<String> response = userService.sendSmsForPasswordReset(requestVO);
         
         // 3. 서비스 처리 결과에 따라 메시지 설정 및 리다이렉트
         if (response.getStatusCode() == HttpStatus.OK) {
@@ -93,16 +93,16 @@ public class LoginController {
     public ResponseEntity<Map<String, Object>> sendSms(@RequestParam String comCode,
                                                        @RequestParam String empId,
                                                        @RequestParam(required = false) String matMail) {
-        PasswordResetRequestVO requestDto = new PasswordResetRequestVO();
-        requestDto.setComCode(comCode);
-        requestDto.setEmpId(empId);
-        requestDto.setMatMail(matMail);
+        PasswordResetRequestVO requestVO = new PasswordResetRequestVO();
+        requestVO.setComCode(comCode);
+        requestVO.setEmpId(empId);
+        requestVO.setMatMail(matMail);
 
         Map<String, Object> result = new HashMap<>();
 
         try {
             // userService에서 SMS 발송 후 userKey 반환하도록 구현했다고 가정
-            String userKey = userService.sendSmsForPasswordReset(requestDto).getBody();
+            String userKey = userService.sendSmsForPasswordReset(requestVO).getBody();
 
             result.put("success", true);
             result.put("message", "인증번호가 발송되었습니다.");

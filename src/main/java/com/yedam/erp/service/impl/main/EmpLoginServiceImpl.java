@@ -81,7 +81,8 @@ public class EmpLoginServiceImpl implements EmpLoginService {
         String encodedPassword = passwordEncoder.encode(tempPassword);
 
         EmpLoginVO loginVO = new EmpLoginVO();
-        loginVO.setEmpId(loginId);
+        //loginVO.setEmpId(loginId);
+        loginVO.setEmpId(emp.getEmp_id());
 
         // 숫자만 추출해서 Long 변환
         String numericPart = employeeId.replaceAll("[^0-9]", "");

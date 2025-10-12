@@ -1,5 +1,6 @@
 package com.yedam.erp.web.ApiController.main;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -7,6 +8,7 @@ import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -131,21 +133,49 @@ public class SubscriptionController {
     public List<SubscriptionVO> getSubscriptionsForCompany(@RequestParam String comCode) {
         return subscriptionService.findSubscriptionsByComCode(comCode);
     }
-    @GetMapping("/admin/subList{matNo}")
-    // public String subList(@RequestParam(required = false) String comCode, Model model) { // 기존
-    public String subList(@RequestParam(required = false) Long matNo, Model model) { // Long matNo로 변경
-        log.info("======> 컨트롤러 실행됨. 전달받은 matNo: {}", matNo); // 로그 메시지 변경
+//    @GetMapping("/admin/subList/{matNo}")
+//    // public String subList(@RequestParam(required = false) String comCode, Model model) { // 기존
+//    public String subList(@RequestParam(required = false) Long matNo, Model model) { // Long matNo로 변경
+//        log.info("======> 컨트롤러 실행됨. 전달받은 matNo: {}", matNo); // 로그 메시지 변경
+//
+//        SubscriptionVO subscription = null;
+//        if (matNo != null) { // matNo null 체크
+//            // Service에 findLatestSubscriptionByMatNo(Long matNo)가 있으므로 바로 호출
+//            subscription = subscriptionService.findLatestSubscriptionByMatNo(matNo);
+//            log.info("======> 조회된 구독 정보: {}", subscription);
+//        } else {
+//            log.warn("matNo가 전달되지 않았습니다. 기본 페이지를 표시합니다.");
+//        }
+//
+//        model.addAttribute("subscription", subscription);
+//        return "main/submanager";
+//    }
+    @GetMapping("/admin/subList/{matNo}")
+    public String subList(@PathVariable Long matNo, Model model) {
+        Long sessionMatNo = SessionUtil.companyId();
+        log.info("PathVariable matNo: {}, Session matNo: {}", matNo, sessionMatNo);
 
-        SubscriptionVO subscription = null;
-        if (matNo != null) { // matNo null 체크
-            // Service에 findLatestSubscriptionByMatNo(Long matNo)가 있으므로 바로 호출
-            subscription = subscriptionService.findLatestSubscriptionByMatNo(matNo);
-            log.info("======> 조회된 구독 정보: {}", subscription);
-        } else {
-            log.warn("matNo가 전달되지 않았습니다. 기본 페이지를 표시합니다.");
+        if (sessionMatNo == null) {
+            log.error("세션에 matNo가 없습니다. 로그인이 필요합니다.");
+            return "redirect:/login";
         }
 
+        // PathVariable과 세션 matNo가 일치하는지 검증
+        if (!matNo.equals(sessionMatNo)) {
+            log.warn("비정상 접근: path matNo={}, session matNo={}", matNo, sessionMatNo);
+            return "redirect:/access-denied";
+        }
+        //구독정보가져오는 부분
+        SubscriptionVO subscription = subscriptionService.findLatestSubscriptionByMatNo(matNo);
         model.addAttribute("subscription", subscription);
+        // 사용 가능한 모듈 리스트 생성 후 model에 추가
+        if (subscription != null && subscription.getSubPlan() != null 
+            && subscription.getSubPlan().getAvaiModules() != null
+            && !subscription.getSubPlan().getAvaiModules().isEmpty()) {
+            
+            List<String> avaiModules = Arrays.asList(subscription.getSubPlan().getAvaiModules().split(","));
+            model.addAttribute("avaiModules", avaiModules);
+        }
         return "main/submanager";
     }
    }

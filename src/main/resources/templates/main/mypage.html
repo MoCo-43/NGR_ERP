@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+
+<th:block layout:fragment="head_extra">
+    <title>마이페이지</title>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.13/main.min.css' rel='stylesheet' />
+</th:block>
+
+<th:block layout:fragment="content">
+    <div class="container-fluid">
+        <h1 class="h3 mb-4 text-gray-800">마이페이지</h1>
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">사원 정보</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                        <!-- th:src="" -->
+                            <img  alt="프로필 이미지" class="img-fluid rounded-circle" style="width: 150px; height: 150px; border: 3px solid #eee; object-fit: cover;"/>
+                        </div>
+                        <div class="px-3">
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-4 font-weight-bold text-dark">사원 이름:</div>
+                                <div class="col-8 d-flex justify-content-between align-items-center">
+                                   <!-- th:text="" -->
+                                    <span ></span>
+                                    <button class="btn btn-sm btn-primary">수정</button>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4 font-weight-bold text-dark">사원 번호:</div>
+                                <div class="col-8" ></div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4 font-weight-bold text-dark">부서:</div>
+                                <div class="col-8" ></div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4 font-weight-bold text-dark">직급:</div>
+                                <div class="col-8" ></div>
+                            </div>
+                             <div class="row align-items-center">
+                                <div class="col-4 font-weight-bold text-dark">비밀번호:</div>
+                                <div class="col-8 d-flex justify-content-between align-items-center">
+                                    <span>********</span>
+                                    <button class="btn btn-sm btn-primary">수정</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card shadow mb-4">
+                     <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">일정내역 확인</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="calendar"></div>
+                    </div>
+                </div>
+            </div>
+        </div> </div> <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.13/main.min.js'></script>
+    
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+           // const eventsData = JSON.parse([[${eventsJson}]]);
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: eventsData,
+                locale: 'ko'
+            });
+            
+            calendar.render();
+        });
+    </script>
+</th:block>
+
+</html>
