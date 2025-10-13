@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html
+  lang="ko"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <title layout:fragment="title">거래명세서 리스트</title>
+
+    <th:block layout:fragment="head_extra">
+      <!-- AG Grid -->
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
+      />
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
+      />
+      <style>
+        #tsGrid.ag-theme-quartz {
+          height: 560px;
+          width: 100%;
+        }
+        .btn-filter-group .btn {
+          min-width: 108px;
+        }
+        .form-inline .form-control,
+        .form-inline .form-select {
+          min-width: 180px;
+        }
+        .muted {
+          color: #6b7280;
+          font-size: 12px;
+        }
+        .text-right {
+          text-align: right;
+        }
+        .text-center {
+          text-align: center;
+        }
+        .badge-link {
+          cursor: pointer;
+        }
+      </style>
+    </th:block>
+  </head>
+
+  <body>
+    <section layout:fragment="content">
+      <!-- ===== 검색/필터 ===== -->
+      <div class="card shadow mb-4">
+        <div
+          class="card-header py-3 d-flex align-items-center justify-content-between"
+        >
+          <h6 class="m-0 font-weight-bold text-primary">거래명세서 조회</h6>
+          <div class="small text-muted" id="rangeLabel"></div>
+        </div>
+
+        <div class="card-body">
+          <!-- 1) 기간 -->
+          <div class="form-inline flex-wrap gap-2 mb-3">
+            <label class="mr-2 mb-2">기간</label>
+            <input id="fromDate" type="date" class="form-control mr-2 mb-2" />
+            <span class="mx-1 mb-2">~</span>
+            <input id="toDate" type="date" class="form-control mb-2" />
+
+            <div
+              class="btn-group ml-3 mb-2"
+              role="group"
+              aria-label="quick-range"
+            >
+              <button class="btn btn-outline-secondary" data-range="7d">
+                최근 7일
+              </button>
+              <button class="btn btn-outline-secondary" data-range="1m">
+                최근 1개월
+              </button>
+              <button class="btn btn-outline-secondary" data-range="3m">
+                최근 3개월
+              </button>
+            </div>
+          </div>
+
+          <!-- 2) 추가 조건 -->
+          <div class="form-inline flex-wrap gap-2">
+            <label class="mr-2 mb-2">거래처</label>
+            <input
+              id="qCus"
+              type="text"
+              class="form-control mr-3 mb-2"
+              placeholder="거래처명"
+            />
+            <label class="mr-2 mb-2">품목명</label>
+            <input
+              id="qItem"
+              type="text"
+              class="form-control mr-3 mb-2"
+              placeholder="품목명(규격)"
+            />
+            <button id="btnSearch" class="btn btn-dark mb-2 mr-2">조회</button>
+            <button id="btnReset" class="btn btn-outline-secondary mb-2">
+              초기화
+            </button>
+          </div>
+
+          <div class="muted mt-1">
+            ※ 기간을 비우면 시스템 기본 범위(최근 1개월)로 조회합니다.
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 리스트(Grid) ===== -->
+      <div class="card shadow">
+        <div
+          class="card-header py-3 d-flex align-items-center justify-content-between"
+        >
+          <h6 class="m-0 font-weight-bold text-primary">거래명세서 리스트</h6>
+          <div class="btn-group">
+            <button id="btnEmail" class="btn btn-outline-primary btn-sm">
+              Email
+            </button>
+            <button id="btnExport" class="btn btn-outline-secondary btn-sm">
+              엑셀
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="tsGrid" class="ag-theme-quartz"></div>
+          <div class="muted mt-2" id="updatedAt"></div>
+        </div>
+      </div>
+    </section>
+
+    <th:block layout:fragment="body_extra">
+      <script
+        defer
+        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"
+      ></script>
+      <script
+        defer
+        src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
+      ></script>
+
+      <script th:inline="none">
+        document.addEventListener("DOMContentLoaded", () => {
+          // ========== 유틸 ==========
+          const nf = new Intl.NumberFormat("ko-KR");
+          const fmtNum = (v) =>
+            v == null || v === "" ? "" : nf.format(Number(v));
+          const ymd = (d) => d.toISOString().slice(0, 10);
+          const today = new Date();
+
+          // ========== DOM ==========
+          const fromDate = document.getElementById("fromDate");
+          const toDate = document.getElementById("toDate");
+          const qCus = document.getElementById("qCus");
+          const qItem = document.getElementById("qItem");
+          const btnSearch = document.getElementById("btnSearch");
+          const btnReset = document.getElementById("btnReset");
+          const rangeLabel = document.getElementById("rangeLabel");
+          const updatedAt = document.getElementById("updatedAt");
+          const btnExport = document.getElementById("btnExport");
+          const btnEmail = document.getElementById("btnEmail");
+
+          // 기본 기간: 최근 1개월
+          const d1m = new Date();
+          d1m.setMonth(d1m.getMonth() - 1);
+          fromDate.value = ymd(d1m);
+          toDate.value = ymd(today);
+          rangeLabel.textContent = `${fromDate.value} ~ ${toDate.value}`;
+
+          // 빠른기간 버튼
+          document.querySelectorAll("[data-range]").forEach((b) => {
+            b.addEventListener("click", () => {
+              const r = b.getAttribute("data-range");
+              const s = new Date();
+              if (r === "7d") s.setDate(s.getDate() - 7);
+              if (r === "1m") s.setMonth(s.getMonth() - 1);
+              if (r === "3m") s.setMonth(s.getMonth() - 3);
+              fromDate.value = ymd(s);
+              toDate.value = ymd(new Date());
+              rangeLabel.textContent = `${fromDate.value} ~ ${toDate.value}`;
+              search();
+            });
+          });
+
+          // ========== Grid ==========
+          const columnDefs = [
+            {
+              headerName: "거래처명",
+              field: "cusName",
+              minWidth: 180,
+              flex: 1,
+              pinned: "left",
+            },
+            {
+              headerName: "품목명[규격명]",
+              field: "itemNameSpec",
+              minWidth: 240,
+              flex: 1,
+            },
+            {
+              headerName: "수량",
+              field: "qty",
+              width: 110,
+              type: "rightAligned",
+              valueFormatter: (p) => fmtNum(p.value),
+            },
+            {
+              headerName: "금액",
+              field: "amount",
+              width: 140,
+              type: "rightAligned",
+              valueFormatter: (p) => fmtNum(p.value),
+            },
+            {
+              headerName: "부가세",
+              field: "vat",
+              width: 120,
+              type: "rightAligned",
+              valueFormatter: (p) => fmtNum(p.value),
+            },
+            {
+              headerName: "합계",
+              field: "total",
+              width: 160,
+              type: "rightAligned",
+              valueFormatter: (p) => fmtNum(p.value),
+              cellClass: (p) => (p.value > 0 ? "font-weight-bold" : ""),
+            },
+            {
+              headerName: "상세",
+              field: "detail",
+              width: 110,
+              pinned: "right",
+              cellRenderer: (p) => {
+                const code = p.data?.statementCode ?? "";
+                const el = document.createElement("span");
+                el.innerHTML = `<span class="badge badge-primary badge-link">상세</span>`;
+                el.addEventListener("click", () => {
+                  if (!code) return;
+                  // 상세 페이지로 이동 (라우팅만 맞춰줘)
+                  window.location.href = `/sales/statement/${encodeURIComponent(
+                    code
+                  )}`;
+                });
+                return el;
+              },
+            },
+          ];
+
+          const gridDiv = document.getElementById("tsGrid");
+          let gridApi;
+
+          const gridOptions = {
+            columnDefs,
+            rowData: [],
+            pagination: true,
+            paginationPageSize: 12,
+            animateRows: true,
+            defaultColDef: { sortable: true, resizable: true, filter: true },
+            pinnedBottomRowData: [],
+            onGridReady: (p) => {
+              gridApi = p.api;
+              search();
+            },
+          };
+
+          if (window.agGrid?.createGrid) {
+            gridApi = agGrid.createGrid(gridDiv, gridOptions);
+          } else {
+            new agGrid.Grid(gridDiv, gridOptions);
+            gridApi = gridOptions.api;
+          }
+
+          const setRows = (rows) =>
+            gridApi?.setGridOption
+              ? gridApi.setGridOption("rowData", rows)
+              : gridApi.setRowData(rows);
+
+          const setPinnedBottom = (rows) =>
+            gridApi?.setGridOption
+              ? gridApi.setGridOption("pinnedBottomRowData", rows)
+              : gridApi.setPinnedBottomRowData(rows);
+
+          function updateTotals(rows) {
+            const acc = rows.reduce(
+              (s, r) => {
+                s.qty += Number(r.qty) || 0;
+                s.amount += Number(r.amount) || 0;
+                s.vat += Number(r.vat) || 0;
+                s.total += Number(r.total) || 0;
+                return s;
+              },
+              { qty: 0, amount: 0, vat: 0, total: 0 }
+            );
+
+            setPinnedBottom([
+              {
+                cusName: "합계",
+                itemNameSpec: "",
+                qty: fmtNum(acc.qty),
+                amount: fmtNum(acc.amount),
+                vat: fmtNum(acc.vat),
+                total: fmtNum(acc.total),
+              },
+            ]);
+          }
+
+          // ========== 조회 ==========
+          async function search() {
+            try {
+              const params = {
+                from: fromDate.value || null,
+                to: toDate.value || null,
+                cus: qCus.value?.trim() || "",
+                item: qItem.value?.trim() || "",
+              };
+
+              const res = await axios.get("/api/sales/trade-statements", {
+                params,
+                withCredentials: true,
+              });
+
+              const list = Array.isArray(res.data) ? res.data : [];
+
+              // 서버키 → 화면키 매핑(유연)
+              const rows = list.map((r) => ({
+                statementCode: r.statementCode ?? r.stmtCode ?? r.code ?? "",
+                cusName: r.cusName ?? r.customerName ?? "",
+                itemNameSpec:
+                  r.itemNameSpec ??
+                  (r.itemName && r.spec
+                    ? `${r.itemName} [${r.spec}]`
+                    : r.itemName ?? ""),
+                qty: r.qty ?? r.quantity ?? 0,
+                amount: r.amount ?? r.supAmt ?? r.price ?? 0,
+                vat: r.vat ?? r.vatAmt ?? 0,
+                total: r.total ?? Number(r.amount ?? 0) + Number(r.vat ?? 0),
+              }));
+
+              setRows(rows);
+              updateTotals(rows);
+              updatedAt.textContent =
+                new Date().toLocaleString("ko-KR") + " 조회";
+              rangeLabel.textContent = `${fromDate.value || "-"} ~ ${
+                toDate.value || "-"
+              }`;
+            } catch (e) {
+              console.error(e);
+              setRows([]);
+              setPinnedBottom([]);
+              updatedAt.textContent = "조회 중 오류가 발생했습니다.";
+            }
+          }
+
+          // 이벤트 바인딩
+          btnSearch.addEventListener("click", search);
+          [fromDate, toDate, qCus, qItem].forEach((el) => {
+            el.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") search();
+            });
+          });
+          btnReset.addEventListener("click", () => {
+            qCus.value = "";
+            qItem.value = "";
+            fromDate.value = ymd(d1m);
+            toDate.value = ymd(today);
+            rangeLabel.textContent = `${fromDate.value} ~ ${toDate.value}`;
+            search();
+          });
+
+          // 엑셀/이메일(후속 연결만 하면 됨)
+          btnExport.addEventListener("click", () => {
+            // 간단 내보내기 (CSV). 필요 시 서버 엑셀 다운로드로 교체
+            gridApi.exportDataAsCsv({ fileName: "거래명세서리스트.csv" });
+          });
+          btnEmail.addEventListener("click", () => {
+            alert(
+              "이메일 발송은 서버 API와 연동하세요. (예: /api/sales/trade-statements/email)"
+            );
+          });
+        });
+      </script>
+    </th:block>
+  </body>
+</html>

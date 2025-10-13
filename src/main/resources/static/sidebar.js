@@ -1,99 +1,95 @@
 /** 모듈별 메뉴 데이터 */
 const MENUS = {
-	hr: {
-		title: "인사",
-		content: "인사 대시보드",
-		groups: [
-			{
-				title: "사원관리",
-				items: [
-					["사원 목록", "/emps"],
-					["수당등록", "/allowcode"],
-					["공제등록", "/deductcode"],
-				],
-			},
-			{ title: "부서관리", items: [["부서관리", "/dept"]] },
-			{
-				title: "급여관리",
-				items: [
-					["급여대장", "/payroll"],
-					["급여이체현황", "/hr/transfer"],
-				],
-			},
-		],
-	},
-	inventory: {
-		title: "재고",
-		content: "재고 대시보드",
-		groups: [
-			{
-				title: "입고관리", items: [
-					["입고조회", "/stock/inbound/list"],
-					["입고등록", "/stock/inbound/insert"],
-				]
-			},
-			{
-				title: "출고관리", items: [
-					["출고조회", "/stock/outbound/list"],
-					["출고등록", "/stock/outbound/insert"],
-				]
-			},
-			{
-				title: "발주관리", items: [
-					["발주계획조회", "/stock/plan/list"],
-					["발주계획등록", "/stock/plan/insert"],
-					["발주서 조회", "/stock/order/list"],
-					["발주서 등록", "/stock/order/insert"],
-				]
-			},
-			{
-				title: "재고결산", items: [
-					["재고결산", "/stock/invenclosing/insert"]
-				]
-			},
-			{
-				title: "제품관리", items: [
-					["제품등록", "/stock/product/insert"]
-				]
-			}
-		]
-	},
-
-	sales: {
-		title: "영업",
-		content: "영업 대시보드",
-		groups: [
-			{
-				title: "주문서",
-				items: [
-					["주문서조회", "/biz/polist"],
-					["주문서입력", "/biz/poinsert"],
-				],
-			},
-			{
-				title: "출하지시서",
-				items: [
-					["출하지시서조회", "/biz/dolist"],
-					["출하지시서입력", "/biz/doinsert"],
-				],
-			},
-			{
-				title: "거래처",
-				items: [
-					["거래처관리", "/biz/mngcus"],
-					["여신관리", "/sales/credit"],
-				],
-			},
-			{
-				title: "영업관리현황",
-				items: [
-					["거래명세서", "/sales/statement"],
-					["거래장부", "/sales/order/status"],
-				],
-			},
-		],
-	},
-
+  hr: {
+    title: "인사",
+    content: "인사 대시보드",
+    groups: [
+      {
+        title: "사원관리",
+        items: [
+          ["사원 목록", "/emps"],
+          ["수당등록", "/allowcode"],
+          ["공제등록", "/deductcode"],
+        ],
+      },
+      { title: "부서관리", items: [["부서관리", "/dept"]] },
+      {
+        title: "급여관리",
+        items: [
+          ["급여대장", "/payroll"],
+          ["급여이체현황", "/hr/transfer"],
+        ],
+      },
+    ],
+  },
+  inventory: {
+    title: "재고",
+    content: "재고 대시보드",
+    groups: [
+      {
+        title: "입고관리",
+        items: [
+          ["입고조회", "/stock/inbound/list"],
+          ["입고등록", "/stock/inbound/insert"],
+        ],
+      },
+      {
+        title: "출고관리",
+        items: [
+          ["출고조회", "/stock/outbound/list"],
+          ["출고등록", "/stock/outbound/insert"],
+        ],
+      },
+      {
+        title: "발주관리",
+        items: [
+          ["발주계획조회", "/stock/plan/list"],
+          ["발주계획등록", "/stock/plan/insert"],
+          ["발주서 조회", "/stock/order/list"],
+          ["발주서 등록", "/stock/order/insert"],
+        ],
+      },
+      {
+        title: "재고결산",
+        items: [["재고결산", "/stock/invenclosing/insert"]],
+      },
+      { title: "제품관리", items: [["제품등록", "/stock/product/insert"]] },
+    ],
+  },
+  sales: {
+    title: "영업",
+    content: "영업 대시보드",
+    groups: [
+      {
+        title: "주문서",
+        items: [
+          ["주문서조회", "/biz/polist"],
+          ["주문서입력", "/biz/poinsert"],
+        ],
+      },
+      {
+        title: "출하지시서",
+        items: [
+          ["출하지시서조회", "/biz/dolist"],
+          ["출하지시서입력", "/biz/doinsert"],
+        ],
+      },
+      {
+        title: "거래처",
+        items: [
+          ["거래처관리", "/biz/mngcus"],
+          ["여신관리", "/biz/mngcredit"],
+        ],
+      },
+      {
+        title: "영업관리현황",
+        items: [
+          ["거래명세서", "/biz/saleinvoice"],
+          ["거래장부", "/sales/order/status"],
+        ],
+      },
+    ],
+  },
 	accounting: {
 		title: "회계",
 		content: "회계 대시보드",
