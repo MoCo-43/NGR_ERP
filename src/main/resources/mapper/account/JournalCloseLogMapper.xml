@@ -58,7 +58,7 @@
     FROM journal_close_log
     WHERE company_code = #{companyCode}
       AND jrn_range LIKE '%' || SUBSTR(#{jrnNo}, -3) || '%'
-      AND TRUNC(action_date) = TO_DATE(SUBSTR('J-20251010-001', 3, 8), 'YYYY/MM/DD')
+      AND TRUNC(action_date) = TO_DATE(SUBSTR(#{jrnNo}, 3, 8), 'YYYY/MM/DD')
     ORDER BY log_id DESC
   </select>
 

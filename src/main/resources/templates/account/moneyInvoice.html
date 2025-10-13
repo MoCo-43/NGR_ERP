@@ -1,156 +1,432 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
 <head>
-  <meta charset="UTF-8" />
-  <title layout:fragment="title">자금전표</title>
+<title layout:fragment="title">자금전표</title>
 
-  <th:block layout:fragment="head_extra">
-    <!-- AG Grid -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
-    <style>
-      #paymentGrid.ag-theme-quartz {
-        height: 18rem;
-        width: 100%;
-        margin-top: 1rem;
-      }
-      #paymentApplyGrid.ag-theme-quartz {
-        height: 14rem;
-        width: 100%;
-        margin-top: 1rem;
-      }
-      .btn-bar {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 0.75rem;
-      }
-    </style>
-  </th:block>
-</head>
-<body>
-<section layout:fragment="content">
+<th:block layout:fragment="head_extra">
+	<!-- AG Grid -->
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+	<style>
+h6 {
+	margin: 0.5rem 0;
+	font-weight: bold;
+}
 
-  <div class="card shadow mb-3">
-    <div class="card-header py-3 d-flex align-items-center justify-content-between">
-      <h6 class="m-0 font-weight-bold text-primary">자금전표</h6>
-    </div>
+.btn-bar {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
 
-    <div class="card-body">
-      <!-- 버튼 영역 -->
-      <div class="btn-bar">
-        <button class="btn btn-primary btn-sm" id="btnSave">저장</button>
-        <button class="btn btn-danger btn-sm" id="btnDelete">삭제</button>
-      </div>
+.ag-theme-quartz {
+	--ag-header-background-color: #f9fafb;
+	--ag-odd-row-background-color: #fafafa;
+	--ag-border-color: #e5e7eb;
+}
 
-      <!-- 검색 필터 -->
-      <div class="row mb-2">
-        <div class="col-md-3">
-          <label class="form-label">시작일</label>
-          <input type="date" id="dateFrom" class="form-control">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">종료일</label>
-          <input type="date" id="dateTo" class="form-control">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">거래처</label>
-          <input type="text" id="searchCus" class="form-control" placeholder="거래처명">
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-success btn-sm" id="btnSearch">조회</button>
-        </div>
-      </div>
+/* ✅ 구분 배지 (매입/매출) */
+.badge-type {
+	display: inline-block;
+	padding: 0.15rem 0.5rem;
+	border-radius: 9999px;
+	font-weight: 600;
+	font-size: 0.8rem;
+	line-height: 1.2;
+}
 
-      <!-- 상단 그리드: 자금전표 -->
-      <h6 class="fw-bold mt-2">자금전표 목록</h6>
-      <div id="paymentGrid" class="ag-theme-quartz"></div>
+.badge-sales {
+	background: #fee2e2;
+	color: #b91c1c;
+}
 
-      <!-- 하단 그리드: 상세 -->
-      <h6 class="fw-bold mt-3">자금전표 상세</h6>
-      <div id="paymentApplyGrid" class="ag-theme-quartz"></div>
-    </div>
-  </div>
+.badge-purchase {
+	background: #dbeafe;
+	color: #1d4ed8;
+}
 
-</section>
+/* ✅ 적용내역 그리드 */
+#applyGrid.ag-theme-quartz {
+	height: 14rem;
+	width: 100%;
+	margin-top: 1rem;
+}
 
-<th:block layout:fragment="body_extra">
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-<script th:inline="none">
-  let paymentApi, paymentApplyApi;
-  let selectedPayment = null;
+/* ✅ 헤더 카드 */
+.card-header h6 {
+	font-weight: bold;
+}
+h6 {
+	margin: 0.5rem 0;
+	font-weight: bold;
+	color: black;
+}
+/* ✅ 오른쪽 버튼 띄우기용 */
+.text-end {
+  text-align: right !important;
+}
 
-  document.addEventListener("DOMContentLoaded", () => {
-    // === 기간 기본 세팅 (이번달)
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2,"0");
-    const dd = String(today.getDate()).padStart(2,"0");
-    document.getElementById("dateFrom").value = `${yyyy}-${mm}-01`;
-    document.getElementById("dateTo").value = `${yyyy}-${mm}-${dd}`;
-
-    // === 상단 PAYMENT Grid ===
-    paymentApi = agGrid.createGrid(document.querySelector("#paymentGrid"), {
-      columnDefs: [
-        { headerName: "전표번호", field: "payCode", flex: 1 },
-        { headerName: "일자", field: "payDate", flex: 1 },
-        { headerName: "구분", field: "payType", flex: 1 },
-        { headerName: "거래처", field: "cusName", flex: 1 },
-        { headerName: "금액", field: "amount", flex: 1, valueFormatter: p => p.value?.toLocaleString() },
-        { headerName: "비고", field: "memo", flex: 1 }
-      ],
-      rowData: [],
-      rowSelection: "single",
-      onRowClicked: e => {
-        selectedPayment = e.data;
-        loadPaymentApply(e.data.payCode);
-      }
-    });
-
-    // === 하단 PAYMENT_APPLY Grid ===
-    paymentApplyApi = agGrid.createGrid(document.querySelector("#paymentApplyGrid"), {
-      columnDefs: [
-        { headerName: "적용번호", field: "applyNo", flex: 1 },
-        { headerName: "전표번호", field: "invoiceNo", flex: 1 },
-        { headerName: "적용금액", field: "applyAmount", flex: 1, valueFormatter: p => p.value?.toLocaleString() },
-        { headerName: "미결제금액", field: "unpaidAmount", flex: 1,
-          cellStyle: p => (p.value > 0 ? {color:"red", fontWeight:"bold"} : {color:"green"}),
-          valueFormatter: p => p.value?.toLocaleString() }
-      ],
-      rowData: []
-    });
-
-    // 더미데이터 로딩
-    loadPaymentList();
-
-    document.getElementById("btnSearch").addEventListener("click", loadPaymentList);
-  });
-
-  // === 더미 데이터 ===
-  function loadPaymentList() {
-    const dummyPayments = [
-      { payCode:"PAY-001", payDate:"2025-10-01", payType:"OUT", cusName:"삼성전자", amount:1200000, memo:"9월 지급" },
-      { payCode:"PAY-002", payDate:"2025-10-02", payType:"IN", cusName:"LG화학", amount:800000, memo:"입금" }
-    ];
-    paymentApi.setGridOption("rowData", dummyPayments);
-    paymentApplyApi.setGridOption("rowData", []); // 초기화
-  }
-
-  function loadPaymentApply(payCode) {
-    // 선택된 payCode에 따라 더미 상세데이터
-    const dummyApply = {
-      "PAY-001": [
-        { applyNo:1, invoiceNo:"INV-101", applyAmount:600000, unpaidAmount:400000 },
-        { applyNo:2, invoiceNo:"INV-102", applyAmount:600000, unpaidAmount:0 }
-      ],
-      "PAY-002": [
-        { applyNo:3, invoiceNo:"INV-201", applyAmount:800000, unpaidAmount:0 }
-      ]
-    };
-    paymentApplyApi.setGridOption("rowData", dummyApply[payCode] || []);
-  }
-</script>
+.btn-bar {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+</style>
 </th:block>
+</head>
+
+<body>
+	<section layout:fragment="content">
+		<div class="card shadow mb-3">
+			<div
+				class="card-header py-3 d-flex align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">자금전표 관리</h6>
+			</div>
+
+			<div class="card-body">
+				<!-- 🔹 필터/버튼 바 -->
+				<div class="btn-bar">
+					<input type="date" id="fromDate"
+						class="form-control form-control-sm" style="max-width: 180px" />
+					<span>~</span> <input type="date" id="toDate"
+						class="form-control form-control-sm" style="max-width: 180px" />
+					<select id="typeSelect" class="form-select form-select-sm"
+						style="max-width: 120px">
+						<option value="">전체</option>
+						<option value="S">매출전표</option>
+						<option value="P">매입전표</option>
+					</select> <input type="text" id="searchCus" placeholder="거래처명"
+						class="form-control form-control-sm" style="max-width: 180px" />
+					<button id="btnSearch" class="btn btn-dark btn-sm">조회</button>
+
+				</div>
+
+				<!-- 🔹 미결전표 목록 -->
+				<div class="row">
+					<!-- 왼쪽: 미결전표 목록 -->
+					<div class="col-md-7">
+						<h6>미결전표 목록</h6>
+						<div id="unpaidGrid" class="ag-theme-quartz"
+							style="height: 24rem; width: 100%;"></div>
+					</div>
+
+					<!-- 오른쪽: 결제 등록 폼 -->
+					<div class="col-md-5">
+						<h6>결제 등록</h6>
+						<form id="paymentForm" class="border rounded p-3 bg-light">
+							<div class="mb-2">
+								<label class="form-label">거래처명</label> <input type="text"
+									id="formCusName" class="form-control form-control-sm" readonly>
+							</div>
+
+							<div class="mb-2">
+								<label class="form-label">결제방식</label> <select id="formMethod"
+									class="form-select form-select-sm">
+									<option value="현금">현금</option>
+									<option value="이체">어음</option>
+									<option value="카드">현금&어음</option>
+								</select>
+							</div>
+
+							<div class="mb-2">
+								<label class="form-label">계좌번호</label> <input type="text"
+									id="formAccount" class="form-control form-control-sm">
+							</div>
+
+							<div class="mb-2">
+								<label class="form-label">결제금액</label> <input type="number"
+									id="formAmount" class="form-control form-control-sm text-end">
+							</div>
+
+							<div class="mb-2">
+								<label class="form-label">비고</label> <input type="text"
+									id="formMemo" class="form-control form-control-sm">
+							</div>
+
+							<!-- ✅ 버튼 중앙 정렬 + 초기화 버튼 추가 -->
+							<div class="d-flex justify-content-center gap-2 mt-3">
+								<button type="button" id="btnSavePayment"
+									class="btn btn-primary btn-sm px-4">저장</button>
+								<button type="button" id="btnResetForm"
+									class="btn btn-danger btn-sm px-4 ml-2">초기화</button>
+							</div>
+						</form>
+					</div>
+
+					<!-- 🔹 자금전표 적용내역 -->
+				</div>
+					<h6 class="mt-3">적용내역</h6>
+					<div class="d-flex justify-content-end gap-2 my-2">
+						<button type="button" id="btnRegisterJournal"
+							class="btn btn-success btn-sm">일반전표등록</button>
+							
+					</div>
+					
+					<div id="journalPreviewGrid" class="ag-theme-quartz"
+						style="height: 16rem; width: 100%;"></div>
+			</div>
+	</section>
+
+	<th:block layout:fragment="body_extra">
+		<script
+			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+		<script
+			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+		<script th:inline="none">
+
+let journalPreviewApi;
+let unpaidApi;
+let selectedInvoice = null;
+
+// ✅ 페이지 초기화
+document.addEventListener("DOMContentLoaded", () => {
+	const today = new Date();
+	const yyyy = today.getFullYear();
+	const mm = String(today.getMonth()+1).padStart(2,'0');
+	const dd = String(today.getDate()).padStart(2,'0');
+	document.getElementById("fromDate").value = `${yyyy}-${mm}-01`;
+	document.getElementById("toDate").value   = `${yyyy}-${mm}-${dd}`;
+
+	initUnpaidGrid();
+	loadUnpaidList();
+	initJournalPreviewGrid();
+	
+	document.getElementById("btnSearch").addEventListener("click", loadUnpaidList);
+	document.getElementById("btnSavePayment").addEventListener("click", savePayment);
+});
+
+// === 미결전표 Grid ===
+function initUnpaidGrid() {
+	const cols = [
+		{ headerName: "전표번호", field: "invoiceNo", flex: 1 },
+		{ headerName: "유형", field: "type", flex: .8,
+		  cellRenderer: p => {
+			const cls = p.value === 'S' ? 'badge-sales' : 'badge-purchase';
+			const txt = p.value === 'S' ? '매출' : '매입';
+			return `<span class="badge-type ${cls}">${txt}</span>`;
+		  }
+		},
+		{ headerName: "거래처명", field: "cusName", flex: 1 },
+		{ headerName: "전표금액", field: "totalAmt", valueFormatter: v => v.value?.toLocaleString(), flex: 1 },
+		{ headerName: "미결금액", field: "unpaidAmt", valueFormatter: v => v.value?.toLocaleString(), flex: 1 },
+		{ headerName: "결제방식", field: "payMethod", flex: 1 },
+		{ headerName: "계좌번호", field: "cashAccount", flex: 1 },
+		{ headerName: "비고", field: "memo", flex: 1 },
+		{ headerName: "전표일자", field: "invoiceDate", valueFormatter: v => v.value?.substring(0,10), flex: 1 }
+	];
+
+	unpaidApi = agGrid.createGrid(document.getElementById("unpaidGrid"), {
+		columnDefs: cols,
+		rowData: [],
+		rowSelection: "single",
+		defaultColDef: { resizable: true, sortable: true },
+		onRowClicked: e => fillPaymentForm(e.data) // ✅ 클릭 시 폼 채우기
+	});
+}
+
+// === 오른쪽 폼 채우기 ===
+function fillPaymentForm(data) {
+	selectedInvoice = data;
+
+	document.getElementById("formCusName").value = data.cusName || "";
+	document.getElementById("formMethod").value   = data.method || "현금";
+	document.getElementById("formAccount").value  = data.cashAccount || "";
+	document.getElementById("formMemo").value     = data.memo || "";
+	document.getElementById("formAmount").value   = data.unpaidAmt || 0;
+}
+
+// === 데이터 로드 ===
+async function loadUnpaidList() {
+	const type = document.getElementById("typeSelect").value;
+	const fromDate = document.getElementById("fromDate").value;
+	const toDate = document.getElementById("toDate").value;
+	const searchCus = document.getElementById("searchCus").value;
+
+	try {
+		const { data } = await axios.get("/api/account/unpaidList", { params: { type, fromDate, toDate, searchCus } });
+		unpaidApi.setGridOption("rowData", data || []);
+		selectedInvoice = null;
+		document.getElementById("paymentForm").reset(); // 이전 폼 초기화
+	} catch (err) {
+		console.error(err);
+		alert("미결전표 조회 실패");
+	}
+}
+
+async function savePayment() {
+	  if (!selectedInvoice) {
+	    alert("전표를 선택하세요.");
+	    return;
+	  }
+
+	  const payAmount = Number(document.getElementById("formAmount").value || 0);
+	  if (payAmount <= 0) {
+	    alert("결제금액을 입력하세요.");
+	    return;
+	  }
+	  const backupInvoice = { ...selectedInvoice };
+	  const header = {
+	    payDate: new Date().toISOString().substring(0,10),
+	    payType: selectedInvoice.type === 'S' ? 'IN' : 'OUT',
+	    cusCode: selectedInvoice.cusCode,
+	    cusName: selectedInvoice.cusName,
+	    method: document.getElementById("formMethod").value,
+	    cashAccount: document.getElementById("formAccount").value,
+	    amount: payAmount,
+	    memo: document.getElementById("formMemo").value
+	  };
+
+	  const apply = {
+	    type: selectedInvoice.type,
+	    invoiceNo: selectedInvoice.invoiceNo,
+	    applyAmount: payAmount,
+	    payNo: null
+	  };
+
+	  try {
+	    // ✅ 서버에 저장
+	    const payment = { ...header, applies: [apply] }
+	    const {data} = await axios.post("/api/account/payment/save",payment);
+	   
+	 // ✅ 서버에서 payCode 반환받기
+	    const payCode = data.payCode;
+	    selectedInvoice = { ...selectedInvoice, payCode }; // 여기에 저장!
+	    
+	    console.log(selectedInvoice);
+	    // ✅ 미리보기 분개 자동 생성
+	    const journalPreview = buildJournalPreview(selectedInvoice, header);
+	    journalPreviewApi.setGridOption("rowData", journalPreview);
+		
+	    alert("자금전표 저장 및 회계처리 생성 완료!");
+
+	  } catch (err) {
+	    console.error(err);
+	    alert("저장 실패");
+	  }
+	}
+
+
+//=== 회계처리 미리보기 Grid 초기화 ===
+function initJournalPreviewGrid() {
+	const cols = [
+	 { headerName: "구분", field: "gbn", flex: .8 },
+	 { headerName: "계정코드", field: "acctCode", flex: 1 },
+	 { headerName: "계정명", field: "acctName", flex: 1 },
+	 { headerName: "거래처명", field: "cusName", flex: 1 },
+	 { headerName: "차변", field: "debit", valueFormatter: v => v.value?.toLocaleString(), flex: 1 },
+	 { headerName: "대변", field: "credit", valueFormatter: v => v.value?.toLocaleString(), flex: 1 },
+	 { headerName: "적요", field: "note", flex: 1.5, editable: true }
+	];
+	journalPreviewApi = agGrid.createGrid(document.getElementById("journalPreviewGrid"), {
+	 columnDefs: cols,
+	 rowData: [],
+	 defaultColDef: { resizable: true }
+	});
+}
+
+// 분개 미리보기
+function buildJournalPreview(invoice, header) {
+	  const rows = [];
+	  const amt = Number(header.amount || 0);
+	  const cus = header.cusName;
+
+	  // ✅ 매출전표 (수금)
+	  if (invoice.type === "S") {
+	    rows.push({
+	      gbn: "차변",
+	      acctCode: "101",
+	      acctName: "보통예금",
+	      cusName: cus,
+	      debit: amt,
+	      credit: null,
+	      note: "매출 수금"
+	    });
+	    rows.push({
+	      gbn: "대변",
+	      acctCode: "108",
+	      acctName: "외상매출금",
+	      cusName: cus,
+	      debit: null,
+	      credit: amt,
+	      note: "외상대금 결제"
+	    });
+	  }
+
+	  // ✅ 매입전표 (지급)
+	  else if (invoice.type === "P") {
+	    rows.push({
+	      gbn: "차변",
+	      acctCode: "251",
+	      acctName: "외상매입금",
+	      cusName: cus,
+	      debit: amt,
+	      credit: null,
+	      note: "외상대금 지급"
+	    });
+	    rows.push({
+	      gbn: "대변",
+	      acctCode: "101",
+	      acctName: "보통예금",
+	      cusName: cus,
+	      debit: null,
+	      credit: amt,
+	      note: "매입대금 출금"
+	    });
+	  }
+
+	  return rows;
+	}
+	
+//=== 일반전표 등록 ===
+document.getElementById("btnRegisterJournal").addEventListener("click", async () => {
+  const rows = [];
+  journalPreviewApi.forEachNode(node => rows.push(node.data));
+
+  if (rows.length === 0) {
+    alert("회계 분개 데이터가 없습니다.");
+    return;
+  }
+  // ✅ 새 전표번호 발급
+  const { data: newNo } = await axios.get("/api/account/nextJrnNo");
+
+  // ✅ 전표 payload 구성
+  const payload = rows.map((r, idx) => ({
+    jrnNo: newNo,
+    lineNo: idx + 1,
+    jrnDate: new Date().toISOString().substring(0, 10),
+    acctCode: r.acctCode,
+    acctName: r.acctName,
+    dcType: r.gbn === "차변" ? "D" : "C",
+    amount: r.debit ? r.debit : r.credit,
+    remarks: r.note,
+    cusCode: selectedInvoice.cusCode,
+    cusName: selectedInvoice.cusName,
+    status: "open"
+  }));
+	
+  try {
+    // ✅ 일반전표 저장
+    await axios.post("/api/account/journalList", payload);
+
+    // ✅ 자금전표 상태 업데이트
+    await axios.put(`/api/account/payment/${selectedInvoice.payCode}/posted`, {
+      postedFlag: "Y"
+    });
+	
+    alert("일반전표 등록 완료!");
+    loadUnpaidList();
+  } catch (err) {
+    console.error(err);
+    alert("일반전표 등록 실패");
+  }
+});
+</script>
+	</th:block>
 </body>
 </html>

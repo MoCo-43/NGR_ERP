@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentLineVO {
+public class PayrollLineVO {
 
     private String yearMonth;
     private String deptCode;
