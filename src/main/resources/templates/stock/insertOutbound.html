@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	 layout:decorate="~{layout/base}">
+<head>
+  <meta charset="UTF-8">
+  <title layout:fragment="title">너 구 름(Your Cloud)</title>
+  <th:block layout:fragment="head_extra">
+     <!-- Bootstrap CSS -->
+  	<!--  base에 있는 버전과 달라서 강제 주입 --> 
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    crossorigin="anonymous"
+  />
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <!-- AG Grid CSS (Quartz) -->
+   <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
+    />
+   <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
+   />
+   <!-- TOASTR -->
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+   
+   <!-- CSS(confirm alert + Quartz) -->
+   <link rel="stylesheet" href="/style/confirm.css" />
+   
+  </th:block>
+</head>
+<body>
+<section layout:fragment="content">
+<!-- 컨테이너 시작 -->
+<div class="card shadow">
+  <!-- 마스터 카드 -->
+  <!-- <div class="card shadow-sm mb-4"> -->
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="mb-0 font-weight-bold text-primary">출고 등록 페이지</h6>
+    </div>
+  <!-- </div>  -->
+
+  <!-- 폼 카드 -->
+  <!-- <div class="card shadow-sm">  -->
+    <div class="card-body">
+    <div class="btn-bar">
+    	 <!-- 버튼 영역 (폼 전체 최상단 오른쪽) -->
+      <div class="d-flex justify-content-end mb-3">
+      	<button type="button" class="btn btn-dark me-2" id="searchBtn">지시서조회</button>
+	    <button type="button" class="btn btn-primary me-2" id="submitBtn">등록</button>
+	    <button type="reset" class="btn btn-danger" form="insertList">초기화</button>
+       </div>
+    </div>
+    
+      <form class="row g-3" id="insertList" enctype="application/x-www-form-urlencoded">
+      <div class="col-md-3">
+          <label for="compCode" class="form-label">회사코드</label>
+          <input type="text" class="form-control" id="compCode" name="compCode">
+        </div>
+        <div class="col-md-3">
+          <label for="doCode" class="form-label">지시서코드</label>
+          <input type="text" class="form-control" id="doCode" name="doCode" placeholder="지시서코드 기입">
+        </div>
+         <div class="col-md-3">
+          <label for="businessCode" class="form-label">거래처코드</label>
+          <input type="text" class="form-control" id="businessCodeInput" name="businessCode">
+        </div>
+        <div class="col-md-3">
+          <label for="cusName" class="form-label">거래처명</label>
+          <input type="text" class="form-control" id="cusName" name="cusName">
+        </div>
+        <div class="col-md-3">
+          <label for="outBoundDate" class="form-label">출고일자</label>
+          <input type="date" class="form-control" id="outBoundDate" name="outBoundDate">
+        </div>
+        <div class="col-md-3">
+          <label for="empId" class="form-label">담당자명</label>
+          <input type="text" class="form-control" id="empId" name="empId">
+        </div>
+        
+      </form>
+    </div>
+  <!-- </div>  -->
+  
+  <div class="card shadow-sm mt-4">
+  <div class="card-header bg-secondary text-white">
+    <h5 class="mb-0">출고 제품 목록</h5>
+  </div>
+  <div class="card-body">
+      <div id="outListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
+  </div>
+  </div>
+  
+  
+  
+  
+  <!-- Toast (닫기 버튼 제거) -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+  <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-body" id="toastMessage">등록 성공!</div>
+  </div>
+</div>
+  
+  <!-- 컨테이너 종료 -->
+</div>
+
+   <!-- 모달 include              경로             ::  div id 부분  -->   
+  <div th:replace="~{stock/modals/delOrderListModal :: delOrderListModal}"></div>
+  
+</section>
+  
+<th:block layout:fragment="body_extra">
+ <!-- Axios 등록 -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+ <!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+ <!-- ag-Grid JS -->
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/dist/ag-grid-community.min.noStyle.js"></script>
+ <!-- toastr -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+ <!-- cuteAlert js -->
+<script src="/js/cuteAlert.js"></script>
+
+  <!-- 스크립트 -->
+<script th:inline="none">
+document.addEventListener("DOMContentLoaded", () => {
+	// 현재 날짜로 초기 입력
+	function initToday(){
+		const today = new Date();
+		const yyyy = today.getFullYear();
+		const mm = String(today.getMonth() + 1).padStart(2, '0'); // 월은 0~11이므로 +1
+		const dd = String(today.getDate()).padStart(2, '0');
+		document.getElementById('outBoundDate').value = `${yyyy}-${mm}-${dd}`;
+	}
+	initToday();
+	const outListGrid = document.getElementById('outListGrid');
+	const addRowBtn = document.getElementById('addRowBtn');
+	const tableBody = document.querySelector('#orderItemsTable tbody');
+	const taxSelect = document.getElementById('taxType'); // 상단 세율 select
+	const searchBtn = document.getElementById('searchBtn'); // 발주계획 조회 버튼
+ 	let gridApi = null;
+ 	let gridOptions = null;
+ 	let orderListGridApi = null;
+	let orderDetailGridApi = null;
+	let orderDetailGridOptions = null;
+	let rowData = null;
+	let productGridApi = null;
+	let productGridOptions = null;
+	
+ 	// 공통 모달 호출 함수
+ 	function initGrid(config) {
+ 	    const eGridDiv = document.getElementById(config.el);
+ 	    if (!eGridDiv) {
+ 	        console.error(`${config.el} div를 찾을 수 없습니다!`);
+ 	        return null;
+ 	    }
+ 		let gridApi = null;
+ 	    const gridOptions = {
+ 	        columnDefs: config.columnDefs || [],
+ 	        rowSelection: config.rowSelection || "single",
+ 	        pagination: true,
+ 	        paginationPageSize: config.paginationPageSize || 12,
+ 	        domLayout: config.domLayout || "normal",
+ 	        rowData: [],
+ 	        defaultColDef: {
+ 	            resizable: true,
+ 	            sortable: true,
+ 	            minWidth: 100,
+ 	        },
+ 	        onRowDoubleClicked: (event) => {
+ 	            if (typeof config.onRowDoubleClicked === "function") {
+ 	                config.onRowDoubleClicked(event);
+ 	            }
+ 	        },
+ 	       onRowClicked: (event) => {
+	            if (typeof config.onRowClicked === "function") {
+	                config.onRowClicked(event);
+	            }
+	        },
+ 	        onGridReady: (event) => {
+ 	            if (typeof config.onGridReady === "function") {
+ 	                config.onGridReady(event);
+ 	            }
+ 	            event.api.sizeColumnsToFit();
+ 	        },
+ 	    };
+
+ 	    new agGrid.Grid(eGridDiv, gridOptions);
+ 	    return { gridApi: gridOptions.api, gridOptions };
+	}// END OF FUNCTION
+ 	
+ 	//let gridCreated = false;
+ 	// withCredentials: true를 추가해야 쿠키 기반 세션을 함께 보내서 로그인 상태를 유지
+ 	axios.get("/api/v1/stock/getEmpName", { withCredentials: true })
+		  .then(res => {
+			  console.log(res.data);
+    			document.getElementById("empId").value = res.data;
+  			})
+  		  .catch(err => console.error(err));
+	
+ 	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+	  .then(res => {
+			document.getElementById("compCode").value = res.data;
+		})
+	  .catch(err => console.error(err));
+ 	
+	
+	// 지시서 조회 버튼 클릭시 모달 호출
+	searchBtn.addEventListener('click', async () => {
+	    const orderListModalEl = document.getElementById('delOrderListModal');
+	    const orderListModal = bootstrap.Modal.getOrCreateInstance(orderListModalEl);
+	    orderListModal.show();
+
+	    // Grid 초기화 (한 번만)
+	    if (!orderListGridApi) {
+	        const eGridDiv = document.getElementById('delOrderListGrid');
+	        const columnDefs = [
+	        	{ headerName: "지시코드", field: "doCode" },
+	            { headerName: "거래처코드", field: "cusCode" },
+	            { headerName: "거래처명", field: "cusName" },
+	            { headerName: "제품명", field: "productName" },
+	            { headerName: "수량", field: "amount" }
+	        ];
+
+	        const gridOptions = {
+	            columnDefs,
+	            rowSelection: "single",
+	            pagination: true,
+	            paginationPageSize: 10,
+	            defaultColDef: {
+	                resizable: true,
+	                sortable: true,
+	                minWidth: 100
+	            },
+	            onGridReady: async (event) => {
+	                orderListGridApi = event.api;
+	                orderListGridApi.sizeColumnsToFit();
+	                await loadOrderListData();
+	            },
+	            onRowDoubleClicked: async (event) => {
+	                console.log("선택된 지시 :", event.data);
+	                const selectedRow = event.data;
+	                // 필요하면 선택한 데이터를 상단 input에 반영
+	               	document.getElementById('doCode').value = selectedRow.doCode || "";
+				    document.getElementById('businessCodeInput').value = selectedRow.cusCode || "";
+				    document.getElementById('cusName').value = selectedRow.cusName || "";
+				    // document.getElementById('dueDate').value = selectedRow.dueDate || "";
+	                await addDetailRow(selectedRow); // 디테일 테이블에 새 row 추가;
+	                orderListModal.hide();
+	            }
+	        };
+	        new agGrid.Grid(eGridDiv, gridOptions);
+	    } else {
+	        orderListGridApi.sizeColumnsToFit();
+	        await loadOrderPlanData();
+	    }
+	});
+	
+	async function addDetailRow(rowData){
+		try {
+			const doCode = rowData.doCode;
+			console.log("doCode : "+doCode);
+	        // rowData.xpCode 기준으로 상세 가져오기
+	        const res = await axios.get(`/api/v1/stock/deliveryOrderDetail/${doCode}`, { withCredentials: true });
+	        const detailData = res.data; // 배열 형태여야 함
+
+	        // AG Grid에 바인딩
+	        if (orderDetailGridApi) {
+	        	orderDetailGridApi.setRowData(detailData);
+	        	orderDetailGridApi.sizeColumnsToFit();
+	        } else {
+	            const eGridDiv = document.getElementById('outListGrid');
+	            const columnDefs = [
+	            	  { headerName: "No.", valueGetter: "node.rowIndex + 1", width: 70 },
+	            	  { headerName: "출고예정일", field: "dueDate" },
+	                  { headerName: "제품코드", field: "productCode" },
+	                  { headerName: "제품명", field: "productName" },
+	                  { headerName: "규격", field: "specification" },
+	                  { headerName: "출고수량", field: "amount", type: 'numericColumn' },
+	                  { headerName: "유형", field: "type", valueGetter: () => "지시서"}
+	            ];
+
+	            const gridOptions = {
+	                columnDefs,
+	                rowData: detailData,
+	                rowSelection: "single",
+	                pagination: true,
+	                paginationPageSize: 10,
+	                defaultColDef: { resizable: true, sortable: true, minWidth: 100},
+	                onGridReady: (event) => {
+	                	orderDetailGridApi = event.api;
+	                	orderDetailGridApi.sizeColumnsToFit();
+	                }
+	            };
+	         	// 그리드 생성 후 API 저장
+	            orderDetailGridApi = new agGrid.Grid(eGridDiv, gridOptions).gridOptions.api;
+	        }
+	    } catch (err) {
+	        console.error(err);
+	        toastr.error("상세 조회 실패");
+	    }
+	}
+
+	// 서버에서 지시서 데이터 가져오기
+	async function loadOrderListData() {
+	    try {
+	        const res = await axios.get('/api/v1/stock/delOrderList', { withCredentials: true });
+	        if (orderListGridApi) {
+	            orderListGridApi.setRowData(res.data);
+	        }
+	    } catch (err) {
+	        console.error(err);
+	        toastr.error('출하 지시 조회 실패');
+	    }
+	}
+
+  // Axios 등록 + Toast
+	const form = document.getElementById('insertList');
+	const submitBtn = document.getElementById('submitBtn');
+	const toastEl = document.getElementById('successToast');
+	const toast = new bootstrap.Toast(toastEl);
+	
+	submitBtn.addEventListener('click', async (event) => {
+		console.log(event.data);
+		event.preventDefault(); // 페이지 새로고침 방지
+	        // confirm 먼저
+	        const res = await cuteAlert({
+	        	type: "question",
+	            title: "출고 확인",
+	            message: "정말 등록하시겠습니까?",
+	            imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
+	            confirmText: "네",
+	            cancelText: "아니오"
+	        });
+	        console.log('cuteAlert result:', res);
+	        if(res !== true) {
+	            return; // 취소 시 함수 종료
+	        }
+	        // 1️⃣ 헤더 데이터
+	        const header = {
+	            outboundCode: document.getElementById('doCode').value,
+	            businessCode: document.getElementById('businessCodeInput').value,
+	            cusName: document.getElementById('cusName').value,
+	            outboundDate: document.getElementById('outBoundDate').value,
+	            empId: document.getElementById('empId').value,
+	            companyCode: Number(document.getElementById('compCode').value) || 0
+	        };
+	        const details = [];
+	        if (orderDetailGridApi) {
+	            orderDetailGridApi.forEachNode((node) => {
+	                details.push({
+	 			    dueDate: document.getElementById('dueDate').value,
+	                productCode: node.data.productCode,
+	                productName: node.data.productName,
+	                specification: node.data.specification,
+	                amount: Number(node.data.amount) || 0,
+	                companyCode: Number(document.getElementById('compCode').value) || 0
+	                });
+	            });
+	        }
+		  const payload = { header, details };
+		  console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
+		  //console.log("payload.orderPrice: "+payload.orderPrice);
+		  try {
+			  	
+			    await axios.post('/api/v1/stock/outboundInsert', payload, {
+			      headers: { 'Content-Type': 'application/json' }
+			    });
+			    
+			    //toast.show();
+			    toastr.success('등록성공');
+			   	form.reset();
+			  	if(orderDetailGridApi) orderDetailGridApi.setRowData([]);
+			    
+        		rowCount = 1; // 행 번호 초기화
+			  } catch (err) {
+			    //alert('등록 실패: ' + err.message);
+			   
+				toastr.error('등록 실패: ' + err.message,{timeOut: 3000});
+			  }
+	});
+
+});
+</script>
+</th:block>
+
+</body>
+</html>
