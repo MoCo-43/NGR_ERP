@@ -1,6 +1,9 @@
 package com.yedam.erp.web.ApiController.main;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.yedam.erp.service.hr.EmpService;
 import com.yedam.erp.service.main.EmpLoginService;
 import com.yedam.erp.vo.hr.EmpVO;
 
@@ -26,11 +28,33 @@ public class EmpLoginController {
      * 사원 목록을 조회합니다. (부서별 검색 기능 포함)
      * hrmanager.html의 '검색' 버튼이 이 API를 호출합니다.
      */
+//    @GetMapping("/hrLists")
+//    public List<EmpVO> getEmployees(@RequestParam(required = false) String deptCode) {
+//        return empLoginService.findEmployeesByDept(deptCode);
+//    }
     @GetMapping("/hrLists")
-    public List<EmpVO> getEmployees(@RequestParam(required = false) String deptCode) {
-        // 사원 정보 조회는 EmpService의 책임입니다.
-        return empLoginService.findEmployeesByDept(deptCode);
+    public List<Map<String, Object>> getEmployees(@RequestParam(required = false) String deptCode) {
+        List<EmpVO> empList = empLoginService.findEmployeesByDept(deptCode);
+
+        for (EmpVO emp : empList) {
+            System.out.println("emp_id=" + emp.getEmp_id() + ", name=" + emp.getName() 
+                + ", dept_code=" + emp.getDept_code() + ", email=" + emp.getEmail());
+        }
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (EmpVO emp : empList) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("empId", emp.getEmp_id());
+            map.put("name", emp.getName());
+            map.put("deptCode", emp.getDept_code());
+            map.put("email", emp.getEmail());
+            result.add(map);
+        }
+
+        System.out.println(result); // Map 변환 후 확인
+        return result;
     }
+
 
     /**
      * 초기 비번 전송' 버튼을 처리합니다.

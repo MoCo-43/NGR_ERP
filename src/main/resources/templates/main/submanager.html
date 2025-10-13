@@ -1,192 +1,279 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
-
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
 <head>
-  <title layout:fragment="title">구독 계정관리</title>
+<title layout:fragment="title">구독 계정관리</title>
+<th:block layout:fragment="head_extra">
+	<link
+		href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+		rel="stylesheet">
+	<style>
+/* 기존 스타일 유지 */
+.detail-box {
+	background-color: #f8f9fa;
+	border: 1px solid #dee2e6;
+	padding: 20px;
+	border-radius: 8px;
+	margin-top: 20px;
+}
 
-  <th:block layout:fragment="head_extra">
-    <style>
-      /* 상세 박스 공통 스타일 */
-      .detail-box {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        padding: 20px;
-        border-radius: 8px;
-        margin-top: 20px;
-        color: black;
-      }
-      
-      /* 시안에 따른 구독 상세 박스 스타일 (3단 레이아웃) */
-      .subscription-detail-container {
-        display: flex;
-        gap: 15px; /* 박스 간 간격 */
-        justify-content: space-between;
-        margin-top: 15px;
-      }
-      .subscription-box {
-        background-color: #ffffff;
-        border: 1px solid #dee2e6;
-        padding: 15px;
-        border-radius: 6px;
-        flex: 1; /* 동일한 너비로 분할 */
-      }
-      .subscription-box-header {
-        font-size: 1.1rem;
-        font-weight: bold;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #0d6efd;
-        text-align: center;
-      }
+.subscription-detail-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 15px;
+	justify-content: space-between;
+	margin-top: 15px;
+}
 
-      /* 구독 패키지 스타일 */
-      .package-button {
-        display: block;
-        width: 100%;
-        padding: 15px;
-        margin-bottom: 15px;
-        border: 2px solid #0d6efd;
-        border-radius: 4px;
-        text-align: center;
-        font-weight: bold;
-        font-size: 1.3rem;
-        background-color: #e9f2ff;
-        color: #0d6efd;
-      }
-      .module-container {
-        display: flex;
-        gap: 10px;
-      }
-      .module-button {
-        flex: 1;
-        padding: 15px 10px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        text-align: center;
-        font-weight: 500;
-        background-color: #f8f9fa;
-      }
+.subscription-box {
+	background-color: #ffffff;
+	border: 1px solid #dee2e6;
+	padding: 15px;
+	border-radius: 6px;
+	flex: 1;
+	min-width: 300px;
+}
 
-      /* 계약 정보 스타일 */
-      .contract-info-item {
-        margin-bottom: 20px;
-      }
-      .contract-info-item label {
-        display: block;
-        font-size: 0.9rem;
-        color: #6c757d;
-        margin-bottom: 5px;
-        font-weight: bold;
-      }
-      .contract-info-field {
-        border: 1px solid #ced4da;
-        padding: 10px;
-        border-radius: 4px;
-        background-color: #e9ecef;
-        font-weight: 500;
-      }
-      .contract-date-group {
-        display: flex;
-        gap: 10px;
-      }
-      .contract-date-group > div {
-        flex: 1;
-      }
+.subscription-box-header {
+	font-size: 1.1rem;
+	font-weight: bold;
+	margin-bottom: 15px;
+	text-align: center;
+	border-bottom: 2px solid #0d6efd;
+	padding-bottom: 10px;
+}
 
-      /* 문서 스타일 */
-      .document-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        padding: 5px 0;
-        border-bottom: 1px dashed #e9ecef;
-        font-weight: 500;
-      }
-      .document-buttons .btn {
-        margin-left: 5px;
-        font-size: 0.8rem;
-        padding: 5px 10px;
-        min-width: 60px;
-      }
-      .document-item:last-child {
-        border-bottom: none;
-        margin-bottom: 0;
-        padding-bottom: 0;
-      }
-    </style>
-  </th:block>
+.package-button {
+	display: block;
+	width: 100%;
+	padding: 15px;
+	margin-bottom: 15px;
+	border: 2px solid #0d6efd;
+	border-radius: 4px;
+	text-align: center;
+	font-weight: bold;
+	font-size: 1.3rem;
+	background-color: #e9f2ff;
+	color: #0d6efd;
+}
+
+.contract-info-item {
+	margin-bottom: 20px;
+}
+
+.contract-info-item label {
+	display: block;
+	font-size: 0.9rem;
+	color: #6c757d;
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+
+.contract-info-field {
+	border: 1px solid #ced4da;
+	padding: 10px;
+	border-radius: 4px;
+	background-color: #e9ecef;
+	font-weight: 500;
+}
+
+.contract-date-group {
+	display: flex;
+	gap: 10px;
+}
+
+.contract-date-group>div {
+	flex: 1;
+}
+
+.document-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
+	padding: 5px 0;
+	border-bottom: 1px dashed #e9ecef;
+	font-weight: 500;
+}
+
+.document-buttons .btn {
+	margin-left: 5px;
+	font-size: 0.8rem;
+	padding: 5px 10px;
+	min-width: 60px;
+}
+
+.document-item:last-child {
+	border-bottom: none;
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+</style>
+</th:block>
 </head>
 
 <body>
-<section layout:fragment="content" class="p-4">
-  <div class="detail-box">
-    <h5 class="fw-bold mb-3">구독 내역</h5>
+	<section layout:fragment="content" class="p-4">
+		<div class="detail-box">
+			<h5 class="fw-bold mb-3">구독 내역</h5>
+			<div class="subscription-detail-container">
+				<!-- 구독 패키지 -->
+				<div class="subscription-box">
+					<div class="subscription-box-header">구독 패키지 확인</div>
+					<div class="package-button"
+						th:text="${subscription?.subPlan?.planName} ?: '-'"></div>
+				</div>
 
-    <div class="subscription-detail-container">
-      
-      <div class="subscription-box">
-        <div class="subscription-box-header">구독 패키지 확인</div>
-        <div class="package-button" th:text="${subscription != null && subscription.subPlan != null} ? ${subscription.subPlan.planName} : '-'"></div>
+				<!-- 계약 정보 -->
+				<div class="subscription-box">
+					<div class="subscription-box-header">계약 정보</div>
+					<div class="contract-info-item">
+						<label>기간</label>
+						<div class="contract-info-field"
+							th:text="${subscription} ? ${subscription.mon} + '개월' : '-'"></div>
+					</div>
+					<div class="contract-date-group">
+						<div class="contract-info-item">
+							<label>구독 시작일</label>
+							<div class="contract-info-field"
+								th:text="${subscription} ? ${#dates.format(subscription.startDate, 'yyyy-MM-dd')} : '-'"></div>
+						</div>
+						<div class="contract-info-item">
+							<label>구독 종료일</label>
+							<div class="contract-info-field"
+								th:text="${subscription} ? ${#dates.format(subscription.endDate, 'yyyy-MM-dd')} : '-'"></div>
+						</div>
+					</div>
+				</div>
 
-        <!--  <div class="module-container">
-          <div th:if="${subscription != null and subscription.subPlan != null and not #strings.isEmpty(subscription.subPlan.avaiModules)}">
-            
-            <th:block th:with="safeModules=${#strings.replace(#strings.trim(subscription.subPlan.avaiModules), ',\s*$', '')}">
-              
-              <div th:each="mod : ${#strings.split(safeModules, ',')}" 
-                   class="module-button" 
-                   th:text="${#strings.trim(mod)}"></div>
-            </th:block>
-            
-          </div>
-          <div th:if="${subscription == null || subscription.subPlan == null || #strings.isEmpty(subscription.subPlan.avaiModules)}" 
-               class="module-button">
-            사용 가능한 모듈이 없습니다.
-          </div>
-        </div>-->
-      </div>
+				<!-- 문서 -->
+				<div class="subscription-box">
+					<div class="subscription-box-header">문서</div>
+					<div class="document-item">
+						<span>계약서</span>
+						<div class="document-buttons">
+							<button class="btn btn-sm btn-outline-primary"
+								id="btnPreviewContract">미리보기</button>
+							<button class="btn btn-sm btn-danger" id="btnDownloadContractPdf">PDF
+								다운로드</button>
+						</div>
+					</div>
+					<div class="document-item">
+						<span>세금계산서</span>
+						<div class="document-buttons">
+							<button class="btn btn-sm btn-outline-primary">미리보기</button>
+							<button class="btn btn-sm btn-danger">PDF</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
 
-      <div class="subscription-box">
-        <div class="subscription-box-header">계약 정보</div>
-        <div class="contract-info-item">
-          <label>기간</label>
-          <div class="contract-info-field" th:text="${subscription != null} ? ${subscription.mon} + '개월' : '-'"></div>
-        </div>
-        <div class="contract-date-group">
-          <div class="contract-info-item">
-            <label>구독 시작일</label>
-            <div class="contract-info-field" th:text="${subscription != null} ? ${#dates.format(subscription.startDate, 'yyyy-MM-dd')} : '-'"></div>
-          </div>
-          <div class="contract-info-item">
-            <label>구독 종료일</label>
-            <div class="contract-info-field" th:text="${subscription != null} ? ${#dates.format(subscription.endDate, 'yyyy-MM-dd')} : '-'"></div>
-          </div>
-        </div>
-      </div>
+	<!-- 계약서 내용 (숨김) -->
+	<div id="contract-document"
+		th:replace="main/content :: contractFragment" style="display: none;"></div>
 
-      <div class="subscription-box">
-        <div class="subscription-box-header">문서</div>
-        <div class="document-item">
-          <span>계약서</span>
-          <div class="document-buttons">
-            <button class="btn btn-sm btn-outline-primary">미리보기</button>
-            <button class="btn btn-sm btn-danger">PDF</button>
-          </div>
-        </div>
-        <div class="document-item">
-          <span>세금계산서</span>
-          <div class="document-buttons">
-            <button class="btn btn-sm btn-outline-primary">미리보기</button>
-            <button class="btn btn-sm btn-danger">PDF</button>
-          </div>
-        </div>
-      </div>
+<th:block layout:fragment="body_extra">
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    let contractHtmlContent = null; // 완성된 계약서 HTML 문자열을 저장할 변수
 
-    </div>
-  </div>
-</section>
-</body>
-</html>
+    // 1. 페이지 로드 시, 서버에서 완성된 계약서 HTML을 미리 가져옵니다. (원래 로직 복원)
+    fetch('/sub/contract-html')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('서버에서 계약서를 불러오지 못했습니다.');
+            }
+            return response.text();
+        })
+        .then(html => {
+            contractHtmlContent = html; // 가져온 HTML 문자열을 변수에 저장
+        })
+        .catch(err => {
+            console.error('계약서 로드 실패:', err);
+            // 사용자에게도 실패를 알릴 수 있습니다.
+            document.getElementById('btnPreviewContract').disabled = true;
+            document.getElementById('btnDownloadContractPdf').disabled = true;
+        });
+
+    // 2️⃣ 새 창 미리보기 (원래 방식으로 되돌림)
+    document.getElementById('btnPreviewContract').addEventListener('click', function() {
+        if (!contractHtmlContent) return alert('계약서 내용을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+
+        const popup = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+        popup.document.write(contractHtmlContent); // 저장해둔 HTML을 그대로 새 창에 씁니다.
+        popup.document.close();
+    });
+
+    // 3️⃣ PDF 다운로드 (개선된 방식 적용)
+    document.getElementById('btnDownloadContractPdf').addEventListener('click', function() {
+        if (!contractHtmlContent) return alert('계약서 내용을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+
+        const pdfButton = this;
+        pdfButton.textContent = '생성 중...';
+        pdfButton.disabled = true;
+
+        // A. PDF 변환을 위한 임시 컨테이너를 만듭니다.
+        const tempContainer = document.createElement('div');
+        
+        // B. 화면에 보이지 않도록 스타일을 설정합니다.
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.top = '0';
+        tempContainer.style.width = '800px'; // A4 용지 비율에 맞게 적절한 너비 지정
+
+        // C. 가져온 계약서 HTML을 임시 컨테이너에 삽입합니다.
+        tempContainer.innerHTML = contractHtmlContent;
+        
+        // D. body에 임시 컨테이너를 추가하여 DOM의 일부로 만듭니다.
+        document.body.appendChild(tempContainer);
+        
+        // 실제 캡처할 요소를 임시 컨테이너 안에서 찾습니다.
+        const elementToCapture = tempContainer.querySelector('#contract-document') || tempContainer;
+
+        html2canvas(elementToCapture, {
+            scale: 2,
+            useCORS: true,
+            windowWidth: elementToCapture.scrollWidth,
+            windowHeight: elementToCapture.scrollHeight
+        }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 210;
+            const pageHeight = 297;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                doc.addPage();
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+            doc.save('NGR_ERP_서비스_이용계약서.pdf');
+        }).catch(err => {
+            console.error("PDF 생성 오류:", err);
+            alert('PDF 생성에 실패했습니다.');
+        }).finally(() => {
+            // E. 작업 완료 후 임시 컨테이너를 DOM에서 반드시 제거합니다.
+            document.body.removeChild(tempContainer);
+            pdfButton.textContent = 'PDF 다운로드';
+            pdfButton.disabled = false;
+        });
+    });
+});
+</script>
+</th:block>
+
+</th:block>

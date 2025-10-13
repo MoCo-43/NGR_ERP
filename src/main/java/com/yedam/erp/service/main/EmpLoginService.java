@@ -23,4 +23,8 @@ public interface EmpLoginService {
 
     // 사원 조회
     EmpVO findEmployeeById(String empId);
+    
+    //마이페이지 사원조회
+    //List<EmpVO> mypageList(String name); 
+    EmpVO mypageInfo(String empId);
 }

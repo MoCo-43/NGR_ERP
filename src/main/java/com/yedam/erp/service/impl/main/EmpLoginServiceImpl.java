@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.main.EmpLoginMapper;
+import com.yedam.erp.service.hr.EmpService;
 import com.yedam.erp.service.main.EmailService;
 import com.yedam.erp.service.main.EmpLoginService;
 import com.yedam.erp.vo.hr.EmpVO;
@@ -81,7 +82,8 @@ public class EmpLoginServiceImpl implements EmpLoginService {
         String encodedPassword = passwordEncoder.encode(tempPassword);
 
         EmpLoginVO loginVO = new EmpLoginVO();
-        loginVO.setEmpId(loginId);
+        //loginVO.setEmpId(loginId);
+        loginVO.setEmpId(emp.getEmp_id());
 
         // 숫자만 추출해서 Long 변환
         String numericPart = employeeId.replaceAll("[^0-9]", "");
@@ -114,4 +116,11 @@ public class EmpLoginServiceImpl implements EmpLoginService {
     private String generateRandomPassword() {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
     }
+
+	@Override
+	public EmpVO mypageInfo(String empId) {
+		return empLoginMapper.mypageInfo(empId);
+	}
+
+
 }
