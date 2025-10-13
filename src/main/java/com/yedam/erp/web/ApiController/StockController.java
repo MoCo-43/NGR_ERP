@@ -36,12 +36,16 @@ import com.yedam.erp.service.JasperService;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.stock.ComOrderDetailVO;
+import com.yedam.erp.vo.stock.ComOrderVO;
 import com.yedam.erp.vo.stock.InboundVO;
 import com.yedam.erp.vo.stock.InvenDetailVO;
 import com.yedam.erp.vo.stock.InvenVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.OrderVO;
+import com.yedam.erp.vo.stock.OutboundHeaderVO;
+import com.yedam.erp.vo.stock.OutboundVO;
 import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
@@ -75,8 +79,10 @@ public class StockController {
 	// 세션 사원이름 불러오기
 	@GetMapping("/getEmpName")
 	public String getEmpName(Model model) {
-		 String empName = SessionUtil.empId();
-	        return empName;
+		 String getSessionName = SessionUtil.empName();
+		 return getSessionName;
+		 // String empName = SessionUtil.empId();
+		// return empName;
 	}
 	
 	@GetMapping("/icList") // 결산 리스트
@@ -115,6 +121,22 @@ public class StockController {
 	    List<InboundVO> details = payload.get("details"); // JS에서 보낸 배열
 	    service.insertInbound(details);
 	    return ResponseEntity.ok("등록 성공");
+	}
+	
+	@GetMapping("/delOrderList")
+	public List<ComOrderVO> getDeliveryOrderList(){
+		return service.getDeliveryOrderList();
+	}
+	
+	@GetMapping("/deliveryOrderDetail/{doCode}")
+	public List<ComOrderDetailVO> getDeliOrderDetailList(@PathVariable String doCode){
+		return service.getComOrderDetailList(doCode);
+	}
+	
+	@PostMapping("/outboundInsert")
+	public ResponseEntity<?> insertOutbound(@RequestBody OutboundHeaderVO payload){
+		service.insertOutbound(payload);
+		return ResponseEntity.ok("출고등록 완료!");
 	}
 	
 	

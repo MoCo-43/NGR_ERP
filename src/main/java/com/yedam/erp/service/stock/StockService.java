@@ -5,12 +5,16 @@ import java.util.Map;
 
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.stock.ComOrderDetailVO;
+import com.yedam.erp.vo.stock.ComOrderVO;
 import com.yedam.erp.vo.stock.InboundVO;
 import com.yedam.erp.vo.stock.InvenDetailVO;
 import com.yedam.erp.vo.stock.InvenVO;
+import com.yedam.erp.vo.stock.LotoutboundVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.OrderVO;
+import com.yedam.erp.vo.stock.OutboundHeaderVO;
 import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
@@ -66,4 +70,12 @@ public interface StockService {
 	
 	// 입고 등록
 	public void insertInbound(List<InboundVO> details);
+	
+	
+	// 출고 등록
+	public void insertOutbound(OutboundHeaderVO payload);
+	
+	// 출하 지시시 조회
+	public List<ComOrderVO> getDeliveryOrderList();
+	public List<ComOrderDetailVO> getComOrderDetailList(String doCode);
 }
