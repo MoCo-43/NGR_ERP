@@ -57,44 +57,55 @@
       method="post"
     ></form>
     <section layout:fragment="content">
-      <!-- 상단 툴바 (8) -->
+      <!-- 상단 툴바 -->
       <div class="card shadow mb-3">
-        <div class="card-body d-flex align-items-center gap-2 flex-wrap">
-          <div class="btn-group">
+        <!-- 헤더: 제목 + 초기화/등록 -->
+        <div
+          class="card-header d-flex align-items-center justify-content-between"
+        >
+          <h6 class="m-0 font-weight-bold text-primary">주문서입력</h6>
+          <div class="d-flex gap-2">
             <button
-              id="btnOpenProduct"
+              id="btnReset"
               type="button"
-              class="btn btn-outline-secondary btn-slim"
-              data-bs-toggle="modal"
-              data-bs-target="#productcodeModal"
+              class="btn btn-danger btn-slim btn-wide"
             >
-              품목코드
+              초기화
             </button>
             <button
-              id="btnOpenHistory"
+              id="btnSubmit"
               type="button"
-              class="btn btn-outline-secondary btn-slim"
-              data-bs-toggle="modal"
-              data-bs-target="#PoHistoryModal"
+              class="btn btn-primary btn-slim btn-wide"
             >
-              주문서이력조회
+              등록
             </button>
           </div>
-          <div class="ml-auto"></div>
-          <button
-            id="btnReset"
-            type="button"
-            class="btn btn-danger btn-slim btn-wide"
-          >
-            초기화
-          </button>
-          <button
-            id="btnSubmit"
-            type="button"
-            class="btn btn-primary btn-slim btn-wide"
-          >
-            등록
-          </button>
+        </div>
+
+        <!-- 품목코드/주문서이력조회 모달 버튼 -->
+        <div class="card-body py-2">
+          <div class="d-flex justify-content-end">
+            <div class="btn-group">
+              <button
+                id="btnOpenProduct"
+                type="button"
+                class="btn btn-outline-secondary btn-slim"
+                data-bs-toggle="modal"
+                data-bs-target="#productcodeModal"
+              >
+                품목코드
+              </button>
+              <button
+                id="btnOpenHistory"
+                type="button"
+                class="btn btn-outline-secondary btn-slim"
+                data-bs-toggle="modal"
+                data-bs-target="#PoHistoryModal"
+              >
+                주문서이력조회
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

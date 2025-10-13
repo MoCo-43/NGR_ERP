@@ -1,0 +1,295 @@
+<!-- templates/fragments/CustomerModal.html -->
+<div th:fragment="mngcustomermodal">
+  <div
+    class="modal fade"
+    id="mngcustomermodal"
+    tabindex="-1"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <!-- 헤더 -->
+        <div class="modal-header">
+          <div class="d-flex align-items-center gap-2">
+            <!-- 1. 탭: 거래처정보 / 여신 -->
+            <div class="btn-group" role="group" aria-label="tabs">
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                id="tabInfoBtn"
+              >
+                거래처정보
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                id="tabCreditBtn"
+              >
+                여신
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn-close ms-2"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+
+        <!-- 바디 -->
+        <div class="modal-body">
+          <!-- 안내/초기화 -->
+          <div class="d-flex justify-content-end mb-2 gap-2">
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              id="btnFormReset"
+            >
+              초기화
+            </button>
+          </div>
+
+          <!-- 거래처 등록 폼 -->
+          <form id="customerForm" class="card p-3">
+            <!-- ====== 탭: 거래처정보 ====== -->
+            <div id="paneInfo">
+              <div class="row g-3">
+                <!-- 2. 거래처코드(자동) / 업태 -->
+                <div class="col-md-6">
+                  <label for="cusCode" class="form-label">거래처코드</label>
+                  <input
+                    type="text"
+                    id="cusCode"
+                    name="cusCode"
+                    class="form-control"
+                    placeholder="등록후 생성"
+                    disabled
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label for="bizType" class="form-label">업태</label>
+                  <input
+                    type="text"
+                    id="bizType"
+                    name="bizType"
+                    class="form-control"
+                  />
+                </div>
+
+                <!-- 상호 / 종목 -->
+                <div class="col-md-6">
+                  <label for="cusName" class="form-label">상호</label>
+                  <input
+                    type="text"
+                    id="cusName"
+                    name="cusName"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label for="bizCategory" class="form-label">종목</label>
+                  <input
+                    type="text"
+                    id="bizCategory"
+                    name="bizCategory"
+                    class="form-control"
+                  />
+                </div>
+
+                <!-- 사업자번호 / 전화번호 -->
+                <div class="col-md-6">
+                  <label for="bizNo" class="form-label">사업자번호</label>
+                  <input
+                    type="text"
+                    id="bizNo"
+                    name="bizNo"
+                    class="form-control"
+                    placeholder="000-00-00000"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label for="tel" class="form-label">전화번호</label>
+                  <input
+                    type="text"
+                    id="tel"
+                    name="tel"
+                    class="form-control"
+                    placeholder="010-0000-0000"
+                  />
+                </div>
+
+                <!-- 대표자명 / Email -->
+                <div class="col-md-6">
+                  <label for="repName" class="form-label">대표자명</label>
+                  <input
+                    type="text"
+                    id="qRep"
+                    name="repName"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label for="email" class="form-label">Email</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    class="form-control"
+                    placeholder="name@example.com"
+                  />
+                </div>
+
+                <!-- 3. 주소(돋보기) / 우편번호 -->
+                <div class="col-md-6">
+                  <label for="addr" class="form-label">주소</label>
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      id="addr"
+                      name="addr"
+                      class="form-control"
+                      placeholder="주소 검색으로 입력"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      id="btnFindAddr"
+                      title="주소검색"
+                    >
+                      <i class="bi bi-search"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="zipCode" class="form-label">우편번호</label>
+                  <input
+                    type="text"
+                    id="zipCode"
+                    name="zipCode"
+                    class="form-control"
+                    placeholder="우편번호"
+                  />
+                </div>
+
+                <!-- 4. 담당자(돋보기) / 취급제품 -->
+                <div class="col-md-6">
+                  <label for="managerName" class="form-label">담당자</label>
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      id="managerName"
+                      name="managerName"
+                      class="form-control"
+                      placeholder="담당자 선택"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      id="btnFindManager"
+                      title="담당자 검색"
+                    >
+                      <i class="bi bi-search"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="product" class="form-label">취급제품</label>
+                  <input
+                    type="text"
+                    id="product"
+                    name="product"
+                    class="form-control"
+                  />
+                </div>
+
+                <!-- 비고 -->
+                <div class="col-12">
+                  <label for="remark" class="form-label">비고</label>
+                  <input
+                    type="text"
+                    id="remark"
+                    name="remark"
+                    class="form-control"
+                  />
+                </div>
+
+                <!-- 사용여부 -->
+                <div class="col-12">
+                  <label for="useYn" class="form-label">사용여부</label>
+                  <select
+                    id="useYn"
+                    name="useYn"
+                    class="form-select"
+                    style="max-width: 180px"
+                  >
+                    <option value="Y" selected>Y</option>
+                    <option value="N">N</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- ====== 탭: 여신 (간단 필드) ====== -->
+            <div id="paneCredit" class="d-none">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="creditLimit" class="form-label">여신한도</label>
+                  <input
+                    type="number"
+                    id="creditLimit"
+                    name="creditLimit"
+                    class="form-control"
+                    value="0"
+                    min="0"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label for="payTerm" class="form-label">결제조건</label>
+                  <input
+                    type="text"
+                    id="payTerm"
+                    name="payTerm"
+                    class="form-control"
+                    placeholder="예: 월말 30일"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label for="billUse" class="form-label">어음사용</label>
+                  <select id="billUse" name="billUse" class="form-select">
+                    <option value="">선택</option>
+                    <option value="Y">Y</option>
+                    <option value="N">N</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- 푸터 -->
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            닫기
+          </button>
+
+          <div class="ms-auto">
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="btnSubmitCustomer"
+            >
+              등록
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -5,7 +5,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -107,5 +109,40 @@ public class BizController {
     return ResponseEntity.ok(result);
   }
 
-  
+  // 거래처관리 조회
+  @GetMapping("/mngcustomer")
+  public List<CustomerVO> getCustomerManagement() {
+    Long companyCode = SessionUtil.companyId();
+    return service.getCustomerManagement(companyCode);
+  }
+
+  // 거래처관리 등록
+  @PostMapping(value = "/mngcustomer", consumes = "application/json")
+  public ResponseEntity<Integer> insertCustomer(@RequestBody CustomerVO cvo) {
+
+    // 세션에서 회사코드 꺼내오기
+    Long companyCode = SessionUtil.companyId();
+    cvo.setCompanyCode(companyCode);
+
+    int result = service.insertCustomer(cvo);
+    return ResponseEntity.ok(result);
+  }
+
+  // 코드별 거래처관리 수정
+ @PutMapping("/mngcustomer/{cusCode}")
+    public ResponseEntity<?> updateCustomerByCode(
+            @PathVariable String cusCode,
+            @RequestBody CustomerVO cvo
+    ) {
+        // 회사코드가 세션이면 여기서 주입하고, 바디에서 받는다면 그대로 사용
+        Long companyCode = SessionUtil.companyId();
+        cvo.setCompanyCode(companyCode);
+        cvo.setCusCode(cusCode);
+
+        int updated = service.updateCustomerByCode(cvo);
+        if (updated == 0) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build(); // 또는 ok(vo)
+    }
 }
