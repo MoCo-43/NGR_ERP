@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.Biz.BizMapper;
 import com.yedam.erp.service.Biz.BizService;
@@ -68,4 +69,23 @@ public class BizServiceImpl implements BizService {
 		return bizMapper.insertDO(dovo);
 	}	
 	
+	// 거래처관리 조회
+	@Override
+	public List<CustomerVO> getCustomerManagement(Long companyCode) {
+		return bizMapper.getCustomerManagement(companyCode);
+	}
+
+	// 거래처관리 등록
+	@Override	
+	public int insertCustomer(CustomerVO cvo) {
+		return bizMapper.insertCustomer(cvo);
+	}
+
+	// 거래처관리 수정  updateCustomerByCode
+    @Override
+    @Transactional
+    public int updateCustomerByCode(CustomerVO cvo) {
+        int updated = bizMapper.updateCustomerByCode(cvo);
+        return updated;
+    }
 }

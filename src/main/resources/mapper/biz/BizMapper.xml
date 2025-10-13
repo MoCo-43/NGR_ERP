@@ -51,7 +51,7 @@ ORDER BY PO_START DESC
       TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
     )
     VALUES (
-      PO_ID_SEQ.NEXTVAL, #{companyCode}, FN_PO_CODE(#{poStart}),
+      PO_ID_SEQ.NEXTVAL, #{companyCode}, fn_generate_code('PO', ''),
       #{cusCode}, #{cusName}, #{creater}, #{poStart}, #{exDate}, #{poDate},
       #{totalPrice}, '작성완료',
       #{payMethod}, #{notes}, #{vatType}, #{poType}
@@ -135,7 +135,7 @@ ORDER BY d.DO_CREATED DESC
       (DO_NO, CUS_CODE, PO_ID, DO_CODE, EMP_NO, NAME, DO_CREATED,
        TOTAL_QTY, DO_STATUS, NOTES, COMPANY_CODE, EX_DATE, ADDR, ZIP_CODE)
     VALUES
-      (DO_NO_SEQ.NEXTVAL, #{cusCode}, 11, FN_DO_CODE(),
+      (DO_NO_SEQ.NEXTVAL, #{cusCode}, 11, fn_generate_code('DO', ''),
        #{empNo}, #{name}, #{doCreated},
        #{totalQty}, #{doStatus}, #{notes}, #{companyCode}, #{exDate},
        #{addr}, #{zipCode})
@@ -157,10 +157,41 @@ ORDER BY d.DO_CREATED DESC
   WHERE COMPANY_CODE = #{companyCode}
 </select>
 
+
+<!-- 거래처 관리 조회 페이지 -->
+<select id="getCustomerManagement" resultType="CustomerVO" parameterType="Long">
+  SELECT CUS_CODE, CUS_NAME, CEO_NAME, TEL, ADDR, ACTIVE_STATUS, GBN
+  FROM CUSTOMER
+  WHERE COMPANY_CODE = #{companyCode}
+</select>
+
 <!-- 거래처 등록 -->
-<insert id="insertCustomer" parameterType="CusModalVO">
-  INSERT INTO CUSTOMER (CUS_NO, CUS_CODE, CUS_NAME, CREDIT_GRADE, LEFT_PRICE, COMPANY_CODE)
-  VALUES (CUS_NO_SEQ.NEXTVAL, #{cusCode}, #{cusName}, #{creditGrade}, #{leftPrice}, #{companyCode})
+<insert id="insertCustomer" parameterType="CustomerVO">
+  INSERT INTO CUSTOMER (CUS_NO, CUS_CODE, EMP_NO, CEMP_NAME, EMP_NAME, CUS_NAME, BIZ_NO, CEO_NAME, BIZ_TYPE, BIZ_CATEGORY, TEL, EMAIL, ADDR, ZIP_CODE, ACTIVE_STATUS, GBN, BANK_NAME, BANK_ACCOUNT, COMPANY_CODE)
+  VALUES (CUS_NO_SEQ.NEXTVAL, FN_CUS_CODE(''), #{empNo}, #{cempName}, #{empName}, #{cusName}, #{bizNo}, #{ceoName}, #{bizType}, #{bizCategory}, #{tel}, #{email}, #{addr}, #{zipCode}, #{activeStatus}, #{gbn}, #{bankName}, #{bankAccount}, #{companyCode})
 </insert>
+
+<!-- 거래처 단건 수정 -->
+  <update id="updateCustomerByCode" parameterType="CustomerVO">
+    UPDATE CUSTOMER
+    <set>
+      <if test="cusName != null">        CUS_NAME = #{cusName},</if>
+      <if test="ceoName != null">        CEO_NAME = #{ceoName},</if>
+      <if test="tel != null">            TEL = #{tel},</if>
+      <if test="addr != null">           ADDR = #{addr},</if>
+      <if test="zipCode != null">        ZIP_CODE = #{zipCode},</if>
+
+      <if test="bizNo != null">          BIZ_NO = #{bizNo},</if>
+      <if test="bizType != null">        BIZ_TYPE = #{bizType},</if>
+      <if test="bizCategory != null">    BIZ_CATEGORY = #{bizCategory},</if>
+
+      <if test="email != null">          EMAIL = #{email},</if>
+      <if test="cempName != null">       CEMP_NAME = #{cempName},</if>
+
+      <if test="activeStatus != null">   ACTIVE_STATUS = #{activeStatus},</if>
+    </set>
+    WHERE CUS_CODE = #{cusCode}
+      AND COMPANY_CODE = #{companyCode}
+  </update>
 
 </mapper>

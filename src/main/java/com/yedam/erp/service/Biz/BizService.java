@@ -35,4 +35,13 @@ public interface BizService {
 
   // 출하지시서 등록
   int insertDO(DoInsertVO dovo);
+
+  // 거래처관리 조회
+  List<CustomerVO> getCustomerManagement(Long companyCode);
+
+  // 거래처관리 등록
+  int insertCustomer(CustomerVO cvo);
+
+  // 거래처관리 수정
+  int updateCustomerByCode(CustomerVO cvo);
 }
