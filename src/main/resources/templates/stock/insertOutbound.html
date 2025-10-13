@@ -38,7 +38,7 @@
   <!-- 마스터 카드 -->
   <!-- <div class="card shadow-sm mb-4"> -->
     <div class="card-header py-3 d-flex align-items-center justify-content-between">
-      <h6 class="mb-0 font-weight-bold text-primary">입고 등록 페이지</h6>
+      <h6 class="mb-0 font-weight-bold text-primary">출고 등록 페이지</h6>
     </div>
   <!-- </div>  -->
 
@@ -48,7 +48,7 @@
     <div class="btn-bar">
     	 <!-- 버튼 영역 (폼 전체 최상단 오른쪽) -->
       <div class="d-flex justify-content-end mb-3">
-      	<button type="button" class="btn btn-dark me-2" id="searchBtn">발주조회</button>
+      	<button type="button" class="btn btn-dark me-2" id="searchBtn">지시서조회</button>
 	    <button type="button" class="btn btn-primary me-2" id="submitBtn">등록</button>
 	    <button type="reset" class="btn btn-danger" form="insertList">초기화</button>
        </div>
@@ -60,20 +60,24 @@
           <input type="text" class="form-control" id="compCode" name="compCode">
         </div>
         <div class="col-md-3">
-          <label for="orderCode" class="form-label">발주코드</label>
-          <input type="text" class="form-control" id="orderCode" name="orderCode" placeholder="발주코드 기입">
+          <label for="doCode" class="form-label">지시서코드</label>
+          <input type="text" class="form-control" id="doCode" name="doCode" placeholder="지시서코드 기입">
         </div>
          <div class="col-md-3">
           <label for="businessCode" class="form-label">거래처코드</label>
           <input type="text" class="form-control" id="businessCodeInput" name="businessCode">
         </div>
         <div class="col-md-3">
-          <label for="businessPartner" class="form-label">거래처명</label>
-          <input type="text" class="form-control" id="businessPartnerInput" name="businessPartner">
+          <label for="cusName" class="form-label">거래처명</label>
+          <input type="text" class="form-control" id="cusName" name="cusName">
         </div>
         <div class="col-md-3">
-          <label for="dueDate" class="form-label">납기일자</label>
-          <input type="date" class="form-control" id="dueDate" name="dueDate">
+          <label for="outBoundDate" class="form-label">출고일자</label>
+          <input type="date" class="form-control" id="outBoundDate" name="outBoundDate">
+        </div>
+        <div class="col-md-3">
+          <label for="empId" class="form-label">담당자명</label>
+          <input type="text" class="form-control" id="empId" name="empId">
         </div>
         
       </form>
@@ -82,10 +86,10 @@
   
   <div class="card shadow-sm mt-4">
   <div class="card-header bg-secondary text-white">
-    <h5 class="mb-0">입고 제품 목록</h5>
+    <h5 class="mb-0">출고 제품 목록</h5>
   </div>
   <div class="card-body">
-      <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
+      <div id="outListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
   </div>
   </div>
   
@@ -103,7 +107,7 @@
 </div>
 
    <!-- 모달 include              경로             ::  div id 부분  -->   
-  <div th:replace="~{stock/modals/orderListModal :: orderListModal}"></div>
+  <div th:replace="~{stock/modals/delOrderListModal :: delOrderListModal}"></div>
   
 </section>
   
@@ -128,10 +132,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		const yyyy = today.getFullYear();
 		const mm = String(today.getMonth() + 1).padStart(2, '0'); // 월은 0~11이므로 +1
 		const dd = String(today.getDate()).padStart(2, '0');
-		document.querySelector('#insDate').value = `${yyyy}-${mm}-${dd}`;
+		document.getElementById('outBoundDate').value = `${yyyy}-${mm}-${dd}`;
 	}
-	
-	const inListGrid = document.getElementById('inListGrid');
+	initToday();
+	const outListGrid = document.getElementById('outListGrid');
 	const addRowBtn = document.getElementById('addRowBtn');
 	const tableBody = document.querySelector('#orderItemsTable tbody');
 	const taxSelect = document.getElementById('taxType'); // 상단 세율 select
@@ -189,12 +193,12 @@ document.addEventListener("DOMContentLoaded", () => {
  	
  	//let gridCreated = false;
  	// withCredentials: true를 추가해야 쿠키 기반 세션을 함께 보내서 로그인 상태를 유지
- 	/* axios.get("/api/v1/stock/getEmpName", { withCredentials: true })
+ 	axios.get("/api/v1/stock/getEmpName", { withCredentials: true })
 		  .then(res => {
 			  console.log(res.data);
     			document.getElementById("empId").value = res.data;
   			})
-  		  .catch(err => console.error(err)); */
+  		  .catch(err => console.error(err));
 	
  	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
 	  .then(res => {
@@ -203,31 +207,21 @@ document.addEventListener("DOMContentLoaded", () => {
 	  .catch(err => console.error(err));
  	
 	
-	// 발주 조회 버튼 클릭시 모달 호출
+	// 지시서 조회 버튼 클릭시 모달 호출
 	searchBtn.addEventListener('click', async () => {
-	    const orderListModalEl = document.getElementById('orderListModal');
+	    const orderListModalEl = document.getElementById('delOrderListModal');
 	    const orderListModal = bootstrap.Modal.getOrCreateInstance(orderListModalEl);
 	    orderListModal.show();
-	    
-	 //   setTimeout(() => {
-	   //     const eGridDiv = document.getElementById('orderListGrid');
-	     //   if (!eGridDiv) return console.error("orderListGrid div가 없습니다!");
-	      //  new agGrid.Grid(eGridDiv, gridOptions);
-	   // }, 100); // 100ms 정도 대기
 
 	    // Grid 초기화 (한 번만)
 	    if (!orderListGridApi) {
-	        const eGridDiv = document.getElementById('orderListGrid');
+	        const eGridDiv = document.getElementById('delOrderListGrid');
 	        const columnDefs = [
-	        	{ headerName: "발주코드", field: "orderCode" },
+	        	{ headerName: "지시코드", field: "doCode" },
 	            { headerName: "거래처코드", field: "cusCode" },
-	            { headerName: "거래처명", field: "businessPartner" },
-	            { headerName: "담당자", field: "empId" },
+	            { headerName: "거래처명", field: "cusName" },
 	            { headerName: "제품명", field: "productName" },
-	            { headerName: "수량", field: "amount" },
-	            { headerName: "세율유형", field: "vatType" },
-	            { headerName: "납기일자", field: "dueDate" },
-	            { headerName: "발주계획코드", field: "xpCode" }
+	            { headerName: "수량", field: "amount" }
 	        ];
 
 	        const gridOptions = {
@@ -246,13 +240,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	                await loadOrderListData();
 	            },
 	            onRowDoubleClicked: async (event) => {
-	                console.log("선택된 발주 :", event.data);
+	                console.log("선택된 지시 :", event.data);
 	                const selectedRow = event.data;
 	                // 필요하면 선택한 데이터를 상단 input에 반영
-	               	document.getElementById('orderCode').value = selectedRow.orderCode || "";
+	               	document.getElementById('doCode').value = selectedRow.doCode || "";
 				    document.getElementById('businessCodeInput').value = selectedRow.cusCode || "";
-				    document.getElementById('businessPartnerInput').value = selectedRow.businessPartner || "";
-				    document.getElementById('dueDate').value = selectedRow.dueDate || "";
+				    document.getElementById('cusName').value = selectedRow.cusName || "";
+				    // document.getElementById('dueDate').value = selectedRow.dueDate || "";
 	                await addDetailRow(selectedRow); // 디테일 테이블에 새 row 추가;
 	                orderListModal.hide();
 	            }
@@ -266,9 +260,10 @@ document.addEventListener("DOMContentLoaded", () => {
 	
 	async function addDetailRow(rowData){
 		try {
-			const orderCode = rowData.orderCode;
+			const doCode = rowData.doCode;
+			console.log("doCode : "+doCode);
 	        // rowData.xpCode 기준으로 상세 가져오기
-	        const res = await axios.get(`/api/v1/stock/orderDetail/${orderCode}`, { withCredentials: true });
+	        const res = await axios.get(`/api/v1/stock/deliveryOrderDetail/${doCode}`, { withCredentials: true });
 	        const detailData = res.data; // 배열 형태여야 함
 
 	        // AG Grid에 바인딩
@@ -276,16 +271,15 @@ document.addEventListener("DOMContentLoaded", () => {
 	        	orderDetailGridApi.setRowData(detailData);
 	        	orderDetailGridApi.sizeColumnsToFit();
 	        } else {
-	            const eGridDiv = document.getElementById('inListGrid');
+	            const eGridDiv = document.getElementById('outListGrid');
 	            const columnDefs = [
 	            	  { headerName: "No.", valueGetter: "node.rowIndex + 1", width: 70 },
-	                { headerName: "제품코드", field: "productCode" },
-	                { headerName: "제품명", field: "productName" },
-	                { headerName: "규격", field: "specification" },
-	                { headerName: "구매단가", field: "orderPrice", type: 'numericColumn' },
-	                { headerName: "재고수량", field: "stock", type: 'numericColumn' },
-	                { headerName: "입고수량", field: "qty",type: 'numericColumn' }
-	                
+	            	  { headerName: "출고예정일", field: "dueDate" },
+	                  { headerName: "제품코드", field: "productCode" },
+	                  { headerName: "제품명", field: "productName" },
+	                  { headerName: "규격", field: "specification" },
+	                  { headerName: "출고수량", field: "amount", type: 'numericColumn' },
+	                  { headerName: "유형", field: "type", valueGetter: () => "지시서"}
 	            ];
 
 	            const gridOptions = {
@@ -294,7 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	                rowSelection: "single",
 	                pagination: true,
 	                paginationPageSize: 10,
-	                defaultColDef: { resizable: true, sortable: true, minWidth: 100 },
+	                defaultColDef: { resizable: true, sortable: true, minWidth: 100},
 	                onGridReady: (event) => {
 	                	orderDetailGridApi = event.api;
 	                	orderDetailGridApi.sizeColumnsToFit();
@@ -309,16 +303,16 @@ document.addEventListener("DOMContentLoaded", () => {
 	    }
 	}
 
-	// 서버에서 발주 계획 데이터 가져오기
+	// 서버에서 지시서 데이터 가져오기
 	async function loadOrderListData() {
 	    try {
-	        const res = await axios.get('/api/v1/stock/orderList', { withCredentials: true });
+	        const res = await axios.get('/api/v1/stock/delOrderList', { withCredentials: true });
 	        if (orderListGridApi) {
 	            orderListGridApi.setRowData(res.data);
 	        }
 	    } catch (err) {
 	        console.error(err);
-	        toastr.error('발주 계획 조회 실패');
+	        toastr.error('출하 지시 조회 실패');
 	    }
 	}
 
@@ -334,7 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	        // confirm 먼저
 	        const res = await cuteAlert({
 	        	type: "question",
-	            title: "발주 확인",
+	            title: "출고 확인",
 	            message: "정말 등록하시겠습니까?",
 	            imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
 	            confirmText: "네",
@@ -344,30 +338,34 @@ document.addEventListener("DOMContentLoaded", () => {
 	        if(res !== true) {
 	            return; // 취소 시 함수 종료
 	        }
-	        
+	        // 1️⃣ 헤더 데이터
+	        const header = {
+	            outboundCode: document.getElementById('doCode').value,
+	            businessCode: document.getElementById('businessCodeInput').value,
+	            cusName: document.getElementById('cusName').value,
+	            outboundDate: document.getElementById('outBoundDate').value,
+	            empId: document.getElementById('empId').value,
+	            companyCode: Number(document.getElementById('compCode').value) || 0
+	        };
 	        const details = [];
 	        if (orderDetailGridApi) {
 	            orderDetailGridApi.forEachNode((node) => {
 	                details.push({
-	 			    businessPartner: document.getElementById('businessPartnerInput').value,
-	 			    cusCode: document.getElementById('businessCodeInput').value,
 	 			    dueDate: document.getElementById('dueDate').value,
 	                productCode: node.data.productCode,
 	                productName: node.data.productName,
 	                specification: node.data.specification,
-	                qty: Number(node.data.qty) || 0,
-	                orderPrice: Number(node.data.orderPrice) || 0,
-	                note: node.data.note || '',
+	                amount: Number(node.data.amount) || 0,
 	                companyCode: Number(document.getElementById('compCode').value) || 0
 	                });
 	            });
 	        }
-		  const payload = { details };
+		  const payload = { header, details };
 		  console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
-		  console.log("payload.orderPrice: "+payload.orderPrice);
+		  //console.log("payload.orderPrice: "+payload.orderPrice);
 		  try {
 			  	
-			    await axios.post('/api/v1/stock/inboundInsert', payload, {
+			    await axios.post('/api/v1/stock/outboundInsert', payload, {
 			      headers: { 'Content-Type': 'application/json' }
 			    });
 			    

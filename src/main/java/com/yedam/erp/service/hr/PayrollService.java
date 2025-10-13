@@ -1,44 +1,43 @@
 package com.yedam.erp.service.hr;
 
 import java.util.List;
+import java.util.Map;
 
 import com.yedam.erp.vo.hr.PayrollVO;
 import com.yedam.erp.vo.hr.PayrollSummaryVO;
-import com.yedam.erp.vo.hr.PayrollDeptSumVO;
 
 public interface PayrollService {
 
-	// 급여대장 마스터 
+    // 급여대장 목록
+    List<PayrollVO> selectPayrollList(PayrollVO vo);
 
-	// 회사별 전체 조회
-	List<PayrollVO> getPayrollList(Long companyCode);
+    // 단건조회
+    PayrollVO selectPayroll(PayrollVO vo);
 
-	// 단건 조회
-	PayrollVO getPayroll(Long payrollNo);
+    // 등록
+    int insertPayroll(PayrollVO vo);
 
-	// 등록
-	int addPayroll(PayrollVO vo);
+    // 수정
+    int updatePayroll(PayrollVO vo);
 
-	// 수정
-	int editPayroll(PayrollVO vo);
+    // 상태변경
+    int updatePayrollStatus(PayrollVO vo);
 
-	// 상태 변경 (확정/취소)
-	int changePayrollStatus(PayrollVO vo);
+    // 조건조회
+    List<PayrollVO> selectPayrollListByCond(PayrollVO vo);
 
-	// 월·부서별 조회
-	List<PayrollVO> getPayrollListByCond(PayrollVO vo);
+    // 수당 컬럼 목록 LISTAGG
+    String selectAllowColList(PayrollVO vo);
 
-	// 급여대장 상세 
+    // 공제 컬럼 목록 LISTAGG
+    String selectDeductColList(PayrollVO vo);
 
-	// 사원별 상세 리스트
-	List<PayrollSummaryVO> getPayrollSummary(Long payrollNo);
+    // 사원별 상세 (PIVOT 결과)
+    List<Map<String,Object>> selectPayrollDetailPivot(Long payrollNo, Long companyCode);
 
-	// 부서별 합계
-	PayrollDeptSumVO getDeptSum(Long payrollNo);
-	
-	//사원 공제 등록
-	 int upsertDeduct(PayrollSummaryVO vo);
-	
-	//부서 합계 저장
-	int insertDeptPayrollSum(PayrollDeptSumVO vo);
+    // 부서합계
+    Map<String,Object> selectDeptSum(PayrollVO vo);
+
+    // 공제 저장
+    int upsertDeduct(PayrollSummaryVO vo);
 }

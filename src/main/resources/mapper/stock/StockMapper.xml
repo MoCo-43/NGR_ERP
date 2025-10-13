@@ -464,31 +464,12 @@ ORDER BY d.product_code
         INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, due_date, company_code, business_partner, cus_code)
         VALUES (#{lotCode}, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode});
  -->
- BEGIN
+
     DECLARE
-        v_seq NUMBER;
         v_lotCode VARCHAR2(30);
     BEGIN
-        -- 오늘 날짜 기준 시퀀스 조회
-        BEGIN
-            SELECT seq INTO v_seq
-            FROM LOT_SEQ_CONTROL
-            WHERE lot_date = TRUNC(SYSDATE)
-            FOR UPDATE;
-
-            -- 시퀀스 증가
-            UPDATE LOT_SEQ_CONTROL
-            SET seq = seq + 1
-            WHERE lot_date = TRUNC(SYSDATE);
-        EXCEPTION
-            WHEN NO_DATA_FOUND THEN
-                -- 오늘 날짜 시퀀스 없으면 새로 생성
-                INSERT INTO LOT_SEQ_CONTROL(lot_date, seq) VALUES (TRUNC(SYSDATE), 1);
-                v_seq := 1;
-        END;
-
         -- LOT 코드 생성
-        v_lotCode := TO_CHAR(SYSDATE, 'YYMMDD') || #{productCode} || '-' || v_seq;
+        v_lotCode := fn_generate_code('LOT',#{productCode});
 
         -- MERGE 구문: 존재하면 qty 업데이트, 없으면 INSERT
         MERGE INTO INBOUND t
@@ -497,10 +478,130 @@ ORDER BY d.product_code
         WHEN MATCHED THEN
             UPDATE SET t.qty = t.qty + #{qty} 
         WHEN NOT MATCHED THEN
-            INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, due_date, company_code, business_partner, business_code,purchase_price)
-            VALUES (v_lotCode, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode}, #{orderPrice});
+            INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, due_date, company_code, business_partner, business_code,purchase_price, remain_qty)
+            VALUES (v_lotCode, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode}, #{orderPrice}, #{qty});
     END;
-END;
+</update>
+
+<!-- 출하 지시서 조회 -->
+<select id="getDeliveryOrderList" resultType="ComOrderVO">
+select 
+       deo.do_code AS do_code, 
+        SUM(dod.qty) AS amount,
+       deo.cus_code AS cus_code,
+       cu.cus_name AS cus_name,
+       deo.ex_date AS due_date,
+       CASE
+         WHEN COUNT(dod.do_no) > 1 
+             THEN COALESCE(MIN(prd.product_name), '제품명미등록') || ' 외 ' || (COUNT(dod.do_no) - 1) || '건'
+        ELSE COALESCE(MIN(prd.product_name), '제품명미등록') 
+       END as product_name
+from delivery_order deo
+JOIN do_detail dod 
+ON deo.do_no = dod.do_no
+LEFT JOIN product prd
+ON dod.product_code = prd.product_code
+JOIN customer cu
+ON deo.cus_code = cu.cus_code
+WHERE deo.do_status = '작성완료'
+GROUP BY deo.do_code ,
+       dod.qty ,
+       deo.cus_code ,
+       cu.cus_name ,
+       deo.ex_date 
+ORDER BY deo.ex_date
+
+</select>
+<select id="getComOrderDetailList" resultType="ComOrderDetailVO" parameterType="String">
+SELECT 
+        deo.do_no AS do_no
+       ,dod.product_code AS product_code
+       ,prd.product_name AS product_name
+       ,prd.specification AS specification
+       ,dod.qty AS amount 
+       ,deo.ex_date AS due_date
+FROM do_detail dod
+JOIN product prd
+ON dod.product_code = prd.product_code
+JOIN delivery_order deo
+ON deo.do_no = dod.do_no
+WHERE deo.do_code = #{doCode}
+
+</select>
+
+
+<select id="selectAvailableLots" resultType="InboundVO">
+    SELECT 
+           lot_code, 
+           qty, 
+           inbound_date, 
+           product_code 
+    FROM inbound 
+    WHERE product_code = #{productCode} 
+      AND qty > 0 
+    ORDER BY inbound_date 
+</select>
+
+
+<!-- 출고 등록 - 헤더 -->
+<insert id="insertOutbound" parameterType="OutboundHeaderVO">
+ <!-- BEFORE: insert 전에 outbHeaderCode 생성 -->
+<selectKey keyProperty="outbHeaderCode" resultType="string" order="BEFORE">
+        SELECT 'OBH' || TO_CHAR(SYSDATE,'YYMMDD') || '-' || SEQ_OUTBOUND_HEADER.nextval FROM dual
+</selectKey>
+INSERT INTO OUTBOUND_HEADER 
+(
+       outb_header_code
+       ,do_no
+       ,due_date
+       ,outbound_date
+       ,business_code
+       ,business_partner
+       ,company_code
+)
+VALUES(
+       #{outbHeaderCode}
+       ,#{doNo}
+       ,#{dueDate}
+       ,#{outboundDate}
+       ,#{cusCode}
+       ,#{businessPartner}
+       ,#{companyCode}
+
+)
+
+</insert>
+
+<!-- 출고 등록 - 상세 -->
+<insert id="insertOutboundDetail" parameterType="OutboundVO">
+INSERT INTO OUTBOUND 
+(
+       outbound_no
+       ,product_name
+       ,product_code
+       ,specification
+       ,qty
+       ,outb_header_code
+       ,company_code
+)
+VALUES(
+       seq_outbound.nextval
+       ,#{productName}
+       ,#{productCode}
+       ,#{specification}
+       ,#{amount}
+       ,#{outbHeaderCode}
+       ,#{companyCode}
+)
+</insert>
+
+<!-- 입고 잔여수량 수정 -->
+<update id="updateInboundQty" >
+<![CDATA[
+ UPDATE INBOUND
+    SET remain_qty = CASE WHEN remain_qty - #{outQty} < 0 THEN 0 ELSE remain_qty - #{outQty} END
+    WHERE lot_code = #{lotCode}
+]]>
 </update>
 
 

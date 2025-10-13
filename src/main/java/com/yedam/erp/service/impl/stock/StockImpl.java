@@ -10,13 +10,18 @@ import com.yedam.erp.mapper.stock.StockMapper;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.stock.ComOrderDetailVO;
+import com.yedam.erp.vo.stock.ComOrderVO;
 import com.yedam.erp.vo.stock.InboundVO;
 import com.yedam.erp.vo.stock.InvenDetailVO;
 import com.yedam.erp.vo.stock.InvenVO;
+import com.yedam.erp.vo.stock.LotoutboundVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.OrderVO;
+import com.yedam.erp.vo.stock.OutboundHeaderVO;
+import com.yedam.erp.vo.stock.OutboundVO;
 import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
@@ -169,6 +174,59 @@ public class StockImpl implements StockService{
             mapper.insertInbound(detail); // 단일 INSERT
         }
     }
+
+
+	@Override
+	public List<ComOrderVO> getDeliveryOrderList() {
+		// TODO Auto-generated method stub
+		return mapper.getDeliveryOrderList();
+	}
+
+
+	@Override
+	public List<ComOrderDetailVO> getComOrderDetailList(String doCode) {
+		// TODO Auto-generated method stub
+		return mapper.getComOrderDetailList(doCode);
+	}
+
+
+	@Transactional
+	@Override
+	public void insertOutbound(OutboundHeaderVO payload) {
+		// TODO Auto-generated method stub
+		mapper.insertOutbound(payload);
+		System.out.println(payload.getDetails());
+		if(payload.getDetails() != null) {
+			for(OutboundVO item : payload.getDetails()) {
+            	item.setOutbHeaderCode(payload.getOutbHeaderCode());// 마스터 PK -> 디테일 FK
+                System.out.println("Detail ORDER_CODE: " + item.getOutbHeaderCode()); // 디버깅용
+                mapper.insertOutboundDetail(item);
+                
+                
+                // 제품별 LOT 처리
+                Long qty = item.getQty();
+                
+                List<InboundVO> inboundLots = mapper.selectAvailableLots(item.getProductCode());
+                for(InboundVO lot : inboundLots) {
+                    if(qty <= 0L) break;
+                    
+                    Long qtyToOut = Math.min(qty, lot.getQty());
+                    LotoutboundVO lotOut = new LotoutboundVO();
+                    lotOut.setLotCode(lot.getLotCode());
+                    lotOut.setLotOutAmt(qtyToOut);
+                    lotOut.setCompanyCode(item.getCompanyCode());
+                    lotOut.setOutboundNo(item.getOutboundNo());
+                    mapper.insertLotOutbound(lotOut);
+
+                    // 입고 잔여수량 업데이트
+                    mapper.updateInboundQty(lot.getLotCode(), lot.getQty() - qtyToOut);
+                    qty -= qtyToOut;
+             
+                }
+            }
+		}
+	}
+
 
 
 

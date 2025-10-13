@@ -1,5 +1,119 @@
-<!-- 급여지급사항 탭 -->
 <div th:fragment="payFix">
   <input type="hidden" id="pf_emp_id">
-  <div id="payfix-list" class="container-fluid"></div>
+
+  <div class="container-fluid mb-4">
+    <h6 class="fw-bold mb-2">수당</h6>
+    <div id="payfix-list"></div>
+  </div>
+
+
+  <div class="container-fluid">
+    <h6 class="fw-bold mb-2">공제</h6>
+    <div id="deductfix-list"></div>
+  </div>
+
+  <script>
+  ;(function(){
+    // 중복 include 방지
+    if (window.__payFix) return;
+
+    const $ = (id)=>document.getElementById(id);
+    const allowArea  = ()=>$('payfix-list');
+    const deductArea = ()=>$('deductfix-list');
+
+    // 공통: empId 보관/획득
+    function setEmpIdHidden(empId){ if($('pf_emp_id')) $('pf_emp_id').value = empId || ''; }
+    function getEmpId(){
+      let v = ($('pf_emp_id')?.value || '').trim();
+      if(!v) v = (document.getElementById('f_emp_id')?.value || '').trim();
+      return v;
+    }
+
+    // 한 섹션 렌더링 유틸
+    function renderList(box, rows, kind ){
+      box.innerHTML = '';
+      rows.forEach(item=>{
+        const has = item.payFixNo != null ? 'true' : 'false';
+        const row = document.createElement('div');
+        row.className = 'row mb-2';
+        row.innerHTML = `
+          <div class="col-md-6">
+            <label class="form-label fw-bold">${item.empAllowLabel}</label>
+          </div>
+          <div class="col-md-6">
+            <input type="number" class="form-control"
+                   data-kind="${kind}"
+                   data-code="${item.empAllowCode}"
+                   data-has-value="${has}"
+                   value="${item.empAllowPay || 0}">
+          </div>`;
+        box.appendChild(row);
+      });
+    }
+
+    // 초기화
+    async function init(empId){
+      try{
+        setEmpIdHidden(empId);
+        const [allowRes, deductRes] = await Promise.all([
+          axios.get('/api/v1/emp-pay-fix/allow-list',  { params:{ empId } }),
+          axios.get('/api/v1/emp-pay-fix/deduct-list', { params:{ empId } })
+        ]);
+        const allowBox  = allowArea();  if (allowBox)  renderList(allowBox,  allowRes.data||[],  'ALLOW');
+        const deductBox = deductArea(); if (deductBox) renderList(deductBox, deductRes.data||[], 'DEDUCT');
+      }catch(err){
+        console.error('init error:', err?.response?.status, err?.response?.data || err);
+        alert('급여지급/공제 목록 조회 중 오류가 발생했습니다.');
+      }
+    }
+
+    // 저장
+    async function save(){
+      const empId = getEmpId();
+      if(!empId){ alert('사번이 없습니다.'); return; }
+
+      const inputs = document.querySelectorAll('#payfix-list input[data-code], #deductfix-list input[data-code]');
+      const errors = [];
+      for (const input of inputs){
+        const code  = input.getAttribute('data-code');
+        const kind  = input.getAttribute('data-kind'); // 'ALLOW' or 'DEDUCT'
+        const pay   = Number(input.value) || 0;
+        const label = input.closest('.row').querySelector('label')?.textContent || '';
+        const body  = {
+          empId,
+          empAllowCode:  code,
+          empAllowLabel: label,
+          empAllowPay:   pay,
+          payType:       kind    
+        };
+        const isUpdate = input.getAttribute('data-has-value') === 'true';
+
+        try{
+          if (isUpdate) await axios.put('/api/v1/emp-pay-fix', body);
+          else {
+            await axios.post('/api/v1/emp-pay-fix', body);
+            input.setAttribute('data-has-value', 'true');
+          }
+        }catch(e){
+          console.error(`[pay-fix save error] code=${code}, kind=${kind}, isUpdate=${isUpdate}`,
+                        e?.response?.status, e?.response?.data || e);
+          errors.push(`${kind}:${code}`);
+        }
+      }
+
+      if (errors.length){
+        alert(`저장 중 오류가 발생했습니다.\n문제 항목: ${errors.join(', ')}`);
+        throw new Error('pay-fix save failed');
+      }
+    }
+
+    function clear(){
+      const a = allowArea();  if (a) a.innerHTML = '';
+      const d = deductArea(); if (d) d.innerHTML = '';
+      const hid = $('pf_emp_id'); if (hid) hid.value = '';
+    }
+
+    window.__payFix = { init, save, clear };
+  })();
+  </script>
 </div>

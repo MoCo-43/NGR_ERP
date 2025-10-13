@@ -1,383 +1,330 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
 <mapper namespace="com.yedam.erp.mapper.hr.PayrollMapper">
 
-  <!-- 급여대장 기본 정보 -->
-  <resultMap id="PayrollBaseMap" type="com.yedam.erp.vo.hr.PayrollVO">
-    <id     property="payrollNo"   column="payroll_no" />
-    <result property="yearMonth"   column="year_month" />
-    <result property="deptCode"    column="dept_code" />
-    <result property="title"       column="title" />
-    <result property="payDate"     column="pay_date" />
-    <result property="status"      column="status" />
-    <result property="companyCode" column="company_code" />
-    <result property="jrnDate"     column="jrn_date"/>
-    <!-- 조인/집계 -->
-    <result property="deptName"    column="dept_name" />
-    <result property="empCount"    column="emp_count" />
-  </resultMap>
-
-  <!-- 사원별 상세 -->
-  <resultMap id="PayrollSummaryMap" type="com.yedam.erp.vo.hr.PayrollSummaryVO">
-    <result property="summaryNo"       column="summary_no" />
-    <result property="payrollNo"       column="payroll_no" />
-    <result property="empId"           column="emp_id" />
-    <result property="empName"         column="emp_name" />
-    <result property="position"        column="position" />
-    <result property="basePay"         column="base_pay" />
-    <result property="familyAllow"     column="family_allow" />
-    <result property="mealAllow"       column="meal_allow" />
-    <result property="annualAllow"     column="annual_allow" />
-    <result property="totalAllow"      column="total_allow" />
-    <result property="incomeTax"       column="income_tax" />
-    <result property="residentTax"     column="resident_tax" />
-    <result property="nationalPension" column="national_pension" />
-    <result property="healthIns"       column="health_ins" />
-    <result property="employIns"       column="employ_ins" />
-    <result property="totalDeduct"     column="total_deduct" />
-    <result property="netPay"          column="net_pay" />
-  </resultMap>
-
-  <!-- 부서별 합계(화면 하단) -->
-  <resultMap id="DeptSumMap" type="com.yedam.erp.vo.hr.PayrollDeptSumVO">
-    <result property="payrollNo"        column="payroll_no" />
-    <result property="deptCode"         column="dept_code" />
-    <result property="deptName"         column="dept_name" />
-    <result property="sumBasePay"       column="sum_base_pay" />
-    <result property="sumFamilyAllow"   column="sum_family_allow" />
-    <result property="sumMealAllow"     column="sum_meal_allow" />
-    <result property="sumAnnualAllow"   column="sum_annual_allow" />
-    <result property="sumIncomeTax"     column="sum_income_tax" />
-    <result property="sumResidentTax"   column="sum_resident_tax" />
-    <result property="sumNationalPension" column="sum_national_pension" />
-    <result property="sumHealthIns"     column="sum_health_ins" />
-    <result property="sumEmployIns"     column="sum_employ_ins" />
-    <result property="sumDeduct"        column="sum_deduct" />
-    <result property="sumNetPay"        column="sum_net_pay" />
-  </resultMap>
-
-
-  <!-- ======================== 공통 SELECT 컬럼 ======================== -->
-
-  <sql id="selectPayrollListColumns">
-    p.payroll_no,
-    p.year_month,
-    p.dept_code,
-    p.title,
-    p.pay_date,
-    p.status,
-    p.company_code,
-    d.dept_name,
-    p.jrn_date,
-    p.jrn_no,
-    /* 부서 인원수(EMP 기준) */
-    (
-      SELECT COUNT(1)
-      FROM emp e2
-      WHERE e2.dept_code   = p.dept_code
-        AND e2.company_code= p.company_code
-    ) AS emp_count
-  </sql>
-
-
-  <!-- ======================== CRUD ======================== -->
-
-  <!-- 회사별 전체 조회 -->
-  <select id="selectPayrollList" parameterType="java.lang.Long" resultMap="PayrollBaseMap">
+  <!-- ============================= -->
+  <!-- 급여대장 목록 (회사/연월) -->
+  <!-- ============================= -->
+  <select id="selectPayrollList"
+          parameterType="com.yedam.erp.vo.hr.PayrollVO"
+          resultType="com.yedam.erp.vo.hr.PayrollVO">
     SELECT
-      <include refid="selectPayrollListColumns" />
+      p.payroll_no,
+      p.company_code,
+      p.year_month,
+      p.dept_code,
+      p.title,
+      p.pay_date,
+      p.status,
+      d.dept_name,
+      (SELECT COUNT(*) FROM emp e
+         WHERE e.company_code = p.company_code
+           AND e.dept_code    = p.dept_code) AS emp_count
     FROM payroll p
-    LEFT JOIN dept d ON d.dept_code = p.dept_code
-    WHERE p.company_code = #{value}
-    ORDER BY p.year_month DESC, p.dept_code ASC, p.payroll_no DESC
+    JOIN dept d
+      ON d.company_code = p.company_code
+     AND d.dept_code    = p.dept_code
+    WHERE p.company_code = #{companyCode}
+    <if test="yearMonth != null and yearMonth != ''">
+      AND p.year_month = #{yearMonth}
+    </if>
+    ORDER BY p.year_month DESC, d.dept_name ASC
   </select>
 
-  <!-- 단건 조회 -->
-  <select id="selectPayroll" parameterType="java.lang.Long" resultMap="PayrollBaseMap">
+  <!-- ============================= -->
+  <!-- 급여대장 단건 (모달 상단 표시용) -->
+  <!-- ============================= -->
+  <select id="selectPayroll"
+          parameterType="com.yedam.erp.vo.hr.PayrollVO"
+          resultType="com.yedam.erp.vo.hr.PayrollVO">
     SELECT
-      <include refid="selectPayrollListColumns" />
+      p.payroll_no   AS payrollNo,
+      p.company_code AS companyCode,
+      p.year_month   AS yearMonth,
+      p.dept_code    AS deptCode,
+      d.dept_name    AS deptName,
+      p.title        AS title,
+      p.pay_date     AS payDate,
+      p.status       AS status,
+      (SELECT COUNT(*) FROM emp e
+         WHERE e.company_code = p.company_code
+           AND e.dept_code    = p.dept_code) AS empCount
     FROM payroll p
-    LEFT JOIN dept d ON d.dept_code = p.dept_code
-    WHERE p.payroll_no = #{value}
+    JOIN dept d
+      ON d.company_code = p.company_code
+     AND d.dept_code    = p.dept_code
+    WHERE p.payroll_no   = #{payrollNo}
+      AND p.company_code = #{companyCode}
   </select>
 
-  <!-- 신규 등록 -->
-  <insert id="insertPayroll" parameterType="com.yedam.erp.vo.hr.PayrollVO" useGeneratedKeys="false">
+  <!-- ============================= -->
+  <!-- 급여대장 등록 -->
+  <!-- ============================= -->
+  <insert id="insertPayroll" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     INSERT INTO payroll (
-      payroll_no, year_month, dept_code, title, pay_date, status, company_code
-    ) VALUES (
-      seq_payroll_no.NEXTVAL,
-      #{yearMonth}, #{deptCode}, #{title}, #{payDate}, #{status}, #{companyCode}
+      payroll_no, company_code, year_month, dept_code, title, pay_date, status
+    )
+    SELECT
+      SEQ_PAYROLL_NO.NEXTVAL,
+      #{companyCode},
+      #{yearMonth},
+      e.dept_code,
+      NVL(#{title},
+          TO_CHAR(#{yearMonth}) || ' ' ||
+          (SELECT d.dept_name FROM dept d
+            WHERE d.company_code = #{companyCode}
+              AND d.dept_code    = e.dept_code)),
+      #{payDate},
+      'DRAFT'
+    FROM (
+      SELECT DISTINCT dept_code
+      FROM emp
+      WHERE company_code = #{companyCode}
+    ) e
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM payroll p
+      WHERE p.company_code = #{companyCode}
+        AND p.year_month   = #{yearMonth}
+        AND p.dept_code    = e.dept_code
     )
   </insert>
 
-  <!-- 수정 -->
+  <!-- ============================= -->
+  <!-- 급여대장 수정 (제목/지급일) -->
+  <!-- ============================= -->
   <update id="updatePayroll" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     UPDATE payroll
-       SET year_month  = #{yearMonth},
-           dept_code   = #{deptCode},
-           title       = #{title},
-           pay_date    = #{payDate},
-           status      = #{status},
-           company_code= #{companyCode}
-     WHERE payroll_no = #{payrollNo}
+       SET title    = #{title},
+           pay_date = #{payDate}
+     WHERE payroll_no   = #{payrollNo}
+       AND company_code = #{companyCode}
   </update>
 
+  <!-- ============================= -->
   <!-- 상태 변경 (확정/취소) -->
+  <!-- ============================= -->
   <update id="updatePayrollStatus" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     UPDATE payroll
        SET status = #{status}
-     WHERE payroll_no = #{payrollNo}
+     WHERE payroll_no   = #{payrollNo}
+       AND company_code = #{companyCode}
   </update>
 
-  <!-- 조건 검색 (회사/월/부서) -->
-  <select id="selectPayrollListByCond" parameterType="com.yedam.erp.vo.hr.PayrollVO" resultMap="PayrollBaseMap">
+  <!-- ============================= -->
+  <!-- 조건 조회 (회사/연월/부서/상태) -->
+  <!-- ============================= -->
+  <select id="selectPayrollListByCond"
+          parameterType="com.yedam.erp.vo.hr.PayrollVO"
+          resultType="com.yedam.erp.vo.hr.PayrollVO">
     SELECT
-      <include refid="selectPayrollListColumns" />
+      p.payroll_no,
+      p.company_code,
+      p.year_month,
+      p.dept_code,
+      p.title,
+      p.pay_date,
+      p.status,
+      d.dept_name,
+      (SELECT COUNT(*) FROM emp e
+         WHERE e.company_code = p.company_code
+           AND e.dept_code    = p.dept_code) AS emp_count
     FROM payroll p
-    LEFT JOIN dept d ON d.dept_code = p.dept_code
-    <where>
-      <if test="companyCode != null"> p.company_code = #{companyCode} </if>
-      <if test="yearMonth  != null and yearMonth  != ''"> AND p.year_month = #{yearMonth} </if>
-      <if test="deptCode   != null and deptCode   != ''"> AND p.dept_code  = #{deptCode}  </if>
-    </where>
-    ORDER BY p.year_month DESC, p.dept_code ASC, p.payroll_no DESC
+    JOIN dept d
+      ON d.company_code = p.company_code
+     AND d.dept_code    = p.dept_code
+    WHERE p.company_code = #{companyCode}
+    <if test="yearMonth != null and yearMonth != ''">
+      AND p.year_month = #{yearMonth}
+    </if>
+    <if test="deptCode != null and deptCode != ''">
+      AND p.dept_code = #{deptCode}
+    </if>
+    <if test="status != null and status != ''">
+      AND p.status = #{status}
+    </if>
+    ORDER BY p.year_month DESC, d.dept_name ASC
   </select>
 
+  <!-- ========================================================= -->
+  <!-- 동적(라벨 기반) PIVOT을 위한 IN 리스트 -->
+  <!-- 코드표(use_yn='Y') + 실데이터(emp_pay_fix) 합집합 -->
+  <!-- ========================================================= -->
 
-  <!-- ======================== 상세 & 합계 ======================== -->
-
-  <!-- 사원별 상세 (EMP_PAY_FIX 기본값 + 상세 보정) -->
-  <select id="selectPayrollSummary" parameterType="java.lang.Long" resultMap="PayrollSummaryMap">
-    SELECT
-      CAST(NULL AS NUMBER) AS summary_no,
-      s.payroll_no,
-      s.emp_id,
-      s.emp_name,
-      s.position,
-      s.base_pay,
-      s.family_allow,
-      s.meal_allow,
-      s.annual_allow,
-      (s.base_pay + s.family_allow + s.meal_allow + s.annual_allow) AS total_allow,
-      s.income_tax,
-      s.resident_tax,
-      s.national_pension,
-      s.health_ins,
-      s.employ_ins,
-      (s.income_tax + s.resident_tax + s.national_pension + s.health_ins + s.employ_ins) AS total_deduct,
-      ((s.base_pay + s.family_allow + s.meal_allow + s.annual_allow)
-       - (s.income_tax + s.resident_tax + s.national_pension + s.health_ins + s.employ_ins)) AS net_pay
-    FROM (
-      SELECT
-        p.payroll_no,
-        e.emp_id,
-        NVL(e.name,'-')     AS emp_name,
-        NVL(e.position,'-') AS position,
-
-        /* 수당: 상세 없으면 FIX 사용 */
-        CASE WHEN SUM(CASE WHEN ead.allow_code = 'BASE'   THEN ead.allow_amount END) IS NULL
-             THEN NVL(MAX(epf.base_pay),0)
-             ELSE SUM(CASE WHEN ead.allow_code = 'BASE'   THEN ead.allow_amount ELSE 0 END)
-        END AS base_pay,
-        CASE WHEN SUM(CASE WHEN ead.allow_code = 'FAMILY' THEN ead.allow_amount END) IS NULL
-             THEN NVL(MAX(epf.family_allow),0)
-             ELSE SUM(CASE WHEN ead.allow_code = 'FAMILY' THEN ead.allow_amount ELSE 0 END)
-        END AS family_allow,
-        CASE WHEN SUM(CASE WHEN ead.allow_code = 'MEAL'   THEN ead.allow_amount END) IS NULL
-             THEN NVL(MAX(epf.meal_allow),0)
-             ELSE SUM(CASE WHEN ead.allow_code = 'MEAL'   THEN ead.allow_amount ELSE 0 END)
-        END AS meal_allow,
-        CASE WHEN SUM(CASE WHEN ead.allow_code = 'ANNUAL' THEN ead.allow_amount END) IS NULL
-             THEN NVL(MAX(epf.annual_allow),0)
-             ELSE SUM(CASE WHEN ead.allow_code = 'ANNUAL' THEN ead.allow_amount ELSE 0 END)
-        END AS annual_allow,
-
-        /* 공제: 없으면 0 */
-        NVL(SUM(CASE WHEN edd.deduct_code = 'INCOME_TAX'       THEN edd.deduct_amount END),0) AS income_tax,
-        NVL(SUM(CASE WHEN edd.deduct_code = 'RESIDENT_TAX'     THEN edd.deduct_amount END),0) AS resident_tax,
-        NVL(SUM(CASE WHEN edd.deduct_code = 'NATIONAL_PENSION' THEN edd.deduct_amount END),0) AS national_pension,
-        NVL(SUM(CASE WHEN edd.deduct_code = 'HEALTH_INS'       THEN edd.deduct_amount END),0) AS health_ins,
-        NVL(SUM(CASE WHEN edd.deduct_code = 'EMPLOY_INS'       THEN edd.deduct_amount END),0) AS employ_ins
-
-      FROM payroll p
-      JOIN emp e ON e.dept_code = p.dept_code AND e.company_code = p.company_code
-      LEFT JOIN emp_pay_fix      epf ON epf.emp_id      = e.emp_id
-      LEFT JOIN emp_allow_detail ead ON ead.payroll_no  = p.payroll_no AND ead.emp_id = e.emp_id
-      LEFT JOIN emp_deduct_detail edd ON edd.payroll_no = p.payroll_no AND edd.emp_id = e.emp_id
-      WHERE p.payroll_no = #{value}
-      GROUP BY p.payroll_no, e.emp_id, e.name, e.position
-    ) s
-    ORDER BY s.emp_name ASC, s.emp_id ASC
-  </select>
-
-  <!-- 부서별 합계 (화면 하단 표) -->
-  <select id="selectDeptSum" parameterType="java.lang.Long" resultMap="DeptSumMap">
-    SELECT
-      x.payroll_no,
-      x.dept_code,
-      x.dept_name,
-      SUM(x.base_pay)            AS sum_base_pay,
-      SUM(x.family_allow)        AS sum_family_allow,
-      SUM(x.meal_allow)          AS sum_meal_allow,
-      SUM(x.annual_allow)        AS sum_annual_allow,
-      SUM(x.income_tax)          AS sum_income_tax,
-      SUM(x.resident_tax)        AS sum_resident_tax,
-      SUM(x.national_pension)    AS sum_national_pension,
-      SUM(x.health_ins)          AS sum_health_ins,
-      SUM(x.employ_ins)          AS sum_employ_ins,
-      SUM(x.income_tax + x.resident_tax + x.national_pension + x.health_ins + x.employ_ins) AS sum_deduct,
-      SUM(x.base_pay + x.family_allow + x.meal_allow + x.annual_allow
-          - (x.income_tax + x.resident_tax + x.national_pension + x.health_ins + x.employ_ins)) AS sum_net_pay
-    FROM (
-      SELECT
-        p.payroll_no,
-        p.dept_code,
-        d.dept_name,
-        e.emp_id,
-
-        /* 수당 집계 */
-        CASE WHEN SUM(CASE WHEN ead.allow_code = 'BASE'   THEN ead.allow_amount END) IS NULL
-             THEN NVL(MAX(epf.base_pay),0)
-             ELSE SUM(CASE WHEN ead.allow_code = 'BASE'   THEN ead.allow_amount ELSE 0 END)
-        END AS base_pay,
-        CASE WHEN SUM(CASE WHEN ead.allow_code = 'FAMILY' THEN ead.allow_amount END) IS NULL
-             THEN NVL(MAX(epf.family_allow),0)
-             ELSE SUM(CASE WHEN ead.allow_code = 'FAMILY' THEN ead.allow_amount ELSE 0 END)
-        END AS family_allow,
-        CASE WHEN SUM(CASE WHEN ead.allow_code = 'MEAL'   THEN ead.allow_amount END) IS NULL
-             THEN NVL(MAX(epf.meal_allow),0)
-             ELSE SUM(CASE WHEN ead.allow_code = 'MEAL'   THEN ead.allow_amount ELSE 0 END)
-        END AS meal_allow,
-        CASE WHEN SUM(CASE WHEN ead.allow_code = 'ANNUAL' THEN ead.allow_amount END) IS NULL
-             THEN NVL(MAX(epf.annual_allow),0)
-             ELSE SUM(CASE WHEN ead.allow_code = 'ANNUAL' THEN ead.allow_amount ELSE 0 END)
-        END AS annual_allow,
-
-        /* 공제 집계 */
-        NVL(SUM(CASE WHEN edd.deduct_code = 'INCOME_TAX'       THEN edd.deduct_amount END),0) AS income_tax,
-        NVL(SUM(CASE WHEN edd.deduct_code = 'RESIDENT_TAX'     THEN edd.deduct_amount END),0) AS resident_tax,
-        NVL(SUM(CASE WHEN edd.deduct_code = 'NATIONAL_PENSION' THEN edd.deduct_amount END),0) AS national_pension,
-        NVL(SUM(CASE WHEN edd.deduct_code = 'HEALTH_INS'       THEN edd.deduct_amount END),0) AS health_ins,
-        NVL(SUM(CASE WHEN edd.deduct_code = 'EMPLOY_INS'       THEN edd.deduct_amount END),0) AS employ_ins
-
-      FROM payroll p
-      JOIN dept d ON d.dept_code = p.dept_code
-      JOIN emp  e ON e.dept_code = p.dept_code AND e.company_code = p.company_code
-      LEFT JOIN emp_pay_fix      epf ON epf.emp_id     = e.emp_id
-      LEFT JOIN emp_allow_detail ead ON ead.payroll_no = p.payroll_no AND ead.emp_id = e.emp_id
-      LEFT JOIN emp_deduct_detail edd ON edd.payroll_no = p.payroll_no AND edd.emp_id = e.emp_id
-      WHERE p.payroll_no = #{value}
-      GROUP BY p.payroll_no, p.dept_code, d.dept_name, e.emp_id
-    ) x
-    GROUP BY x.payroll_no, x.dept_code, x.dept_name
-  </select>
-
-
-  <!-- ======================== 저장(업서트/확정) ======================== -->
-
-  <!-- 사원 공제 저장(업서트) -->
-  <insert id="upsertDeduct" parameterType="com.yedam.erp.vo.hr.PayrollSummaryVO">
-    MERGE INTO emp_deduct_detail t
-    USING (
-      SELECT #{payrollNo} AS payroll_no, #{empId} AS emp_id, 'INCOME_TAX'       AS deduct_code, NVL(#{incomeTax},0)       AS deduct_amount FROM dual
-      UNION ALL
-      SELECT #{payrollNo}                , #{empId}           , 'RESIDENT_TAX'  , NVL(#{residentTax},0)                   FROM dual
-      UNION ALL
-      SELECT #{payrollNo}                , #{empId}           , 'NATIONAL_PENSION', NVL(#{nationalPension},0)            FROM dual
-      UNION ALL
-      SELECT #{payrollNo}                , #{empId}           , 'HEALTH_INS'    , NVL(#{healthIns},0)                     FROM dual
-      UNION ALL
-      SELECT #{payrollNo}                , #{empId}           , 'EMPLOY_INS'    , NVL(#{employIns},0)                     FROM dual
-    ) s
-    ON (
-      t.payroll_no = s.payroll_no
-      AND t.emp_id = s.emp_id
-      AND t.deduct_code = s.deduct_code
+  <!-- 수당 PIVOT IN 리스트:  '식대' AS "AL_식대", ... -->
+  <select id="selectAllowColList"
+          parameterType="com.yedam.erp.vo.hr.PayrollVO"
+          resultType="string">
+    WITH base_emp AS (
+      SELECT e.emp_id
+      FROM emp e
+      WHERE e.company_code = #{companyCode}
+        AND e.dept_code = (
+          SELECT p.dept_code
+          FROM payroll p
+          WHERE p.payroll_no   = #{payrollNo}
+            AND p.company_code = #{companyCode}
+        )
+    ),
+    label_union AS (
+      SELECT TRIM(a.allow_name) AS label
+      FROM pay_allow_code a
+      WHERE a.company_code = #{companyCode}
+        AND a.use_yn = 'Y'
+      UNION
+      SELECT DISTINCT TRIM(epf.emp_allow_label) AS label
+      FROM emp_pay_fix epf
+      WHERE epf.company_code = #{companyCode}
+        AND epf.pay_type = 'ALLOW'
+        AND epf.emp_id IN (SELECT emp_id FROM base_emp)
     )
-    WHEN MATCHED THEN
-      UPDATE SET t.deduct_amount = s.deduct_amount
-    WHEN NOT MATCHED THEN
-      INSERT (t.payroll_no, t.emp_id, t.deduct_code, t.deduct_amount)
-      VALUES (s.payroll_no, s.emp_id, s.deduct_code, s.deduct_amount)
-  </insert>
+    SELECT NVL(
+      LISTAGG( '''' || label || ''' AS "AL_' || label || '"', ',' )
+      WITHIN GROUP (ORDER BY label),
+      '''__DUMMY__'' AS "AL___DUMMY__"'
+    ) AS col_list
+    FROM label_union
+  </select>
 
-  <!-- 부서 확정 합계 업서트 -->
-  <insert id="insertDeptPayrollSum" parameterType="com.yedam.erp.vo.hr.PayrollDeptSumVO">
-    MERGE INTO DEPT_PAYROLL_SUM d
-    USING (
-      /* payrollNo로 월/부서/회사 집계 1건 생성 */
-      SELECT
-        s.year_month,
-        s.dept_code,
-        s.company_code,
-        COUNT(*) AS emp_count,
-        SUM(s.base_pay + s.family_allow + s.meal_allow + s.annual_allow) AS total_allow_sum,
-        SUM(s.income_tax + s.resident_tax + s.national_pension + s.health_ins + s.employ_ins) AS total_deduct_sum
+  <!-- 공제 PIVOT IN 리스트:  '소득세' AS "DC_소득세", ... -->
+  <select id="selectDeductColList"
+          parameterType="com.yedam.erp.vo.hr.PayrollVO"
+          resultType="string">
+    WITH base_emp AS (
+      SELECT e.emp_id
+      FROM emp e
+      WHERE e.company_code = #{companyCode}
+        AND e.dept_code = (
+          SELECT p.dept_code
+          FROM payroll p
+          WHERE p.payroll_no   = #{payrollNo}
+            AND p.company_code = #{companyCode}
+        )
+    ),
+    label_union AS (
+      SELECT TRIM(d.deduct_name) AS label
+      FROM pay_deduct_code d
+      WHERE d.company_code = #{companyCode}
+        AND d.use_yn = 'Y'
+      UNION
+      SELECT DISTINCT TRIM(epf.emp_allow_label) AS label
+      FROM emp_pay_fix epf
+      WHERE epf.company_code = #{companyCode}
+        AND epf.pay_type = 'DEDUCT'
+        AND epf.emp_id IN (SELECT emp_id FROM base_emp)
+    )
+    SELECT NVL(
+      LISTAGG( '''' || label || ''' AS "DC_' || label || '"', ',' )
+      WITHIN GROUP (ORDER BY label),
+      '''__DUMMY__'' AS "DC___DUMMY__"'
+    ) AS col_list
+    FROM label_union
+  </select>
+
+  <!-- ============================= -->
+  <!-- 사원별 급여 상세 (동적 PIVOT, 하드코딩 제거) -->
+  <!-- 파라미터 map: { companyCode, payrollNo, allowCols, deductCols } -->
+  <!-- 리턴: Map (emp_id, emp_name, position, + AL_*, DC_* 전부 동적 포함) -->
+  <!-- ============================= -->
+  <select id="selectPayrollDetailPivot" parameterType="map" resultType="map">
+    WITH BASE_EMP AS (
+      SELECT e.emp_id, e.name, e.position
+      FROM emp e
+      WHERE e.company_code = #{companyCode}
+        AND e.dept_code = (
+          SELECT p.dept_code
+          FROM payroll p
+          WHERE p.payroll_no   = #{payrollNo}
+            AND p.company_code = #{companyCode}
+        )
+    ),
+    ALLOW_SRC AS (
+      SELECT epf.emp_id, TRIM(epf.emp_allow_label) AS item, epf.emp_allow_pay AS amount
+      FROM emp_pay_fix epf
+      WHERE epf.company_code = #{companyCode}
+        AND epf.pay_type = 'ALLOW'
+        AND epf.emp_id IN (SELECT emp_id FROM BASE_EMP)
+    ),
+    DEDUCT_SRC AS (
+      SELECT epf.emp_id, TRIM(epf.emp_allow_label) AS item, epf.emp_allow_pay AS amount
+      FROM emp_pay_fix epf
+      WHERE epf.company_code = #{companyCode}
+        AND epf.pay_type = 'DEDUCT'
+        AND epf.emp_id IN (SELECT emp_id FROM BASE_EMP)
+    ),
+    /* emp_id를 서로 다른 이름으로 분리해서 최종 SELECT에서 컬럼 충돌 방지 */
+    ALLOW_P AS (
+      SELECT *
       FROM (
-        SELECT
-          p.year_month,
-          p.dept_code,
-          p.company_code,
-          e.emp_id,
-          /* 수당: 상세 없으면 FIX 사용 */
-          CASE WHEN SUM(CASE WHEN ead.allow_code='BASE'   THEN ead.allow_amount END) IS NULL
-               THEN NVL(MAX(epf.base_pay),0)
-               ELSE SUM(CASE WHEN ead.allow_code='BASE'   THEN ead.allow_amount ELSE 0 END)
-          END AS base_pay,
-          CASE WHEN SUM(CASE WHEN ead.allow_code='FAMILY' THEN ead.allow_amount END) IS NULL
-               THEN NVL(MAX(epf.family_allow),0)
-               ELSE SUM(CASE WHEN ead.allow_code='FAMILY' THEN ead.allow_amount ELSE 0 END)
-          END AS family_allow,
-          CASE WHEN SUM(CASE WHEN ead.allow_code='MEAL'   THEN ead.allow_amount END) IS NULL
-               THEN NVL(MAX(epf.meal_allow),0)
-               ELSE SUM(CASE WHEN ead.allow_code='MEAL'   THEN ead.allow_amount ELSE 0 END)
-          END AS meal_allow,
-          CASE WHEN SUM(CASE WHEN ead.allow_code='ANNUAL' THEN ead.allow_amount END) IS NULL
-               THEN NVL(MAX(epf.annual_allow),0)
-               ELSE SUM(CASE WHEN ead.allow_code='ANNUAL' THEN ead.allow_amount ELSE 0 END)
-          END AS annual_allow,
-          /* 공제: 없으면 0 */
-          NVL(SUM(CASE WHEN edd.deduct_code='INCOME_TAX'       THEN edd.deduct_amount END),0) AS income_tax,
-          NVL(SUM(CASE WHEN edd.deduct_code='RESIDENT_TAX'     THEN edd.deduct_amount END),0) AS resident_tax,
-          NVL(SUM(CASE WHEN edd.deduct_code='NATIONAL_PENSION' THEN edd.deduct_amount END),0) AS national_pension,
-          NVL(SUM(CASE WHEN edd.deduct_code='HEALTH_INS'       THEN edd.deduct_amount END),0) AS health_ins,
-          NVL(SUM(CASE WHEN edd.deduct_code='EMPLOY_INS'       THEN edd.deduct_amount END),0) AS employ_ins
-        FROM payroll p
-        JOIN emp e ON e.dept_code = p.dept_code AND e.company_code = p.company_code
-        LEFT JOIN emp_pay_fix      epf ON epf.emp_id     = e.emp_id
-        LEFT JOIN emp_allow_detail ead ON ead.payroll_no = p.payroll_no AND ead.emp_id = e.emp_id
-        LEFT JOIN emp_deduct_detail edd ON edd.payroll_no = p.payroll_no AND edd.emp_id = e.emp_id
-        WHERE p.payroll_no = #{payrollNo}
-        GROUP BY p.year_month, p.dept_code, p.company_code, e.emp_id
-      ) s
-      GROUP BY s.year_month, s.dept_code, s.company_code
-    ) src
-    ON (
-      d.year_month  = src.year_month
-      AND d.dept_code    = src.dept_code
-      AND d.company_code = src.company_code
+        SELECT b.emp_id AS emp_id_a, s.item, s.amount
+        FROM BASE_EMP b LEFT JOIN ALLOW_SRC s ON s.emp_id = b.emp_id
+      )
+      PIVOT (
+        SUM(amount)
+        FOR item IN (${allowCols})
+      )
+    ),
+    DEDUCT_P AS (
+      SELECT *
+      FROM (
+        SELECT b.emp_id AS emp_id_d, s.item, s.amount
+        FROM BASE_EMP b LEFT JOIN DEDUCT_SRC s ON s.emp_id = b.emp_id
+      )
+      PIVOT (
+        SUM(amount)
+        FOR item IN (${deductCols})
+      )
     )
-    WHEN MATCHED THEN
-      UPDATE SET
-        d.emp_count        = src.emp_count,
-        d.total_allow_sum  = src.total_allow_sum,
-        d.total_deduct_sum = src.total_deduct_sum,
-        d.net_pay_sum      = (src.total_allow_sum - src.total_deduct_sum)
-    WHEN NOT MATCHED THEN
-      INSERT (
-        /* CONFIRM_NO 제외(트리거가 자동 할당) */
-        YEAR_MONTH, DEPT_CODE, EMP_COUNT, TOTAL_ALLOW_SUM, TOTAL_DEDUCT_SUM, NET_PAY_SUM, COMPANY_CODE
-      )
-      VALUES (
-        src.year_month, src.dept_code, src.emp_count,
-        src.total_allow_sum, src.total_deduct_sum,
-        (src.total_allow_sum - src.total_deduct_sum),
-        src.company_code
-      )
-  </insert>
+    SELECT
+      b.emp_id   AS "emp_id",
+      b.name     AS "emp_name",
+      b.position AS "position",
+      a.*,
+      d.*
+    FROM BASE_EMP b
+    LEFT JOIN ALLOW_P a  ON a.emp_id_a = b.emp_id
+    LEFT JOIN DEDUCT_P d ON d.emp_id_d = b.emp_id
+    ORDER BY b.emp_id
+  </select>
+  <!-- 부서 합계  -->
+ <select id="selectDeptSum"
+        parameterType="com.yedam.erp.vo.hr.PayrollVO"
+        resultType="map">
+  WITH base_ctx AS (
+    SELECT p.company_code, p.dept_code, p.payroll_no
+    FROM payroll p
+    WHERE p.payroll_no   = #{payrollNo}
+      AND p.company_code = #{companyCode}
+  ),
+  emp_in_dept AS (
+    SELECT e.emp_id
+    FROM emp e
+    JOIN base_ctx c
+      ON e.company_code = c.company_code
+     AND e.dept_code    = c.dept_code
+  ),
+  src_sum AS (  
+    SELECT
+      TRIM(f.emp_allow_label) AS label,
+      f.pay_type,
+      NVL(f.emp_allow_pay,0)  AS amt
+    FROM emp_pay_fix f
+    JOIN emp_in_dept ed ON ed.emp_id = f.emp_id
+    JOIN base_ctx    c  ON c.company_code = f.company_code
+    WHERE f.company_code = #{companyCode}
+  )
+  SELECT
+    (SELECT COUNT(DISTINCT e.emp_id)
+     FROM emp e JOIN base_ctx c
+       ON e.company_code = c.company_code
+      AND e.dept_code = c.dept_code) AS empCount,
 
+    NVL(SUM(CASE WHEN pay_type = 'ALLOW' THEN amt END), 0) AS sumTotalAllow,
+    NVL(SUM(CASE WHEN pay_type = 'DEDUCT' THEN amt END), 0) AS sumTotalDeduct,
+    NVL(SUM(CASE WHEN pay_type = 'ALLOW' THEN amt END), 0)
+    - NVL(SUM(CASE WHEN pay_type = 'DEDUCT' THEN amt END), 0) AS sumNetPay
+  FROM src_sum
+</select>
 </mapper>

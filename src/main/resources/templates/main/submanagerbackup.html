@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
+
+<head>
+<title layout:fragment="title">구독 계정관리</title>
+
+<th:block layout:fragment="head_extra">
+	<style>
+/* 상세 박스 공통 스타일 */
+.detail-box {
+	background-color: #f8f9fa;
+	border: 1px solid #dee2e6;
+	padding: 20px;
+	border-radius: 8px;
+	margin-top: 20px;
+	color: black;
+}
+
+/* 시안에 따른 구독 상세 박스 스타일 (3단 레이아웃) */
+.subscription-detail-container {
+	display: flex;
+	gap: 15px; /* 박스 간 간격 */
+	justify-content: space-between;
+	margin-top: 15px;
+}
+
+.subscription-box {
+	background-color: #ffffff;
+	border: 1px solid #dee2e6;
+	padding: 15px;
+	border-radius: 6px;
+	flex: 1; /* 동일한 너비로 분할 */
+}
+
+.subscription-box-header {
+	font-size: 1.1rem;
+	font-weight: bold;
+	margin-bottom: 15px;
+	padding-bottom: 10px;
+	border-bottom: 2px solid #0d6efd;
+	text-align: center;
+}
+
+/* 구독 패키지 스타일 */
+.package-button {
+	display: block;
+	width: 100%;
+	padding: 15px;
+	margin-bottom: 15px;
+	border: 2px solid #0d6efd;
+	border-radius: 4px;
+	text-align: center;
+	font-weight: bold;
+	font-size: 1.3rem;
+	background-color: #e9f2ff;
+	color: #0d6efd;
+}
+
+.module-container {
+	display: flex;
+	gap: 10px;
+}
+
+.module-button {
+	flex: 1;
+	padding: 15px 10px;
+	border: 1px solid #ced4da;
+	border-radius: 4px;
+	text-align: center;
+	font-weight: 500;
+	background-color: #f8f9fa;
+}
+
+/* 계약 정보 스타일 */
+.contract-info-item {
+	margin-bottom: 20px;
+}
+
+.contract-info-item label {
+	display: block;
+	font-size: 0.9rem;
+	color: #6c757d;
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+
+.contract-info-field {
+	border: 1px solid #ced4da;
+	padding: 10px;
+	border-radius: 4px;
+	background-color: #e9ecef;
+	font-weight: 500;
+}
+
+.contract-date-group {
+	display: flex;
+	gap: 10px;
+}
+
+.contract-date-group>div {
+	flex: 1;
+}
+
+/* 문서 스타일 */
+.document-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
+	padding: 5px 0;
+	border-bottom: 1px dashed #e9ecef;
+	font-weight: 500;
+}
+
+.document-buttons .btn {
+	margin-left: 5px;
+	font-size: 0.8rem;
+	padding: 5px 10px;
+	min-width: 60px;
+}
+
+.document-item:last-child {
+	border-bottom: none;
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+</style>
+</th:block>
+</head>
+
+<body>
+	<section layout:fragment="content" class="p-4">
+		<div class="detail-box">
+			<h5 class="fw-bold mb-3">구독 내역</h5>
+
+			<div class="subscription-detail-container">
+
+				<div class="subscription-box">
+					<div class="subscription-box-header">구독 패키지 확인</div>
+					<div class="package-button"
+						th:text="${subscription != null && subscription.subPlan != null} ? ${subscription.subPlan.planName} : '-'"></div>
+
+					<!--  <div class="module-container">
+          <div th:if="${subscription != null and subscription.subPlan != null and not #strings.isEmpty(subscription.subPlan.avaiModules)}">
+            
+            <th:block th:with="safeModules=${#strings.replace(#strings.trim(subscription.subPlan.avaiModules), ',\s*$', '')}">
+              
+              <div th:each="mod : ${#strings.split(safeModules, ',')}" 
+                   class="module-button" 
+                   th:text="${#strings.trim(mod)}"></div>
+            </th:block>
+            
+          </div>
+          <div th:if="${subscription == null || subscription.subPlan == null || #strings.isEmpty(subscription.subPlan.avaiModules)}" 
+               class="module-button">
+            사용 가능한 모듈이 없습니다.
+          </div>
+        </div>-->
+				</div>
+
+				<div class="subscription-box">
+					<div class="subscription-box-header">계약 정보</div>
+					<div class="contract-info-item">
+						<label>기간</label>
+						<div class="contract-info-field"
+							th:text="${subscription != null} ? ${subscription.mon} + '개월' : '-'"></div>
+					</div>
+					<div class="contract-date-group">
+						<div class="contract-info-item">
+							<label>구독 시작일</label>
+							<div class="contract-info-field"
+								th:text="${subscription != null} ? ${#dates.format(subscription.startDate, 'yyyy-MM-dd')} : '-'"></div>
+						</div>
+						<div class="contract-info-item">
+							<label>구독 종료일</label>
+							<div class="contract-info-field"
+								th:text="${subscription != null} ? ${#dates.format(subscription.endDate, 'yyyy-MM-dd')} : '-'"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="subscription-box">
+					<div class="subscription-box-header">문서</div>
+					<div class="document-item">
+						<span>계약서</span>
+						<div class="document-buttons">
+							<button class="btn btn-sm btn-outline-primary">미리보기</button>
+							<button id="btnPdf" class="btn btn-outline btn-sm"
+								style="border-color: #b91c1c; color: #b91c1c;">PDF</button>
+						</div>
+					</div>
+					<div class="document-item">
+						<span>세금계산서</span>
+						<div class="document-buttons">
+							<button class="btn btn-sm btn-outline-primary">미리보기</button>
+							<button class="btn btn-sm btn-danger">PDF</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<div class="modal fade" id="contractModal" tabindex="-1" aria-labelledby="contractModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="contractModalLabel">NGR_ERP 서비스 이용계약서</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div id="contract-document">
+					<style>
+						#contract-document { padding: 1rem; }
+						#contract-document h1, #contract-document h2, #contract-document h3 { margin-top: 1em; margin-bottom: 0.5em; font-weight: bold; }
+						#contract-document h1 { font-size: 1.8em; text-align: center; margin-bottom: 1.5em; }
+						#contract-document h2 { font-size: 1.4em; border-bottom: 2px solid #eee; padding-bottom: 0.3em; }
+						#contract-document h3 { font-size: 1.1em; }
+						#contract-document p, #contract-document li { line-height: 1.7; color: #333; }
+						#contract-document article { margin-bottom: 1.5em; }
+						#contract-document strong { color: #000; }
+						#contract-document ol, #contract-document ul { padding-left: 2em; }
+					</style>
+
+					<h1>NGR_ERP 서비스 이용계약서</h1>
+					<p class="introduction">본 계약서는 NGR_ERP 서비스 이용과 관련하여 필요한 제반 사항을 규정함을 목적으로 합니다.</p>
+					<h2>제1장 총칙</h2>
+					<article>
+						<h3>제1조 (목적)</h3>
+						<p>본 약관은 엔지알(이하 "회사")이 제공하는 NGR_ERP 서비스(이하 "서비스")의 이용과 관련하여 회사와 이용자(이하 "고객")의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.</p>
+					</article>
+					<article>
+						<h3>제2조 (용어의 정의)</h3>
+						<ul>
+							<li><strong>서비스:</strong> 회사가 고객에게 제공하는 전사적자원관리(ERP) 시스템 및 관련 부가 서비스를 의미합니다.</li>
+							<li><strong>고객:</strong> 회사와 서비스 이용계약을 체결하고 회사가 제공하는 서비스를 이용하는 법인 또는 개인사업자를 의미합니다.</li>
+							<li><strong>이용요금:</strong> 고객이 서비스를 이용하는 대가로 회사에 지불해야 하는 비용을 의미합니다.</li>
+						</ul>
+					</article>
+					</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<th:block layout:fragment="body_extra">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+	<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		const pdfButton = document.getElementById('btnPdf');
+
+		pdfButton.addEventListener('click', function() {
+			pdfButton.textContent = '생성 중...';
+			pdfButton.disabled = true;
+
+			const element = document.getElementById('contract-document');
+
+			// html2canvas 옵션: scale을 높여 PDF 품질을 개선합니다.
+			html2canvas(element, { scale: 2 }).then(canvas => {
+				const imgData = canvas.toDataURL('image/png');
+				const { jsPDF } = window.jspdf;
+				const doc = new jsPDF('p', 'mm', 'a4');
+
+				const imgWidth = 210; // A4 가로 (mm)
+				const pageHeight = 297; // A4 세로 (mm)
+				const imgHeight = canvas.height * imgWidth / canvas.width;
+				let heightLeft = imgHeight;
+				let position = 0;
+
+				// 첫 페이지 추가
+				doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+				heightLeft -= pageHeight;
+
+				// 내용이 길면 다음 페이지에 이어서 추가
+				while (heightLeft >= 0) {
+					position = heightLeft - imgHeight;
+					doc.addPage();
+					doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+					heightLeft -= pageHeight;
+				}
+
+				doc.save('NGR_ERP_서비스_이용계약서.pdf');
+
+				// 버튼 상태 원상 복구
+				pdfButton.textContent = 'PDF';
+				pdfButton.disabled = false;
+			}).catch(error => {
+				console.error("PDF 생성 오류:", error);
+				alert("PDF 생성에 실패했습니다. 다시 시도해 주세요.");
+				pdfButton.textContent = 'PDF';
+				pdfButton.disabled = false;
+			});
+		});
+	});
+	</script>
+</th:block>
+</body>
+</html>

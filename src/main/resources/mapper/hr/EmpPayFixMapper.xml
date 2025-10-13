@@ -13,6 +13,8 @@
     <result property="empAllowLabel" column="emp_allow_label"/>
     <result property="empAllowPay"   column="emp_allow_pay"/>
     <result property="companyCode"   column="company_code"/>
+    <!-- ★ 추가: 수당/공제 구분 -->
+    <result property="payType"       column="pay_type"/>
   </resultMap>
 
   <!-- 활성 수당 목록 + 사원 저장값(없으면 0/라벨은 기본명) -->
@@ -23,18 +25,41 @@
         a.allow_code                                     AS emp_allow_code,
         COALESCE(e.emp_allow_label, a.allow_name)        AS emp_allow_label,
         NVL(e.emp_allow_pay, 0)                          AS emp_allow_pay,
-        a.company_code                                   AS company_code
+        a.company_code                                   AS company_code,
+        'ALLOW'                                          AS pay_type
     FROM pay_allow_code a
     LEFT JOIN emp_pay_fix e
       ON e.company_code   = a.company_code
      AND e.emp_id         = #{empId}
      AND e.emp_allow_code = a.allow_code
+     AND e.pay_type       = 'ALLOW'        <!-- LEFT JOIN에 타입 조건 포함 -->
     WHERE a.use_yn = 'Y'
       AND a.company_code = #{companyCode}
     ORDER BY a.allow_code
   </select>
 
-  <!-- 사원 수당 등록 (INSERT) -->
+  <!-- ★ 신규: 활성 공제 목록 + 사원 저장값(없으면 0/라벨은 기본명) -->
+  <select id="selectDeductList" resultMap="EmpPayFixMap">
+    SELECT
+        e.pay_fix_no,
+        e.emp_id,
+        d.deduct_code                                    AS emp_allow_code,
+        COALESCE(e.emp_allow_label, d.deduct_name)       AS emp_allow_label,
+        NVL(e.emp_allow_pay, 0)                          AS emp_allow_pay,
+        d.company_code                                   AS company_code,
+        'DEDUCT'                                         AS pay_type
+    FROM pay_deduct_code d
+    LEFT JOIN emp_pay_fix e
+      ON e.company_code   = d.company_code
+     AND e.emp_id         = #{empId}
+     AND e.emp_allow_code = d.deduct_code
+     AND e.pay_type       = 'DEDUCT'       <!-- 공제 타입 -->
+    WHERE d.use_yn = 'Y'
+      AND d.company_code = #{companyCode}
+    ORDER BY d.deduct_code
+  </select>
+
+  <!-- 사원 수당/공제 등록 (INSERT) -->
   <insert id="insertEmpPayFix" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
     INSERT INTO emp_pay_fix (
         pay_fix_no,
@@ -42,18 +67,20 @@
         emp_allow_code,
         emp_allow_label,
         emp_allow_pay,
-        company_code
+        company_code,
+        pay_type              <!-- ★ 추가 -->
     ) VALUES (
-        SEQ_EMP_PAY_FIX.NEXTVAL,      <!-- 필요 시 CLOUD.SEQ_EMP_PAY_FIX.NEXTVAL -->
+        SEQ_EMP_PAY_FIX.NEXTVAL,
         #{empId},
         #{empAllowCode},
         #{empAllowLabel},
         #{empAllowPay},
-        #{companyCode}
+        #{companyCode},
+        #{payType}            <!-- ★ 추가 -->
     )
   </insert>
 
-  <!-- 사원 수당 수정 (UPDATE) -->
+  <!-- 사원 수당/공제 수정 (UPDATE) -->
   <update id="updateEmpPayFix" parameterType="com.yedam.erp.vo.hr.EmpPayFixVO">
     UPDATE emp_pay_fix
        SET emp_allow_label = #{empAllowLabel},
@@ -61,6 +88,7 @@
      WHERE emp_id          = #{empId}
        AND emp_allow_code  = #{empAllowCode}
        AND company_code    = #{companyCode}
+       AND pay_type        = #{payType}   <!-- ★ 추가 -->
   </update>
 
 </mapper>

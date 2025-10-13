@@ -34,7 +34,7 @@ public class EmailService {
         // 내용
         message.setText(text);
 
-        // 메일 발송!
+        // 메일 발송
         emailSender.send(message);
     }
 }

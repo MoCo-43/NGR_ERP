@@ -19,5 +19,20 @@
             #{endDate}
         )
     </insert>
+ <select id="findTokenByTokenString" resultType="com.yedam.erp.vo.main.PwResetTokenVO">
+        SELECT
+            token_id,
+            emp_id_no,
+            token,
+            start_date,
+            end_date
+        FROM
+            pw_reset_token
+        WHERE
+            token = #{token}
+    </select>
 
+    <delete id="deleteToken">
+        DELETE FROM pw_reset_token WHERE token = #{token}
+    </delete>
 </mapper>

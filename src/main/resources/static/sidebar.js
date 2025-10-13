@@ -56,7 +56,6 @@ const MENUS = {
       { title: "제품관리", items: [["제품등록", "/stock/product/insert"]] },
     ],
   },
-
   sales: {
     title: "영업",
     content: "영업 대시보드",
@@ -91,34 +90,39 @@ const MENUS = {
       },
     ],
   },
-
-  accounting: {
-    title: "회계",
-    content: "회계 대시보드",
-    groups: [
-      { title: "계정 과목", items: [["계정 과목 관리", "/accountList"]] },
-      {
-        title: "전표",
-        items: [
-          ["매출매입전표", "/invoice"],
-          ["일반전표", "/journal"],
-          ["자금전표", "/moneyInvoice"],
-          ["급여전표", "/payment"],
-          ["전표 마감", "/close"],
-        ],
-      },
-      { title: "손익계산서", items: [["손익계산서", "/income"]] },
-      { title: "재무상태표", items: [["재무상태표", "/balanceSheet"]] },
-    ],
-  },
-  mains: {
+	accounting: {
+		title: "회계",
+		content: "회계 대시보드",
+		groups: [
+			{ title: "계정 과목", items: [["계정 과목 관리", "/accountList"]] },
+			{
+				title: "전표",
+				items: [
+					["매출매입전표", "/invoice"],
+					["일반전표", "/journal"],
+					["자금전표", "/moneyInvoice"],
+					["급여전표", "/payment"],
+					["전표 마감", "/close"],
+				],
+			},
+			{ title: "손익계산서", items: [["손익계산서", "/income"]] },
+			{ title: "재무상태표", items: [["재무상태표", "/balanceSheet"]] },
+		],
+	},
+mains: {
     title: "마이페이지",
     content: "마이페이지대시보드",
     groups: [
-      { title: "구독관리", items: [["구독관리", "/sub/admin/subList"]] },
-      { title: "계정관리", items: [["계정관리", "/admin/hrmanager"]] },
+        { title: "구독관리", items: [["구독관리", "/admin/subList"]] },
+        { title: "계정관리", items: [["계정관리", "/admin/hrmanager"]] },
+        { 
+            title: "마이페이지", 
+            items: [
+                ["마이페이지", /*[[@{/mypage/mylist(empId=${session.loginUser.empId})}]]*/ '/mypage/mylist']
+            ]
+        }
     ],
-  },
+},
 };
 
 /** DOM 참조 */
@@ -129,99 +133,99 @@ const contentTitle = () => $("contentTitle");
 
 /** 사이드바 렌더 */
 function renderSidebar(key) {
-  const data = MENUS[key] || MENUS.hr;
-  const currentPath = window.location.pathname;
+	const data = MENUS[key] || MENUS.hr;
+	const currentPath = window.location.pathname;
 
-  if (sidebarTitle()) sidebarTitle().textContent = data.title;
-  if (contentTitle()) contentTitle().textContent = data.content;
+	if (sidebarTitle()) sidebarTitle().textContent = data.title;
+	if (contentTitle()) contentTitle().textContent = data.content;
 
-  const root = navRoot();
-  if (!root) return;
-  root.innerHTML = "";
+	const root = navRoot();
+	if (!root) return;
+	root.innerHTML = "";
 
-  data.groups.forEach((grp) => {
-    const wrap = document.createElement("div");
-    wrap.className = "group";
+	data.groups.forEach((grp) => {
+		const wrap = document.createElement("div");
+		wrap.className = "group";
 
-    const gtitle = document.createElement("div");
-    gtitle.className = "group-title";
-    gtitle.textContent = grp.title;
+		const gtitle = document.createElement("div");
+		gtitle.className = "group-title";
+		gtitle.textContent = grp.title;
 
-    const ul = document.createElement("ul");
-    ul.className = "sub";
-    let hasActiveItem = false;
+		const ul = document.createElement("ul");
+		ul.className = "sub";
+		let hasActiveItem = false;
 
-    grp.items.forEach(([label, href]) => {
-      const li = document.createElement("li");
-      const a = document.createElement("a");
-      a.href = href;
-      a.textContent = label;
+		grp.items.forEach(([label, href]) => {
+			const li = document.createElement("li");
+			const a = document.createElement("a");
+			a.href = href;
+			a.textContent = label;
 
-      if (a.pathname === currentPath) {
-        a.classList.add("active");
-        hasActiveItem = true;
-      }
+			if (a.pathname === currentPath) {
+				a.classList.add("active");
+				hasActiveItem = true;
+			}
 
-      li.appendChild(a);
-      ul.appendChild(li);
-    });
+			li.appendChild(a);
+			ul.appendChild(li);
+		});
 
-    if (hasActiveItem) {
-      ul.classList.add("open");
-    }
+		if (hasActiveItem) {
+			ul.classList.add("open");
+		}
 
-    gtitle.addEventListener("click", () => {
-      ul.classList.toggle("open");
-    });
+		gtitle.addEventListener("click", () => {
+			ul.classList.toggle("open");
+		});
 
-    wrap.appendChild(gtitle);
-    wrap.appendChild(ul);
-    root.appendChild(wrap);
-  });
+		wrap.appendChild(gtitle);
+		wrap.appendChild(ul);
+		root.appendChild(wrap);
+	});
 }
 
 /** 탭 이벤트 */
 function initTabs() {
-  const tabs = document.querySelectorAll(".tab");
-  const currentPath = window.location.pathname;
-  let activeTabKey = "hr";
+	const tabs = document.querySelectorAll(".tab");
+	const currentPath = window.location.pathname;
+	let activeTabKey = "hr";
 
-  for (const key in MENUS) {
-    const groups = MENUS[key].groups;
-    for (const group of groups) {
-      if (group.items.some(([label, href]) => href === currentPath)) {
-        activeTabKey = key;
-        break;
-      }
-    }
-    if (activeTabKey !== "hr") break;
-  }
+	for (const key in MENUS) {
+		const groups = MENUS[key].groups;
+		for (const group of groups) {
+			if (group.items.some(([label, href]) => href === currentPath)) {
+				activeTabKey = key;
+				break;
+			}
+		}
+		if (activeTabKey !== "hr") break;
+	}
 
-  tabs.forEach((t) => {
-    if (t.dataset.tab === activeTabKey) {
-      t.classList.add("active");
-      t.setAttribute("aria-selected", "true");
-    } else {
-      t.classList.remove("active");
-      t.setAttribute("aria-selected", "false");
-    }
+	tabs.forEach((t) => {
+		if (t.dataset.tab === activeTabKey) {
+			t.classList.add("active");
+			t.setAttribute("aria-selected", "true");
+		} else {
+			t.classList.remove("active");
+			t.setAttribute("aria-selected", "false");
+		}
 
-    t.addEventListener("click", (e) => {
-      e.preventDefault();
-      tabs.forEach((x) => {
-        x.classList.remove("active");
-        x.setAttribute("aria-selected", "false");
-      });
-      t.classList.add("active");
-      t.setAttribute("aria-selected", "true");
-      renderSidebar(t.dataset.tab);
-    });
-  });
+		t.addEventListener("click", (e) => {
+			e.preventDefault();
+			tabs.forEach((x) => {
+				x.classList.remove("active");
+				x.setAttribute("aria-selected", "false");
+			});
+			t.classList.add("active");
+			t.setAttribute("aria-selected", "true");
+			renderSidebar(t.dataset.tab);
+		});
+	});
 
-  renderSidebar(activeTabKey);
+	renderSidebar(activeTabKey);
 }
 
 /** 초기 구동 */
 document.addEventListener("DOMContentLoaded", () => {
-  initTabs();
+	initTabs();
 });

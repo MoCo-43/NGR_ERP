@@ -16,19 +16,25 @@ public class EmpPayFixServiceImpl implements EmpPayFixService {
 
     private final EmpPayFixMapper empPayFixMapper;
 
-    // 활성 수당 목록 조회
+    // 수당 목록 조회 (ALLOW)
     @Override
     public List<EmpPayFixVO> getAllowList(String empId, Long companyCode) {
         return empPayFixMapper.selectAllowList(empId, companyCode);
     }
 
-    // 사원 수당 등록
+    //공제 목록 조회 (DEDUCT)
+    @Override
+    public List<EmpPayFixVO> getDeductList(String empId, Long companyCode) {
+        return empPayFixMapper.selectDeductList(empId, companyCode);
+    }
+
+    // 사원 수당/공제 등록 (VO.payType 으로 구분)
     @Override
     public int insertEmpPayFix(EmpPayFixVO vo) {
         return empPayFixMapper.insertEmpPayFix(vo);
     }
 
-    // 사원 수당 수정
+    // 사원 수당/공제 수정 (VO.payType 으로 구분)
     @Override
     public int updateEmpPayFix(EmpPayFixVO vo) {
         return empPayFixMapper.updateEmpPayFix(vo);
