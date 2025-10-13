@@ -6,7 +6,7 @@
 <mapper namespace="com.yedam.erp.mapper.account.PaymentMapper">
 
   <!-- 급여 확정건을 회계 전표라인으로 변환 -->
- <select id="selectDeptJournalLines" resultType="com.yedam.erp.vo.account.PaymentLineVO">
+ <select id="selectDeptJournalLines" resultType="com.yedam.erp.vo.account.PayrollLineVO">
   <![CDATA[
   WITH s AS (
     SELECT dept_code, year_month, company_code, item_key, amount

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 인터페이스 FQN과 100% 일치 -->
+<mapper namespace="com.yedam.erp.mapper.account.PaymentMapper">
+	<select id="selectUnpaidInvoices" resultType="InvoiceHeaderVO">
+  SELECT
+    INVOICE_NO,
+    TYPE,
+    INVOICE_DATE,
+    CUS_CODE,
+    CUS_NAME,
+    TOTAL_AMT,
+    UNPAID_AMT,
+    STATUS,
+    CASH_ACCOUNT,
+    MEMO,
+    PAY_METHOD
+  FROM INVOICE_HEADER
+  WHERE UNPAID_AMT > 0
+  AND COMPANY_CODE = #{companyCode}
+  <if test="type != null and type != ''">
+    AND TYPE = #{type}
+  </if>
+  <if test="fromDate != null and toDate != null">
+    AND INVOICE_DATE BETWEEN TO_DATE(#{fromDate}, 'YYYY-MM-DD')
+                         AND TO_DATE(#{toDate}, 'YYYY-MM-DD')
+  </if>
+  <if test="searchCus != null and searchCus != ''">
+    AND CUS_NAME LIKE '%' || #{searchCus} || '%'
+  </if>
+  ORDER BY INVOICE_DATE DESC
+</select>
+
+  <!-- 자금전표 헤더 등록 -->
+  <insert id="insertPaymentHeader" parameterType="PaymentHeaderVO" useGeneratedKeys="false">
+
+    <!-- BEFORE: 시퀀스 NEXTVAL 미리 조회 후 VO.payCode 에 자동 세팅 -->
+    <selectKey keyProperty="payCode" order="BEFORE" resultType="long">
+      SELECT SEQ_PAYMENT.NEXTVAL FROM DUAL
+    </selectKey>
+
+    INSERT INTO PAYMENT (
+        PAY_CODE,
+        PAY_NO,
+        PAY_TYPE,
+        CUS_CODE,
+        CUS_NAME,
+        METHOD,
+        CASH_ACCOUNT,
+        AMOUNT,
+        MEMO,
+        CREATED_AT,
+        COMPANY_CODE,
+        POSTED_FLAG
+    ) VALUES (
+        #{payCode},
+        FN_NEXT_VOUCHER_NO('M', SYSDATE),
+        #{payType},
+        #{cusCode},
+        #{cusName},
+        #{method},
+        #{cashAccount},
+        #{amount},
+        #{memo},
+        SYSDATE,
+        #{companyCode},
+        NVL(#{postedFlag}, 'N')
+    )
+  </insert>
+
+
+  <!--  자금전표 상세 등록 -->
+  <insert id="insertPaymentApply" parameterType="PaymentApplyVO">
+    INSERT INTO PAYMENT_APPLY (
+        APPLY_NO,
+        TYPE,
+        INVOICE_NO,
+        APPLY_AMOUNT,
+        PAY_CODE
+    ) VALUES (
+        SEQ_PAYMENT_APPLY.NEXTVAL,
+        #{type},
+        #{invoiceNo},
+        #{applyAmount},
+        #{payCode}
+    )
+  </insert>
+
+  <!--  매입/매출전표 미결금액 차감 -->
+  <update id="updateInvoiceUnpaid" parameterType="PaymentApplyVO">
+    UPDATE INVOICE_HEADER
+       SET UNPAID_AMT = UNPAID_AMT - #{applyAmount}
+     WHERE INVOICE_NO = #{invoiceNo}
+  </update>
+
+  <!--  자금전표 조회 -->
+  <select id="selectPaymentList" resultType="PaymentHeaderVO">
+    SELECT
+        PAY_CODE,
+        PAY_NO,
+        PAY_DATE,
+        PAY_TYPE,
+        CUS_CODE,
+        CUS_NAME,
+        METHOD,
+        CASH_ACCOUNT,
+        AMOUNT,
+        MEMO,
+        CREATED_AT,
+        COMPANY_CODE,
+        POSTED_FLAG
+    FROM PAYMENT
+    WHERE COMPANY_CODE = #{companyCode}
+    ORDER BY PAY_DATE DESC
+  </select>
+  
+  <!-- 일반전표 등록후 자금전표업뎃 -->
+<update id="updatePostedFlag">
+  UPDATE PAYMENT
+     SET POSTED_FLAG = #{postedFlag},
+         UPDATED_AT = SYSDATE
+   WHERE PAY_CODE = #{payCode}
+     AND COMPANY_CODE = #{companyCode}
+</update>
+	
+</mapper>

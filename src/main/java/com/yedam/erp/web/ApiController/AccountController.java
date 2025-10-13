@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.data.annotation.CreatedBy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,13 +21,15 @@ import com.yedam.erp.service.account.AccountService;
 import com.yedam.erp.service.account.InvoiceService;
 import com.yedam.erp.service.account.JournalCloseLogService;
 import com.yedam.erp.service.account.JournalService;
-import com.yedam.erp.service.account.PaymentService;
+import com.yedam.erp.service.account.MoneyService;
+import com.yedam.erp.service.account.PayrollAccountService;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
 import com.yedam.erp.vo.account.InvoiceLineVO;
 import com.yedam.erp.vo.account.JournalCloseLogVO;
 import com.yedam.erp.vo.account.JournalVO;
-import com.yedam.erp.vo.account.PaymentLineVO;
+import com.yedam.erp.vo.account.PaymentHeaderVO;
+import com.yedam.erp.vo.account.PayrollLineVO;
 import com.yedam.erp.vo.account.accountVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderVO;
@@ -45,7 +46,9 @@ public class AccountController {
 	private final JournalCloseLogService logService;
 	private final InvoiceService invoiceService;
 	private final StockService stockService;
-	private final PaymentService paymentService;
+	private final PayrollAccountService payrollService;
+	private final MoneyService moneyService;
+	
 	
 	@GetMapping("/list")
 	public List<accountVO> list(Long companyCode){
@@ -236,12 +239,12 @@ public class AccountController {
 	
 	// 급여전표 라인 
 	 @GetMapping("/payment/lines")
-	   public Map<String, List<PaymentLineVO>> getPaymentLines(
+	   public Map<String, List<PayrollLineVO>> getPaymentLines(
 	            @RequestParam String yearMonth,@RequestParam String deptCode, Long companyCode) {
 	        companyCode = SessionUtil.companyId();
-	        List<PaymentLineVO> allLines = paymentService.getDeptJournalLines(yearMonth,deptCode ,companyCode);
+	        List<PayrollLineVO> allLines = payrollService.getDeptJournalLines(yearMonth,deptCode ,companyCode);
 
-	        Map<String, List<PaymentLineVO>> result = new HashMap<>();
+	        Map<String, List<PayrollLineVO>> result = new HashMap<>();
 	        result.put("debit", allLines.stream()
 	                                    .filter(l -> "D".equalsIgnoreCase(l.getDcType()))
 	                                    .toList());
@@ -252,6 +255,50 @@ public class AccountController {
 	        return result;
 	    }
 	
+	 	// ✅ 미결 전표 목록 조회
+	    @GetMapping("/unpaidList")
+	    public List<InvoiceHeaderVO> getUnpaidList(
+	    		@RequestParam(required = false)   String type,
+	    		@RequestParam(required = false)  String fromDate,
+	    		@RequestParam(required = false)  String toDate,
+	    		@RequestParam(required = false) String searchCus, Long companyCode) {
+	    	companyCode = SessionUtil.companyId();
+	        return moneyService.getUnpaidInvoices(type, fromDate, toDate, searchCus, companyCode);
+	       
+	    }
+	    
+	    // 자금전표 INSERT
+	    @PostMapping("/payment/save")
+	    public ResponseEntity<?> savePayment(@RequestBody PaymentHeaderVO payment) {
+	        try {
+	            payment.setCompanyCode(SessionUtil.companyId());
+	            moneyService.savePayment(payment);
+	            return ResponseEntity.ok(Map.of("success", true,
+	            		"message", "자금전표 저장 완료",
+	            		"payCode", payment.getPayCode()));
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            return ResponseEntity.internalServerError()
+	                                 .body(Map.of("success", false, "message", e.getMessage()));
+	        }
+	    }
+	    
+	    // 자금전표 업데이트(상태값)
+	    @PutMapping("/payment/{payCode}/posted")
+	    public ResponseEntity<?> updatePaymentPosted(
+	            @PathVariable Long payCode,
+	            @RequestBody Map<String, String> body) {
+	        try {
+	            String postedFlag = body.get("postedFlag");
+	            Long companyCode = SessionUtil.companyId();
+	            moneyService.updatePaymentPosted(payCode, companyCode, postedFlag);
+	            return ResponseEntity.ok(Map.of("success", true, "message", "자금전표 상태 업데이트 완료"));
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            return ResponseEntity.internalServerError()
+	                .body(Map.of("success", false, "message", e.getMessage()));
+	        }
+	    }
 }
 
 	

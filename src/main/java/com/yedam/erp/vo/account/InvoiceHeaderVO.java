@@ -35,6 +35,7 @@ public class InvoiceHeaderVO {
     private Date updatedAt;       // 수정일
     private Long companyCode;   // 회사코드
     private String postedFlag;    // 전표반영 여부
+    private Long unpaidAmt; // 미결금액
 
     // 1:N 매핑
     private List<InvoiceLineVO> lines;

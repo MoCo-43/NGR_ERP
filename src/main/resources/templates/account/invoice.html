@@ -279,7 +279,7 @@
       { headerName: "거래처", field: "partner", flex: 1 },
       { headerName: "차변(출금)", field: "debit", flex: 1,valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
       { headerName: "대변(입금)", field: "credit", flex: 1,valueFormatter: p => p.value ? p.value.toLocaleString() : "" },
-      { headerName: "적요", field: "note", flex: 1 }
+      { headerName: "적요", field: "note", flex: 1, editable: true }
     ];
 
     detailApi = agGrid.createGrid(document.querySelector("#detailGrid"), {
