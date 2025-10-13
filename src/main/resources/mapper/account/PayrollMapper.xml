@@ -3,7 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.yedam.erp.mapper.account.PaymentMapper">
+<mapper namespace="com.yedam.erp.mapper.account.PayrollAccountMapper">
 
   <!-- 급여 확정건을 회계 전표라인으로 변환 -->
  <select id="selectDeptJournalLines" resultType="com.yedam.erp.vo.account.PayrollLineVO">
