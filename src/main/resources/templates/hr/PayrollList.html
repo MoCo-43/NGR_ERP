@@ -12,14 +12,13 @@
 		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
 
 	<style>
-.toolbar {
-	padding: 1.0rem 1.0rem 0.25rem 1.0rem;
-}
+.toolbar { padding: 1.0rem 1.0rem 0.25rem 1.0rem; }
 
 #payrollGrid.ag-theme-quartz {
 	height: 32rem;
 	width: 100%;
 }
+
 .status-wait {
 	color: red;
 	font-weight: bold;
@@ -37,15 +36,15 @@
 	<section layout:fragment="content">
 
 		<div class="card shadow mb-3">
-			<div class="card-header py-3">
+			<div class="card-header py-3 d-flex justify-content-between align-items-center">
 				<h6 class="m-0 font-weight-bold text-primary">급여대장 리스트</h6>
+				<button class="btn btn-primary btn-sm" id="btnRegister">등록</button>
 			</div>
 
 			<div class="toolbar btn-bar">
 				<div class="row g-2 align-items-center">
 					<div class="col-12 col-sm-4 col-xl-3">
-						<input id="srchMonth" type="month" class="form-control"
-							placeholder="귀속연월">
+						<input id="srchMonth" type="month" class="form-control" placeholder="귀속연월">
 					</div>
 					<div class="col-12 col-sm-4 col-xl-3">
 						<input id="srchDeptName" class="form-control" placeholder="부서명">
@@ -69,123 +68,128 @@
 	</section>
 
 	<th:block layout:fragment="body_extra">
-
-		<script
-			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-		<script
-			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 
 		<script>
-    document.addEventListener('DOMContentLoaded', () => {
-      //DOM 요소 참조
-      const gridDiv      = document.getElementById('payrollGrid');
-      const btnSearch    = document.getElementById('btnSearch');
-      const btnReset     = document.getElementById('btnReset');
-      const srchMonth    = document.getElementById('srchMonth');
-      const srchDeptName = document.getElementById('srchDeptName');
+		document.addEventListener('DOMContentLoaded', () => {
+		  const gridDiv      = document.getElementById('payrollGrid');
+		  const btnSearch    = document.getElementById('btnSearch');
+		  const btnReset     = document.getElementById('btnReset');
+		  const btnRegister  = document.getElementById('btnRegister');
+		  const srchMonth    = document.getElementById('srchMonth');
+		  const srchDeptName = document.getElementById('srchDeptName');
 
-      //그리드 핸들 + 원본 데이터 캐시
-      let gridApi = null;
-      let rowDataCache = [];
+		  let gridApi = null;
+		  let rowDataCache = [];
 
-      //날짜 포맷 유틸
-      const formatDate = (v) => v ? String(v).slice(0,10) : '';
+		  const formatDate = (v) => v ? String(v).slice(0,10) : '';
 
-      //컬럼 정의
-      const columnDefs = [
-        { headerName:'귀속연월', field:'yearMonth', width:120 },
-        { headerName:'대장 명칭', field:'title', flex:1, minWidth:220 },
-        { headerName:'부서', width:140,
-          valueGetter:(p)=> p.data?.deptName ?? p.data?.dept_name ?? '' },
-        { headerName:'지급일', field:'payDate', width:140, valueFormatter:(p)=>formatDate(p.value) },
-        { headerName:'인원수', field:'empCount', width:100 },
-        { headerName:'상태', field:'status', width:100,
-          cellRenderer:(p)=> p.value==='CONFIRMED'
-            ? '<span class="status-confirm">확정</span>'
-            : '<span class="status-wait">대기</span>' },
-        { headerName:'급여대장', width:100,
-            	
-          //보기 링크 클릭 시 상세 모달 오픈
-          cellRenderer:(p)=> {
-            const no = p.data?.payrollNo ?? p.data?.payroll_no;
-            if (!no) return '';
-            const a = document.createElement('a');
-            a.href = 'javascript:void(0)';
-            a.textContent = '보기';
-            a.addEventListener('click', (e)=>{
-              e.preventDefault();
-              window.PayrollDetail?.open?.(Number(no));
-            });
-            return a;
-          } }
-      ];
+		  // 컬럼 정의
+		  const columnDefs = [
+			{ headerName:'귀속연월', field:'yearMonth', width:120 },
+			{ headerName:'대장 명칭', field:'title', flex:1, minWidth:220 },
+			{ headerName:'부서', width:140, valueGetter:(p)=> p.data?.deptName ?? p.data?.dept_code ?? '' },
+			{ headerName:'지급일', field:'payDate', width:140, valueFormatter:(p)=>formatDate(p.value) },
+			{ headerName:'인원수', field:'empCount', width:100 },
+			{ headerName:'상태', field:'status', width:100,
+			  cellRenderer:(p)=> p.value==='CONFIRMED'
+				? '<span class="status-confirm">확정</span>'
+				: '<span class="status-wait">대기</span>' },
+			{ headerName:'급여대장', width:100,
+			  cellRenderer:(p)=> {
+				const no = p.data?.payrollNo ?? p.data?.payroll_no;
+				if (!no) return '';
+				const a = document.createElement('a');
+				a.href = 'javascript:void(0)';
+				a.textContent = '보기';
+				a.addEventListener('click', (e)=>{
+				  e.preventDefault();
+				  window.PayrollDetail?.open?.(Number(no));
+				});
+				return a;
+			  } }
+		  ];
 
-      //그리드 옵션
-      const gridOptions = {
-        columnDefs,
-        rowData: [],
-        pagination: true,
-        paginationPageSize: 10,
-        defaultColDef: { sortable:true, resizable:true, filter:false, suppressMenu:true },
-        onGridReady: (params) => { gridApi = params.api; initLoad(); }
-      };
+		  // 그리드 옵션
+		  const gridOptions = {
+			columnDefs,
+			rowData: [],
+			pagination: true,
+			paginationPageSize: 10,
+			defaultColDef: { sortable:true, resizable:true, filter:false, suppressMenu:true },
+			onGridReady: (params) => { gridApi = params.api; initLoad(); }
+		  };
 
-      //그리드 생성
-      new agGrid.Grid(gridDiv, gridOptions);
+		  new agGrid.Grid(gridDiv, gridOptions);
 
-      //초기 로드: 현재 월로 기본 조회
-      async function initLoad(){
-        const now = new Date();
-        srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-        await loadFromServer();
-      }
+		  async function initLoad(){
+			const now = new Date();
+			srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+			await loadFromServer();
+		  }
 
-      //서버 조회 + 부서명 프런트 필터 적용
-      async function loadFromServer(){
-        //월 값 → 'YYYYMM'로 변환해 쿼리 파라미터 구성
-        const monthVal  = srchMonth.value;
-        const yearMonth = monthVal ? monthVal.replace('-','') : '';
+		  async function loadFromServer(){
+			const monthVal  = srchMonth.value;
+			const yearMonth = monthVal ? monthVal.replace('-','') : '';
 
-        const params = new URLSearchParams();
-        if (yearMonth) params.append('yearMonth', yearMonth);
-        const url = `/api/hr/payroll${params.toString() ? ('?'+params.toString()) : ''}`;
+			const params = new URLSearchParams();
+			if (yearMonth) params.append('yearMonth', yearMonth);
+			params.append('companyCode', 1001); // ※ 실제 로그인 회사코드로 대체
 
-        //API 호출
-        const { data } = await axios.get(url, { validateStatus:s=>s>=200&&s<500 });
-        rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
+			const url = `/api/hr/payroll/list?${params.toString()}`;
+			const { data } = await axios.get(url, { validateStatus:s=>s>=200&&s<500 });
+			rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
+			applyFrontFilter();
+		  }
 
-        applyFrontFilter();
-      }
+		  function applyFrontFilter(){
+			const deptKw = (srchDeptName.value||'').trim().toLowerCase();
+			const filtered = deptKw
+			  ? rowDataCache.filter(r => ((r.deptName ?? r.dept_code ?? '')+'').toLowerCase().includes(deptKw))
+			  : rowDataCache;
+			setRows(filtered);
+			gridApi?.paginationGoToFirstPage?.();
+		  }
 
-      //부서명 입력값으로 화면 필터링만 수행
-      function applyFrontFilter(){
-        const deptKw = (srchDeptName.value||'').trim().toLowerCase();
-        const filtered = deptKw
-          ? rowDataCache.filter(r => ((r.deptName ?? r.dept_name ?? '')+'').toLowerCase().includes(deptKw))
-          : rowDataCache;
-        setRows(filtered);
-        gridApi?.paginationGoToFirstPage?.();
-      }
+		  function doReset(){
+			const now = new Date();
+			srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+			srchDeptName.value = '';
+			loadFromServer();
+		  }
 
-      //초기화: 현재 월로 되돌리고 서버 재조회
-      function doReset(){
-        const now = new Date();
-        srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-        srchDeptName.value = '';
-        loadFromServer();
-      }
+		  function setRows(rows){
+			if (!gridApi) return;
+			gridApi.setRowData(rows);
+		  }
 
-      //행 데이터 교체
-      function setRows(rows){
-        if (!gridApi) return;
-        gridApi.setRowData(rows);
-      }
+		  btnSearch.addEventListener('click', loadFromServer);
+		  btnReset .addEventListener('click', doReset);
 
-      //버튼 이벤트
-      btnSearch.addEventListener('click', loadFromServer);
-      btnReset .addEventListener('click', doReset);
-    });
-  </script>
+	
+		  //  급여대장 등록 버튼
+	
+		  btnRegister.addEventListener('click', async ()=>{
+			const monthVal = srchMonth.value;
+			if (!monthVal) {
+			  alert('귀속연월을 먼저 선택해주세요.');
+			  return;
+			}
+			const yearMonth = monthVal.replace('-','');
+			const payload = { yearMonth: yearMonth, companyCode: 1001 };
+
+			try {
+			  await axios.post('/api/hr/payroll', payload);
+			  alert('급여대장이 등록되었습니다.');
+			  await loadFromServer();
+			} catch (e) {
+			  console.error(e);
+			  alert('등록 중 오류가 발생했습니다.');
+			}
+		  });
+		});
+		</script>
 	</th:block>
 </body>
 </html>

@@ -13,6 +13,7 @@
         </div>
 
         <div class="modal-body">
+          <!-- 공통코드 조회 모달 포함 -->
           <th:block th:replace="~{hr/codeLookup :: codeLookupModal}"></th:block>
 
           <ul class="nav nav-tabs mb-3" id="empTabs" role="tablist">
@@ -313,6 +314,82 @@
         (new bootstrap.Modal($('empModal'))).show();
       }
     };
+
+    /* ========= 오류 수정: 조회 모달 정확 분기 ========= */
+    function bindLookupButtons(){
+      // CodeLookup.open 존재 검사
+      const open = window.CodeLookup?.open;
+      if (!open) {
+        console.warn('CodeLookup.open 이 없습니다. codeLookupModal fragment가 포함되었는지 확인하세요.');
+      }
+
+      // 1) 부서: /api/hr/dept 사용 (source:'dept'), 코드만 입력 필드에 세팅
+      $('btnDeptLookup')?.addEventListener('click', ()=>{
+        open?.({
+          source: 'dept',
+          title: '부서 선택',
+          targetId: 'f_dept_code',      // codeId → f_dept_code
+          targetNameId: null            // (부서명 입력필드가 따로 없으니 생략)
+        });
+      });
+
+      // 2) 직급: groupId 'RK' (네 모듈 정의), code/name 각각 hidden/visible 필드에 세팅
+      $('btnPositionLookup')?.addEventListener('click', ()=>{
+        open?.({
+          groupId: 'RK',
+          title: '직급 선택',
+          targetId: 'f_position_code',  // codeId → hidden
+          targetNameId: 'f_position'    // codeName → visible
+        });
+      });
+
+      // 3) 직책: groupId 'PO'
+      $('btnTitleLookup')?.addEventListener('click', ()=>{
+        open?.({
+          groupId: 'PO',
+          title: '직책 선택',
+          targetId: 'f_title_code',     // codeId → hidden
+          targetNameId: 'f_title'       // codeName → visible
+        });
+      });
+
+      // 4) 은행: groupId 'BK'
+      $('btnBankLookup')?.addEventListener('click', ()=>{
+        open?.({
+          groupId: 'BK',
+          title: '은행 선택',
+          targetId: 'f_bankCode',       // codeId → hidden
+          targetNameId: 'f_bankName'    // codeName → readonly visible
+        });
+      });
+
+      // 5) 우편번호는 기존대로(네가 사용하는 openZipSearch가 있으면 사용)
+      $('btnZipSearch')?.addEventListener('click', ()=>{
+        if (window.openZipSearch) {
+          return window.openZipSearch({
+            onSelect: ({zonecode, roadAddress})=>{
+              $('f_zipCode').value = zonecode || '';
+              $('f_address').value = roadAddress || '';
+              $('f_address_detail')?.focus();
+            }
+          });
+        }
+        // 임시 입력(개발 테스트용)
+        const z = prompt('우편번호 입력(임시):');
+        const a = prompt('주소 입력(임시):');
+        if (z) $('f_zipCode').value = z;
+        if (a) $('f_address').value = a;
+        $('f_address_detail')?.focus();
+      });
+    }
+
+    // DOM ready 시 1회 바인딩
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bindLookupButtons, { once:true });
+    } else {
+      bindLookupButtons();
+    }
+
   })();
   </script>
 </div>

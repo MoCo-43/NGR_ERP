@@ -1,82 +1,102 @@
 package com.yedam.erp.service.impl.hr;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.hr.PayrollMapper;
 import com.yedam.erp.service.hr.PayrollService;
-import com.yedam.erp.vo.hr.PayrollDeptSumVO;
 import com.yedam.erp.vo.hr.PayrollSummaryVO;
 import com.yedam.erp.vo.hr.PayrollVO;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class PayrollServiceImpl implements PayrollService {
 
-    @Autowired
-    private PayrollMapper payrollMapper;
-
-    // ==================== 급여대장 마스터 ====================
+    private final PayrollMapper payrollMapper;
 
     @Override
-    public List<PayrollVO> getPayrollList(Long companyCode) {
-        return payrollMapper.selectPayrollList(companyCode);
+    public List<PayrollVO> selectPayrollList(PayrollVO vo) {
+        return payrollMapper.selectPayrollList(vo);
     }
 
     @Override
-    public PayrollVO getPayroll(Long payrollNo) {
-        return payrollMapper.selectPayroll(payrollNo);
+    public PayrollVO selectPayroll(PayrollVO vo) {
+        return payrollMapper.selectPayroll(vo);
     }
 
     @Override
-    @Transactional
-    public int addPayroll(PayrollVO vo) {
+    public int insertPayroll(PayrollVO vo) {
         return payrollMapper.insertPayroll(vo);
     }
 
     @Override
-    @Transactional
-    public int editPayroll(PayrollVO vo) {
+    public int updatePayroll(PayrollVO vo) {
         return payrollMapper.updatePayroll(vo);
     }
 
     @Override
-    @Transactional
-    public int changePayrollStatus(PayrollVO vo) {
+    public int updatePayrollStatus(PayrollVO vo) {
         return payrollMapper.updatePayrollStatus(vo);
     }
 
     @Override
-    public List<PayrollVO> getPayrollListByCond(PayrollVO vo) {
+    public List<PayrollVO> selectPayrollListByCond(PayrollVO vo) {
         return payrollMapper.selectPayrollListByCond(vo);
     }
 
-    // ==================== 급여대장 상세 ====================
-
     @Override
-    public List<PayrollSummaryVO> getPayrollSummary(Long payrollNo) {
-        return payrollMapper.selectPayrollSummary(payrollNo);
+    public String selectAllowColList(PayrollVO vo) {
+        return payrollMapper.selectAllowColList(vo);
     }
 
     @Override
-    public PayrollDeptSumVO getDeptSum(Long payrollNo) {
-        return payrollMapper.selectDeptSum(payrollNo);
+    public String selectDeductColList(PayrollVO vo) {
+        return payrollMapper.selectDeductColList(vo);
     }
 
-    // ==================== 저장(업서트/확정) ====================
+    @Override
+    public List<Map<String, Object>> selectPayrollDetailPivot(Long payrollNo, Long companyCode) {
+        // 1) 조회용 VO 생성
+        PayrollVO vo = new PayrollVO();
+        vo.setPayrollNo(payrollNo);
+        vo.setCompanyCode(companyCode);
+
+        // 2) 동적 PIVOT IN 리스트 조회 (LISTAGG 결과)
+        //    XML에서 NVL로 기본값을 주지만, 혹시 모를 null/blank 방어 추가
+        String allowCols = payrollMapper.selectAllowColList(vo);
+        String deductCols = payrollMapper.selectDeductColList(vo);
+
+        if (allowCols == null || allowCols.isBlank()) {
+            // 오라클 PIVOT IN 에 최소 1개는 필요
+            allowCols = "''__DUMMY__'' AS \"AL___DUMMY__\"";
+        }
+        if (deductCols == null || deductCols.isBlank()) {
+            deductCols = "''__DUMMY__'' AS \"DC___DUMMY__\"";
+        }
+
+        // 3) 파라미터 맵 구성
+        Map<String, Object> param = new HashMap<>();
+        param.put("payrollNo", payrollNo);
+        param.put("companyCode", companyCode);
+        param.put("allowCols", allowCols);
+        param.put("deductCols", deductCols);
+
+        // 4) Mapper 호출 (동적 PIVOT)
+        return payrollMapper.selectPayrollDetailPivot(param);
+    }
 
     @Override
-    @Transactional
+    public Map<String, Object> selectDeptSum(PayrollVO vo) {
+        return payrollMapper.selectDeptSum(vo);
+    }
+
+    @Override
     public int upsertDeduct(PayrollSummaryVO vo) {
         return payrollMapper.upsertDeduct(vo);
-    }
-
-    @Override
-    @Transactional
-    public int insertDeptPayrollSum(PayrollDeptSumVO vo) {
-        // mapper.xml에서 payrollNo, deptCode 기반으로 집계 수행
-        return payrollMapper.insertDeptPayrollSum(vo);
     }
 }
