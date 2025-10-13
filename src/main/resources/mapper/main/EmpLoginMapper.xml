@@ -89,10 +89,18 @@
         AND 
             T2.com_code = #{comCode}      
     </select>
-    
+<resultMap id="EmpVOResultMap" type="com.yedam.erp.vo.hr.EmpVO">
+    <id property="emp_id" column="EMP_ID"/> 
+	    <result property="name" column="NAME"/> 
+	    <result property="dept_code" column="DEPT_CODE"/>
+	    <result property="email" column="EMAIL"/>
+	    <result property="companyCode" column="COMPANY_CODE"/> 
+	    <result property="position" column="POSITION"/>
+	    <result property="dept_name" column="DEPT_NAME"/> 
+    </resultMap>    
     
  <!-- 사원정보 조회 -->
-<select id="findEmployeesByDept" parameterType="String" resultType="com.yedam.erp.vo.hr.EmpVO">
+<select id="findEmployeesByDept" parameterType="String" resultMap="EmpVOResultMap">
     SELECT
         EMP_ID,
         NAME,
@@ -149,7 +157,7 @@
             EMP_ID = #{empId}
     </update>
 
-  <select id="findEmployeeById" parameterType="String" resultType="com.yedam.erp.vo.hr.EmpVO">
+  <select id="findEmployeeById" parameterType="String" resultMap="EmpVOResultMap">
     SELECT
         EMP_ID,
         NAME,
@@ -160,5 +168,18 @@
     WHERE
         EMP_ID = #{empId}
 </select>
-    
+<select id="mypageInfo" resultType="com.yedam.erp.vo.hr.EmpVO">
+		SELECT 
+		    l.emp_id AS login_id,
+		    e.emp_id AS emp_id,
+		    e.name,
+		    d.dept_name,
+		    e.position
+		FROM emp_login l
+		LEFT JOIN emp e 
+		    ON REPLACE(l.emp_id, 'gen-', '') = e.emp_id
+		LEFT JOIN dept d 
+		    ON e.dept_code = d.dept_code
+		WHERE l.emp_id = #{empId}
+</select>
 </mapper>

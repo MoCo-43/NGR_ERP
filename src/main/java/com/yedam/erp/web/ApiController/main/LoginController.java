@@ -8,7 +8,10 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,11 +19,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.yedam.erp.service.UserService;
+import com.yedam.erp.service.main.EmpLoginService;
 import com.yedam.erp.service.main.LoginService;
 import com.yedam.erp.service.main.NaverCaptchaService;
 import com.yedam.erp.service.main.RecaptchaService;
+import com.yedam.erp.vo.hr.EmpVO;
 import com.yedam.erp.vo.main.PasswordResetRequestVO;
 
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
 @Controller
 public class LoginController {
 
@@ -34,6 +42,43 @@ public class LoginController {
     
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private EmpLoginService empLoginService;
+    
+    @GetMapping("/mypage/mylist")
+    public String mypage(
+        @AuthenticationPrincipal UserDetails userDetails,
+        Model model
+    ) throws Exception {
+        
+        // 1. 로그인된 사용자 ID를 인증 객체에서 가져옴
+        String empId = userDetails.getUsername(); 
+        
+        log.info("마이페이지 요청 - 로그인된 사용자 ID (empId): {}", empId);
+        
+        // 2. 서비스 로직은 empId를 사용하여 그대로 진행
+        EmpVO emp = empLoginService.mypageInfo(empId);
+        
+        // 3. EmpVO가 null일 때 템플릿 오류가 발생하지 않도록 Null 체크
+        if (emp == null) {
+            log.warn("⚠️ [경고] 사용자 ID: {} 에 대한 사원 정보(EmpVO)가 DB에서 발견되지 않았습니다.", empId);
+            
+            // 안전한 템플릿 렌더링을 위해 빈 객체로 초기화
+            emp = new EmpVO(); 
+        } else {
+            log.info("✔️ 사용자 ID: {} 에 대한 사원 정보 로드 성공.", empId);
+            log.debug("   - 이름: {}", emp.getName());
+            log.debug("   - 사원 번호: {}", emp.getEmp_id());
+            log.debug("   - 직급: {}", emp.getPosition());
+        }
+
+        model.addAttribute("emp", emp);
+        
+        return "main/mypage"; // templates/main/mypage.html
+    }
+    
+    
     //보안문자 이미지 + 정답 확인 필요한 고유 키 -> 생성된 이미지와 키 model담아 main/login.html페이지로 전달-> 화면 보안문자 포함된 로그인 화면 확인
     @GetMapping("/login")
     public String showLoginPage() {

@@ -1,10 +1,13 @@
 package com.yedam.erp.web.ApiController.main;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -177,5 +180,13 @@ public class SubscriptionController {
             model.addAttribute("avaiModules", avaiModules);
         }
         return "main/submanager";
+    }
+    
+    @GetMapping("/contract-html")
+    @ResponseBody
+    public String getContractHtml() throws IOException {
+        // src/main/resources/templates/main/content.html 읽어서 반환
+        ClassPathResource resource = new ClassPathResource("templates/main/content.html");
+        return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
    }

@@ -30,4 +30,7 @@ public interface EmpLoginMapper {
     
     EmpLoginVO findByEmpIdAndComCode(@Param("empId") String empId, @Param("comCode") String comCode);
     int updatePasswordByEmpIdNo(@Param("empIdNo") Long empIdNo, @Param("password") String password);
+    //마이페이지 사원조회
+  //  List<EmpVO> mypageList(String name); 
+    EmpVO mypageInfo(String empId);
 }

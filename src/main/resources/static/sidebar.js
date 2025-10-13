@@ -109,16 +109,20 @@ const MENUS = {
 			{ title: "재무상태표", items: [["재무상태표", "/balanceSheet"]] },
 		],
 	},
-	mains: {
-		title: "마이페이지",
-		content: "마이페이지대시보드",
-		groups: [
-			{ title: "구독관리", items: [["구독관리", "/admin/subList"]] },
-			{ title: "계정관리", items: [["계정관리", "/admin/hrmanager"]] },
-			{ title: "마이페이지", items: [["마이페이지", "/admin/mypage"]]}
-
-		],
-	},
+mains: {
+    title: "마이페이지",
+    content: "마이페이지대시보드",
+    groups: [
+        { title: "구독관리", items: [["구독관리", "/admin/subList"]] },
+        { title: "계정관리", items: [["계정관리", "/admin/hrmanager"]] },
+        { 
+            title: "마이페이지", 
+            items: [
+                ["마이페이지", /*[[@{/mypage/mylist(empId=${session.loginUser.empId})}]]*/ '/mypage/mylist']
+            ]
+        }
+    ],
+},
 };
 
 /** DOM 참조 */

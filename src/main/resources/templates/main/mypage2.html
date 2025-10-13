@@ -6,7 +6,9 @@
 <!-- head 영역 -->
 <th:block layout:fragment="head_extra">
 	<title>마이페이지</title>
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/main.min.css" rel="stylesheet" />
+	<link
+		href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.13/main.min.css"
+		rel="stylesheet" />
 </th:block>
 
 <!-- content 영역 -->
@@ -69,7 +71,7 @@
 			</div>
 
 			<!-- 일정 내역 카드 -->
-			<div class="col-lg-5">
+			<div class="col-lg-7">
 				<div class="card shadow mb-4">
 					<div class="card-header py-3">
 						<h6 class="m-0 font-weight-bold text-primary">일정내역 확인</h6>
@@ -83,24 +85,13 @@
 	</div>
 
 	<!-- FullCalendar -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
-<script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.13/main.min.js"></script>
+	<script th:inline="javascript">
+		/*<![CDATA[*/
 		document.addEventListener('DOMContentLoaded', function() {
 			const calendarEl = document.getElementById('calendar');
-
-			const eventsData = [ {
-				title : '회의',
-				start : '2025-10-15',
-				color : '#ff9f89'
-			}, {
-				title : '출장',
-				start : '2025-10-18',
-				color : '#4caf50'
-			}, {
-				title : '프로젝트 마감',
-				start : '2025-10-20',
-				color : '#2196f3'
-			} ];
+			const eventsData = /*[[${eventsJson}]]*/'[]';
 
 			const calendar = new FullCalendar.Calendar(calendarEl, {
 				initialView : 'dayGridMonth',
@@ -109,39 +100,13 @@
 					center : 'title',
 					right : 'dayGridMonth,timeGridWeek,timeGridDay'
 				},
-				events : eventsData, // JSON.parse 필요 없음
+				events : JSON.parse(eventsData),
 				locale : 'ko'
 			});
 
 			calendar.render();
 		});
+		/*]]>*/
 	</script>
-	<!-- <script th:inline="javascript">
-/*<![CDATA[*/
-document.addEventListener('DOMContentLoaded', function() {
-    const calendarEl = document.getElementById('calendar');
-    
-    // 더미 이벤트 데이터
-    const eventsData = /*[[${eventsJson}]]*/ JSON.stringify([
-        { title: '회의', start: '2025-10-15', end: '2025-10-15', color: '#ff9f89' },
-        { title: '출장', start: '2025-10-18', color: '#4caf50' },
-        { title: '프로젝트 마감', start: '2025-10-20', color: '#2196f3' }
-    ]);
-
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        events: JSON.parse(eventsData),
-        locale: 'ko'
-    });
-
-    calendar.render();
-});
-/*]]>*/
-</script>-->
 </th:block>
 </html>
