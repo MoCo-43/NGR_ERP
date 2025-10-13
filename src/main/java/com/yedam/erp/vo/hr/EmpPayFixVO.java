@@ -21,4 +21,6 @@ public class EmpPayFixVO {
 
     // 회사코드
     private Long companyCode;
+    
+    private String payType;
 }
