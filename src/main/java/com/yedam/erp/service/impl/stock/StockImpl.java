@@ -194,6 +194,10 @@ public class StockImpl implements StockService{
 	@Override
 	public void insertOutbound(OutboundHeaderVO payload) {
 		// TODO Auto-generated method stub
+		
+		System.out.println("Header doCode=" + payload.getDoCode());
+		System.out.println("Header dueDate=" + payload.getDueDate());
+		
 		mapper.insertOutbound(payload);
 		System.out.println(payload.getDetails());
 		if(payload.getDetails() != null) {
@@ -205,7 +209,7 @@ public class StockImpl implements StockService{
                 
                 // 제품별 LOT 처리
                 Long qty = item.getQty();
-                
+                Long outboundNo = item.getOutboundNo();
                 List<InboundVO> inboundLots = mapper.selectAvailableLots(item.getProductCode());
                 for(InboundVO lot : inboundLots) {
                     if(qty <= 0L) break;
@@ -215,18 +219,26 @@ public class StockImpl implements StockService{
                     lotOut.setLotCode(lot.getLotCode());
                     lotOut.setLotOutAmt(qtyToOut);
                     lotOut.setCompanyCode(item.getCompanyCode());
-                    lotOut.setOutboundNo(item.getOutboundNo());
-                    mapper.insertLotOutbound(lotOut);
-
-                    // 입고 잔여수량 업데이트
-                    mapper.updateInboundQty(lot.getLotCode(), lot.getQty() - qtyToOut);
-                    qty -= qtyToOut;
-             
+                    lotOut.setOutboundNo(outboundNo);
+                    mapper.insertLotOutbound(lotOut);      
                 }
             }
 		}
+	}// END OF insertOutbound
+
+
+	@Override
+	public List<OutboundHeaderVO> getOutboundList() {
+		// TODO Auto-generated method stub
+		return mapper.getDeliveryNote();
 	}
 
+
+	@Override
+	public List<OutboundVO> selectOutboundByOutbHeaderCode(String outbHeaderCode , String doCode) {
+		// TODO Auto-generated method stub
+		return mapper.selectOutboundByOutbHeaderCode(outbHeaderCode, doCode);
+	}
 
 
 

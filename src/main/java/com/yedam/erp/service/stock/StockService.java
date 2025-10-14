@@ -10,11 +10,11 @@ import com.yedam.erp.vo.stock.ComOrderVO;
 import com.yedam.erp.vo.stock.InboundVO;
 import com.yedam.erp.vo.stock.InvenDetailVO;
 import com.yedam.erp.vo.stock.InvenVO;
-import com.yedam.erp.vo.stock.LotoutboundVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderPlanVO;
 import com.yedam.erp.vo.stock.OrderVO;
 import com.yedam.erp.vo.stock.OutboundHeaderVO;
+import com.yedam.erp.vo.stock.OutboundVO;
 import com.yedam.erp.vo.stock.PartnerVO;
 import com.yedam.erp.vo.stock.ProductVO;
 
@@ -70,6 +70,10 @@ public interface StockService {
 	
 	// 입고 등록
 	public void insertInbound(List<InboundVO> details);
+	
+	//출고 조회
+	public List<OutboundHeaderVO> getOutboundList();
+	public List<OutboundVO> selectOutboundByOutbHeaderCode(String outbHeaderCode , String doCode);
 	
 	
 	// 출고 등록
