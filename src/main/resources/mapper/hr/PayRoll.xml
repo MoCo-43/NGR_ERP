@@ -19,6 +19,8 @@
       p.pay_date,
       p.status,
       d.dept_name,
+      p.jrn_date,
+      p.jrn_no,
       (SELECT COUNT(*) FROM emp e
          WHERE e.company_code = p.company_code
            AND e.dept_code    = p.dept_code) AS emp_count

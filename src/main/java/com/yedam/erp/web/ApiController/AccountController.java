@@ -29,6 +29,7 @@ import com.yedam.erp.vo.account.InvoiceLineVO;
 import com.yedam.erp.vo.account.JournalCloseLogVO;
 import com.yedam.erp.vo.account.JournalVO;
 import com.yedam.erp.vo.account.PaymentHeaderVO;
+import com.yedam.erp.vo.account.PayrollJournalVO;
 import com.yedam.erp.vo.account.PayrollLineVO;
 import com.yedam.erp.vo.account.accountVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
@@ -239,10 +240,9 @@ public class AccountController {
 	
 	// 급여전표 라인 
 	 @GetMapping("/payment/lines")
-	   public Map<String, List<PayrollLineVO>> getPaymentLines(
-	            @RequestParam String yearMonth,@RequestParam String deptCode, Long companyCode) {
+	   public Map<String, List<PayrollLineVO>> getPaymentLines(@RequestParam int payrollNo, Long companyCode) {
 	        companyCode = SessionUtil.companyId();
-	        List<PayrollLineVO> allLines = payrollService.getDeptJournalLines(yearMonth,deptCode ,companyCode);
+	        List<PayrollLineVO> allLines = payrollService.getDeptJournalLines(payrollNo ,companyCode);
 
 	        Map<String, List<PayrollLineVO>> result = new HashMap<>();
 	        result.put("debit", allLines.stream()
@@ -267,38 +267,40 @@ public class AccountController {
 	       
 	    }
 	    
-	    // 자금전표 INSERT
+	    // ✅ 자금전표 + 자동분개 저장
 	    @PostMapping("/payment/save")
 	    public ResponseEntity<?> savePayment(@RequestBody PaymentHeaderVO payment) {
 	        try {
 	            payment.setCompanyCode(SessionUtil.companyId());
-	            moneyService.savePayment(payment);
-	            return ResponseEntity.ok(Map.of("success", true,
-	            		"message", "자금전표 저장 완료",
-	            		"payCode", payment.getPayCode()));
+	            List<JournalVO> journals = moneyService.savePaymentAndAutoJournal(payment);
+
+	            return ResponseEntity.ok(Map.of(
+	                "success", true,
+	                "message", "자금전표 및 일반전표 자동분개 저장 완료",
+	                "payCode", payment.getPayCode(),
+	                "journals", journals
+	            ));
 	        } catch (Exception e) {
 	            e.printStackTrace();
-	            return ResponseEntity.internalServerError()
-	                                 .body(Map.of("success", false, "message", e.getMessage()));
+	            return ResponseEntity.internalServerError().body(Map.of(
+	                "success", false,
+	                "message", e.getMessage()
+	            ));
 	        }
 	    }
 	    
-	    // 자금전표 업데이트(상태값)
-	    @PutMapping("/payment/{payCode}/posted")
-	    public ResponseEntity<?> updatePaymentPosted(
-	            @PathVariable Long payCode,
-	            @RequestBody Map<String, String> body) {
+	  // 자금전표 등록
+	    @PostMapping("/payrollHist/save")
+	    public ResponseEntity<?> registerPayrollJournal(@RequestBody PayrollJournalVO vo) {
 	        try {
-	            String postedFlag = body.get("postedFlag");
-	            Long companyCode = SessionUtil.companyId();
-	            moneyService.updatePaymentPosted(payCode, companyCode, postedFlag);
-	            return ResponseEntity.ok(Map.of("success", true, "message", "자금전표 상태 업데이트 완료"));
+	            String histCode = payrollService.registerPayrollJournal(vo);
+	            return ResponseEntity.ok(histCode);
 	        } catch (Exception e) {
 	            e.printStackTrace();
 	            return ResponseEntity.internalServerError()
-	                .body(Map.of("success", false, "message", e.getMessage()));
+	                    .body("전표 등록 중 오류: " + e.getMessage());
 	        }
-	    }
+	    }  
 }
 
 	

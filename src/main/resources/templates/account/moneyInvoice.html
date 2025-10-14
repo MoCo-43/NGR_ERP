@@ -162,11 +162,7 @@ h6 {
 					<!-- 🔹 자금전표 적용내역 -->
 				</div>
 					<h6 class="mt-3">적용내역</h6>
-					<div class="d-flex justify-content-end gap-2 my-2">
-						<button type="button" id="btnRegisterJournal"
-							class="btn btn-success btn-sm">일반전표등록</button>
-							
-					</div>
+		
 					
 					<div id="journalPreviewGrid" class="ag-theme-quartz"
 						style="height: 16rem; width: 100%;"></div>
@@ -270,7 +266,7 @@ async function savePayment() {
 	    alert("결제금액을 입력하세요.");
 	    return;
 	  }
-	  const backupInvoice = { ...selectedInvoice };
+
 	  const header = {
 	    payDate: new Date().toISOString().substring(0,10),
 	    payType: selectedInvoice.type === 'S' ? 'IN' : 'OUT',
@@ -285,29 +281,31 @@ async function savePayment() {
 	  const apply = {
 	    type: selectedInvoice.type,
 	    invoiceNo: selectedInvoice.invoiceNo,
-	    applyAmount: payAmount,
-	    payNo: null
+	    applyAmount: payAmount
 	  };
 
 	  try {
-	    // ✅ 서버에 저장
-	    const payment = { ...header, applies: [apply] }
-	    const {data} = await axios.post("/api/account/payment/save",payment);
-	   
-	 // ✅ 서버에서 payCode 반환받기
-	    const payCode = data.payCode;
-	    selectedInvoice = { ...selectedInvoice, payCode }; // 여기에 저장!
-	    
-	    console.log(selectedInvoice);
-	    // ✅ 미리보기 분개 자동 생성
-	    const journalPreview = buildJournalPreview(selectedInvoice, header);
-	    journalPreviewApi.setGridOption("rowData", journalPreview);
+	    const payment = { ...header, applies: [apply] };
+	    const { data } = await axios.post("/api/account/payment/save", payment);
 		
-	    alert("자금전표 저장 및 회계처리 생성 완료!");
+	    // ✅ 서버에서 분개 데이터(journals)까지 반환되도록 설정했을 경우
+	    if (data.journals && data.journals.length > 0) {
+	      journalPreviewApi.setGridOption("rowData", data.journals.map(j => ({
+	        gbn: j.dcType === "D" ? "차변" : "대변",
+	        acctCode: j.acctCode,
+	        acctName: j.acctName || "",
+	        cusName: selectedInvoice.cusName,
+	        debit: j.dcType === "D" ? j.amount : null,
+	        credit: j.dcType === "C" ? j.amount : null,
+	        note: j.remarks
+	      })));
+	    }
 
+	    alert("자금전표 및 일반전표 자동반영 완료!");
+	    loadUnpaidList();
 	  } catch (err) {
 	    console.error(err);
-	    alert("저장 실패");
+	    alert("저장 실패: " + err.message);
 	  }
 	}
 
@@ -317,7 +315,6 @@ function initJournalPreviewGrid() {
 	const cols = [
 	 { headerName: "구분", field: "gbn", flex: .8 },
 	 { headerName: "계정코드", field: "acctCode", flex: 1 },
-	 { headerName: "계정명", field: "acctName", flex: 1 },
 	 { headerName: "거래처명", field: "cusName", flex: 1 },
 	 { headerName: "차변", field: "debit", valueFormatter: v => v.value?.toLocaleString(), flex: 1 },
 	 { headerName: "대변", field: "credit", valueFormatter: v => v.value?.toLocaleString(), flex: 1 },
@@ -330,102 +327,8 @@ function initJournalPreviewGrid() {
 	});
 }
 
-// 분개 미리보기
-function buildJournalPreview(invoice, header) {
-	  const rows = [];
-	  const amt = Number(header.amount || 0);
-	  const cus = header.cusName;
-
-	  // ✅ 매출전표 (수금)
-	  if (invoice.type === "S") {
-	    rows.push({
-	      gbn: "차변",
-	      acctCode: "101",
-	      acctName: "보통예금",
-	      cusName: cus,
-	      debit: amt,
-	      credit: null,
-	      note: "매출 수금"
-	    });
-	    rows.push({
-	      gbn: "대변",
-	      acctCode: "108",
-	      acctName: "외상매출금",
-	      cusName: cus,
-	      debit: null,
-	      credit: amt,
-	      note: "외상대금 결제"
-	    });
-	  }
-
-	  // ✅ 매입전표 (지급)
-	  else if (invoice.type === "P") {
-	    rows.push({
-	      gbn: "차변",
-	      acctCode: "251",
-	      acctName: "외상매입금",
-	      cusName: cus,
-	      debit: amt,
-	      credit: null,
-	      note: "외상대금 지급"
-	    });
-	    rows.push({
-	      gbn: "대변",
-	      acctCode: "101",
-	      acctName: "보통예금",
-	      cusName: cus,
-	      debit: null,
-	      credit: amt,
-	      note: "매입대금 출금"
-	    });
-	  }
-
-	  return rows;
-	}
 	
-//=== 일반전표 등록 ===
-document.getElementById("btnRegisterJournal").addEventListener("click", async () => {
-  const rows = [];
-  journalPreviewApi.forEachNode(node => rows.push(node.data));
 
-  if (rows.length === 0) {
-    alert("회계 분개 데이터가 없습니다.");
-    return;
-  }
-  // ✅ 새 전표번호 발급
-  const { data: newNo } = await axios.get("/api/account/nextJrnNo");
-
-  // ✅ 전표 payload 구성
-  const payload = rows.map((r, idx) => ({
-    jrnNo: newNo,
-    lineNo: idx + 1,
-    jrnDate: new Date().toISOString().substring(0, 10),
-    acctCode: r.acctCode,
-    acctName: r.acctName,
-    dcType: r.gbn === "차변" ? "D" : "C",
-    amount: r.debit ? r.debit : r.credit,
-    remarks: r.note,
-    cusCode: selectedInvoice.cusCode,
-    cusName: selectedInvoice.cusName,
-    status: "open"
-  }));
-	
-  try {
-    // ✅ 일반전표 저장
-    await axios.post("/api/account/journalList", payload);
-
-    // ✅ 자금전표 상태 업데이트
-    await axios.put(`/api/account/payment/${selectedInvoice.payCode}/posted`, {
-      postedFlag: "Y"
-    });
-	
-    alert("일반전표 등록 완료!");
-    loadUnpaidList();
-  } catch (err) {
-    console.error(err);
-    alert("일반전표 등록 실패");
-  }
-});
 </script>
 	</th:block>
 </body>
