@@ -5,10 +5,13 @@
       layout:decorate="~{layout/base}">
 
 <th:block layout:fragment="head_extra">
-    <title>마이페이지</title>
+    <title>일정 관리</title>
 
+    <!-- FullCalendar -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/main.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/css/bootstrap-datepicker.min.css" rel="stylesheet"/>
+    <!-- Flatpickr (순수 JS datepicker) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/l10n/ko.css">
 
     <style>
         html, body { height: 100%; }
@@ -17,13 +20,12 @@
 
         .schedule-container { display: flex; gap: 20px; }
         .schedule-main { flex: 3; }
-        .schedule-sidebar { flex: 1; background-color: #f8f9fa; padding: 20px; border-radius: 8px; height: fit-content; }
         #calendar { min-height: 700px; max-width: 1100px; margin: 0 auto; }
     </style>
 </th:block>
 
 <th:block layout:fragment="content">
-    <!-- 모달 -->
+    <!-- 일정 추가/수정 모달 -->
     <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -81,55 +83,63 @@
 </th:block>
 
 <th:block layout:fragment="body_extra">
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/js/bootstrap-datepicker.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.10.0/dist/locales/bootstrap-datepicker.ko.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    <script type="module">
+    document.addEventListener('DOMContentLoaded', () => {
         const calendarEl = document.getElementById('calendar');
-        const scheduleForm = document.getElementById('addScheduleForm');
-        const scheduleModalEl = document.getElementById('scheduleModal');
-        const scheduleModal = new bootstrap.Modal(scheduleModalEl);
-        const deleteBtn = document.getElementById('delete-btn');
+        const modalEl = document.getElementById('scheduleModal');
+        const modal = new bootstrap.Modal(modalEl);
 
+        const form = document.getElementById('addScheduleForm');
+        const deleteBtn = document.getElementById('delete-btn');
+        const planNoInput = document.getElementById('plan-no');
+
+        const titleInput = document.getElementById('schedule-title');
+        const typeInput = document.getElementById('schedule-type');
         const startInput = document.getElementById('schedule-start');
         const endInput = document.getElementById('schedule-end');
-        const planNoInput = document.getElementById('plan-no');
+        const detailsInput = document.getElementById('schedule-details');
 
         const colorMap = { "회의": "#ff9f89", "출장": "#4caf50", "프로젝트 마감": "#2196f3", "기타": "#9c27b0" };
 
+        // Flatpickr 초기화
+        flatpickr(startInput, { dateFormat: "Y-m-d", locale: "ko" });
+        flatpickr(endInput, { dateFormat: "Y-m-d", locale: "ko" });
+
+        // FullCalendar 초기화
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
             locale: 'ko',
             selectable: true,
-            select: function(info) {
+            select: (info) => {
                 planNoInput.value = '';
-                document.getElementById('schedule-title').value = '';
-                document.getElementById('schedule-type').value = '';
-                document.getElementById('schedule-details').value = '';
+                titleInput.value = '';
+                typeInput.value = '';
+                detailsInput.value = '';
                 startInput.value = info.startStr;
                 const endDate = new Date(info.endStr);
                 endDate.setDate(endDate.getDate() - 1);
                 endInput.value = endDate.toISOString().split('T')[0];
                 deleteBtn.style.display = 'none';
-                scheduleModal.show();
+                modal.show();
             },
-            eventClick: function(info) {
+            eventClick: (info) => {
                 planNoInput.value = info.event.id;
                 const [type, title] = info.event.title.split(' - ');
-                document.getElementById('schedule-title').value = title;
-                document.getElementById('schedule-type').value = type;
-                document.getElementById('schedule-details').value = info.event.extendedProps.details || '';
+                titleInput.value = title;
+                typeInput.value = type;
+                detailsInput.value = info.event.extendedProps.details || '';
                 startInput.value = info.event.startStr;
                 const endDate = new Date(info.event.endStr);
                 endDate.setDate(endDate.getDate() - 1);
                 endInput.value = endDate.toISOString().split('T')[0];
                 deleteBtn.style.display = 'inline-block';
-                scheduleModal.show();
+                modal.show();
             }
         });
 
@@ -154,87 +164,83 @@
 
         calendar.render();
 
-        // Datepicker 초기화
-        $(startInput).datepicker({ format: "yyyy-mm-dd", todayHighlight: true, autoclose: true, language: "ko" });
-        $(endInput).datepicker({ format: "yyyy-mm-dd", todayHighlight: true, autoclose: true, language: "ko" });
-
-        // 일정 등록/수정
-        scheduleForm.addEventListener('submit', function(e) {
+        // 저장 (등록/수정)
+        form.addEventListener('submit', (e) => {
             e.preventDefault();
-            const planData = {
-                title: document.getElementById('schedule-title').value,
-                category: document.getElementById('schedule-type').value,
+            const data = {
+                title: titleInput.value,
+                category: typeInput.value,
                 startDate: startInput.value,
                 endDate: endInput.value,
-                description: document.getElementById('schedule-details').value,
-                empIdNo: 1001 // TODO: 로그인 세션에서 본인 empIdNo로 가져오기
+                description: detailsInput.value,
+                empIdNo: 1001 // TODO: 세션값으로 교체
             };
-
             const planNo = planNoInput.value;
-            if(planNo){ // 수정
+
+            if (planNo) { // 수정
                 fetch(`/plan/${planNo}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(planData)
+                    body: JSON.stringify(data)
                 }).then(res => res.json())
-                  .then(updatedPlan => {
-                      const event = calendar.getEventById(planNo);
-                      event.setProp('title', `${updatedPlan.category} - ${updatedPlan.title}`);
-                      event.setStart(updatedPlan.startDate);
-                      const endDate = new Date(updatedPlan.endDate);
-                      endDate.setDate(endDate.getDate() + 1);
-                      event.setEnd(endDate.toISOString().split('T')[0]);
-                      event.setExtendedProp('details', updatedPlan.description);
-                  });
+                .then(updated => {
+                    const ev = calendar.getEventById(planNo);
+                    ev.setProp('title', `${updated.category} - ${updated.title}`);
+                    ev.setStart(updated.startDate);
+                    const endDate = new Date(updated.endDate);
+                    endDate.setDate(endDate.getDate() + 1);
+                    ev.setEnd(endDate.toISOString().split('T')[0]);
+                    ev.setExtendedProp('details', updated.description);
+                });
             } else { // 추가
                 fetch('/plan', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(planData)
+                    body: JSON.stringify(data)
                 }).then(res => res.json())
-                  .then(createdPlan => {
-                      if(createdPlan.planNo){
-                          const endDate = new Date(createdPlan.endDate);
-                          endDate.setDate(endDate.getDate() + 1);
-                          calendar.addEvent({
-                              id: createdPlan.planNo,
-                              title: `${createdPlan.category} - ${createdPlan.title}`,
-                              start: createdPlan.startDate,
-                              end: endDate.toISOString().split('T')[0],
-                              color: colorMap[createdPlan.category] || '#999',
-                              details: createdPlan.description
-                          });
-                      } else {
-                          alert('등록 실패');
-                      }
-                  });
+                .then(created => {
+                    if (created.planNo) {
+                        const endDate = new Date(created.endDate);
+                        endDate.setDate(endDate.getDate() + 1);
+                        calendar.addEvent({
+                            id: created.planNo,
+                            title: `${created.category} - ${created.title}`,
+                            start: created.startDate,
+                            end: endDate.toISOString().split('T')[0],
+                            color: colorMap[created.category] || '#999',
+                            details: created.description
+                        });
+                    } else {
+                        alert('등록 실패');
+                    }
+                });
             }
 
-            scheduleModal.hide();
-            scheduleForm.reset();
+            modal.hide();
+            form.reset();
         });
 
-        // 일정 삭제 (Map 기반 empIdNo 포함)
-        deleteBtn.addEventListener('click', function() {
+        // 삭제
+        deleteBtn.addEventListener('click', () => {
             const planNo = planNoInput.value;
-            const empIdNo = 1001; // TODO: 로그인 세션에서 가져오기
-            if(!planNo || !empIdNo) return;
-            if(!confirm('정말 삭제하시겠습니까?')) return;
+            const empIdNo = 1001;
+            if (!planNo) return;
+            if (!confirm('정말 삭제하시겠습니까?')) return;
 
             fetch(`/plan/${planNo}?empIdNo=${empIdNo}`, { method: 'DELETE' })
                 .then(res => {
-                    if(res.ok){
-                        const event = calendar.getEventById(planNo);
-                        if(event) event.remove();
-                    } else if(res.status === 403){
+                    if (res.ok) {
+                        const ev = calendar.getEventById(planNo);
+                        if (ev) ev.remove();
+                    } else if (res.status === 403) {
                         alert('삭제 권한이 없습니다.');
                     } else {
                         alert('삭제 실패');
                     }
                 });
-
-            scheduleModal.hide();
+            modal.hide();
         });
     });
     </script>
 </th:block>
+</html>

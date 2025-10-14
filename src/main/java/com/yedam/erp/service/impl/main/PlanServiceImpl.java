@@ -25,7 +25,10 @@ public class PlanServiceImpl implements PlanService {
         LocalDateTime now = LocalDateTime.now();
         plan.setCreatedAt(now);
         plan.setUpdatedAt(now);
-        return planMapper.insertPlan(plan);
+        
+        int result = planMapper.insertPlan(plan);
+        System.out.println("▶ insertPlan 실행됨, result=" + result + ", planNo=" + plan.getPlanNo());
+        return result;
     }
 
     // 수정

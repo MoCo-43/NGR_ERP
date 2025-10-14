@@ -44,6 +44,7 @@ public class PlanController {  // 이름 오타 수정
     // 등록
     @PostMapping
     public ResponseEntity<PlanVO> createPlan(@RequestBody PlanVO plan) {
+    	System.out.println("▶ POST /plan 호출됨 : " + plan);
         planService.insertPlan(plan);
         return new ResponseEntity<>(plan, HttpStatus.CREATED);
     }

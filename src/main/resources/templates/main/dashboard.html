@@ -5,10 +5,188 @@
       layout:decorate="~{layout/base}">
 <head>
     <title>대시보드</title>
+
+    <th:block layout:fragment="head_extra">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <style>
+            /* 1. 기본 레이아웃 재정의 (필요한 경우) */
+            /* body와 HTML에 높이를 100% 설정하여 뷰포트 기준으로 높이를 잡을 수 있게 합니다. */
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
+            /* 만약 base 템플릿의 content 섹션이 main 태그라면, 그 태그에도 높이가 적용되어야 합니다. */
+            /* section[layout\:fragment="content"] {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            } */
+
+
+            /* 2. 대시보드 전체 컨테이너 설정 */
+            .dashboard-container {
+                /* ❗ 중요: 뷰포트 높이에서 헤더/네비게이션 등 상단 고정 영역의 높이(예: 80px)를 뺀 만큼 높이를 확보 */
+                height: calc(100vh - 120px); /* 뷰포트 전체 높이에서 상단 메뉴바 등을 고려해 120px 제외 */
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                overflow: hidden; /* 컨테이너 내에서 스크롤이 발생하지 않도록 설정 */
+            }
+
+            /* 3. 상단 통계 타일 그룹 */
+            .stats-group {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+                flex-shrink: 0; /* 높이가 줄어들 때 이 영역은 축소되지 않도록 고정 */
+            }
+
+            /* 통계 타일 스타일 (이전과 동일) */
+            .stat-card {
+                background-color: #f7f7f7;
+                padding: 15px 20px;
+                border-radius: 4px;
+                border: 1px solid #ddd;
+                /* 높이 고정 (작은 타일이므로) */
+                height: 90px;
+            }
+            .stat-label { font-size: 0.9em; color: #666; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+            .stat-value { font-size: 2em; font-weight: bold; color: #333; }
+            .stat-icon { font-size: 24px; }
+
+
+            /* 4. 하단 모듈 그룹 (2x2 Layout) */
+            .modules-group {
+                /* ❗ 중요: 남은 수직 공간을 모두 차지하도록 설정 */
+                flex-grow: 1;
+                
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                /* ❗ 중요: 남은 공간을 두 행이 균등하게 나누어 차지 */
+                grid-template-rows: 1fr 1fr; 
+                gap: 20px;
+                overflow: hidden; /* 차트 영역 내 스크롤 방지 */
+            }
+
+            .module-card {
+                background-color: #ffffff;
+                padding: 10px;
+                border-radius: 4px;
+                border: 1px solid #ddd;
+
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .module-title {
+                font-size: 1.1em;
+                font-weight: bold;
+                margin-bottom: 10px;
+                padding: 5px;
+                color: #333;
+                background-color: #f0f0f0;
+                flex-shrink: 0; /* 제목은 높이가 줄어들지 않도록 고정 */
+            }
+
+            /* Chart.js 캔버스 스타일 */
+            canvas {
+                /* ❗ 중요: 부모 카드의 남은 공간을 모두 차지 */
+                flex-grow: 1; 
+                width: 100% !important;
+                height: 100% !important;
+                max-height: 100%;
+            }
+        </style>
+    </th:block>
 </head>
 <body>
     <section layout:fragment="content">
-        <h1>대시보드 내용</h1>
+        
+        <div class="dashboard-container">
+            
+            <div class="stats-group">
+                
+                <div class="stat-card">
+                    <div class="stat-label"><span>근무 중 인원</span><span class="stat-icon">👥</span>
+                    <div class="stat-value">10명</div></div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label"><span>이번 날 매출</span><span class="stat-icon">📈</span>
+                    <div class="stat-value">₩ 0</div></div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-label"><span>재고 현황</span><span class="stat-icon">🛍️</span>
+                    <div class="stat-value">0개</div></div>
+                </div>
+                
+            </div> 
+            
+            <div class="modules-group">
+                
+                <div class="module-card">
+                    <div class="module-title">영업 모듈</div>
+                    <canvas id="salesChart"></canvas>
+                </div>
+                
+                <div class="module-card">
+                    <div class="module-title">재고 모듈</div>
+                    <canvas id="inventoryChart"></canvas>
+                </div>
+                
+                <div class="module-card">
+                    <div class="module-title">인사 모듈</div>
+                    <canvas id="hrChart"></canvas>
+                </div>
+                
+                <div class="module-card">
+                    <div class="module-title">회계 모듈</div>
+                    <canvas id="accountingChart"></canvas>
+                </div>
+
+            </div>
+        
+        </div>
+
+        
+        <script th:inline="javascript">
+            // Chart.js로 차트를 그리는 함수
+            function createChart(canvasId, type, data) {
+                const ctx = document.getElementById(canvasId);
+                if (!ctx) return;
+                
+                new Chart(ctx.getContext('2d'), {
+                    type: type,
+                    data: data,
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, // 캔버스 크기를 부모 컨테이너에 맞춤
+                        plugins: { legend: { display: false } }, 
+                        scales: {
+                            y: { ticks: { font: { size: 10 } } },
+                            x: { ticks: { font: { size: 10 } } }
+                        }
+                    }
+                });
+            }
+            
+            // 데이터 정의 (이전과 동일)
+            const salesData = { labels: ['1Q', '2Q', '3Q', '4Q'], datasets: [{ label: '분기 매출', data: [12, 19, 3, 5], backgroundColor: 'rgba(75, 192, 192, 0.8)', borderWidth: 1 }] };
+            const inventoryData = { labels: ['A 상품', 'B 상품', 'C 상품'], datasets: [{ data: [300, 50, 100], backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'] }] };
+            const hrData = { labels: ['월', '화', '수', '목', '금'], datasets: [{ label: '휴가 사용률', data: [1, 3, 2, 4, 1], fill: false, borderColor: 'rgb(255, 99, 132)', tension: 0.1 }] };
+            const accountingData = { labels: ['급여', '운영비', '마케팅비'], datasets: [{ data: [50, 25, 25], backgroundColor: ['#4BC0C0', '#9966FF', '#FF9F40'] }] };
+            
+            // 차트 생성
+            createChart('salesChart', 'bar', salesData);
+            createChart('inventoryChart', 'doughnut', inventoryData);
+            createChart('hrChart', 'line', hrData);
+            createChart('accountingChart', 'pie', accountingData);
+            
+        </script>
+        
     </section>
 </body>
 </html>
