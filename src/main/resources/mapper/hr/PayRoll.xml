@@ -3,10 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yedam.erp.mapper.hr.PayrollMapper">
-
-  <!-- ============================= -->
   <!-- 급여대장 목록 (회사/연월) -->
-  <!-- ============================= -->
   <select id="selectPayrollList"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="com.yedam.erp.vo.hr.PayrollVO">
@@ -32,10 +29,7 @@
     </if>
     ORDER BY p.year_month DESC, d.dept_name ASC
   </select>
-
-  <!-- ============================= -->
-  <!-- 급여대장 단건 (모달 상단 표시용) -->
-  <!-- ============================= -->
+  <!-- 급여대장 단건  -->
   <select id="selectPayroll"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="com.yedam.erp.vo.hr.PayrollVO">
@@ -58,10 +52,7 @@
     WHERE p.payroll_no   = #{payrollNo}
       AND p.company_code = #{companyCode}
   </select>
-
-  <!-- ============================= -->
   <!-- 급여대장 등록 -->
-  <!-- ============================= -->
   <insert id="insertPayroll" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     INSERT INTO payroll (
       payroll_no, company_code, year_month, dept_code, title, pay_date, status
@@ -92,9 +83,8 @@
     )
   </insert>
 
-  <!-- ============================= -->
-  <!-- 급여대장 수정 (제목/지급일) -->
-  <!-- ============================= -->
+  <!-- 급여대장 수정  -->
+
   <update id="updatePayroll" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     UPDATE payroll
        SET title    = #{title},
@@ -103,19 +93,14 @@
        AND company_code = #{companyCode}
   </update>
 
-  <!-- ============================= -->
   <!-- 상태 변경 (확정/취소) -->
-  <!-- ============================= -->
   <update id="updatePayrollStatus" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     UPDATE payroll
        SET status = #{status}
      WHERE payroll_no   = #{payrollNo}
        AND company_code = #{companyCode}
   </update>
-
-  <!-- ============================= -->
   <!-- 조건 조회 (회사/연월/부서/상태) -->
-  <!-- ============================= -->
   <select id="selectPayrollListByCond"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="com.yedam.erp.vo.hr.PayrollVO">
@@ -148,12 +133,7 @@
     ORDER BY p.year_month DESC, d.dept_name ASC
   </select>
 
-  <!-- ========================================================= -->
-  <!-- 동적(라벨 기반) PIVOT을 위한 IN 리스트 -->
-  <!-- 코드표(use_yn='Y') + 실데이터(emp_pay_fix) 합집합 -->
-  <!-- ========================================================= -->
-
-  <!-- 수당 PIVOT IN 리스트:  '식대' AS "AL_식대", ... -->
+  <!-- 수당 PIVOT IN 리스트-->
   <select id="selectAllowColList"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="string">
@@ -188,7 +168,7 @@
     FROM label_union
   </select>
 
-  <!-- 공제 PIVOT IN 리스트:  '소득세' AS "DC_소득세", ... -->
+  <!-- 공제 PIVOT IN 리스트 -->
   <select id="selectDeductColList"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="string">
@@ -223,11 +203,9 @@
     FROM label_union
   </select>
 
-  <!-- ============================= -->
-  <!-- 사원별 급여 상세 (동적 PIVOT, 하드코딩 제거) -->
-  <!-- 파라미터 map: { companyCode, payrollNo, allowCols, deductCols } -->
-  <!-- 리턴: Map (emp_id, emp_name, position, + AL_*, DC_* 전부 동적 포함) -->
-  <!-- ============================= -->
+
+  <!-- 사원별 급여 상세  -->
+
   <select id="selectPayrollDetailPivot" parameterType="map" resultType="map">
     WITH BASE_EMP AS (
       SELECT e.emp_id, e.name, e.position
@@ -254,7 +232,6 @@
         AND epf.pay_type = 'DEDUCT'
         AND epf.emp_id IN (SELECT emp_id FROM BASE_EMP)
     ),
-    /* emp_id를 서로 다른 이름으로 분리해서 최종 SELECT에서 컬럼 충돌 방지 */
     ALLOW_P AS (
       SELECT *
       FROM (

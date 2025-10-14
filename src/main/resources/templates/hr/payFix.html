@@ -76,7 +76,7 @@
       const errors = [];
       for (const input of inputs){
         const code  = input.getAttribute('data-code');
-        const kind  = input.getAttribute('data-kind'); // 'ALLOW' or 'DEDUCT'
+        const kind  = input.getAttribute('data-kind');
         const pay   = Number(input.value) || 0;
         const label = input.closest('.row').querySelector('label')?.textContent || '';
         const body  = {
@@ -102,7 +102,7 @@
       }
 
       if (errors.length){
-        alert(`저장 중 오류가 발생했습니다.\n문제 항목: ${errors.join(', ')}`);
+        alert(`저장 중 오류가 발생했습니다.문제 항목: ${errors.join(', ')}`);
         throw new Error('pay-fix save failed');
       }
     }

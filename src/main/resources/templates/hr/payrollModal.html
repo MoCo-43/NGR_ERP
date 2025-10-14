@@ -1,5 +1,6 @@
 <div th:fragment="payrollModal">
-	<div class="modal fade" id="payrollModal" tabindex="-1" aria-hidden="true">
+	<div class="modal fade" id="payrollModal" tabindex="-1"
+		aria-hidden="true">
 		<div class="modal-dialog modal-xl modal-dialog-scrollable">
 			<div class="modal-content">
 
@@ -8,9 +9,12 @@
 						급여대장 상세 <small class="text-muted ms-2" id="pd-title-suffix"></small>
 					</h5>
 					<div class="d-flex justify-content-end gap-3 my-2 mr-2">
-						<button type="button" class="btn btn-success mr-2" id="pd-btn-confirm">확정</button>					
-						<button type="button" class="btn btn-secondary mr-3" id="pd-btn-pdf">PDF</button>
-						<button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal" aria-label="닫기">
+						<button type="button" class="btn btn-success mr-2"
+							id="pd-btn-confirm">확정</button>
+						<button type="button" class="btn btn-secondary mr-3"
+							id="pd-btn-pdf">PDF</button>
+						<button type="button" class="btn btn-light btn-sm border-0"
+							data-bs-dismiss="modal" aria-label="닫기">
 							<i class="fas fa-times"></i>
 						</button>
 					</div>
@@ -21,24 +25,28 @@
 						<div class="card-body py-3">
 							<div class="row g-3 small basic-info">
 								<div class="col-6 col-md-3">
-									<span class="label">귀속연월</span> <span class="value" id="pd-yearMonth"></span>
+									<span class="label">귀속연월</span> <span class="value"
+										id="pd-yearMonth"></span>
 								</div>
 								<div class="col-6 col-md-3">
-									<span class="label">부서</span> <span class="value" id="pd-deptName"></span>
+									<span class="label">부서</span> <span class="value"
+										id="pd-deptName"></span>
 								</div>
 								<div class="col-6 col-md-3">
-									<span class="label">지급일</span> <span class="value" id="pd-payDate"></span>
+									<span class="label">지급일</span> <span class="value"
+										id="pd-payDate"></span>
 								</div>
 								<div class="col-6 col-md-3">
-									<span class="label">상태</span> 
-									<span class="value"><span id="pd-status-badge" class="status-chip"></span></span>
+									<span class="label">상태</span> <span class="value"><span
+										id="pd-status-badge" class="status-chip"></span></span>
 								</div>
 							</div>
 						</div>
 					</div>
 
 					<div class="card shadow-sm mb-3">
-						<div class="card-header py-2 d-flex align-items-center justify-content-between">
+						<div
+							class="card-header py-2 d-flex align-items-center justify-content-between">
 							<h6 class="m-0 payroll-title">사원별 급여내역</h6>
 						</div>
 						<div class="card-body pt-2">
@@ -61,57 +69,94 @@
 				</div>
 
 				<div class="modal-footer pt-2">
-					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+					<button type="button" class="btn btn-secondary"
+						data-bs-dismiss="modal">닫기</button>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<!-- PDF 기능에 필요한 jsPDF / autotable 라이브러리 추가 -->
-	<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
-	<style>
-/* 제목 강조 */
-#payrollModal .title-highlight { color: #0d6efd; font-weight: 800; letter-spacing: .2px; }
+<style>
 
-/* 섹션 제목 스타일 */
-.payroll-title { font-weight: 800; color: #0d6efd !important; letter-spacing: .5px; }
+/* 타이틀 강조 */
+#payrollModal .title-highlight,
+#payrollModal .payroll-title {
+  color: #0d6efd;
+  font-weight: 800;
+  letter-spacing: .2px;
+}
 
-/* 모달 기본 정보 라벨 */
-#payrollModal .basic-info>[class*="col-"] { display: flex; gap: .5rem; align-items: center; padding: .25rem 0; }
-#payrollModal .basic-info .label { color: #212529; font-weight: 700; min-width: 64px; display: inline-block; }
-#payrollModal .basic-info .value { color: #212529; font-weight: 500; }
+/* 기본 정보 라인 */
+#payrollModal .basic-info > [class*="col-"] {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  padding: .25rem 0;
+}
+#payrollModal .basic-info .label {
+  color: #212529;
+  font-weight: 700;
+  min-width: 64px;
+}
+#payrollModal .basic-info .value {
+  color: #212529;
+  font-weight: 500;
+}
 
 /* 상태 뱃지 */
-.status-chip { display: inline-block; padding: .2rem .5rem; border-radius: 999px; font-size: .8rem; line-height: 1; border: 1px solid transparent; }
-#pd-status-badge.badge-draft { color: #dc3545; background: #fff5f5; border-color: #f1c0c5; }
-#pd-status-badge.badge-confirm { color: #0d6efd; background: #eef5ff; border-color: #cfe2ff; }
+.status-chip {
+  display: inline-block;
+  padding: .2rem .5rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+#pd-status-badge.badge-draft {
+  color: #dc3545;
+  background: #fff5f5;
+  border-color: #f1c0c5;
+}
+#pd-status-badge.badge-confirm {
+  color: #0d6efd;
+  background: #eef5ff;
+  border-color: #cfe2ff;
+}
 
-/* 그리드 */
-.ag-grid-wrap { width: 100%; overflow-x: auto; margin-bottom: 0; padding-bottom: 0; }
-#pd-grid.ag-theme-quartz { height: 28rem; min-width: 980px; }
-#dept-sum-grid.ag-theme-quartz { min-width: 980px; margin-top: .25rem; margin-bottom: 0; }
-#dept-sum-grid .ag-root-wrapper { border: none; }
-#payrollModal .modal-body { padding-bottom:.25rem; }
-payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
-#payrollModal .card:last-of-type { margin-bottom:0; }
-#dept-sum-grid.ag-theme-quartz { min-width:980px; margin-top:.25rem; margin-bottom:0; }
-#dept-sum-grid .ag-root-wrapper { border:none; }
+/* 그리드 크기 */
+#pd-grid.ag-theme-quartz {
+  height: 28rem;      /* 사원 상세 */
+  min-width: 980px;
+}
+#dept-sum-grid.ag-theme-quartz {
+  min-width: 980px;   /* 부서 합계 그리드  */
+  margin-top: .25rem;
+}
+
+
 </style>
 
 	<script>
   (function () {
+    // DOM 헬퍼 
     const $ = (id) => document.getElementById(id);
+    // 백엔드 급여 대장 API
     const API_BASE = '/api/v1/payrolls';
 
     let gridApi = null;
     let deptGridApi = null;
     let currentPayrollNo = null;
     let CURRENT_ROWS = [];
+    // 동적 컬럼 키들 
     let ALLOW_KEYS = [];
     let DEDUCT_KEYS = [];
 
+    // 문자열 금액 → 숫자 변환 유틸 
     const toNumber = (v) => Number(String(v ?? '').replace(/[^\d\-]/g, '')) || 0;
     const fmt = (p) => toNumber(p.value).toLocaleString();
 
@@ -122,6 +167,7 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
       badge.className = 'status-chip ' + (confirmed ? 'badge-confirm' : 'badge-draft');
     }
 
+    // 다중 URL을 순차 시도하는 GET 헬퍼 (첫 성공 반환, 모두 실패 시 alert)
     async function tryGet(urls, label) {
       let lastErr;
       for (const url of urls) {
@@ -131,6 +177,7 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
       alert(`[${label}] 요청 실패`); throw lastErr;
     }
 
+    // 마스터 정보(연월/부서/지급일/상태) 로드 후 상단 바인딩
     async function loadMaster(no) {
       const data = await tryGet([`${API_BASE}/${no}`], '마스터');
       const m = data?.data ?? data ?? {};
@@ -140,14 +187,17 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
       setStatus(m?.status || 'DRAFT');
     }
 
+    // 사원별 상세 그리드의 동적 컬럼 구성 
     function buildEmployeeCols() {
       const base = [
         { headerName:'사번', field:'emp_id', width:120 },
         { headerName:'성명', field:'emp_name', width:120 },
         { headerName:'직급', field:'position', width:110 }
       ];
+      // 수당/공제 접두사 제거해 헤더 표시
       const allowCols  = ALLOW_KEYS.map(k=>({ headerName:k.replace(/^AL_/,''), field:k, width:120, valueFormatter:fmt }));
       const deductCols = DEDUCT_KEYS.map(k=>({ headerName:k.replace(/^DC_/,''), field:k, width:120, valueFormatter:fmt }));
+      // 행 단위 계산 컬럼
       const totals = [
         { headerName:'지급총액', field:'_total_allow', width:130, valueFormatter:fmt,
           valueGetter:p=> ALLOW_KEYS.reduce((a,k)=> a + toNumber(p.data?.[k]), 0) },
@@ -160,8 +210,10 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
       return [...base, ...allowCols, ...deductCols, ...totals];
     }
 
+    // 부서 합계 그리드 렌더링
     function renderDeptTotalsGrid() {
       const cols = [{ headerName:'구분', field:'label', pinned:'left', width:120 }];
+
       ALLOW_KEYS.forEach(k=> cols.push({ headerName:k.replace(/^AL_/,''), field:k, width:120, valueFormatter:fmt }));
       DEDUCT_KEYS.forEach(k=> cols.push({ headerName:k.replace(/^DC_/,''), field:k, width:120, valueFormatter:fmt }));
       cols.push(
@@ -170,6 +222,7 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
         { headerName:'실지급액', field:'_net_pay', width:140, valueFormatter:fmt }
       );
 
+      // 각 동적 컬럼 합계 계산
       const sums = {};
       ALLOW_KEYS.forEach(k => sums[k] = CURRENT_ROWS.reduce((acc, r) => acc + toNumber(r[k]), 0));
       DEDUCT_KEYS.forEach(k => sums[k] = CURRENT_ROWS.reduce((acc, r) => acc + toNumber(r[k]), 0));
@@ -178,6 +231,7 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
       const totalDeduct = DEDUCT_KEYS.reduce((acc, k) => acc + (sums[k] || 0), 0);
       const net = totalAllow - totalDeduct;
 
+      //합계만 표현
       const rowData = [{ label:'합계', ...sums, _total_allow:totalAllow, _total_deduct:totalDeduct, _net_pay:net }];
       
       const sumGridOptions = {
@@ -191,23 +245,26 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
         onGridReady: () => fitSumGridHeight()
       };
       if (!deptGridApi) {
+        // 최초 생성
         deptGridApi = agGrid.createGrid($('dept-sum-grid'), sumGridOptions);
       } else {
+        // 데이터/컬럼 갱신
         deptGridApi.setGridOption('columnDefs', cols);
         deptGridApi.setGridOption('rowData', rowData);
       }
     }
 
+    // 부서 합계 그리드 높이 고정
     function fitSumGridHeight() {
       const el = document.getElementById('dept-sum-grid');
       el.style.height = (40 + 50 + 2) + 'px';
     }
 
+    // 사원별 상세 데이터 로드 → 동적 컬럼 추출 → 그리드 렌더/갱신 → 합계 그리드 렌더
     async function loadRows(no) {
       const data = await tryGet([`${API_BASE}/${no}/detail`], '사원별 상세');
       const rows = Array.isArray(data) ? data : (data?.data ?? data?.rows ?? []);
       CURRENT_ROWS = rows;
-
       const allow = new Set(), deduct = new Set();
       rows.forEach(r => {
         Object.keys(r).forEach(k => { if (k.startsWith('AL_')) allow.add(k); if (k.startsWith('DC_')) deduct.add(k); });
@@ -215,6 +272,7 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
       ALLOW_KEYS = [...allow];
       DEDUCT_KEYS = [...deduct];
 
+      // 사원 상세 그리드 생성
       if (!gridApi) {
         gridApi = agGrid.createGrid($('pd-grid'), {
           columnDefs: buildEmployeeCols(),
@@ -230,19 +288,18 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
         gridApi.setGridOption('rowData', rows);
       }
 
+      // 부서 합계 그리드도 함께 갱신
       renderDeptTotalsGrid();
     }
 
+    // 모달 오픈 시 전체 데이터 로딩
     async function loadAll(no) {
       currentPayrollNo = Number(no);
       await loadMaster(currentPayrollNo);
       await loadRows(currentPayrollNo);
     }
 
-    function setBusy(b){
-      ['pd-btn-confirm','pd-btn-pdf'].forEach(id=>{ const el=$(id); if(el) el.disabled=b; });
-    }
-
+    // 상태 변경(PATCH) 후 재조회
     async function confirmStatus(next) {
       try {
         setBusy(true);
@@ -254,8 +311,9 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
       }
     }
     
- // ===== PDF 관련 함수 =====
+ // PDF 관련 함수 
     let __krFontBase64 = null;
+    // 폰트 파일 경로 
     const KR_FONT_URL = '/fonts/NotoSansKR-Regular.ttf';
 
     async function fetchAsBase64(url) {
@@ -267,115 +325,172 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
       return btoa(binary);
     }
 
+    // 한글 폰트 1회만 로드하여 캐시
     async function ensureKoreanFont() {
       if (__krFontBase64) return __krFontBase64;
       __krFontBase64 = await fetchAsBase64(KR_FONT_URL);
       return __krFontBase64;
     }
 
+    // 현재 그리드 스냅샷을 가로 A4 PDF로 내보내기 
     async function exportPayrollPdf() {
-      const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-      if (!jsPDFCtor) return alert('jsPDF가 로드되지 않았습니다.');
-      if (!('autoTable' in (jsPDFCtor.API || {}))) return alert('jspdf-autotable이 로드되지 않았습니다.');
+    	  const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    	  if (!jsPDFCtor) return alert('jsPDF가 로드되지 않았습니다.');
+    	  if (!('autoTable' in (jsPDFCtor.API || {}))) return alert('jspdf-autotable이 로드되지 않았습니다.');
 
-      const yearMonth = $('pd-yearMonth')?.textContent.trim() || '';
-      const deptName  = $('pd-deptName')?.textContent.trim() || '';
-      const title = `급여대장 (${yearMonth}) - ${deptName}`;
+    	  const yearMonth = $('pd-yearMonth')?.textContent.trim() || '';
+    	  const deptName  = $('pd-deptName')?.textContent.trim() || '';
+    	  const title = `급여대장 (${yearMonth}) - ${deptName}`;
 
-      // ===== 본문 데이터 =====
-      const headers = [
-        '사번', '성명', '직급',
-        ...ALLOW_KEYS.map(k => k.replace(/^AL_/, '')),
-        ...DEDUCT_KEYS.map(k => k.replace(/^DC_/, '')),
-        '지급총액', '공제총액', '실지급액'
-      ];
+    	  //본문 데이터
+    	  // 헤더: 기본 3열 + 동적 수당/공제 + 합계 3열
+    	  const headers = [
+    	    '사번','성명','직급',
+    	    ...ALLOW_KEYS.map(k=>k.replace(/^AL_/,'')),
+    	    ...DEDUCT_KEYS.map(k=>k.replace(/^DC_/,'')),
+    	    '지급총액','공제총액','실지급액'
+    	  ];
+    	  const toK = v => (toNumber(v)||0).toLocaleString();
 
-      const bodyRows = CURRENT_ROWS.map(r => [
-        r.emp_id,
-        r.emp_name,
-        r.position,
-        ...ALLOW_KEYS.map(k => (toNumber(r[k]) || 0).toLocaleString()),
-        ...DEDUCT_KEYS.map(k => (toNumber(r[k]) || 0).toLocaleString()),
-        ALLOW_KEYS.reduce((a, k) => a + toNumber(r[k]), 0).toLocaleString(),
-        DEDUCT_KEYS.reduce((a, k) => a + toNumber(r[k]), 0).toLocaleString(),
-        (ALLOW_KEYS.reduce((a, k) => a + toNumber(r[k]), 0) -
-         DEDUCT_KEYS.reduce((a, k) => a + toNumber(r[k]), 0)).toLocaleString()
-      ]);
+    	  // 행 데이터 변환 (숫자 → 로케일 문자열)
+    	  const bodyRows = CURRENT_ROWS.map(r => [
+    	    r.emp_id,
+    	    r.emp_name,
+    	    r.position,
+    	    ...ALLOW_KEYS.map(k => toK(r[k])),
+    	    ...DEDUCT_KEYS.map(k => toK(r[k])),
+    	    ALLOW_KEYS.reduce((a,k)=>a+toNumber(r[k]),0).toLocaleString(),
+    	    DEDUCT_KEYS.reduce((a,k)=>a+toNumber(r[k]),0).toLocaleString(),
+    	    (ALLOW_KEYS.reduce((a,k)=>a+toNumber(r[k]),0)-DEDUCT_KEYS.reduce((a,k)=>a+toNumber(r[k]),0)).toLocaleString()
+    	  ]);
 
-      // ===== 합계 =====
-      const sums = {};
-      ALLOW_KEYS.forEach(k => sums[k] = CURRENT_ROWS.reduce((acc, r) => acc + toNumber(r[k]), 0));
-      DEDUCT_KEYS.forEach(k => sums[k] = CURRENT_ROWS.reduce((acc, r) => acc + toNumber(r[k]), 0));
-      const totalAllow  = ALLOW_KEYS.reduce((a, k) => a + (sums[k] || 0), 0);
-      const totalDeduct = DEDUCT_KEYS.reduce((a, k) => a + (sums[k] || 0), 0);
-      const net = totalAllow - totalDeduct;
+    	  // 합계
+    	  const sums = {};
+    	  ALLOW_KEYS.forEach(k => sums[k] = CURRENT_ROWS.reduce((acc, r) => acc + toNumber(r[k]), 0));
+    	  DEDUCT_KEYS.forEach(k => sums[k] = CURRENT_ROWS.reduce((acc, r) => acc + toNumber(r[k]), 0));
+    	  const totalAllow  = ALLOW_KEYS.reduce((a,k)=>a+(sums[k]||0),0);
+    	  const totalDeduct = DEDUCT_KEYS.reduce((a,k)=>a+(sums[k]||0),0);
+    	  const net = totalAllow - totalDeduct;
+    	  bodyRows.push([
+    	    '합계','','',
+    	    ...ALLOW_KEYS.map(k => (sums[k]||0).toLocaleString()),
+    	    ...DEDUCT_KEYS.map(k => (sums[k]||0).toLocaleString()),
+    	    totalAllow.toLocaleString(), totalDeduct.toLocaleString(), net.toLocaleString()
+    	  ]);
 
-      bodyRows.push([
-        '합계', '', '',
-        ...ALLOW_KEYS.map(k => (sums[k] || 0).toLocaleString()),
-        ...DEDUCT_KEYS.map(k => (sums[k] || 0).toLocaleString()),
-        totalAllow.toLocaleString(),
-        totalDeduct.toLocaleString(),
-        net.toLocaleString()
-      ]);
+    	  // PDF 생성 
+    	  const doc = new jsPDFCtor({ orientation:'landscape', unit:'pt', format:'a4' });
+    	  const base64 = await ensureKoreanFont();
+    	  // 한글 폰트를 VFS에 등록하고 적용
+    	  doc.addFileToVFS('NotoSansKR-Regular.ttf', base64);
+    	  doc.addFont('NotoSansKR-Regular.ttf','NotoSansKR','normal');
+    	  doc.setFont('NotoSansKR');
 
-      // ===== PDF 생성 =====
-      const doc = new jsPDFCtor({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-      const base64 = await ensureKoreanFont();
-      doc.addFileToVFS('NotoSansKR-Regular.ttf', base64);
-      doc.addFont('NotoSansKR-Regular.ttf', 'NotoSansKR', 'normal');
-      doc.setFont('NotoSansKR');
+    	  // 타이틀
+    	  doc.setFontSize(14);
+    	  doc.text(title, 40, 40);
 
-      doc.setFontSize(14);
-      doc.text(title, 40, 40);
+    	  //폭/폰트 자동 계산 
+    	  const margin = { top: 60, right: 28, bottom: 28, left: 28 };
+    	  const pageW  = doc.internal.pageSize.getWidth();
+    	  const tableW = pageW - margin.left - margin.right;
 
-      // ===== 폭 계산 =====
-      const margin = { top: 60, right: 28, bottom: 28, left: 28 };
-      const pageW = doc.internal.pageSize.getWidth();
-      const tableW = pageW - margin.left - margin.right;
+    	  // 초기 폭 가이드 
+    	  const baseWidths = [78, 76, 56]; 
+    	  const PAD = 6;                   
+    	  const textCols = [0,1,2];
+    	  const numberStart = 3;
 
-      const idW = 78, nameW = 92, posW = 64;
-      const leftW = idW + nameW + posW;
-      const numCols = headers.length - 3;
-      const remainW = Math.max(tableW - leftW, 240);
-      const numW = Math.floor(remainW / numCols);
+    	  function measureWidths(fontSize) {
+    	    doc.setFontSize(fontSize);
 
-      const colStyles = {
-        0: { halign: 'center', cellWidth: idW },
-        1: { halign: 'center', cellWidth: nameW },
-        2: { halign: 'center', cellWidth: posW }
-      };
-      for (let i = 3; i < headers.length; i++) {
-        colStyles[i] = { halign: 'right', cellWidth: numW };
-      }
+    	    const widths = Array(headers.length).fill(0);
+    	    for (let i of textCols) {
+    	      let maxw = doc.getTextWidth(headers[i]) + PAD;
+    	      for (let r=0; r<bodyRows.length; r++) {
+    	        const t = String(bodyRows[r][i] ?? '');
+    	        maxw = Math.max(maxw, doc.getTextWidth(t) + PAD);
+    	      }
+    	      widths[i] = Math.max(baseWidths[i], Math.ceil(maxw));
+    	    }
 
-      // ===== 테이블 출력 =====
-      doc.setFontSize(7);
-      doc.autoTable({
-        startY: margin.top,
-        head: [headers],
-        body: bodyRows,
-        theme: 'striped',
-        margin,
-        tableWidth: tableW,
-        styles: {
-          font: 'NotoSansKR',
-          fontSize: 7,
-          cellPadding: 2,
-          lineHeight: 1.15,
-          overflow: 'hidden',
-          halign: 'right'
-        },
-        headStyles: { fillColor: [55, 65, 81], textColor: 255, halign: 'center' },
-        columnStyles: colStyles
-      });
+    	    // 숫자 열(AL/DC/합계)은 숫자 폭 기준(최대값 가정)으로 산출
+    	    for (let i = numberStart; i < headers.length; i++) {
+    	      let maxw = doc.getTextWidth(headers[i]) + PAD;
+    	      for (let r=0; r<bodyRows.length; r++) {
+    	        const t = String(bodyRows[r][i] ?? '');
+    	        maxw = Math.max(maxw, doc.getTextWidth(t) + PAD);
+    	      }
+    	      maxw = Math.max(maxw, doc.getTextWidth('100,0000') + PAD);
+    	      widths[i] = Math.ceil(maxw);
+    	    }
 
-      doc.save(`급여대장_${yearMonth}_${deptName}.pdf`);
-    }
+    	    // 총합
+    	    const sum = widths.reduce((a,b)=>a+b,0);
+    	    return { widths, sum };
+    	  }
+
+    	  let fontSize = 7;
+    	  let result = measureWidths(fontSize);
+    	  while (result.sum > tableW && fontSize > 5) {
+    	    fontSize -= 0.5;
+    	    result = measureWidths(fontSize);
+    	  }
+
+    	  let { widths } = result;
+    	  let total = widths.reduce((a,b)=>a+b,0);
+    	  if (total > tableW) {
+    	    const fixed = textCols.reduce((a,i)=>a+widths[i],0);
+    	    const flexIdx = []; let flexSum = 0;
+    	    for (let i = numberStart; i < headers.length; i++) { flexIdx.push(i); flexSum += widths[i]; }
+    	    const targetFlex = tableW - fixed;
+    	    const scale = Math.max(0.8, targetFlex / flexSum); // 너무 쪼그라들지 않게 하한 0.8
+    	    for (let i of flexIdx) widths[i] = Math.floor(widths[i] * scale);
+    	    total = widths.reduce((a,b)=>a+b,0);
+    	  }
+
+    	  // columnStyles: 텍스트열은 가운데, 숫자열은 오른쪽 정렬
+    	  const colStyles = {};
+    	  for (let i=0;i<headers.length;i++) {
+    	    colStyles[i] = {
+    	      cellWidth: widths[i],
+    	      halign: (i <= 2 ? 'center' : 'right')
+    	    };
+    	  }
+
+    	  // 테이블 렌더링
+    	  doc.setFontSize(fontSize);
+    	  doc.autoTable({
+    	    startY: margin.top,
+    	    head: [headers],
+    	    body: bodyRows,
+    	    theme: 'striped',
+    	    margin,
+    	    tableWidth: tableW,
+    	    styles: {
+    	      font: 'NotoSansKR',
+    	      fontSize,
+    	      cellPadding: 2,
+    	      lineHeight: 1.15,
+    	      overflow: 'hidden',   
+    	      halign: 'right'
+    	    },
+    	    headStyles: {
+    	      fillColor: [55,65,81],
+    	      textColor: 255,
+    	      halign: 'center',
+    	      overflow: 'linebreak'  
+    	    },
+    	    columnStyles: colStyles
+    	  });
+
+    	  // 파일명: 급여대장_YYYYMM_부서명.pdf
+    	  doc.save(`급여대장_${yearMonth}_${deptName}.pdf`);
+    	}
+
 
 
     // 버튼 이벤트
-
     document.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if (!b) return;
       if (b.id === 'pd-btn-confirm') return confirmStatus('CONFIRMED');
@@ -385,6 +500,7 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
       }
     });
 
+    // 외부에서 PayrollDetail.open(no) 호출 시 모달 열고 데이터 로드
     window.PayrollDetail = {
       open: async (payrollNo) => {
         const modalEl = $('payrollModal');
@@ -395,4 +511,5 @@ payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
     };
   })();
   </script>
+
 </div>

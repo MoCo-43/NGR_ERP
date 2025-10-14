@@ -27,5 +27,7 @@ public class EmpVO {
     private String accountNo;   // 계좌번호
     private String zipCode;     // 우편번호
     private String address;     // 주소
+    private String accountName; //예금주
+    private String addressDetail; //상세주소
     private Long companyCode; // 회사코드
 }

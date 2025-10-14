@@ -19,7 +19,7 @@ public class PayrollApiController {
 
     private final PayrollService payrollService;
 
-    // 회사코드 반환 (long 타입)
+    // 회사코드 반환
     private long companyCode() {
         return Long.parseLong(SessionUtil.companyId().toString());
     }
