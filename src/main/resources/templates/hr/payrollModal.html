@@ -1,59 +1,44 @@
-<!-- templates/hr/payrollModal.html (조회전용 버전 - 동적 컬럼/부서합계 Grid 버전) -->
 <div th:fragment="payrollModal">
-	<div class="modal fade" id="payrollModal" tabindex="-1"
-		aria-hidden="true">
+	<div class="modal fade" id="payrollModal" tabindex="-1" aria-hidden="true">
 		<div class="modal-dialog modal-xl modal-dialog-scrollable">
 			<div class="modal-content">
 
-				<!-- Header -->
 				<div class="modal-header align-items-center">
 					<h5 class="modal-title title-highlight m-0">
 						급여대장 상세 <small class="text-muted ms-2" id="pd-title-suffix"></small>
 					</h5>
 					<div class="d-flex justify-content-end gap-3 my-2 mr-2">
-						<button type="button" class="btn btn-success mr-2"
-							id="pd-btn-confirm">확정</button>
-						<button type="button" class="btn btn-danger mr-2"
-							id="pd-btn-unconfirm">취소</button>
-						<button type="button" class="btn btn-secondary mr-3"
-							id="pd-btn-pdf">PDF</button>
-						<button type="button" class="btn btn-light btn-sm border-0"
-							data-bs-dismiss="modal" aria-label="닫기">
+						<button type="button" class="btn btn-success mr-2" id="pd-btn-confirm">확정</button>					
+						<button type="button" class="btn btn-secondary mr-3" id="pd-btn-pdf">PDF</button>
+						<button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal" aria-label="닫기">
 							<i class="fas fa-times"></i>
 						</button>
 					</div>
 				</div>
 
-				<!-- Body -->
 				<div class="modal-body">
-					<!-- 기본정보 -->
 					<div class="card shadow-sm mb-3">
 						<div class="card-body py-3">
 							<div class="row g-3 small basic-info">
 								<div class="col-6 col-md-3">
-									<span class="label">귀속연월</span> <span class="value"
-										id="pd-yearMonth"></span>
+									<span class="label">귀속연월</span> <span class="value" id="pd-yearMonth"></span>
 								</div>
 								<div class="col-6 col-md-3">
-									<span class="label">부서</span> <span class="value"
-										id="pd-deptName"></span>
+									<span class="label">부서</span> <span class="value" id="pd-deptName"></span>
 								</div>
 								<div class="col-6 col-md-3">
-									<span class="label">지급일</span> <span class="value"
-										id="pd-payDate"></span>
+									<span class="label">지급일</span> <span class="value" id="pd-payDate"></span>
 								</div>
 								<div class="col-6 col-md-3">
-									<span class="label">상태</span> <span class="value"><span
-										id="pd-status-badge" class="status-chip"></span></span>
+									<span class="label">상태</span> 
+									<span class="value"><span id="pd-status-badge" class="status-chip"></span></span>
 								</div>
 							</div>
 						</div>
 					</div>
 
-					<!-- 사원별 급여내역 -->
 					<div class="card shadow-sm mb-3">
-						<div
-							class="card-header py-2 d-flex align-items-center justify-content-between">
+						<div class="card-header py-2 d-flex align-items-center justify-content-between">
 							<h6 class="m-0 payroll-title">사원별 급여내역</h6>
 						</div>
 						<div class="card-body pt-2">
@@ -63,12 +48,11 @@
 						</div>
 					</div>
 
-					<!-- 부서 합계 Grid -->
-					<div class="card shadow-sm">
+					<div class="card shadow-sm mb-0">
 						<div class="card-header py-2">
 							<h6 class="m-0 payroll-title">부서 합계</h6>
 						</div>
-						<div class="card-body pt-2">
+						<div class="card-body pt-2 pb-2">
 							<div class="ag-grid-wrap">
 								<div id="dept-sum-grid" class="ag-theme-quartz"></div>
 							</div>
@@ -76,103 +60,53 @@
 					</div>
 				</div>
 
-				<!-- Footer -->
-				<div class="modal-footer">
-					<button type="button" class="btn btn-secondary"
-						data-bs-dismiss="modal">닫기</button>
+				<div class="modal-footer pt-2">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<!-- Styles -->
+	<!-- PDF 기능에 필요한 jsPDF / autotable 라이브러리 추가 -->
+	<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
 	<style>
-#payrollModal .title-highlight {
-	color: #0d6efd;
-	font-weight: 800;
-	letter-spacing: .2px;
-}
+/* 제목 강조 */
+#payrollModal .title-highlight { color: #0d6efd; font-weight: 800; letter-spacing: .2px; }
 
-.payroll-title {
-	font-weight: 800;
-	color: #0d6efd !important;
-	letter-spacing: .5px;
-}
+/* 섹션 제목 스타일 */
+.payroll-title { font-weight: 800; color: #0d6efd !important; letter-spacing: .5px; }
 
-#pd-title-suffix {
-	display: none !important;
-}
+/* 모달 기본 정보 라벨 */
+#payrollModal .basic-info>[class*="col-"] { display: flex; gap: .5rem; align-items: center; padding: .25rem 0; }
+#payrollModal .basic-info .label { color: #212529; font-weight: 700; min-width: 64px; display: inline-block; }
+#payrollModal .basic-info .value { color: #212529; font-weight: 500; }
 
-#payrollModal .basic-info>[class*="col-"] {
-	display: flex;
-	gap: .5rem;
-	align-items: center;
-	padding: .25rem 0;
-}
+/* 상태 뱃지 */
+.status-chip { display: inline-block; padding: .2rem .5rem; border-radius: 999px; font-size: .8rem; line-height: 1; border: 1px solid transparent; }
+#pd-status-badge.badge-draft { color: #dc3545; background: #fff5f5; border-color: #f1c0c5; }
+#pd-status-badge.badge-confirm { color: #0d6efd; background: #eef5ff; border-color: #cfe2ff; }
 
-#payrollModal .basic-info .label {
-	color: #212529 !important;
-	font-weight: 700;
-	min-width: 64px;
-	display: inline-block;
-}
-
-#payrollModal .basic-info .value {
-	color: #212529 !important;
-	font-weight: 500;
-}
-
-.status-chip {
-	display: inline-block;
-	padding: .2rem .5rem;
-	border-radius: 999px;
-	font-size: .8rem;
-	line-height: 1;
-	border: 1px solid transparent;
-}
-
-#pd-status-badge.badge-draft {
-	color: #dc3545;
-	background: #fff5f5;
-	border-color: #f1c0c5;
-}
-
-#pd-status-badge.badge-confirm {
-	color: #0d6efd;
-	background: #eef5ff;
-	border-color: #cfe2ff;
-}
-
-.ag-grid-wrap {
-	width: 100%;
-	overflow-x: auto;
-}
-
-#pd-grid.ag-theme-quartz {
-	height: 28rem;
-	min-width: 980px;
-}
-
-#dept-sum-grid.ag-theme-quartz {
-	height: auto !important;
-	min-width: 980px;
-	margin-top: 0.5rem;
-}
-
-.ag-theme-quartz .ag-cell, .ag-theme-quartz .ag-header-cell-label {
-	white-space: nowrap;
-	text-overflow: clip;
-}
+/* 그리드 */
+.ag-grid-wrap { width: 100%; overflow-x: auto; margin-bottom: 0; padding-bottom: 0; }
+#pd-grid.ag-theme-quartz { height: 28rem; min-width: 980px; }
+#dept-sum-grid.ag-theme-quartz { min-width: 980px; margin-top: .25rem; margin-bottom: 0; }
+#dept-sum-grid .ag-root-wrapper { border: none; }
+#payrollModal .modal-body { padding-bottom:.25rem; }
+payrollModal .card:last-of-type .card-body { padding-bottom:.25rem; }
+#payrollModal .card:last-of-type { margin-bottom:0; }
+#dept-sum-grid.ag-theme-quartz { min-width:980px; margin-top:.25rem; margin-bottom:0; }
+#dept-sum-grid .ag-root-wrapper { border:none; }
 </style>
 
-	<!-- Script -->
 	<script>
   (function () {
     const $ = (id) => document.getElementById(id);
-    const API_BASE = '/api/hr/payroll';
+    const API_BASE = '/api/v1/payrolls';
 
-    let gridApi = null;        
-    let deptGridApi = null;   
+    let gridApi = null;
+    let deptGridApi = null;
     let currentPayrollNo = null;
     let CURRENT_ROWS = [];
     let ALLOW_KEYS = [];
@@ -181,7 +115,6 @@
     const toNumber = (v) => Number(String(v ?? '').replace(/[^\d\-]/g, '')) || 0;
     const fmt = (p) => toNumber(p.value).toLocaleString();
 
-    // 상태 뱃지
     function setStatus(status) {
       const badge = $('pd-status-badge');
       const confirmed = (status === 'CONFIRMED');
@@ -190,10 +123,8 @@
     }
 
     async function tryGet(urls, label) {
-      const appendCompany = (u) => (!/[?&]companyCode=/.test(u) ? u + (u.includes('?') ? '&' : '?') + 'companyCode=1001' : u);
       let lastErr;
-      for (const u of urls) {
-        const url = appendCompany(u);
+      for (const url of urls) {
         try { const res = await axios.get(url); return res.data; }
         catch (e) { lastErr = e; }
       }
@@ -201,81 +132,42 @@
     }
 
     async function loadMaster(no) {
-      const data = await tryGet([`${API_BASE}/${no}`, `${API_BASE}?payrollNo=${no}`], '마스터');
+      const data = await tryGet([`${API_BASE}/${no}`], '마스터');
       const m = data?.data ?? data ?? {};
-      $('pd-title-suffix').textContent = `#${m?.payrollNo ?? no}`;
       $('pd-yearMonth').textContent = m?.yearMonth || '';
       $('pd-deptName').textContent  = m?.deptName  || m?.deptCode || '';
       $('pd-payDate').textContent   = (m?.payDate || '').slice(0,10);
       setStatus(m?.status || 'DRAFT');
     }
 
-    // ===========================
-    // 사원 그리드 컬럼 생성
-    // ===========================
     function buildEmployeeCols() {
       const base = [
-        { headerName: '사번', field: 'emp_id', width: 120 },
-        { headerName: '성명', field: 'emp_name', width: 120 },
-        { headerName: '직급', field: 'position', width: 110 }
+        { headerName:'사번', field:'emp_id', width:120 },
+        { headerName:'성명', field:'emp_name', width:120 },
+        { headerName:'직급', field:'position', width:110 }
       ];
-
-      const allowCols = ALLOW_KEYS.map(k => ({
-        headerName: k.replace(/^AL_/, ''),
-        field: k,
-        width: 120,
-        valueFormatter: fmt
-      }));
-
-      const deductCols = DEDUCT_KEYS.map(k => ({
-        headerName: k.replace(/^DC_/, ''),
-        field: k,
-        width: 120,
-        valueFormatter: fmt
-      }));
-
+      const allowCols  = ALLOW_KEYS.map(k=>({ headerName:k.replace(/^AL_/,''), field:k, width:120, valueFormatter:fmt }));
+      const deductCols = DEDUCT_KEYS.map(k=>({ headerName:k.replace(/^DC_/,''), field:k, width:120, valueFormatter:fmt }));
       const totals = [
-        {
-          headerName: '지급총액',
-          field: '_total_allow',
-          width: 130,
-          valueFormatter: fmt,
-          valueGetter: p => ALLOW_KEYS.reduce((a, k) => a + toNumber(p.data?.[k]), 0)
-        },
-        {
-          headerName: '공제총액',
-          field: '_total_deduct',
-          width: 130,
-          valueFormatter: fmt,
-          valueGetter: p => DEDUCT_KEYS.reduce((a, k) => a + toNumber(p.data?.[k]), 0)
-        },
-        {
-          headerName: '실지급액',
-          field: '_net_pay',
-          width: 140,
-          valueFormatter: fmt,
-          valueGetter: p =>
-            ALLOW_KEYS.reduce((a, k) => a + toNumber(p.data?.[k]), 0) -
-            DEDUCT_KEYS.reduce((a, k) => a + toNumber(p.data?.[k]), 0)
-        }
+        { headerName:'지급총액', field:'_total_allow', width:130, valueFormatter:fmt,
+          valueGetter:p=> ALLOW_KEYS.reduce((a,k)=> a + toNumber(p.data?.[k]), 0) },
+        { headerName:'공제총액', field:'_total_deduct', width:130, valueFormatter:fmt,
+          valueGetter:p=> DEDUCT_KEYS.reduce((a,k)=> a + toNumber(p.data?.[k]), 0) },
+        { headerName:'실지급액', field:'_net_pay', width:140, valueFormatter:fmt,
+          valueGetter:p=> ALLOW_KEYS.reduce((a,k)=> a + toNumber(p.data?.[k]), 0)
+                           - DEDUCT_KEYS.reduce((a,k)=> a + toNumber(p.data?.[k]), 0) }
       ];
-
       return [...base, ...allowCols, ...deductCols, ...totals];
     }
 
-    // ===========================
-    // 부서합계 그리드 렌더링
-    // ===========================
     function renderDeptTotalsGrid() {
-      const cols = [{ headerName: '구분', field: 'label', pinned: 'left', width: 120 }];
-
-      ALLOW_KEYS.forEach(k => cols.push({ headerName: k.replace(/^AL_/, ''), field: k, width: 120, valueFormatter: fmt }));
-      DEDUCT_KEYS.forEach(k => cols.push({ headerName: k.replace(/^DC_/, ''), field: k, width: 120, valueFormatter: fmt }));
-
+      const cols = [{ headerName:'구분', field:'label', pinned:'left', width:120 }];
+      ALLOW_KEYS.forEach(k=> cols.push({ headerName:k.replace(/^AL_/,''), field:k, width:120, valueFormatter:fmt }));
+      DEDUCT_KEYS.forEach(k=> cols.push({ headerName:k.replace(/^DC_/,''), field:k, width:120, valueFormatter:fmt }));
       cols.push(
-        { headerName: '지급총액', field: '_total_allow', width: 130, valueFormatter: fmt },
-        { headerName: '공제총액', field: '_total_deduct', width: 130, valueFormatter: fmt },
-        { headerName: '실지급액', field: '_net_pay', width: 140, valueFormatter: fmt }
+        { headerName:'지급총액', field:'_total_allow', width:130, valueFormatter:fmt },
+        { headerName:'공제총액', field:'_total_deduct', width:130, valueFormatter:fmt },
+        { headerName:'실지급액', field:'_net_pay', width:140, valueFormatter:fmt }
       );
 
       const sums = {};
@@ -286,60 +178,50 @@
       const totalDeduct = DEDUCT_KEYS.reduce((acc, k) => acc + (sums[k] || 0), 0);
       const net = totalAllow - totalDeduct;
 
-      const rowData = [{
-        label: '합계',
-        ...sums,
-        _total_allow: totalAllow,
-        _total_deduct: totalDeduct,
-        _net_pay: net
-      }];
-
+      const rowData = [{ label:'합계', ...sums, _total_allow:totalAllow, _total_deduct:totalDeduct, _net_pay:net }];
+      
+      const sumGridOptions = {
+        columnDefs: cols,
+        rowData,
+        pagination: false,
+        defaultColDef: { sortable:true, resizable:true, suppressMenu:true },
+        headerHeight: 32,
+        rowHeight: 32,
+        domLayout: 'normal',
+        onGridReady: () => fitSumGridHeight()
+      };
       if (!deptGridApi) {
-        deptGridApi = agGrid.createGrid($('dept-sum-grid'), {
-          columnDefs: cols,
-          rowData,
-          pagination: false,
-          defaultColDef: { sortable: true, resizable: true, suppressMenu: true },
-          domLayout: 'autoHeight', 
-        });
+        deptGridApi = agGrid.createGrid($('dept-sum-grid'), sumGridOptions);
       } else {
         deptGridApi.setGridOption('columnDefs', cols);
         deptGridApi.setGridOption('rowData', rowData);
       }
     }
 
-    // ===========================
-    // 사원별 급여내역 조회
-    // ===========================
-    async function loadRows(no) {
-      const data = await tryGet([
-        `${API_BASE}/${no}/detail`,
-        `${API_BASE}/detail/${no}`,
-        `${API_BASE}/detail?payrollNo=${no}`
-      ], '사원별 상세');
+    function fitSumGridHeight() {
+      const el = document.getElementById('dept-sum-grid');
+      el.style.height = (40 + 50 + 2) + 'px';
+    }
 
+    async function loadRows(no) {
+      const data = await tryGet([`${API_BASE}/${no}/detail`], '사원별 상세');
       const rows = Array.isArray(data) ? data : (data?.data ?? data?.rows ?? []);
       CURRENT_ROWS = rows;
 
-      // 컬럼키 추출
       const allow = new Set(), deduct = new Set();
       rows.forEach(r => {
-        Object.keys(r).forEach(k => {
-          if (k.startsWith('AL_')) allow.add(k);
-          if (k.startsWith('DC_')) deduct.add(k);
-        });
+        Object.keys(r).forEach(k => { if (k.startsWith('AL_')) allow.add(k); if (k.startsWith('DC_')) deduct.add(k); });
       });
       ALLOW_KEYS = [...allow];
       DEDUCT_KEYS = [...deduct];
 
-      // 사원 Grid 렌더
       if (!gridApi) {
         gridApi = agGrid.createGrid($('pd-grid'), {
           columnDefs: buildEmployeeCols(),
           rowData: rows,
           pagination: true,
           paginationPageSize: 10,
-          defaultColDef: { sortable: true, resizable: true, suppressMenu: true },
+          defaultColDef: { sortable:true, resizable:true, suppressMenu:true },
           singleClickEdit: false,
           alwaysShowHorizontalScroll: true
         });
@@ -348,7 +230,6 @@
         gridApi.setGridOption('rowData', rows);
       }
 
-      // 부서합계 Grid 렌더
       renderDeptTotalsGrid();
     }
 
@@ -357,46 +238,153 @@
       await loadMaster(currentPayrollNo);
       await loadRows(currentPayrollNo);
     }
-    // 상태 변경
-  
-    function getCompanyCode() {
-    	  return document.body.dataset.companyCode;
-    	}
 
-    function setBusy(b){ ['pd-btn-confirm','pd-btn-unconfirm','pd-btn-pdf'].forEach(id=>{ const el=$(id); if(el) el.disabled=b; }); }
+    function setBusy(b){
+      ['pd-btn-confirm','pd-btn-pdf'].forEach(id=>{ const el=$(id); if(el) el.disabled=b; });
+    }
+
     async function confirmStatus(next) {
-    	  try {
-    	    setBusy(true);
-    	    const appendCompany = (u) => {
-    	      const code = getCompanyCode();
-    	      return (!/[?&]companyCode=/.test(u))
-    	        ? u + (u.includes('?') ? '&' : '?') + 'companyCode=' + code
-    	        : u;
-    	    };
-    	    for (const u0 of [`${API_BASE}/${currentPayrollNo}/status`, `${API_BASE}/status/${currentPayrollNo}`, `${API_BASE}/status?payrollNo=${currentPayrollNo}`]) {
-    	      const u = appendCompany(u0);
-    	      try { await axios.patch(u, { status: next }); break; } catch {}
-    	    }
-    	    await loadAll(currentPayrollNo);
-    	    alert('상태가 변경되었습니다.');
-    	  } finally { setBusy(false); }
-    	}
+      try {
+        setBusy(true);
+        await axios.patch(`${API_BASE}/${currentPayrollNo}/status`, { status: next });
+        await loadAll(currentPayrollNo);
+        alert('상태가 변경되었습니다.');
+      } finally {
+        setBusy(false);
+      }
+    }
+    
+ // ===== PDF 관련 함수 =====
+    let __krFontBase64 = null;
+    const KR_FONT_URL = '/fonts/NotoSansKR-Regular.ttf';
+
+    async function fetchAsBase64(url) {
+      const res = await fetch(url, { cache: 'force-cache' });
+      const buf = await res.arrayBuffer();
+      let binary = '';
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary);
+    }
+
+    async function ensureKoreanFont() {
+      if (__krFontBase64) return __krFontBase64;
+      __krFontBase64 = await fetchAsBase64(KR_FONT_URL);
+      return __krFontBase64;
+    }
+
+    async function exportPayrollPdf() {
+      const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      if (!jsPDFCtor) return alert('jsPDF가 로드되지 않았습니다.');
+      if (!('autoTable' in (jsPDFCtor.API || {}))) return alert('jspdf-autotable이 로드되지 않았습니다.');
+
+      const yearMonth = $('pd-yearMonth')?.textContent.trim() || '';
+      const deptName  = $('pd-deptName')?.textContent.trim() || '';
+      const title = `급여대장 (${yearMonth}) - ${deptName}`;
+
+      // ===== 본문 데이터 =====
+      const headers = [
+        '사번', '성명', '직급',
+        ...ALLOW_KEYS.map(k => k.replace(/^AL_/, '')),
+        ...DEDUCT_KEYS.map(k => k.replace(/^DC_/, '')),
+        '지급총액', '공제총액', '실지급액'
+      ];
+
+      const bodyRows = CURRENT_ROWS.map(r => [
+        r.emp_id,
+        r.emp_name,
+        r.position,
+        ...ALLOW_KEYS.map(k => (toNumber(r[k]) || 0).toLocaleString()),
+        ...DEDUCT_KEYS.map(k => (toNumber(r[k]) || 0).toLocaleString()),
+        ALLOW_KEYS.reduce((a, k) => a + toNumber(r[k]), 0).toLocaleString(),
+        DEDUCT_KEYS.reduce((a, k) => a + toNumber(r[k]), 0).toLocaleString(),
+        (ALLOW_KEYS.reduce((a, k) => a + toNumber(r[k]), 0) -
+         DEDUCT_KEYS.reduce((a, k) => a + toNumber(r[k]), 0)).toLocaleString()
+      ]);
+
+      // ===== 합계 =====
+      const sums = {};
+      ALLOW_KEYS.forEach(k => sums[k] = CURRENT_ROWS.reduce((acc, r) => acc + toNumber(r[k]), 0));
+      DEDUCT_KEYS.forEach(k => sums[k] = CURRENT_ROWS.reduce((acc, r) => acc + toNumber(r[k]), 0));
+      const totalAllow  = ALLOW_KEYS.reduce((a, k) => a + (sums[k] || 0), 0);
+      const totalDeduct = DEDUCT_KEYS.reduce((a, k) => a + (sums[k] || 0), 0);
+      const net = totalAllow - totalDeduct;
+
+      bodyRows.push([
+        '합계', '', '',
+        ...ALLOW_KEYS.map(k => (sums[k] || 0).toLocaleString()),
+        ...DEDUCT_KEYS.map(k => (sums[k] || 0).toLocaleString()),
+        totalAllow.toLocaleString(),
+        totalDeduct.toLocaleString(),
+        net.toLocaleString()
+      ]);
+
+      // ===== PDF 생성 =====
+      const doc = new jsPDFCtor({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+      const base64 = await ensureKoreanFont();
+      doc.addFileToVFS('NotoSansKR-Regular.ttf', base64);
+      doc.addFont('NotoSansKR-Regular.ttf', 'NotoSansKR', 'normal');
+      doc.setFont('NotoSansKR');
+
+      doc.setFontSize(14);
+      doc.text(title, 40, 40);
+
+      // ===== 폭 계산 =====
+      const margin = { top: 60, right: 28, bottom: 28, left: 28 };
+      const pageW = doc.internal.pageSize.getWidth();
+      const tableW = pageW - margin.left - margin.right;
+
+      const idW = 78, nameW = 92, posW = 64;
+      const leftW = idW + nameW + posW;
+      const numCols = headers.length - 3;
+      const remainW = Math.max(tableW - leftW, 240);
+      const numW = Math.floor(remainW / numCols);
+
+      const colStyles = {
+        0: { halign: 'center', cellWidth: idW },
+        1: { halign: 'center', cellWidth: nameW },
+        2: { halign: 'center', cellWidth: posW }
+      };
+      for (let i = 3; i < headers.length; i++) {
+        colStyles[i] = { halign: 'right', cellWidth: numW };
+      }
+
+      // ===== 테이블 출력 =====
+      doc.setFontSize(7);
+      doc.autoTable({
+        startY: margin.top,
+        head: [headers],
+        body: bodyRows,
+        theme: 'striped',
+        margin,
+        tableWidth: tableW,
+        styles: {
+          font: 'NotoSansKR',
+          fontSize: 7,
+          cellPadding: 2,
+          lineHeight: 1.15,
+          overflow: 'hidden',
+          halign: 'right'
+        },
+        headStyles: { fillColor: [55, 65, 81], textColor: 255, halign: 'center' },
+        columnStyles: colStyles
+      });
+
+      doc.save(`급여대장_${yearMonth}_${deptName}.pdf`);
+    }
+
+
+    // 버튼 이벤트
 
     document.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if (!b) return;
       if (b.id === 'pd-btn-confirm') return confirmStatus('CONFIRMED');
-      if (b.id === 'pd-btn-unconfirm') return confirmStatus('DRAFT');
       if (b.id === 'pd-btn-pdf') {
-        const payrollNo = currentPayrollNo;
-        const yearMonth = $('pd-yearMonth')?.textContent.trim() || '';
-        const deptName  = $('pd-deptName')?.textContent.trim() || '';
-        if (!payrollNo) return alert('급여대장 번호가 유효하지 않습니다.');
-        const url = `/api/hr/payroll/report?payrollNo=${encodeURIComponent(payrollNo)}&yearMonth=${encodeURIComponent(yearMonth)}&deptName=${encodeURIComponent(deptName)}`;
-        window.open(url, '_blank');
+        if (!currentPayrollNo) return alert('급여대장 번호가 유효하지 않습니다.');
+        exportPayrollPdf();
       }
     });
 
-    // 외부 호출
     window.PayrollDetail = {
       open: async (payrollNo) => {
         const modalEl = $('payrollModal');

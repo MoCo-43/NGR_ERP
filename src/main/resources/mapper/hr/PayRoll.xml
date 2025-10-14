@@ -288,43 +288,5 @@
     LEFT JOIN DEDUCT_P d ON d.emp_id_d = b.emp_id
     ORDER BY b.emp_id
   </select>
-  <!-- 부서 합계  -->
- <select id="selectDeptSum"
-        parameterType="com.yedam.erp.vo.hr.PayrollVO"
-        resultType="map">
-  WITH base_ctx AS (
-    SELECT p.company_code, p.dept_code, p.payroll_no
-    FROM payroll p
-    WHERE p.payroll_no   = #{payrollNo}
-      AND p.company_code = #{companyCode}
-  ),
-  emp_in_dept AS (
-    SELECT e.emp_id
-    FROM emp e
-    JOIN base_ctx c
-      ON e.company_code = c.company_code
-     AND e.dept_code    = c.dept_code
-  ),
-  src_sum AS (  
-    SELECT
-      TRIM(f.emp_allow_label) AS label,
-      f.pay_type,
-      NVL(f.emp_allow_pay,0)  AS amt
-    FROM emp_pay_fix f
-    JOIN emp_in_dept ed ON ed.emp_id = f.emp_id
-    JOIN base_ctx    c  ON c.company_code = f.company_code
-    WHERE f.company_code = #{companyCode}
-  )
-  SELECT
-    (SELECT COUNT(DISTINCT e.emp_id)
-     FROM emp e JOIN base_ctx c
-       ON e.company_code = c.company_code
-      AND e.dept_code = c.dept_code) AS empCount,
-
-    NVL(SUM(CASE WHEN pay_type = 'ALLOW' THEN amt END), 0) AS sumTotalAllow,
-    NVL(SUM(CASE WHEN pay_type = 'DEDUCT' THEN amt END), 0) AS sumTotalDeduct,
-    NVL(SUM(CASE WHEN pay_type = 'ALLOW' THEN amt END), 0)
-    - NVL(SUM(CASE WHEN pay_type = 'DEDUCT' THEN amt END), 0) AS sumNetPay
-  FROM src_sum
-</select>
+ 
 </mapper>
