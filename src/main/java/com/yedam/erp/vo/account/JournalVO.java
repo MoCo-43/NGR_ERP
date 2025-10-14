@@ -30,4 +30,5 @@ public class JournalVO {
     private Long closeNo;         // 마감 번호
     private Long companyCode;
     
+    
 }

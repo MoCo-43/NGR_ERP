@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.account.AutoJournalMapper">
+
+    <!-- ✅ 결제유형 기준 규칙 조회 -->
+    <select id="selectRulesByPayType"
+            parameterType="map"
+            resultType="com.yedam.erp.vo.account.AutoJournalRuleVO">
+         SELECT
+        R.RULE_ID,
+        R.COMPANY_CODE,
+        R.MODULE_TYPE,
+        R.PAY_TYPE,
+        R.PAY_METHOD,
+        R.DC_TYPE,
+        R.ACCT_CODE,
+        A.ACCT_NAME,   -- ✅ 계정명 추가
+        R.REMARKS,
+        R.PRIORITY,
+        R.USE_YN
+    FROM AUTO_JOURNAL_RULE R
+    LEFT JOIN ACCOUNT A 
+      ON R.ACCT_CODE = A.ACCT_CODE
+     AND R.COMPANY_CODE = A.COMPANY_CODE  -- ✅ 회사코드 매칭
+    WHERE R.USE_YN = 'Y'
+      AND R.MODULE_TYPE = #{moduleType}
+      AND R.PAY_TYPE = #{payType}
+      <if test="payMethod != null and payMethod != ''">
+        AND (R.PAY_METHOD = #{payMethod} OR R.PAY_METHOD IS NULL)
+      </if>
+    ORDER BY R.PRIORITY
+    </select>
+
+</mapper>
