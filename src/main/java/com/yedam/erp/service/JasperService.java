@@ -82,4 +82,59 @@ public class JasperService {
 		    return result.toString();
 		}
 	 
+	 public static String convertToKoreanV2(BigDecimal num) {
+		    String[] han1 = {"", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"};
+		    String[] han2 = {"", "십", "백", "천"};
+		    String[] han3 = {"", "만", "억", "조"};
+
+		    // BigDecimal → 문자열, 정수/소수 분리
+		    String numStr = num.toPlainString();
+		    String[] parts = numStr.split("\\.");
+		    String integerPart = parts[0]; // 정수 부분
+		    String decimalPart = parts.length > 1 ? parts[1] : ""; // 소수 부분
+
+		    StringBuilder result = new StringBuilder();
+
+		    // 정수 부분 처리
+		    int len = integerPart.length();
+		    int groupCount = 0;
+
+		    while (len > 0) {
+		        int start = Math.max(len - 4, 0);
+		        String group = integerPart.substring(start, len);
+		        StringBuilder groupKor = new StringBuilder();
+		        int groupLen = group.length();
+
+		        for (int i = 0; i < groupLen; i++) {
+		            int n = group.charAt(i) - '0';
+		            if (n != 0) {
+		                groupKor.append(han1[n]).append(han2[groupLen - i - 1]);
+		            }
+		        }
+
+		        if (groupKor.length() > 0) {
+		            groupKor.append(han3[groupCount]);
+		            result.insert(0, groupKor);
+		        }
+
+		        groupCount++;
+		        len -= 4;
+		    }
+
+		    result.append("원");
+
+		    // 소수점 처리 (있으면 "점 ~" 형식)
+		    if (!decimalPart.isEmpty()) {
+		        result.append(" ").append("점");
+		        for (char c : decimalPart.toCharArray()) {
+		            int n = c - '0';
+		            if (n >= 0 && n <= 9) {
+		                result.append(han1[n]);
+		            }
+		        }
+		    }
+
+		    return result.toString();
+		}
+	 
 }

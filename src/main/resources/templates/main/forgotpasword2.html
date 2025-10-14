@@ -8,7 +8,6 @@
 
   <th:block layout:fragment="head_extra">
     <style>
-      /* 제공해주신 CSS 스타일 */
       .auth-forms h2 { text-align: center; margin-bottom: 1.5rem; color: #333; }
       .auth-forms .input-field { width: 100%; margin-bottom: 1rem; }
       .auth-forms .input-field input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; background: transparent; outline: none; box-sizing: border-box; }
@@ -20,11 +19,13 @@
       .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
       .success-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
       
+      /* 인증번호 관련 필드 그룹 */
       .verification-group { display: flex; align-items: center; gap: 10px; }
       .verification-group input { flex-grow: 1; }
       .verification-group button { flex-shrink: 0; padding: 12px; border: 1px solid #ced4da; background-color: #e9ecef; cursor: pointer; border-radius: 4px; }
       .verification-group button:disabled { background-color: #f8f9fa; color: #6c757d; cursor: not-allowed; }
       
+      /* 단계별 폼 숨기기 */
       #step2-form { display: none; }
     </style>
   </th:block>
@@ -40,6 +41,8 @@
     </div>
 
     <form id="step1-form" th:action="@{/sendSms}" method="post" onsubmit="return false;">
+      <input type="hidden" name="userKey" th:value="${userKey}">
+
       <div class="input-field">
           <input type="text" name="comCode" placeholder="회사코드" required th:value="${comCode}">
       </div>
@@ -53,8 +56,7 @@
       <button type="button" class="btn-primary" id="requestVerificationBtn">인증 요청</button>
     </form>
 
-    <form id="step2-form" th:action="@{/pwngremail}" method="post" onsubmit="return false;">
-      
+    <form id="step2-form" th:action="@{/pwngremail}" method="post">
       <input type="hidden" name="comCode" id="hiddenComCode">
       <input type="hidden" name="empId" id="hiddenEmpId">
       <input type="hidden" name="matMail" id="hiddenMatMail">
@@ -86,19 +88,18 @@
         const requestVerificationBtn = document.getElementById('requestVerificationBtn');
         const resendBtn = document.getElementById('resendBtn');
         const messageArea = document.getElementById('message-area');
-        const verifyBtn = document.getElementById('verifyBtn'); // 2단계 버튼
 
         // STEP1 입력 필드
         const comCodeInput = step1Form.querySelector('input[name="comCode"]');
         const empIdInput = step1Form.querySelector('input[name="empId"]');
         const matMailInput = step1Form.querySelector('input[name="matMail"]');
+        const userKeyInput = step1Form.querySelector('input[name="userKey"]');
         
-        // STEP2 숨겨진 필드 및 입력 필드
+        // STEP2 숨겨진 필드
         const hiddenComCode = document.getElementById('hiddenComCode');
         const hiddenEmpId = document.getElementById('hiddenEmpId');
         const hiddenMatMail = document.getElementById('hiddenMatMail');
         const hiddenUserKey = document.getElementById('hiddenUserKey');
-        const smsCodeInput = document.getElementById('smsCode'); // 2단계 입력 필드
 
         let timerInterval;
 
@@ -129,9 +130,9 @@
                 hiddenComCode.value = comCodeInput.value;
                 hiddenEmpId.value = empIdInput.value;
                 hiddenMatMail.value = matMailInput.value;
-                // hiddenUserKey는 sendVerificationCode 성공 시 채워짐
+                if(userKeyInput) hiddenUserKey.value = userKeyInput.value;
 
-                startTimer(10000); // 타이머 시작
+                startTimer(60); // 타이머 시작
             } else {
                 step1Form.style.display = 'block';
                 step2Form.style.display = 'none';
@@ -143,46 +144,31 @@
             messageArea.innerHTML = `<div class="message ${isError ? 'error-message' : 'success-message'}">${text}</div>`;
         }
         
-        // ==========================================================
-        // ★ 1단계: 인증번호 발송 요청 (AJAX - JSON 전송)
-        // ==========================================================
+        // 서버로 인증번호 발송을 요청하는 함수
         function sendVerificationCode(isResend = false) {
             const button = isResend ? resendBtn : requestVerificationBtn;
             const originalText = button.textContent;
             button.disabled = true;
             button.textContent = '전송 중...';
+            
             messageArea.innerHTML = ''; // 이전 메시지 초기화
 
-            // ★ JSON으로 보낼 데이터 객체 생성
-            const dataToSend = {
-                comCode: comCodeInput.value,
-                empId: empIdInput.value,
-                matMail: matMailInput.value
-            };
+            const formData = new FormData(step1Form);
 
             // Fetch API를 이용한 비동기 서버 요청
-            fetch(step1Form.action, { // (action="@{/sendSms}")
+            fetch(step1Form.action, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(dataToSend) // ★ JSON으로 전송
+                body: new URLSearchParams(formData)
             })
             .then(response => response.json()) // 응답을 JSON으로 파싱
             .then(data => {
                 // 서버로부터 success:true 응답을 받았을 경우
                 if (data.success) {
                     showMessage('인증번호가 발송되었습니다. 휴대폰을 확인해주세요.', false);
-                    
-                    // ★ 핵심: 서버가 반환한 userKey를 2단계 폼의 hidden input에 저장
-                    if(data.userKey) {
-                        hiddenUserKey.value = data.userKey;
-                    }
-
                     if (!isResend) {
                         showStep('STEP2'); // 최초 요청 시 STEP2로 전환
                     } else {
-                        startTimer(10000); // 재전송 시 타이머만 재시작
+                        startTimer(60); // 재전송 시 타이머만 재시작
                     }
                 } else {
                     // 서버로부터 success:false 응답을 받았을 경우
@@ -193,17 +179,12 @@
                 // 네트워크 오류 또는 서버 에러 발생 시
                 console.error('인증 요청 오류:', error);
                 showMessage(error.message, true);
-            })
-            .finally(() => {
-                 // 성공/실패 여부와 관계없이 버튼 상태 복원 (재전송 버튼 제외)
-                if (!isResend) {
-                    button.disabled = false;
-                    button.textContent = originalText;
-                }
+                button.disabled = false;
+                button.textContent = originalText;
             });
         }
         
-        // '인증 요청' 버튼(1단계) 클릭 이벤트
+        // '인증 요청' 버튼 클릭 이벤트
         requestVerificationBtn.addEventListener('click', (event) => {
             event.preventDefault();
             // 필수 입력 필드가 비어있는지 확인
@@ -216,51 +197,6 @@
 
         // '재전송' 버튼 클릭 이벤트
         resendBtn.addEventListener('click', () => sendVerificationCode(true));
-
-        // ==========================================================
-        // ★ 2단계: 인증번호 확인 및 이메일 발송 요청 (AJAX - JSON 전송)
-        // ==========================================================
-        step2Form.addEventListener('submit', function(event) {
-            event.preventDefault(); // (폼의 기본 제출(새로고침)을 막음)
-            
-            verifyBtn.disabled = true;
-            verifyBtn.textContent = '확인 중...';
-
-            // 서버로 전송할 JSON 데이터 구성
-            const dataToSend = {
-                comCode: hiddenComCode.value,
-                empId: hiddenEmpId.value,
-                matMail: hiddenMatMail.value,
-                userKey: hiddenUserKey.value, // 1단계에서 저장한 userKey
-                smsCode: smsCodeInput.value   // 사용자가 입력한 인증번호
-            };
-
-            fetch(step2Form.action, { // (action="@{/pwngremail}")
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json', // JSON 형식으로 전송
-                },
-                body: JSON.stringify(dataToSend)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // 최종 성공 (이메일 발송 완료)
-                    showMessage(data.message, false);
-                    step2Form.style.display = 'none'; // 성공 후 폼 숨기기
-                } else {
-                    // 인증 실패 (번호 불일치, 시간 초과 등)
-                    throw new Error(data.message || '인증에 실패했습니다.');
-                }
-            })
-            .catch(error => {
-                console.error('인증 확인 오류:', error);
-                showMessage(error.message, true);
-                verifyBtn.disabled = false;
-                verifyBtn.textContent = '인증 확인';
-            });
-        });
-
 
         // 페이지 로드 시 항상 STEP1부터 시작
         showStep('STEP1');

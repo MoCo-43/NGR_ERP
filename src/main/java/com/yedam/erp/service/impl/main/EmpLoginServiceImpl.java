@@ -122,5 +122,16 @@ public class EmpLoginServiceImpl implements EmpLoginService {
 		return empLoginMapper.mypageInfo(empId);
 	}
 
+	@Override
+	public Long findMatNOByEmpId(String empId) {
+		return empLoginMapper.findMatNoByEmpId(empId);
+	}
+
+	@Override
+	public Long findMatNoByEmpId(String empId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 
 }

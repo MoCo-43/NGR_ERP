@@ -33,4 +33,6 @@ public interface EmpLoginMapper {
     //마이페이지 사원조회
   //  List<EmpVO> mypageList(String name); 
     EmpVO mypageInfo(String empId);
+    
+    Long findMatNoByEmpId(String empId); 
 }

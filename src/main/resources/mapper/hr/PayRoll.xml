@@ -3,10 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yedam.erp.mapper.hr.PayrollMapper">
-
-  <!-- ============================= -->
   <!-- 급여대장 목록 (회사/연월) -->
-  <!-- ============================= -->
   <select id="selectPayrollList"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="com.yedam.erp.vo.hr.PayrollVO">
@@ -19,6 +16,8 @@
       p.pay_date,
       p.status,
       d.dept_name,
+      p.jrn_date,
+      p.jrn_no,
       (SELECT COUNT(*) FROM emp e
          WHERE e.company_code = p.company_code
            AND e.dept_code    = p.dept_code) AS emp_count
@@ -32,10 +31,7 @@
     </if>
     ORDER BY p.year_month DESC, d.dept_name ASC
   </select>
-
-  <!-- ============================= -->
-  <!-- 급여대장 단건 (모달 상단 표시용) -->
-  <!-- ============================= -->
+  <!-- 급여대장 단건  -->
   <select id="selectPayroll"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="com.yedam.erp.vo.hr.PayrollVO">
@@ -58,10 +54,7 @@
     WHERE p.payroll_no   = #{payrollNo}
       AND p.company_code = #{companyCode}
   </select>
-
-  <!-- ============================= -->
   <!-- 급여대장 등록 -->
-  <!-- ============================= -->
   <insert id="insertPayroll" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     INSERT INTO payroll (
       payroll_no, company_code, year_month, dept_code, title, pay_date, status
@@ -92,9 +85,8 @@
     )
   </insert>
 
-  <!-- ============================= -->
-  <!-- 급여대장 수정 (제목/지급일) -->
-  <!-- ============================= -->
+  <!-- 급여대장 수정  -->
+
   <update id="updatePayroll" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     UPDATE payroll
        SET title    = #{title},
@@ -103,19 +95,14 @@
        AND company_code = #{companyCode}
   </update>
 
-  <!-- ============================= -->
   <!-- 상태 변경 (확정/취소) -->
-  <!-- ============================= -->
   <update id="updatePayrollStatus" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     UPDATE payroll
        SET status = #{status}
      WHERE payroll_no   = #{payrollNo}
        AND company_code = #{companyCode}
   </update>
-
-  <!-- ============================= -->
   <!-- 조건 조회 (회사/연월/부서/상태) -->
-  <!-- ============================= -->
   <select id="selectPayrollListByCond"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="com.yedam.erp.vo.hr.PayrollVO">
@@ -148,12 +135,7 @@
     ORDER BY p.year_month DESC, d.dept_name ASC
   </select>
 
-  <!-- ========================================================= -->
-  <!-- 동적(라벨 기반) PIVOT을 위한 IN 리스트 -->
-  <!-- 코드표(use_yn='Y') + 실데이터(emp_pay_fix) 합집합 -->
-  <!-- ========================================================= -->
-
-  <!-- 수당 PIVOT IN 리스트:  '식대' AS "AL_식대", ... -->
+  <!-- 수당 PIVOT IN 리스트-->
   <select id="selectAllowColList"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="string">
@@ -188,7 +170,7 @@
     FROM label_union
   </select>
 
-  <!-- 공제 PIVOT IN 리스트:  '소득세' AS "DC_소득세", ... -->
+  <!-- 공제 PIVOT IN 리스트 -->
   <select id="selectDeductColList"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="string">
@@ -223,11 +205,9 @@
     FROM label_union
   </select>
 
-  <!-- ============================= -->
-  <!-- 사원별 급여 상세 (동적 PIVOT, 하드코딩 제거) -->
-  <!-- 파라미터 map: { companyCode, payrollNo, allowCols, deductCols } -->
-  <!-- 리턴: Map (emp_id, emp_name, position, + AL_*, DC_* 전부 동적 포함) -->
-  <!-- ============================= -->
+
+  <!-- 사원별 급여 상세  -->
+
   <select id="selectPayrollDetailPivot" parameterType="map" resultType="map">
     WITH BASE_EMP AS (
       SELECT e.emp_id, e.name, e.position
@@ -254,7 +234,6 @@
         AND epf.pay_type = 'DEDUCT'
         AND epf.emp_id IN (SELECT emp_id FROM BASE_EMP)
     ),
-    /* emp_id를 서로 다른 이름으로 분리해서 최종 SELECT에서 컬럼 충돌 방지 */
     ALLOW_P AS (
       SELECT *
       FROM (
@@ -288,43 +267,5 @@
     LEFT JOIN DEDUCT_P d ON d.emp_id_d = b.emp_id
     ORDER BY b.emp_id
   </select>
-  <!-- 부서 합계  -->
- <select id="selectDeptSum"
-        parameterType="com.yedam.erp.vo.hr.PayrollVO"
-        resultType="map">
-  WITH base_ctx AS (
-    SELECT p.company_code, p.dept_code, p.payroll_no
-    FROM payroll p
-    WHERE p.payroll_no   = #{payrollNo}
-      AND p.company_code = #{companyCode}
-  ),
-  emp_in_dept AS (
-    SELECT e.emp_id
-    FROM emp e
-    JOIN base_ctx c
-      ON e.company_code = c.company_code
-     AND e.dept_code    = c.dept_code
-  ),
-  src_sum AS (  
-    SELECT
-      TRIM(f.emp_allow_label) AS label,
-      f.pay_type,
-      NVL(f.emp_allow_pay,0)  AS amt
-    FROM emp_pay_fix f
-    JOIN emp_in_dept ed ON ed.emp_id = f.emp_id
-    JOIN base_ctx    c  ON c.company_code = f.company_code
-    WHERE f.company_code = #{companyCode}
-  )
-  SELECT
-    (SELECT COUNT(DISTINCT e.emp_id)
-     FROM emp e JOIN base_ctx c
-       ON e.company_code = c.company_code
-      AND e.dept_code = c.dept_code) AS empCount,
-
-    NVL(SUM(CASE WHEN pay_type = 'ALLOW' THEN amt END), 0) AS sumTotalAllow,
-    NVL(SUM(CASE WHEN pay_type = 'DEDUCT' THEN amt END), 0) AS sumTotalDeduct,
-    NVL(SUM(CASE WHEN pay_type = 'ALLOW' THEN amt END), 0)
-    - NVL(SUM(CASE WHEN pay_type = 'DEDUCT' THEN amt END), 0) AS sumNetPay
-  FROM src_sum
-</select>
+ 
 </mapper>

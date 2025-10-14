@@ -1,212 +1,342 @@
-<!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/base}">
-<head>
-<meta charset="UTF-8" />
-<title layout:fragment="title">자동 전표 처리</title>
-
-<th:block layout:fragment="head_extra">
-	<!-- AG Grid -->
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
-	<style>
-.btn-bar {
-	display: flex;
-	gap: .5rem;
-	margin-bottom: 1rem;
-}
-
-.section-title {
-	margin: .75rem 0;
-	font-weight: 700;
-}
-
-.grid-sm {
-	height: 300px;
-	width: 100%;
-}
-
-.grid-full {
-	height: 260px;
-	width: 100%;
-	margin-top: 1rem;
-}
-</style>
-</th:block>
-</head>
-
-<body>
-	<section layout:fragment="content">
-		<div class="card shadow mb-3">
-			<div class="card-header py-3">
-				<h6 class="m-0 font-weight-bold text-primary">자동 전표 처리</h6>
-			</div>
-			<div class="card-body">
-
-				<!-- 조회조건 -->
-				<div class="btn-bar">
-					<input type="month" id="srchMonth"
-						class="form-control form-control-sm" style="max-width: 180px"
-						placeholder="귀속연월">
-					<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
-					<button class="btn btn-primary btn-sm" id="btnRegister">등록</button>
-				</div>
-
-				<!-- 상단 3단 Grid -->
-				<div class="row">
-					<div class="col-md-4">
-						<div class="section-title">기본정보</div>
-						<div id="baseGrid" class="ag-theme-quartz grid-sm"></div>
-					</div>
-					<div class="col-md-4">
-						<div class="section-title">지급항목(차변)</div>
-						<div id="debitGrid" class="ag-theme-quartz grid-sm"></div>
-					</div>
-					<div class="col-md-4">
-						<div class="section-title">공제항목(대변)</div>
-						<div id="creditGrid" class="ag-theme-quartz grid-sm"></div>
-					</div>
-				</div>
-
-				<!-- 하단 결과 -->
-				<div class="section-title">전표결과</div>
-				<div id="journalGrid" class="ag-theme-quartz grid-full"></div>
-			</div>
-		</div>
-	</section>
-
-	<th:block layout:fragment="body_extra">
-		<script
-			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-		<script
-			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
-		<script th:inline="none">
-    let baseApi, debitApi, creditApi, journalApi;
-    let baseCache = [];  // ✅ 원본 데이터 캐시
-    
-    document.addEventListener("DOMContentLoaded", () => {
-      // === Grid 초기화 ===
-      baseApi = agGrid.createGrid(document.getElementById("baseGrid"), {
-        columnDefs: [
-          { headerName:'귀속연월', field:'period', flex:1 },
-          { headerName:'지급일', field:'payDate', flex:1 },
-          { headerName:'부서', field:'dept', flex:1 },
-          { headerName:'전표발생일', field:'jrnDate', flex:1,valueFormatter:p=>p.value?.substring(0,10) },
-          { headerName:'전표번호', field:'jrn', flex:1 }
-        ],
-        rowData: [],
-        defaultColDef:{resizable:true},
-        onGridReady: () => initBaseGrid(getThisMonthYM()),
-        onRowClicked: async (event) => {
-            console.log("=== baseGrid Row Clicked ===", event.data);
-
-            const { period, deptCode } = event.data;
-            if (!period || !deptCode) {
-              alert("yearMonth 또는 deptCode가 없습니다.");
-              return;
-            }
-
-            try {
-              const { data } = await axios.get("/api/account/payment/lines", {
-                params: { yearMonth: period, deptCode }
-              });
-
-              console.log("=== payment lines ===", data);
-           // 지급/공제 그리드
-              debitApi.setGridOption("rowData", data.debit || []);
-              creditApi.setGridOption("rowData", data.credit || []);
-
-              // 전표결과 그리드
-              journalApi.setGridOption("rowData", data.journal || []);
-            } catch (err) {
-              console.error("지급/공제 항목 조회 실패", err);
-              debitApi.setGridOption("rowData", []);
-              creditApi.setGridOption("rowData", []);
-              journalApi.setGridOption("rowData", []);
-            }
-          }
-      });
-
-      debitApi = agGrid.createGrid(document.getElementById("debitGrid"), {
-        columnDefs: [
-        	  { headerName:'지급항목', field:'itemLabel', flex:1 },
-              { headerName:'코드', field:'acctCode', width:100 },
-              { headerName:'계정과목명', field:'acctName', flex:1 },
-              { headerName:'금액', field:'amount', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() }
-        ],
-        rowData: [],
-        defaultColDef:{resizable:true}
-      });
-
-      creditApi = agGrid.createGrid(document.getElementById("creditGrid"), {
-        columnDefs: [
-          { headerName:'공제항목', field:'itemLabel', flex:1 },
-          { headerName:'코드', field:'acctCode', width:100 },
-          { headerName:'계정과목명', field:'acctName', flex:1 },
-          { headerName:'금액', field:'amount', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() }
-        ],
-        rowData: [],
-        defaultColDef:{resizable:true}
-      });
-
-      journalApi = agGrid.createGrid(document.getElementById("journalGrid"), {
-        columnDefs: [
-          { headerName:'구분', field:'gbn', width:90 },
-          { headerName:'코드', field:'code', width:100 },
-          { headerName:'계정과목', field:'acct', flex:1 },
-          { headerName:'거래처코드', field:'partnerCode', width:120 },
-          { headerName:'거래처', field:'partner', flex:1 },
-          { headerName:'차변(출금)', field:'debit', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() },
-          { headerName:'대변(입금)', field:'credit', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() },
-          { headerName:'적요', field:'note', flex:1 }
-        ],
-        rowData: [],
-        defaultColDef:{resizable:true},
-        onRowClicked:()=>{
-        	console.log()
-        }
-      });
-   // 이번 달 YM 계산
-      function getThisMonthYM(){
-        const now = new Date();
-        return `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}`;
-      }
-
-      document.getElementById("btnSearch").addEventListener("click", () => {
-    	  const monthVal = document.getElementById("srchMonth").value; // yyyy-MM
-    	  if (monthVal) {
-    	    const ym = monthVal.replace("-", "");  // "2025-10" → "202510"
-    	    initBaseGrid(ym);
-    	  } else {
-    	    initBaseGrid(getThisMonthYM());
-    	  }
-    	});
-  });
-
- // === baseGrid 데이터 로드 함수 ===
-    async function initBaseGrid(yearMonth) {
-      try {
-        const { data } = await axios.get("/api/hr/payroll", { params: { yearMonth } });
-		console.log(data);
-        const rows = (Array.isArray(data) ? data : []).map(item => ({
-          deptCode: item.deptCode,   // ✅ 부서코드	
-          jrn: "",
-          period: item.yearMonth || "",
-          dept: item.deptName || item.dept_name || "",
-          jrnDate: item.jrnDate,
-          payDate: `${yearMonth.slice(0,4)}-${yearMonth.slice(4)}-29` // 지급일 하드코딩
-        }));
-
-        baseApi.setGridOption("rowData", rows);
-      } catch (err) {
-        console.error("급여대장 조회 실패", err);
-        baseApi.setGridOption("rowData", []);
-      }
-    }
-  </script>
+	<!DOCTYPE html>
+	<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+		xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+		layout:decorate="~{layout/base}">
+	<head>
+	<meta charset="UTF-8" />
+	<title layout:fragment="title">자동 전표 처리</title>
+	
+	<th:block layout:fragment="head_extra">
+		<!-- AG Grid -->
+		<link rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+		<link rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+		<style>
+	.btn-bar {
+		display: flex;
+		gap: .5rem;
+		margin-bottom: 1rem;
+	}
+	
+	.section-title {
+		margin: .75rem 0;
+		font-weight: 700;
+	}
+	
+	.grid-sm {
+		height: 300px;
+		width: 100%;
+	}
+	
+	.grid-full {
+		height: 260px;
+		width: 100%;
+		margin-top: 1rem;
+	}
+	
+	</style>
 	</th:block>
-</body>
-</html>
+	</head>
+	
+	<body>
+		<section layout:fragment="content">
+			<div class="card shadow mb-3">
+				<div class="card-header py-3">
+					<h6 class="m-0 font-weight-bold text-primary">자동 전표 처리</h6>
+				</div>
+				<div class="card-body">
+	
+					<!-- 조회조건 -->
+					<div class="btn-bar">
+						<input type="month" id="srchMonth"
+							class="form-control form-control-sm" style="max-width: 180px"
+							placeholder="귀속연월">
+						<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
+						<button class="btn btn-primary btn-sm" id="btnRegister">등록</button>
+						<select id="debitGroupSelect" class="form-select form-select-sm"
+							style="width: 140px">
+							<option value="none" selected>차변: 펼치기</option>
+							<option value="group">차변: 합치기</option>
+						</select> <select id="creditGroupSelect" class="form-select form-select-sm"
+							style="width: 140px">
+							<option value="none" selected>대변: 펼치기</option>
+							<option value="group">대변: 합치기</option>
+						</select>
+					</div>
+					
+	
+					<!-- 상단 3단 Grid -->
+					<div class="row">
+						<div class="col-md-4">
+							<div class="section-title">기본정보</div>
+							<div id="baseGrid" class="ag-theme-quartz grid-sm"></div>
+						</div>
+						<div class="col-md-4">
+							<div class="section-title">지급항목(차변)</div>
+							<div id="debitGrid" class="ag-theme-quartz grid-sm"></div>
+						</div>
+						<div class="col-md-4">
+							<div class="section-title">공제항목(대변)</div>
+							<div id="creditGrid" class="ag-theme-quartz grid-sm"></div>
+						</div>
+					</div>
+	
+					<!-- 하단 결과 -->
+					<div class="section-title">전표결과</div>
+					
+					<div id="journalGrid" class="ag-theme-quartz grid-full"></div>
+				</div>
+			</div>
+		</section>
+	
+		<th:block layout:fragment="body_extra">
+			<script
+				src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+			<script
+				src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+			<script th:inline="none">
+	    let baseApi, debitApi, creditApi, journalApi;
+	    let baseCache = [];  // ✅ 원본 데이터 캐시
+	    let selectedPayrollNo = null;  // ✅ 전역변수로 선언
+	    let selectedRowData = null; // ✅ 추가
+	    const API_BASE = '/api/v1/payrolls';
+	    
+	    document.addEventListener("DOMContentLoaded", () => {
+	    	document.getElementById("debitGroupSelect").addEventListener("change", applyJournalFilter);
+	    	document.getElementById("creditGroupSelect").addEventListener("change", applyJournalFilter);
+	      // === Grid 초기화 ===
+	      baseApi = agGrid.createGrid(document.getElementById("baseGrid"), {
+	        columnDefs: [
+	        { headerName:'급여번호', field:'payrollNo', hide:true },   // ✅ 숨김 컬럼
+	          { headerName:'귀속연월', field:'period', flex:0.8 },
+	          { headerName:'지급일', field:'payDate', flex:0.7,valueFormatter:p=>p.value?.substring(5)},
+	          { headerName:'부서', field:'dept', flex:0.7 },
+	          { headerName:'전표발생일', field:'jrnDate', flex:1,valueFormatter:p=>p.value?.substring(0,10) },
+	          { headerName:'전표번호', field:'jrnNo', flex:1 }
+	        ],
+	        rowData: [],
+	        defaultColDef:{resizable:true},
+	        onGridReady: () => initBaseGrid(getThisMonthYM()),
+	        onRowClicked: async (event) => {
+	            console.log("=== baseGrid Row Clicked ===", event.data);
+	            selectedRowData = event.data; // ✅ 클릭된 행 전체 저장
+	            const { payrollNo } = event.data;      // ✅ payrollNo 바로 꺼내기
+	            selectedPayrollNo = payrollNo;
+	            
+	            
+	            const { period, deptCode } = event.data;
+	            if (!period || !deptCode) {
+	              alert("yearMonth 또는 deptCode가 없습니다.");
+	              return;
+	            }
+	
+	            try {
+	              const { data } = await axios.get("/api/account/payment/lines", {params: { payrollNo }
+	              });
+	
+	              console.log("=== payment lines ===", data);
+	           // 지급/공제 그리드
+	              debitApi.setGridOption("rowData", data.debit || []);
+	              creditApi.setGridOption("rowData", data.credit || []);
+	             
+	           
+	              // ✅ 자동 전표결과 합산
+	              const journal = [
+	                ...data.debit.map(d => ({
+	                  gbn: "차변",
+	                  code: d.acctCode,
+	                  acct: d.acctName,
+	                  debit: d.amount,
+	                  credit:'',
+	                  note: d.itemLabel
+	                })),
+	                ...data.credit.map(c => ({
+	                  gbn: "대변",
+	                  code: c.acctCode,
+	                  acct: c.acctName,
+	                  debit: '',
+	                  credit: c.amount,
+	                  note: c.itemLabel
+	                }))
+	              ];
+	              journalCache = journal;
+	              applyJournalFilter();
+	              // 전표결과 그리드
+	              journalApi.setGridOption("rowData",journal || []);
+	            } catch (err) {
+	              console.error("지급/공제 항목 조회 실패", err);
+	              debitApi.setGridOption("rowData", []);
+	              creditApi.setGridOption("rowData", []);
+	              journalApi.setGridOption("rowData", []);
+	            }
+	          }
+	      });
+	
+	      debitApi = agGrid.createGrid(document.getElementById("debitGrid"), {
+	        columnDefs: [
+	        	  { headerName:'지급항목', field:'itemLabel', flex:1 },
+	              { headerName:'코드', field:'acctCode', width:100 },
+	              { headerName:'계정과목명', field:'acctName', flex:1 },
+	              { headerName:'금액', field:'amount', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() }
+	        ],
+	        rowData: [],
+	        defaultColDef:{resizable:true}
+	      });
+	
+	      creditApi = agGrid.createGrid(document.getElementById("creditGrid"), {
+	        columnDefs: [
+	          { headerName:'공제항목', field:'itemLabel', flex:1 },
+	          { headerName:'코드', field:'acctCode', width:100 },
+	          { headerName:'계정과목명', field:'acctName', flex:1 },
+	          { headerName:'금액', field:'amount', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() }
+	        ],
+	        rowData: [],
+	        defaultColDef:{resizable:true}
+	      });
+	
+	      journalApi = agGrid.createGrid(document.getElementById("journalGrid"), {
+	        columnDefs: [
+	          { headerName:'구분', field:'gbn', flex:0.5 },
+	          { headerName:'코드', field:'code', flex:0.5 },
+	          { headerName:'계정과목', field:'acct', flex:1 },
+	          { headerName:'거래처코드', field:'partnerCode', flex:1},
+	          { headerName:'거래처', field:'partner', flex:1 },
+	          { headerName:'차변(출금)', field:'debit', flex:1, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() },
+	          { headerName:'대변(입금)', field:'credit', flex:1, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() },
+	          { headerName:'적요', field:'note', flex:1 }
+	        ],
+	        rowData: [],
+	        defaultColDef:{resizable:true},
+	        animateRows: true,
+	        onRowClicked:()=>{
+	        	console.log()
+	        }
+	      });
+	   // 이번 달 YM 계산
+	      function getThisMonthYM(){
+	        const now = new Date();
+	        return `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}`;
+	      }
+	
+	      document.getElementById("btnSearch").addEventListener("click", () => {
+	    	  const monthVal = document.getElementById("srchMonth").value; // yyyy-MM
+	    	  if (monthVal) {
+	    	    const ym = monthVal.replace("-", "");  // "2025-10" → "202510"
+	    	    initBaseGrid(ym);
+	    	  } else {
+	    	    initBaseGrid(getThisMonthYM());
+	    	  }
+	    	});
+	  });
+	
+	 // === baseGrid 데이터 로드 함수 ===
+	    async function initBaseGrid(yearMonth) {
+	      try {
+	    	const monthVal  = srchMonth.value;
+	        const yearMonth = monthVal ? monthVal.replace('-','') : '';
+	        const url = yearMonth ? `${API_BASE}?yearMonth=${encodeURIComponent(yearMonth)}` : ``;
+	        const { data } = await axios.get(url);
+	        const rows = (Array.isArray(data) ? data : []).map(item => ({
+	          payrollNo :item.payrollNo,
+	          deptCode: item.deptCode,   // ✅ 부서코드	
+	          jrnNo: item.jrnNo,
+	          period: item.yearMonth || "",
+	          dept: item.deptName || item.dept_name || "",
+	          jrnDate: item.jrnDate,
+	          payDate: `${yearMonth.slice(0,4)}-${yearMonth.slice(4)}-25` // 지급일 하드코딩
+	        }));
+			console.log(rows);
+	        baseApi.setGridOption("rowData", rows);
+	      } catch (err) {
+	        console.error("급여대장 조회 실패", err);
+	        baseApi.setGridOption("rowData", []);
+	      }
+	    }
+	 
+	    function applyJournalFilter() {
+	    	  const debitMode = document.getElementById("debitGroupSelect").value;   // 'group' or 'none'
+	    	  const creditMode = document.getElementById("creditGroupSelect").value;
+	
+	    	  let result = [];
+	
+	    	  // === 차변 ===
+	    	  const debitRows = journalCache.filter(r => r.gbn === "차변");
+	    	  if (debitMode === "group") {
+	    	    const grouped = Object.values(debitRows.reduce((acc, cur) => {
+	    	      const key = cur.code;
+	    	      if (!acc[key]) acc[key] = { ...cur, debit: 0, note: "합산" };
+	    	      acc[key].debit += Number(cur.debit || 0);
+	    	      return acc;
+	    	    }, {}));
+	    	    result.push(...grouped);
+	    	  } else {
+	    	    result.push(...debitRows);
+	    	  }
+	
+	    	  // === 대변 ===
+	    	  const creditRows = journalCache.filter(r => r.gbn === "대변");
+	    	  if (creditMode === "group") {
+	    	    const grouped = Object.values(creditRows.reduce((acc, cur) => {
+	    	      const key = cur.code;
+	    	      if (!acc[key]) acc[key] = { ...cur, credit: 0, note: "합산" };
+	    	      acc[key].credit += Number(cur.credit || 0);
+	    	      return acc;
+	    	    }, {}));
+	    	    result.push(...grouped);
+	    	  } else {
+	    	    result.push(...creditRows);
+	    	  }
+	
+	    	  // ✅ 화면 반영
+	    	  journalApi.setGridOption("rowData", result);
+	    	}
+	    
+	    // 등록 버튼
+document.getElementById("btnRegister").addEventListener("click", async () => {
+  if (!selectedRowData) return alert("급여대장을 먼저 선택하세요.");
+
+  if (selectedRowData.jrnNo && selectedRowData.jrnNo.trim() !== "") {
+    alert(`⚠️ 이미 전표가 등록된 급여대장입니다.\n전표번호: ${selectedRowData.jrnNo}`);
+    return;
+  }
+  
+  const totalDebit = journalCache
+    .filter(r => r.gbn === "차변")
+    .reduce((sum, r) => sum + Number(r.debit || 0), 0);
+  const totalCredit = journalCache
+    .filter(r => r.gbn === "대변")
+    .reduce((sum, r) => sum + Number(r.credit || 0), 0);
+
+  const payload = {
+    payrollNo: selectedPayrollNo,
+    yearMonth: document.getElementById("srchMonth").value.replace("-", ""),
+    payDate: new Date(),
+    totalDebit,
+    totalCredit,
+    createdBy: "ADMIN",
+    companyCode: "1001",
+    lines: journalCache.map((r, i) => ({
+      lineNo: i + 1,
+      itemKey: r.note,
+      acctCode: r.code,
+      dcType: r.gbn === "차변" ? "D" : "C",
+      remarks: r.note
+    }))
+  };
+
+  try {
+    const res = await axios.post("/api/account/payrollHist/save", payload);
+    const monthVal  = srchMonth.value;
+    const yearMonth = monthVal ? monthVal.replace('-','') : '';
+    initBaseGrid(yearMonth);
+    alert(`✅ 급여전표 등록 완료\n전표번호: ${res.data}`);
+  } catch (err) {
+    console.error(err);
+    alert("전표 등록 중 오류 발생");
+  }
+});
+	  </script>
+		</th:block>
+	</body>
+	</html>

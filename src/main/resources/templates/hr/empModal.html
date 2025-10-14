@@ -1,173 +1,228 @@
-<!-- templates/hr/empModal.html -->
 <div th:fragment="empModal">
-  <div class="modal fade" id="empModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-      <div class="modal-content">
+	<div class="modal fade" id="empModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-lg modal-dialog-scrollable">
+			<div class="modal-content">
 
-        <!-- Header -->
-        <div class="modal-header">
-          <h5 class="modal-title title-highlight" id="empModalTitle">사원 등록 기본사항</h5>
-          <button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal" aria-label="닫기">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
+				<!-- Header -->
+				<div class="modal-header">
+					<h5 class="modal-title title-highlight" id="empModalTitle">사원
+						등록 기본사항</h5>
+					<button type="button" class="btn btn-light btn-sm border-0"
+						data-bs-dismiss="modal" aria-label="닫기">
+						<i class="fas fa-times"></i>
+					</button>
+				</div>
 
-        <div class="modal-body">
-          <!-- 공통코드 조회 모달 포함 -->
-          <th:block th:replace="~{hr/codeLookup :: codeLookupModal}"></th:block>
+				<div class="modal-body">
+					<!-- 공통코드 조회 모달 포함 -->
+					<th:block th:replace="~{hr/codeLookup :: codeLookupModal}"></th:block>
 
-          <ul class="nav nav-tabs mb-3" id="empTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basic" type="button" role="tab">기본사항</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-pay" type="button" role="tab">급여지급사항</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-edu" type="button" role="tab">교육</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-cert" type="button" role="tab">자격증</button>
-            </li>
-          </ul>
+					<ul class="nav nav-tabs mb-3" id="empTabs" role="tablist">
+						<li class="nav-item" role="presentation">
+							<button class="nav-link active" data-bs-toggle="tab"
+								data-bs-target="#tab-basic" type="button" role="tab">기본사항</button>
+						</li>
+						<li class="nav-item" role="presentation">
+							<button class="nav-link" data-bs-toggle="tab"
+								data-bs-target="#tab-pay" type="button" role="tab">급여지급사항</button>
+						</li>
+						<li class="nav-item" role="presentation">
+							<button class="nav-link" data-bs-toggle="tab"
+								data-bs-target="#tab-edu" type="button" role="tab">교육</button>
+						</li>
+						<li class="nav-item" role="presentation">
+							<button class="nav-link" data-bs-toggle="tab"
+								data-bs-target="#tab-cert" type="button" role="tab">자격증</button>
+						</li>
+					</ul>
 
-          <div class="tab-content">
-            <!-- 기본사항 -->
-            <div class="tab-pane fade show active" id="tab-basic" role="tabpanel">
-              <form id="empForm" onsubmit="return false;">
-                <div class="container-fluid">
-                  <div class="row g-3">
-                    <div class="col-md-6">
-                      <label for="f_emp_id" class="form-label">사번</label>
-                      <input id="f_emp_id" name="emp_id" class="form-control" placeholder="EMP-YYYY-###" readonly>
-                    </div>
-                    <div class="col-md-6">
-                      <label for="f_name" class="form-label">성명 <span class="text-danger">*</span></label>
-                      <input id="f_name" name="name" class="form-control" required>
-                    </div>
+					<div class="tab-content">
+						<!-- 기본사항 -->
+						<div class="tab-pane fade show active" id="tab-basic"
+							role="tabpanel">
+							<form id="empForm" onsubmit="return false;">
+								<div class="container-fluid">
+									<div class="row g-3">
+										<div class="col-md-6">
+											<label for="f_emp_id" class="form-label">사번</label> <input
+												id="f_emp_id" name="emp_id" class="form-control"
+												placeholder="EMP-YYYY-###" readonly>
+										</div>
+										<div class="col-md-6">
+											<label for="f_name" class="form-label">성명 <span
+												class="text-danger">*</span></label> <input id="f_name" name="name"
+												class="form-control" required>
+										</div>
 
-                    <div class="col-md-6">
-                      <label for="f_dept_code" class="form-label">부서 <span class="text-danger">*</span></label>
-                      <div class="input-group">
-                        <input id="f_dept_code" name="dept_code" class="form-control" placeholder="DEPT-001" required>
-                        <button class="btn btn-outline-secondary" type="button" id="btnDeptLookup"><i class="fas fa-search"></i></button>
-                      </div>
-                    </div>
+										<div class="col-md-6">
+											<label for="f_dept_code" class="form-label">부서 <span
+												class="text-danger">*</span></label>
+											<div class="input-group">
+												<input id="f_dept_code" name="dept_code"
+													class="form-control" placeholder="DEPT-001" required>
+												<button class="btn btn-outline-secondary" type="button"
+													id="btnDeptLookup">
+													<i class="fas fa-search"></i>
+												</button>
+											</div>
+										</div>
 
-                    <div class="col-md-6">
-                      <label for="f_position" class="form-label">직급</label>
-                      <div class="input-group">
-                        <input id="f_position" name="position" class="form-control" placeholder="과장/대리 등">
-                        <button class="btn btn-outline-secondary" type="button" id="btnPositionLookup"><i class="fas fa-search"></i></button>
-                      </div>
-                      <input type="hidden" id="f_position_code" name="positionCode">
-                    </div>
+										<div class="col-md-6">
+											<label for="f_position" class="form-label">직급</label>
+											<div class="input-group">
+												<input id="f_position" name="position" class="form-control"
+													placeholder="과장/대리 등">
+												<button class="btn btn-outline-secondary" type="button"
+													id="btnPositionLookup">
+													<i class="fas fa-search"></i>
+												</button>
+											</div>
+											<input type="hidden" id="f_position_code" name="positionCode">
+										</div>
 
-                    <div class="col-md-6">
-                      <label for="f_title" class="form-label">직책</label>
-                      <div class="input-group">
-                        <input id="f_title" name="title" class="form-control" placeholder="팀장/팀원 등">
-                        <button class="btn btn-outline-secondary" type="button" id="btnTitleLookup"><i class="fas fa-search"></i></button>
-                      </div>
-                      <input type="hidden" id="f_title_code" name="titleCode">
-                    </div>
+										<div class="col-md-6">
+											<label for="f_title" class="form-label">직책</label>
+											<div class="input-group">
+												<input id="f_title" name="title" class="form-control"
+													placeholder="팀장/팀원 등">
+												<button class="btn btn-outline-secondary" type="button"
+													id="btnTitleLookup">
+													<i class="fas fa-search"></i>
+												</button>
+											</div>
+											<input type="hidden" id="f_title_code" name="titleCode">
+										</div>
 
-                    <div class="col-md-6">
-                      <label for="f_birth" class="form-label">생년월일</label>
-                      <input id="f_birth" name="birth" type="date" class="form-control">
-                    </div>
+										<div class="col-md-6">
+											<label for="f_birth" class="form-label">생년월일</label> <input
+												id="f_birth" name="birth" type="date" class="form-control">
+										</div>
 
-                    <div class="col-md-6">
-                      <label for="f_phone" class="form-label">전화번호</label>
-                      <input id="f_phone" name="phone" class="form-control" placeholder="010-0000-0000">
-                    </div>
+										<div class="col-md-6">
+											<label for="f_phone" class="form-label">전화번호</label> <input
+												id="f_phone" name="phone" class="form-control"
+												placeholder="010-0000-0000">
+										</div>
 
-                    <div class="col-md-6">
-                      <label for="f_email" class="form-label">이메일 <span class="text-danger">*</span></label>
-                      <input id="f_email" name="email" type="email" class="form-control" required>
-                    </div>
+										<div class="col-md-6">
+											<label for="f_email" class="form-label">이메일 <span
+												class="text-danger">*</span></label> <input id="f_email"
+												name="email" type="email" class="form-control" required>
+										</div>
 
-                    <div class="col-md-6">
-                      <label for="f_joinDate" class="form-label">입사일자 <span class="text-danger">*</span></label>
-                      <input id="f_joinDate" name="joinDate" type="date" class="form-control" required>
-                    </div>
+										<div class="col-md-6">
+											<label for="f_joinDate" class="form-label">입사일자 <span
+												class="text-danger">*</span></label> <input id="f_joinDate"
+												name="joinDate" type="date" class="form-control" required>
+										</div>
 
-                    <div class="col-md-6">
-                      <label for="f_leaveDate" class="form-label">퇴사일자</label>
-                      <input id="f_leaveDate" name="leaveDate" type="date" class="form-control">
-                    </div>
+										<div class="col-md-6">
+											<label for="f_leaveDate" class="form-label">퇴사일자</label> <input
+												id="f_leaveDate" name="leaveDate" type="date"
+												class="form-control">
+										</div>
 
-                    <div class="col-12">
-                      <label for="f_leaveReason" class="form-label">퇴사 사유</label>
-                      <input id="f_leaveReason" name="leaveReason" class="form-control">
-                    </div>
+										<div class="col-12">
+											<label for="f_leaveReason" class="form-label">퇴사 사유</label> <input
+												id="f_leaveReason" name="leaveReason" class="form-control">
+										</div>
 
-                    <div class="col-md-6">
-                      <label for="f_bankName" class="form-label">은행</label>
-                      <div class="input-group">
-                        <input id="f_bankName" name="bankName" class="form-control" placeholder="신한은행" readonly>
-                        <input type="hidden" id="f_bankCode" name="bankCode">
-                        <button class="btn btn-outline-secondary" type="button" id="btnBankLookup"><i class="fas fa-search"></i></button>
-                      </div>
-                    </div>
+										<div class="col-md-6">
+											<label for="f_bankName" class="form-label">은행</label>
+											<div class="input-group">
+												<input id="f_bankName" name="bankName" class="form-control"
+													placeholder="신한은행" readonly> <input type="hidden"
+													id="f_bankCode" name="bankCode">
+												<button class="btn btn-outline-secondary" type="button"
+													id="btnBankLookup">
+													<i class="fas fa-search"></i>
+												</button>
+											</div>
+										</div>
 
-                    <div class="col-md-5">
-                      <label for="f_accountNo" class="form-label">계좌번호</label>
-                      <input id="f_accountNo" name="accountNo" class="form-control">
-                    </div>
-                    <div class="col-md-3">
-                      <label for="f_accountName" class="form-label">예금주</label>
-                      <input id="f_accountName" name="accountName" class="form-control">
-                    </div>
+										<div class="col-md-5">
+											<label for="f_accountNo" class="form-label">계좌번호</label> <input
+												id="f_accountNo" name="accountNo" class="form-control">
+										</div>
+										<div class="col-md-3">
+											<label for="f_accountName" class="form-label">예금주</label> <input
+												id="f_accountName" name="accountName" class="form-control">
+										</div>
 
-                    <div class="col-md-4">
-                      <label for="f_zipCode" class="form-label">우편번호</label>
-                      <div class="input-group">
-                        <input id="f_zipCode" name="zipCode" class="form-control">
-                        <button class="btn btn-outline-secondary" type="button" id="btnZipSearch">찾기</button>
-                      </div>
-                    </div>
+										<div class="col-md-4">
+											<label for="f_zipCode" class="form-label">우편번호</label>
+											<div class="input-group">
+												<input id="f_zipCode" name="zipCode" class="form-control">
+												<button class="btn btn-outline-secondary" type="button"
+													id="btnZipSearch">찾기</button>
+											</div>
+										</div>
 
-                    <div class="col-md-8">
-                      <label for="f_address" class="form-label">주소</label>
-                      <input id="f_address" name="address" class="form-control">
-                    </div>
+										<div class="col-md-8">
+											<label for="f_address" class="form-label">주소</label> <input
+												id="f_address" name="address" class="form-control">
+										</div>
 
-                    <div class="col-12">
-                      <input id="f_address_detail" name="addressDetail" class="form-control mt-2" placeholder="상세주소(동/호)">
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
+										<div class="col-12">
+											<input id="f_address_detail" name="addressDetail"
+												class="form-control mt-2" placeholder="상세주소(동/호)">
+										</div>
+									</div>
+								</div>
+							</form>
+						</div>
 
-            <!-- 급여 / 교육 / 자격증 탭 -->
-            <div class="tab-pane fade" id="tab-pay" th:insert="~{hr/payFix :: payFix}" role="tabpanel"></div>
-            <div class="tab-pane fade" id="tab-edu" role="tabpanel">
-              <div th:insert="~{hr/eduList :: eduList}"></div>
-            </div>
-            <div class="tab-pane fade" id="tab-cert" role="tabpanel">
-              <div th:insert="~{hr/certList :: certList}"></div>
-            </div>
-          </div>
-        </div>
+						<!-- 급여 / 교육 / 자격증 탭 -->
+						<div class="tab-pane fade" id="tab-pay"
+							th:insert="~{hr/payFix :: payFix}" role="tabpanel"></div>
+						<div class="tab-pane fade" id="tab-edu" role="tabpanel">
+							<div th:insert="~{hr/eduList :: eduList}"></div>
+						</div>
+						<div class="tab-pane fade" id="tab-cert" role="tabpanel">
+							<div th:insert="~{hr/certList :: certList}"></div>
+						</div>
+					</div>
+				</div>
 
-        <div class="modal-footer" id="empModalFooter">
-          <button type="button" class="btn btn-success" id="btnSave">저장</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-        </div>
-      </div>
-    </div>
-  </div>
+				<div class="modal-footer" id="empModalFooter">
+					<button type="button" class="btn btn-success" id="btnSave">저장</button>
+					<button type="button" class="btn btn-secondary"
+						data-bs-dismiss="modal">닫기</button>
+				</div>
+			</div>
+		</div>
+	</div>
 
-  <style>
-  #empModal .nav-tabs { display:flex; flex-direction:row; gap:.5rem; border-bottom:1px solid #dee2e6; }
-  #empModal .nav-tabs .nav-item { flex:1 1 0; }
-  #empModal .nav-tabs .nav-link { width:100%; display:flex; align-items:center; justify-content:center; font-weight:600; height:40px; }
-  #empModal .modal-dialog { max-width:1200px; }
-  </style>
+	<style>
+#empModal .nav-tabs {
+	display: flex;
+	flex-direction: row;
+	gap: .5rem;
+	border-bottom: 1px solid #dee2e6;
+}
 
-  <script>
+#empModal .nav-tabs .nav-item {
+	flex: 1 1 0;
+}
+
+#empModal .nav-tabs .nav-link {
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	height: 40px;
+}
+
+#empModal .modal-dialog {
+	max-width: 1200px;
+}
+</style>
+
+	<script
+		src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
+	<script>
   (function(){
     const $  = (id)=>document.getElementById(id);
     const qs = (sel,root=document)=>root.querySelector(sel);
@@ -210,7 +265,7 @@
     }
     function validate(p){
       if(!p.name)      return alert('성명을 입력하세요.'),false;
-      if(!p.dept_code) return alert('부서를 입력하세요.'),false;
+      if(!p.dept_code) return alert('부서를 입력하세요.'),false;	
       if(!p.email)     return alert('이메일을 입력하세요.'),false;
       if(!p.joinDate)  return alert('입사일자를 입력하세요.'),false;
       return true;
@@ -315,75 +370,101 @@
       }
     };
 
-    /* ========= 오류 수정: 조회 모달 정확 분기 ========= */
+    window.openZipSearch = function({ onSelect } = {}) {
+    	  if (!window.daum || !daum.Postcode) {
+    	    alert('주소 검색 스크립트가 로드되지 않았습니다.\n네트워크를 확인하세요.');
+    	    return;
+    	  }
+    	  new daum.Postcode({
+    	    oncomplete: function(data) {
+    	      var road = data.roadAddress;
+    	      var jibun = data.jibunAddress;
+    	      var addr = road && road.trim().length ? road : jibun;
+
+    	      var zipEl = document.getElementById('f_zipCode');
+    	      var addrEl = document.getElementById('f_address');
+    	      var detailEl = document.getElementById('f_address_detail');
+
+    	      if (zipEl)  zipEl.value  = data.zonecode || '';
+    	      if (addrEl) addrEl.value = addr || '';
+    	      
+    	
+    	      if (detailEl) {
+    	        detailEl.disabled = false;
+    	        detailEl.readOnly = false;
+    	        detailEl.focus();
+    	        detailEl.select();
+    	      }
+
+    	      // 기존 콜백 유지
+    	      if (typeof onSelect === 'function') {
+    	        onSelect({
+    	          zonecode: data.zonecode,
+    	          roadAddress: data.roadAddress,
+    	          jibunAddress: data.jibunAddress,
+    	          address: addr,
+    	          data
+    	        });
+    	      }
+    	    }
+    	  }).open();
+    	};
+
     function bindLookupButtons(){
-      // CodeLookup.open 존재 검사
       const open = window.CodeLookup?.open;
       if (!open) {
         console.warn('CodeLookup.open 이 없습니다. codeLookupModal fragment가 포함되었는지 확인하세요.');
       }
 
-      // 1) 부서: /api/hr/dept 사용 (source:'dept'), 코드만 입력 필드에 세팅
+      // 1) 부서
       $('btnDeptLookup')?.addEventListener('click', ()=>{
         open?.({
           source: 'dept',
           title: '부서 선택',
-          targetId: 'f_dept_code',      // codeId → f_dept_code
-          targetNameId: null            // (부서명 입력필드가 따로 없으니 생략)
+          targetId: 'f_dept_code',
+          targetNameId: null
         });
       });
 
-      // 2) 직급: groupId 'RK' (네 모듈 정의), code/name 각각 hidden/visible 필드에 세팅
+      // 2) 직급
       $('btnPositionLookup')?.addEventListener('click', ()=>{
         open?.({
           groupId: 'RK',
           title: '직급 선택',
-          targetId: 'f_position_code',  // codeId → hidden
-          targetNameId: 'f_position'    // codeName → visible
+          targetId: 'f_position_code',
+          targetNameId: 'f_position'
         });
       });
 
-      // 3) 직책: groupId 'PO'
+      // 3) 직책
       $('btnTitleLookup')?.addEventListener('click', ()=>{
         open?.({
           groupId: 'PO',
           title: '직책 선택',
-          targetId: 'f_title_code',     // codeId → hidden
-          targetNameId: 'f_title'       // codeName → visible
+          targetId: 'f_title_code',
+          targetNameId: 'f_title'
         });
       });
 
-      // 4) 은행: groupId 'BK'
+      // 4) 은행
       $('btnBankLookup')?.addEventListener('click', ()=>{
         open?.({
           groupId: 'BK',
           title: '은행 선택',
-          targetId: 'f_bankCode',       // codeId → hidden
-          targetNameId: 'f_bankName'    // codeName → readonly visible
+          targetId: 'f_bankCode',
+          targetNameId: 'f_bankName'
         });
       });
 
-      // 5) 우편번호는 기존대로(네가 사용하는 openZipSearch가 있으면 사용)
+      // 5) 우편번호
       $('btnZipSearch')?.addEventListener('click', ()=>{
-        if (window.openZipSearch) {
-          return window.openZipSearch({
-            onSelect: ({zonecode, roadAddress})=>{
-              $('f_zipCode').value = zonecode || '';
-              $('f_address').value = roadAddress || '';
-              $('f_address_detail')?.focus();
-            }
-          });
-        }
-        // 임시 입력(개발 테스트용)
-        const z = prompt('우편번호 입력(임시):');
-        const a = prompt('주소 입력(임시):');
-        if (z) $('f_zipCode').value = z;
-        if (a) $('f_address').value = a;
-        $('f_address_detail')?.focus();
+        window.openZipSearch({
+          onSelect: ({ zonecode, address }) => {
+          }
+        });
       });
     }
 
-    // DOM ready 시 1회 바인딩
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', bindLookupButtons, { once:true });
     } else {

@@ -552,7 +552,7 @@ WHERE deo.do_code = #{doCode}
 INSERT INTO OUTBOUND_HEADER 
 (
        outb_header_code
-       ,do_no
+       ,do_code
        ,due_date
        ,outbound_date
        ,business_code
@@ -561,10 +561,10 @@ INSERT INTO OUTBOUND_HEADER
 )
 VALUES(
        #{outbHeaderCode}
-       ,#{doNo}
+       ,#{doCode}
        ,#{dueDate}
        ,#{outboundDate}
-       ,#{cusCode}
+       ,#{businessCode}
        ,#{businessPartner}
        ,#{companyCode}
 
@@ -574,6 +574,9 @@ VALUES(
 
 <!-- 출고 등록 - 상세 -->
 <insert id="insertOutboundDetail" parameterType="OutboundVO">
+<selectKey keyProperty="outboundNo" resultType="long" order="BEFORE">
+        SELECT seq_outbound.nextval FROM dual
+</selectKey>
 INSERT INTO OUTBOUND 
 (
        outbound_no
@@ -585,24 +588,121 @@ INSERT INTO OUTBOUND
        ,company_code
 )
 VALUES(
-       seq_outbound.nextval
+       #{outboundNo}
        ,#{productName}
        ,#{productCode}
        ,#{specification}
-       ,#{amount}
+       ,#{qty}
        ,#{outbHeaderCode}
        ,#{companyCode}
 )
 </insert>
 
-<!-- 입고 잔여수량 수정 -->
-<update id="updateInboundQty" >
-<![CDATA[
- UPDATE INBOUND
-    SET remain_qty = CASE WHEN remain_qty - #{outQty} < 0 THEN 0 ELSE remain_qty - #{outQty} END
-    WHERE lot_code = #{lotCode}
-]]>
-</update>
+<!-- 제품별 LOT 출고 등록 -->
+<insert id="insertLotOutbound" parameterType="LotOutboundVO">
+INSERT INTO lot_outbound
+(
+       LOT_OUT_NO
+       ,LOT_OUT_AMT
+       ,LOT_CODE
+       ,OUTBOUND_NO
+       ,COMPANY_CODE
+)
+VALUES
+(
+       seq_lot_outbound.nextval
+       ,#{lotOutAmt}
+       ,#{lotCode}
+       ,#{outboundNo}
+       ,#{companyCode}
+)
 
+</insert>
+
+<!-- 거래명세서 조회용 쿼리 -->
+<select id="getDeliveryNote" resultMap = "deliveryResultMap">
+SELECT 
+       oh.outb_header_code AS outb_header_code,
+       oh.outbound_date AS outbound_date,
+       oh.do_code AS do_code,
+       oh.business_code AS business_code,
+       oh.business_partner AS business_partner,
+       oh.due_date AS due_date,
+       case
+        when count(o.outbound_no) > 1 
+            then min(o.product_name) || ' 외 ' || (count(o.outbound_no) - 1) || '건' 
+        else min(o.product_name) 
+    end AS product_name,
+    sum(o.qty) AS qty,
+    case 
+        when exists (
+            select 1
+            FROM delivery_order do
+            JOIN do_detail dod
+            ON do.do_no = dod.do_no
+            WHERE do.do_code = oh.do_code
+        ) then 'Y'
+        else 'N'
+    end AS has_sheet  
+FROM outbound_header oh 
+JOIN outbound o
+ON oh.outb_header_code = o.outb_header_code
+GROUP BY oh.outb_header_code ,
+       oh.outbound_date ,
+       o.product_name ,
+       oh.business_code ,
+       oh.business_partner ,
+       oh.due_date,
+       oh.do_code 
+ORDER BY oh.outb_header_code DESC
+
+</select>
+
+<!-- ResultMap -->
+<resultMap id="deliveryResultMap" type="OutboundHeaderVO">
+    <id property="outbHeaderCode" column="outb_header_code"/>
+    <result property="doCode" column="do_code"/>
+    <result property="outboundDate" column="outbound_date"/>
+    <result property="businessPartner" column="business_partner"/>
+    <result property="productName" column="product_name"/>
+    <result property="businessPartner" column="business_partner"/>
+    <result property="qty" column="qty"/>
+    <result property="dueDate" column="due_date"/>
+    <result property="hasSheet" column="has_sheet"/> <!-- 추가 -->
+    
+    <!-- 디테일 매핑 -->
+    <collection property="details" ofType="OutboundVO" 
+        select="selectOutboundByOutbHeaderCode" column="outb_header_code"/>
+</resultMap>
+
+<select id="selectOutboundByOutbHeaderCode">
+SELECT DISTINCT 
+       o.product_code AS productCode,
+       o.product_name AS productName,
+       o.specification AS specification, 
+       oh.business_code AS businessCode,
+       oh.business_partner AS businessPartner,
+       oh.do_code AS do_code,
+       o.qty AS qty,
+       oh.due_date AS dueDate,
+       dod.vat_amt AS vatAmt,
+       dod.sup_amt AS supAmt,
+       dod.unit_price AS orderPrice,
+       CASE WHEN EXISTS(select vat_amt from do_detail where do_no = (select do_no
+                                                                     FROM delivery_order
+                                                                     where do_code = #{doCode})
+                        ) THEN 'VAT 포함'
+            ELSE '면세' 
+       END AS taxType
+FROM outbound_header oh 
+JOIN outbound o
+ON oh.outb_header_code = o.outb_header_code
+JOIN delivery_order do
+ON do.do_code = oh.do_code
+JOIN do_detail dod
+ON do.do_no = dod.do_no
+WHERE oh.outb_header_code = #{outCode}
+
+</select>
 
 </mapper>
