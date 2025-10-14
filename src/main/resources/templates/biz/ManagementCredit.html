@@ -10,6 +10,7 @@
     <title layout:fragment="title">거래처 여신 현황</title>
 
     <th:block layout:fragment="head_extra">
+      <!-- AG Grid -->
       <link
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
@@ -31,6 +32,23 @@
         }
         .search-box .input-group-text {
           cursor: pointer;
+        }
+        .muted {
+          color: #6b7280;
+          font-size: 12px;
+        }
+        .text-center {
+          text-align: center;
+        }
+        .cell-bad {
+          background: #fff2f2;
+          color: #c62828;
+          font-weight: 600;
+        }
+        .cell-good {
+          background: #f2fff4;
+          color: #2e7d32;
+          font-weight: 600;
         }
       </style>
     </th:block>
@@ -60,8 +78,12 @@
               </button>
             </div>
 
-            <!-- 2. 초기화 -->
-            <button class="btn btn-danger ms-auto" id="btnReset">초기화</button>
+            <div class="ms-auto d-flex gap-2">
+              <button class="btn btn-outline-secondary" id="btnExport">
+                CSV
+              </button>
+              <button class="btn btn-danger" id="btnReset">초기화</button>
+            </div>
           </div>
 
           <!-- 상호 / 담당자 검색 -->
@@ -84,15 +106,16 @@
                   class="form-control"
                   placeholder="담당자명"
                 />
-                <span class="input-group-text" id="btnFindManager">
-                  <i class="bi bi-search"></i>
-                </span>
+                <span class="input-group-text" id="btnFindManager"
+                  ><i class="bi bi-search"></i
+                ></span>
               </div>
             </div>
           </div>
 
-          <div class="text-end mt-3">
-            <button class="btn btn-dark" id="btnSearch">조회</button>
+          <div class="d-flex mt-3">
+            <div class="muted">※ 빈 값 조회 시 전체 검색됩니다.</div>
+            <button class="btn btn-dark ms-auto" id="btnSearch">조회</button>
           </div>
         </div>
       </div>
@@ -120,53 +143,62 @@
 
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
-          // ====== 컬럼 정의 (설계서 순서) ======
+          // ===== 포맷터 & 헬퍼 =====
+          const fmtMoney = (p) => {
+            const v = Number(p.value ?? 0);
+            return isNaN(v) ? "" : v.toLocaleString("ko-KR");
+          };
+          const asNum = (v) => (isNaN(Number(v)) ? 0 : Number(v));
+
+          // ===== 컬럼 정의 (설계서 순서) =====
           const columnDefs = [
             {
               headerName: "거래처코드",
               field: "cusCode",
-              width: 120,
+              width: 130,
               pinned: "left",
             },
             {
               headerName: "거래처명",
               field: "cusName",
-              minWidth: 150,
+              minWidth: 160,
               flex: 1,
             },
             {
               headerName: "신용등급",
               field: "creditGrade",
-              width: 110,
+              width: 100,
               cellClass: "text-center",
             },
             {
               headerName: "여신한도",
               field: "creditLimit",
-              width: 140,
+              width: 130,
               type: "numericColumn",
-              valueFormatter: moneyFmt,
+              valueFormatter: fmtMoney,
             },
-            { headerName: "적용시작일", field: "startDate", width: 130 },
-            { headerName: "적용만료일", field: "endDate", width: 130 },
+            { headerName: "적용시작일", field: "startDate", width: 120 },
+            { headerName: "적용만료일", field: "endDate", width: 120 },
             {
               headerName: "잔여한도",
               field: "remainLimit",
-              width: 140,
+              width: 130,
               type: "numericColumn",
-              valueFormatter: moneyFmt,
+              valueFormatter: fmtMoney,
+              cellClass: (p) =>
+                asNum(p.value) <= 0 ? "cell-bad" : "cell-good",
             },
             { headerName: "담당자", field: "managerName", width: 140 },
             {
               headerName: "할인잔여횟수",
               field: "discountRemainCnt",
-              width: 130,
+              width: 120,
               type: "numericColumn",
-              cellClass: "text-center",
+              cellClass: (p) => (Number(p.value ?? 0) === 0 ? "cell-bad" : ""),
             },
           ];
 
-          // 그리드 생성
+          // ===== Grid 생성 =====
           const gridDiv = document.getElementById("creditGrid");
           let gridApi;
           const gridOptions = {
@@ -174,10 +206,15 @@
             rowData: [],
             pagination: true,
             paginationPageSize: 12,
+            animateRows: true,
             defaultColDef: { sortable: true, resizable: true, filter: true },
+            overlayLoadingTemplate:
+              '<span class="ag-overlay-loading-center">불러오는 중…</span>',
+            overlayNoRowsTemplate:
+              '<span class="ag-overlay-no-rows-center">데이터가 없습니다</span>',
             onGridReady: (p) => {
               gridApi = p.api;
-              fetchAndRender(); // 최초 조회
+              fetchAndRender(); // 최초 로드
             },
           };
           if (window.agGrid?.createGrid) {
@@ -191,35 +228,30 @@
               ? gridApi.setGridOption("rowData", rows)
               : gridApi.setRowData(rows);
 
-          // ====== 포맷터 ======
-          function moneyFmt(p) {
-            const v = Number(p.value ?? 0);
-            return v ? v.toLocaleString("ko-KR") : "0";
-          }
-
-          // ====== DOM ======
+          // ===== DOM 요소 =====
           const qName = document.getElementById("qName");
           const qManager = document.getElementById("qManager");
           const btnSearch = document.getElementById("btnSearch");
           const btnReset = document.getElementById("btnReset");
           const btnSortGrade = document.getElementById("btnSortGrade");
           const btnSortState = document.getElementById("btnSortState");
+          const btnFindManager = document.getElementById("btnFindManager");
+          const btnExport = document.getElementById("btnExport");
 
-          // 검색
+          // ===== 이벤트 =====
           btnSearch.addEventListener("click", fetchAndRender);
           [qName, qManager].forEach((el) =>
-            el.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") fetchAndRender();
-            })
+            el.addEventListener(
+              "keydown",
+              (e) => e.key === "Enter" && fetchAndRender()
+            )
           );
-          document
-            .getElementById("btnFindManager")
-            .addEventListener("click", fetchAndRender);
+          btnFindManager.addEventListener("click", fetchAndRender);
 
-          // 초기화
           btnReset.addEventListener("click", () => {
             qName.value = "";
             qManager.value = "";
+            gridApi.showLoadingOverlay();
             fetchAndRender();
           });
 
@@ -252,42 +284,49 @@
             ]);
           });
 
-          // ====== 데이터 조회 ======
+          // CSV 내보내기
+          btnExport.addEventListener("click", () => {
+            gridApi.exportDataAsCsv({
+              fileName: "credit-status.csv",
+              columnKeys: columnDefs.map((c) => c.field),
+            });
+          });
+
+          // ===== 데이터 조회 =====
           async function fetchAndRender() {
             try {
+              gridApi.showLoadingOverlay();
               const res = await axios.get("/api/biz/crdlist", {
                 params: {
                   name: qName.value?.trim() || "",
                   manager: qManager.value?.trim() || "",
                 },
+                withCredentials: true,
               });
               const list = Array.isArray(res.data) ? res.data : [];
 
-              // 서버키 → 화면키 매핑(유연)
+              // 서버키 → 화면키 매핑(유연 매핑)
               const rows = list.map((r) => ({
                 cusCode: r.cusCode ?? r.code ?? "",
                 cusName: r.cusName ?? r.name ?? "",
                 creditGrade: r.creditGrade ?? r.grade ?? "",
-                creditLimit: num(r.creditLimit ?? r.limit),
+                creditLimit: asNum(r.creditLimit ?? r.limit),
                 startDate: r.startDate ?? r.applyStart ?? "",
                 endDate: r.endDate ?? r.applyEnd ?? "",
-                remainLimit: num(r.remainLimit ?? r.balance ?? 0),
+                remainLimit: asNum(r.remainLimit ?? r.balance),
                 managerName: r.managerName ?? r.manager ?? "",
                 discountRemainCnt: Number(
                   r.discountRemainCnt ?? r.discountLeft ?? 0
                 ),
               }));
-              console.log("rows 내용" + rows);
-              setRows(rows);
-            } catch (e) {
-              console.error(e);
-              setRows([]);
-            }
-          }
 
-          function num(v) {
-            const n = Number(v);
-            return isNaN(n) ? 0 : n;
+              rows.length ? setRows(rows) : gridApi.showNoRowsOverlay();
+            } catch (err) {
+              console.error(err);
+              gridApi.showNoRowsOverlay();
+              setRows([]);
+              alert("여신 현황 조회 중 오류가 발생했습니다.");
+            }
           }
         });
       </script>

@@ -1,5 +1,6 @@
 package com.yedam.erp.service.impl.Biz;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,8 +92,12 @@ public class BizServiceImpl implements BizService {
     }
 
 	// 거래처여신관리 조회
-	@Override
-	public List<CustomerCreditVO> selectCrdMaster(Long companyCode) {
-	  return bizMapper.selectCrdMaster(companyCode);
-	}
+    @Override
+    public List<CustomerCreditVO> selectCrdMaster(Long companyCode, LocalDate monthBase) {
+        // monthBase가 null이면 이번달 1일로 세팅 (DB 쿼리에서도 SYSDATE로 안전장치 해둠)
+        if (monthBase == null) {
+            monthBase = LocalDate.now().withDayOfMonth(1);
+        }
+        return bizMapper.selectCrdMaster(companyCode, monthBase);
+    }
 }

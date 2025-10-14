@@ -1,5 +1,6 @@
 package com.yedam.erp.service.Biz;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
@@ -47,5 +48,6 @@ public interface BizService {
   int updateCustomerByCode(CustomerVO cvo);
 
   // 거래처여신 조회
-  List<CustomerCreditVO> selectCrdMaster(Long companyCode);
+    List<CustomerCreditVO> selectCrdMaster(Long companyCode, LocalDate monthBase);
 }
+

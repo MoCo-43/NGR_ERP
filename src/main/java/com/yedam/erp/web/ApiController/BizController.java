@@ -1,8 +1,10 @@
 package com.yedam.erp.web.ApiController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yedam.erp.security.SessionUtil;
@@ -150,8 +153,14 @@ public class BizController {
 
     // 거래처여신관리 조회
     @GetMapping("/crdlist")
-    public List<CustomerCreditVO> selectCrdMaster () {
+    /**
+     * 예: GET /api/sales/credit/status?companyCode=1001&month=2025-10-01
+     * month는 yyyy-MM-01 형태(첫날) 전달을 권장
+     */
+    public List<CustomerCreditVO> status(
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate month
+    ) {
       Long companyCode = SessionUtil.companyId();
-        return service.selectCrdMaster(companyCode);
+        return service.selectCrdMaster(companyCode, month);
     }
 }

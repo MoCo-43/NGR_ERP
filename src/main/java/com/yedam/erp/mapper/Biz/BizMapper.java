@@ -1,8 +1,10 @@
 package com.yedam.erp.mapper.Biz;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.springframework.data.repository.query.Param;
 
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
@@ -39,5 +41,11 @@ public interface BizMapper {
   // 거래처관리 수정
   int updateCustomerByCode(CustomerVO cvo);
   // 거래처여신 조회
-  List<CustomerCreditVO> selectCrdMaster(Long companyCode);
+      /**
+     * 회사별 거래처 여신현황 조회
+     * @param companyCode 필수 (예: "1001")
+     * @param monthBase 기준월의 1일(예: 2025-10-01). null이면 SYSDATE 기준.
+     * @return 여신현황 리스트
+     */
+    List<CustomerCreditVO> selectCrdMaster(Long companyCode, @Param("monthBase") LocalDate monthBase);
 }

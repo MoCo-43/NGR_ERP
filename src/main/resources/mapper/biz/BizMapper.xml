@@ -194,11 +194,116 @@ ORDER BY d.DO_CREATED DESC
       AND COMPANY_CODE = #{companyCode}
   </update>
 
+<!-- 여신관리 조회 MAP-->
+ <resultMap id="CreditStatusMap" type="CustomerCreditVO">
+    <result column="COMPANY_CODE"   property="companyCode"/>
+    <result column="CUS_CODE"       property="cusCode"/>
+    <result column="CUS_NAME"       property="cusName"/>
+    <result column="CREDIT_GRADE"   property="creditGrade"/>
+    <result column="CREDIT_LIMIT"   property="creditLimit"/>
+    <result column="START_DATE"     property="startDate"/>
+    <result column="EXPIRE_DATE"    property="expireDate"/>
+    <result column="USED_LIMIT"     property="usedLimit"/>
+    <result column="REMAIN_LIMIT"   property="remainLimit"/>
+    <result column="DISC_LIMIT_CNT" property="discLimitCnt"/>
+    <result column="DISC_USED_CNT"  property="discUsedCnt"/>
+    <result column="DISC_LEFT_CNT"  property="discLeftCnt"/>
+  </resultMap>
+
 <!-- 여신관리 조회 -->
-<select id="selectCrdMaster" resultType="java.util.List" parameterType="Long">
-SELECT cm.CUS_CODE, cst.CUS_NAME, cm.DUE_DATE, cm.CREDIT_LIMIT, cm.CREDIT_GRADE, cm.START_DATE, cm.EXPIRE_DATE, cm.LEFT_PRICE, cm.ACTIVE_STATUS
-FROM CREDIT_MASTER cm
-JOIN CUSTOMER cst ON cm.CUS_CODE = cst.CUS_CODE
-WHERE cm.COMPANY_CODE = '#{companyCode} 
-</select>
+  <!-- 기준월 파라미터가 null이면 SYSDATE 사용 -->
+  <select id="selectCrdMaster" resultMap="CreditStatusMap">
+    /* 여신현황 + 할인잔여횟수 */
+    WITH inv AS (  /* 송장별 금액 (중복 방지) */
+      SELECT
+          ih.cus_code,
+          ih.invoice_no,
+          NVL( ih.total_amt,
+               SUM(NVL(il.sup_amt,0) + NVL(il.vat_amt,0)) ) AS invoice_amt
+      FROM invoice_header ih
+      LEFT JOIN invoice_line il
+        ON il.invoice_code = ih.invoice_code
+      GROUP BY ih.cus_code, ih.invoice_no, ih.total_amt
+    ),
+    applied AS (  /* 송장별 수금 적용합 */
+      SELECT
+          p.company_code,
+          p.cus_code,
+          pa.invoice_no,
+          SUM(pa.apply_amount) AS applied_amt
+      FROM payment p
+      JOIN payment_apply pa
+        ON pa.pay_code = p.pay_code
+      GROUP BY p.company_code, p.cus_code, pa.invoice_no
+    ),
+    ar_by_inv AS (  /* 회사 귀속 후 송장단위 미수 */
+      SELECT
+          cm.company_code,
+          i.cus_code,
+          i.invoice_no,
+          NVL(i.invoice_amt,0) AS invoice_amt,
+          NVL(a.applied_amt,0) AS applied_amt,
+          GREATEST(NVL(i.invoice_amt,0) - NVL(a.applied_amt,0), 0) AS ar_amt
+      FROM inv i
+      JOIN credit_master cm
+        ON TO_CHAR(cm.cus_code) = i.cus_code
+       AND NVL(cm.active_status,'Y') = 'Y'
+      LEFT JOIN applied a
+        ON a.company_code = cm.company_code
+       AND a.cus_code     = i.cus_code
+       AND a.invoice_no   = i.invoice_no
+    ),
+    ar_cust AS (  /* 고객별 미수 합계 */
+      SELECT company_code, cus_code, SUM(ar_amt) AS total_ar
+      FROM ar_by_inv
+      GROUP BY company_code, cus_code
+    ),
+    disc_limit AS (  /* 등급별 월 허용건수 */
+      SELECT
+        cm.company_code,
+        TO_CHAR(cm.cus_code) AS cus_code,
+        CASE WHEN cm.credit_grade = 'A' THEN 3
+             WHEN cm.credit_grade = 'B' THEN 1
+             ELSE 0 END AS limit_cnt
+      FROM credit_master cm
+    ),
+    disc_used AS (  /* 이번 달 여신할인 사용건수 (PURCHASE_ORDER + PO_DETAIL) */
+      SELECT
+        po.company_code,
+        po.cus_code,
+        COUNT(DISTINCT po.po_id) AS used_cnt,
+        SUM(NVL(pd.dc_price,0))  AS used_amt
+      FROM purchase_order po
+      JOIN po_detail      pd ON pd.po_id = po.po_id
+      WHERE TRUNC(po.po_date,'MM') = TRUNC(
+               /* monthBase가 null이면 SYSDATE */
+               NVL(#{monthBase, jdbcType=DATE}, SYSDATE), 'MM')
+        AND NVL(pd.credit_active,'N') = 'Y'
+        AND NVL(pd.dc_price,0) > 0
+      GROUP BY po.company_code, po.cus_code
+    )
+    SELECT
+      cm.company_code                                   AS COMPANY_CODE,
+      TO_CHAR(cm.cus_code)                              AS CUS_CODE,
+      /* 거래처명은 고객마스터가 있으면 거기에서 조인하세요. 임시로 invoice에서 하나 가져오려면 서브쿼리 사용 */
+      (SELECT MAX(ih.cus_name) FROM invoice_header ih WHERE ih.cus_code = TO_CHAR(cm.cus_code)) AS CUS_NAME,
+      cm.credit_grade                                    AS CREDIT_GRADE,
+      cm.credit_limit                                    AS CREDIT_LIMIT,
+      cm.start_date                                      AS START_DATE,
+      cm.expire_date                                     AS EXPIRE_DATE,
+      NVL(ac.total_ar, 0)                                AS USED_LIMIT,
+      (cm.credit_limit - NVL(ac.total_ar, 0))            AS REMAIN_LIMIT,
+      NVL(dl.limit_cnt,0)                                AS DISC_LIMIT_CNT,
+      NVL(du.used_cnt,0)                                 AS DISC_USED_CNT,
+      GREATEST(NVL(dl.limit_cnt,0) - NVL(du.used_cnt,0), 0) AS DISC_LEFT_CNT
+    FROM credit_master cm
+    LEFT JOIN ar_cust   ac ON ac.company_code = cm.company_code
+                          AND ac.cus_code     = TO_CHAR(cm.cus_code)
+    LEFT JOIN disc_limit dl ON dl.company_code = cm.company_code
+                            AND dl.cus_code     = TO_CHAR(cm.cus_code)
+    LEFT JOIN disc_used  du ON du.company_code = cm.company_code
+                            AND du.cus_code     = TO_CHAR(cm.cus_code)
+    WHERE cm.company_code = #{companyCode}
+    ORDER BY cm.cus_code
+  </select>
 </mapper>
