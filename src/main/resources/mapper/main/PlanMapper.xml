@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.erp.mapper.main.PlanMapper">
+
+	<!-- 등록 -->
+	<insert id="insertPlan"
+		parameterType="com.yedam.erp.vo.main.PlanVO">
+		<selectKey keyProperty="planNo" resultType="Long"
+			order="BEFORE">
+			SELECT plan_seq.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO plan (
+		PLAN_NO,
+		TITLE,
+		DESCRIPTION,
+		START_DATE,
+		END_DATE,
+		EMP_ID_NO,
+		CATEGORY,
+		CREATED_AT,
+		UPDATED_AT
+		) VALUES (
+		#{planNo},
+		#{title},
+		#{description},
+		TO_DATE(#{startDate}, 'YYYY-MM-DD'),
+		TO_DATE(#{endDate}, 'YYYY-MM-DD')
+		#{empIdNo},
+		#{category},
+		#{createdAt, jdbcType=TIMESTAMP},
+		#{updatedAt, jdbcType=TIMESTAMP}
+		)
+	</insert>
+
+	<!-- 수정 (empIdNo 기준 체크 포함) -->
+	<update id="updatePlan"
+		parameterType="com.yedam.erp.vo.main.PlanVO">
+		UPDATE plan
+		SET TITLE = #{title},
+		DESCRIPTION = #{description},
+		START_DATE = #{startDate},
+		END_DATE = #{endDate},
+		CATEGORY = #{category},
+		UPDATED_AT = #{updatedAt, jdbcType=TIMESTAMP}
+		WHERE PLAN_NO = #{planNo}
+		AND EMP_ID_NO = #{empIdNo}
+	</update>
+
+	<!-- 삭제 (empIdNo 기준 체크 포함, map parameter 사용) -->
+	<delete id="deletePlan" parameterType="map">
+		DELETE FROM plan
+		WHERE PLAN_NO = #{planNo}
+		AND EMP_ID_NO = #{empIdNo}
+	</delete>
+
+	<!-- 전체 조회 (필터링 가능) -->
+	<select id="selectPlanList"
+		parameterType="com.yedam.erp.vo.main.PlanVO"
+		resultType="com.yedam.erp.vo.main.PlanVO">
+		SELECT
+		PLAN_NO,
+		TITLE,
+		DESCRIPTION,
+		START_DATE,
+		END_DATE,
+		CREATED_AT,
+		UPDATED_AT,
+		EMP_ID_NO,
+		CATEGORY
+		FROM plan
+		<where>
+			<if test="empIdNo != null">
+				EMP_ID_NO = #{empIdNo}
+			</if>
+		</where>
+		ORDER BY CREATED_AT DESC
+	</select>
+
+	<!-- 단건 조회 -->
+	<select id="selectPlanById" parameterType="Long"
+		resultType="com.yedam.erp.vo.main.PlanVO">
+		SELECT
+		PLAN_NO,
+		TITLE,
+		DESCRIPTION,
+		START_DATE,
+		END_DATE,
+		CREATED_AT,
+		UPDATED_AT,
+		EMP_ID_NO,
+		CATEGORY
+		FROM plan
+		WHERE PLAN_NO = #{planNo}
+	</select>
+
+</mapper>

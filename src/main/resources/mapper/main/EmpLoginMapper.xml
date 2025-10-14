@@ -35,7 +35,7 @@
         UPDATE
             emp_login   
         SET
-            emp_pw = #{newPassword}
+            emp_pw = #{password}
         WHERE
             emp_id_no = #{empIdNo}
     </update>
@@ -182,4 +182,14 @@
 		    ON e.dept_code = d.dept_code
 		WHERE l.emp_id = #{empId}
 </select>
+
+<select id="findMatNoByEmpId" parameterType="String" resultType="long">
+    SELECT 
+        mat_no 
+    FROM 
+        emp_login 
+    WHERE 
+        emp_id = #{empId}
+</select>
+
 </mapper>
