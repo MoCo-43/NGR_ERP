@@ -60,14 +60,14 @@ ORDER BY PO_START DESC
     <foreach collection="poDetails" item="pod">
       INTO po_detail (
         POD_ID, PO_ID, COMPANY_CODE, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
-        DC_PRICE, SUP_AMT, VAT_AMT, PRODUCT_NAME
+        DC_PRICE, SUP_AMT, VAT_AMT, PRODUCT_NAME, CREDIT_ACTIVE
       )
       VALUES (
         POD_ID_SEQ.NEXTVAL,
         PO_ID_SEQ.CURRVAL,
         #{companyCode},
         #{pod.productCode}, #{pod.orderQty}, #{pod.unitPrice},
-        #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.productName}
+        #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.productName}, #{pod.creditActive}
       )
     </foreach>
   SELECT 1 FROM DUAL
@@ -194,4 +194,11 @@ ORDER BY d.DO_CREATED DESC
       AND COMPANY_CODE = #{companyCode}
   </update>
 
+<!-- 여신관리 조회 -->
+<select id="selectCrdMaster" resultType="java.util.List" parameterType="Long">
+SELECT cm.CUS_CODE, cst.CUS_NAME, cm.DUE_DATE, cm.CREDIT_LIMIT, cm.CREDIT_GRADE, cm.START_DATE, cm.EXPIRE_DATE, cm.LEFT_PRICE, cm.ACTIVE_STATUS
+FROM CREDIT_MASTER cm
+JOIN CUSTOMER cst ON cm.CUS_CODE = cst.CUS_CODE
+WHERE cm.COMPANY_CODE = '#{companyCode} 
+</select>
 </mapper>

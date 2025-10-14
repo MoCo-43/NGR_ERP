@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.Biz.BizMapper;
 import com.yedam.erp.service.Biz.BizService;
+import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.DoInsertVO;
@@ -88,4 +89,10 @@ public class BizServiceImpl implements BizService {
         int updated = bizMapper.updateCustomerByCode(cvo);
         return updated;
     }
+
+	// 거래처여신관리 조회
+	@Override
+	public List<CustomerCreditVO> selectCrdMaster(Long companyCode) {
+	  return bizMapper.selectCrdMaster(companyCode);
+	}
 }

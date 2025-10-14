@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.Biz.BizService;
+import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.DoDetailVO;
@@ -123,6 +124,7 @@ public class BizController {
     // 세션에서 회사코드 꺼내오기
     Long companyCode = SessionUtil.companyId();
     cvo.setCompanyCode(companyCode);
+    
 
     int result = service.insertCustomer(cvo);
     return ResponseEntity.ok(result);
@@ -144,5 +146,12 @@ public class BizController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.noContent().build(); // 또는 ok(vo)
+  }
+
+    // 거래처여신관리 조회
+    @GetMapping("/crdlist")
+    public List<CustomerCreditVO> selectCrdMaster () {
+      Long companyCode = SessionUtil.companyId();
+        return service.selectCrdMaster(companyCode);
     }
 }
