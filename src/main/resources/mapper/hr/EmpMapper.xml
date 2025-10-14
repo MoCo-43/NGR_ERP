@@ -5,138 +5,149 @@
 
 <mapper namespace="com.yedam.erp.mapper.hr.EmpMapper">
 
-  <resultMap id="EmpMap" type="com.yedam.erp.vo.hr.EmpVO">
-    <id property="emp_id" column="emp_id"/>
-    <result property="name" column="name"/>
-    <result property="dept_code" column="dept_code"/>
-    <result property="dept_name" column="dept_name"/>
-    <result property="position" column="position"/>
-    <result property="title" column="title"/>
-    <result property="birth" column="birth"/>
-    <result property="phone" column="phone"/>
-    <result property="email" column="email"/>
-    <result property="joinDate" column="joinDate"/>
-    <result property="leaveDate" column="leaveDate"/>
-    <result property="leaveReason" column="leaveReason"/>
-    <result property="bankCode" column="bankCode"/>
-    <result property="accountNo" column="accountNo"/>
-    <result property="zipCode" column="zipCode"/>
-    <result property="address" column="address"/>
-    <result property="companyCode" column="companyCode"/>
-  </resultMap>
+	<resultMap id="EmpMap" type="com.yedam.erp.vo.hr.EmpVO">
+		<id property="emp_id" column="emp_id" />
+		<result property="name" column="name" />
+		<result property="dept_code" column="dept_code" />
+		<result property="dept_name" column="dept_name" />
+		<result property="position" column="position" />
+		<result property="title" column="title" />
+		<result property="birth" column="birth" />
+		<result property="phone" column="phone" />
+		<result property="email" column="email" />
+		<result property="joinDate" column="joinDate" />
+		<result property="leaveDate" column="leaveDate" />
+		<result property="leaveReason" column="leaveReason" />
+		<result property="bankCode" column="bankCode" />
+		<result property="accountNo" column="accountNo" />
+		<result property="zipCode" column="zipCode" />
+		<result property="address" column="address" />
+		<result property="addressDetail" column="addressDetail" />
+		<result property="accountName" column="accountName" />
+		<result property="companyCode" column="companyCode" />
+	</resultMap>
 
-  <!-- 전체조회 -->
-  <select id="selectEmpList" resultMap="EmpMap">
-    SELECT
-      e.EMP_ID       AS emp_id,
-      e.NAME         AS name,
-      e.DEPT_CODE    AS dept_code,
-      d.DEPT_NAME    AS dept_name,
-      e.POSITION     AS position,
-      e.TITLE        AS title,
-      e.BIRTH        AS birth,
-      e.PHONE        AS phone,
-      e.EMAIL        AS email,
-      e.JOIN_DATE    AS joinDate,
-      e.LEAVE_DATE   AS leaveDate,
-      e.LEAVE_REASON AS leaveReason,
-      e.BANK_CODE    AS bankCode,
-      e.ACCOUNT_NO   AS accountNo,
-      e.ZIP_CODE     AS zipCode,
-      e.ADDRESS      AS address,
-      e.COMPANY_CODE AS companyCode
-    FROM EMP e
-    LEFT JOIN DEPT d ON e.DEPT_CODE = d.DEPT_CODE
-    WHERE e.COMPANY_CODE = #{companyCode}
-    ORDER BY e.EMP_ID DESC
-  </select>
+	<!-- 전체조회 -->
+	<select id="selectEmpList" resultMap="EmpMap">
+		SELECT
+		e.EMP_ID AS emp_id,
+		e.NAME AS name,
+		e.DEPT_CODE AS dept_code,
+		d.DEPT_NAME AS dept_name,
+		e.POSITION AS position,
+		e.TITLE AS title,
+		e.BIRTH AS birth,
+		e.PHONE AS phone,
+		e.EMAIL AS email,
+		e.JOIN_DATE AS joinDate,
+		e.LEAVE_DATE AS leaveDate,
+		e.LEAVE_REASON AS leaveReason,
+		e.BANK_CODE AS bankCode,
+		e.ACCOUNT_NO AS accountNo,
+		e.ZIP_CODE AS zipCode,
+		e.ADDRESS AS address,
+		e.ADDRESS_DETAIL AS addressDetail,
+		e.ACCOUNT_NAME AS accountName,
+		e.COMPANY_CODE AS companyCode
+		FROM EMP e
+		LEFT JOIN DEPT d ON e.DEPT_CODE = d.DEPT_CODE
+		WHERE e.COMPANY_CODE = #{companyCode}
+		ORDER BY e.EMP_ID DESC
+	</select>
 
-  <!-- 단건 조회 -->
-  <select id="selectEmp" parameterType="com.yedam.erp.vo.hr.EmpVO" resultMap="EmpMap">
-    SELECT
-      e.EMP_ID       AS emp_id,
-      e.NAME         AS name,
-      e.DEPT_CODE    AS dept_code,
-      d.DEPT_NAME    AS dept_name,
-      e.POSITION     AS position,
-      e.TITLE        AS title,
-      e.BIRTH        AS birth,
-      e.PHONE        AS phone,
-      e.EMAIL        AS email,
-      e.JOIN_DATE    AS joinDate,
-      e.LEAVE_DATE   AS leaveDate,
-      e.LEAVE_REASON AS leaveReason,
-      e.BANK_CODE    AS bankCode,
-      e.ACCOUNT_NO   AS accountNo,
-      e.ZIP_CODE     AS zipCode,
-      e.ADDRESS      AS address,
-      e.COMPANY_CODE AS companyCode
-    FROM EMP e
-    LEFT JOIN DEPT d ON e.DEPT_CODE = d.DEPT_CODE
-    WHERE e.EMP_ID = #{emp_id}
-  </select>
+	<!-- 단건 조회 -->
+	<select id="selectEmp" parameterType="com.yedam.erp.vo.hr.EmpVO"
+		resultMap="EmpMap">
+		SELECT
+		e.EMP_ID AS emp_id,
+		e.NAME AS name,
+		e.DEPT_CODE AS dept_code,
+		d.DEPT_NAME AS dept_name,
+		e.POSITION AS position,
+		e.TITLE AS title,
+		e.BIRTH AS birth,
+		e.PHONE AS phone,
+		e.EMAIL AS email,
+		e.JOIN_DATE AS joinDate,
+		e.LEAVE_DATE AS leaveDate,
+		e.LEAVE_REASON AS leaveReason,
+		e.BANK_CODE AS bankCode,
+		e.ACCOUNT_NO AS accountNo,
+		e.ZIP_CODE AS zipCode,
+		e.ADDRESS AS address,
+		e.ADDRESS_DETAIL AS addressDetail,
+		e.ACCOUNT_NAME AS accountName,
+		e.COMPANY_CODE AS companyCode
+		FROM EMP e
+		LEFT JOIN DEPT d ON e.DEPT_CODE = d.DEPT_CODE
+		WHERE e.EMP_ID = #{emp_id}
+	</select>
 
-  <!-- 팀장 조회 -->
-  <select id="selectManagers" resultMap="EmpMap">
-    SELECT
-      e.EMP_ID       AS emp_id,
-      e.NAME         AS name,
-      e.DEPT_CODE    AS dept_code,
-      d.DEPT_NAME    AS dept_name,
-      e.POSITION     AS position,
-      e.TITLE        AS title,
-      e.BIRTH        AS birth,
-      e.PHONE        AS phone,
-      e.EMAIL        AS email,
-      e.JOIN_DATE    AS joinDate,
-      e.LEAVE_DATE   AS leaveDate,
-      e.LEAVE_REASON AS leaveReason,
-      e.BANK_CODE    AS bankCode,
-      e.ACCOUNT_NO   AS accountNo,
-      e.ZIP_CODE     AS zipCode,
-      e.ADDRESS      AS address,
-      e.COMPANY_CODE AS companyCode
-    FROM EMP e
-    LEFT JOIN DEPT d ON e.DEPT_CODE = d.DEPT_CODE
-    WHERE e.COMPANY_CODE = #{companyCode}
-      AND e.TITLE = '팀장'
-    ORDER BY e.EMP_ID DESC
-  </select>
+	<!-- 팀장 조회 -->
+	<select id="selectManagers" resultMap="EmpMap">
+		SELECT
+		e.EMP_ID AS emp_id,
+		e.NAME AS name,
+		e.DEPT_CODE AS dept_code,
+		d.DEPT_NAME AS dept_name,
+		e.POSITION AS position,
+		e.TITLE AS title,
+		e.BIRTH AS birth,
+		e.PHONE AS phone,
+		e.EMAIL AS email,
+		e.JOIN_DATE AS joinDate,
+		e.LEAVE_DATE AS leaveDate,
+		e.LEAVE_REASON AS leaveReason,
+		e.BANK_CODE AS bankCode,
+		e.ACCOUNT_NO AS accountNo,
+		e.ZIP_CODE AS zipCode,
+		e.ADDRESS AS address,
+		e.ADDRESS_DETAIL AS addressDetail,
+		e.ACCOUNT_NAME AS accountName,
+		e.COMPANY_CODE AS companyCode
+		FROM EMP e
+		LEFT JOIN DEPT d ON e.DEPT_CODE = d.DEPT_CODE
+		WHERE e.COMPANY_CODE = #{companyCode}
+		AND e.TITLE = '팀장'
+		ORDER BY e.EMP_ID DESC
+	</select>
 
-  <!-- 등록 -->
-  <insert id="insertEmp" parameterType="com.yedam.erp.vo.hr.EmpVO">
-    INSERT INTO EMP (
-      NAME, DEPT_CODE, POSITION, TITLE, BIRTH, PHONE,
-      EMAIL, JOIN_DATE, LEAVE_DATE, LEAVE_REASON,
-      BANK_CODE, ACCOUNT_NO, ZIP_CODE, ADDRESS, COMPANY_CODE
-    ) VALUES (
-      #{name}, #{dept_code}, #{position}, #{title}, #{birth}, #{phone},
-      #{email}, #{joinDate}, #{leaveDate}, #{leaveReason},
-      #{bankCode}, #{accountNo}, #{zipCode}, #{address}, #{companyCode}
-    )
-  </insert>
+	<!-- 등록 -->
+	<insert id="insertEmp" parameterType="com.yedam.erp.vo.hr.EmpVO">
+		INSERT INTO EMP (
+		NAME, DEPT_CODE, POSITION, TITLE, BIRTH, PHONE,
+		EMAIL, JOIN_DATE, LEAVE_DATE, LEAVE_REASON,
+		BANK_CODE, ACCOUNT_NO, ACCOUNT_NAME,ZIP_CODE, ADDRESS,ADDRESS_DETAIL, COMPANY_CODE
+		) VALUES (
+		#{name}, #{dept_code}, #{position}, #{title}, #{birth}, #{phone},
+		#{email}, #{joinDate}, #{leaveDate}, #{leaveReason},
+		#{bankCode}, #{accountNo},#{accountName}, #{zipCode}, #{address},#{addressDetail}, #{companyCode}
+		)
+	</insert>
 
-  <!-- 수정 -->
-  <update id="updateEmp" parameterType="com.yedam.erp.vo.hr.EmpVO">
-    UPDATE EMP
-    <set>
-      <if test="name != null">        NAME = #{name},</if>
-      <if test="dept_code != null">   DEPT_CODE = #{dept_code},</if>
-      <if test="position != null">    POSITION = #{position},</if>
-      <if test="title != null">       TITLE = #{title},</if>
-      <if test="birth != null">       BIRTH = #{birth},</if>
-      <if test="phone != null">       PHONE = #{phone},</if>
-      <if test="email != null">       EMAIL = #{email},</if>
-      <if test="joinDate != null">    JOIN_DATE = #{joinDate},</if>
-      <if test="leaveDate != null">   LEAVE_DATE = #{leaveDate},</if>
-      <if test="leaveReason != null"> LEAVE_REASON = #{leaveReason},</if>
-      <if test="bankCode != null">    BANK_CODE = #{bankCode},</if>
-      <if test="accountNo != null">   ACCOUNT_NO = #{accountNo},</if>
-      <if test="zipCode != null">     ZIP_CODE = #{zipCode},</if>
-      <if test="address != null">     ADDRESS = #{address},</if>
-      <if test="companyCode != null"> COMPANY_CODE = #{companyCode},</if>
-    </set>
-    WHERE EMP_ID = #{emp_id}
-  </update>
+	<!-- 수정 -->
+	<update id="updateEmp" parameterType="com.yedam.erp.vo.hr.EmpVO">
+		UPDATE EMP
+		<set>
+			<if test="name != null"> NAME = #{name},</if>
+			<if test="dept_code != null"> DEPT_CODE = #{dept_code},</if>
+			<if test="position != null"> POSITION = #{position},</if>
+			<if test="title != null"> TITLE = #{title},</if>
+			<if test="birth != null"> BIRTH = #{birth},</if>
+			<if test="phone != null"> PHONE = #{phone},</if>
+			<if test="email != null"> EMAIL = #{email},</if>
+			<if test="joinDate != null"> JOIN_DATE = #{joinDate},</if>
+			<if test="leaveDate != null"> LEAVE_DATE = #{leaveDate},</if>
+			<if test="leaveReason != null"> LEAVE_REASON = #{leaveReason},</if>
+			<if test="bankCode != null"> BANK_CODE = #{bankCode},</if>
+			<if test="accountNo != null"> ACCOUNT_NO = #{accountNo},</if>
+			<if test="zipCode != null"> ZIP_CODE = #{zipCode},</if>
+			<if test="address != null"> ADDRESS = #{address},</if>
+			<if test="addressDetail != null"> ADDRESS_DETAIL = #{addressDetail},</if>
+			<if test="accountName != null"> ACCOUNT_NAME = #{accountName},</if>
+			<if test="companyCode != null"> COMPANY_CODE = #{companyCode},</if>
+		</set>
+		WHERE EMP_ID = #{emp_id}
+	</update>
 
 </mapper>

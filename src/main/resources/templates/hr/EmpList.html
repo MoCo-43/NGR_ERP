@@ -19,6 +19,14 @@
 	height: 32rem;
 	width: 100%;
 }
+
+/* ▼ 인풋/셀렉트 스타일 통일 */
+.toolbar .form-control, .toolbar .form-select {
+	height: 38px;
+	font-size: 0.95rem;
+	line-height: 1.4;
+}
+/* ▲ 끝 */
 </style>
 
 </th:block>
@@ -31,11 +39,11 @@
 				<h6 class="m-0 font-weight-bold text-primary">사원 목록</h6>
 			</div>
 			<div class="toolbar">
-				<div class="row g-2 align-items-center">
-					<div class="col-12 col-sm-4 col-xl-3">
+				<div class="row g-2 align-items-center flex-xl-nowrap">
+					<div class="col-12 col-sm-4 col-xl-2">
 						<input id="keyword" class="form-control" placeholder="사번/성명 검색">
 					</div>
-					<div class="col-12 col-sm-4 col-xl-3">
+					<div class="col-12 col-sm-4 col-xl-2">
 						<input id="srchDept" class="form-control" placeholder="부서명">
 					</div>
 					<div class="col-12 col-sm-4 col-xl-2">
@@ -43,6 +51,13 @@
 					</div>
 					<div class="col-12 col-sm-4 col-xl-2">
 						<input id="srchTitle" class="form-control" placeholder="직책">
+					</div>
+					<div class="col-12 col-sm-4 col-xl-2">
+						<select id="srchStatus" class="form-control">
+							<option value="ALL" selected>재직상태(전체)</option>
+							<option value="EMPLOYED">재직자</option>
+							<option value="RESIGNED">퇴사자</option>
+						</select>
 					</div>
 					<div class="col-12 col-xl-auto">
 						<div>
@@ -126,23 +141,36 @@
           else gridApi.setRowData?.(rows);
         }
 
+        // ▼ 퇴사 여부 (퇴사일자 존재시 퇴사자로 판단)
+        function isResigned(row){
+          return !!(row && row.leaveDate);
+        }
+
         // 조회,초기화
         function applyFrontFilter(){
           const kw=($('keyword').value||'').trim().toLowerCase();
           const dept=($('srchDept').value||'').trim().toLowerCase();
           const pos=($('srchPosition').value||'').trim().toLowerCase();
           const tit=($('srchTitle').value||'').trim().toLowerCase();
+          const status=($('srchStatus')?.value)||'ALL';
+
           const filtered=rowDataCache.filter(r=>{
             const mKw=!kw||(String(r.emp_id||'').toLowerCase().includes(kw)||String(r.name||'').toLowerCase().includes(kw));
             const mDept=!dept||String(r.dept_name||'').toLowerCase().includes(dept);
             const mPos=!pos||String(r.position||'').toLowerCase().includes(pos);
             const mTit=!tit||String(r.title||'').toLowerCase().includes(tit);
-            return mKw&&mDept&&mPos&&mTit;
+
+            let mStatus=true;
+            if (status==='RESIGNED')   mStatus = isResigned(r);
+            else if (status==='EMPLOYED') mStatus = !isResigned(r);
+
+            return mKw&&mDept&&mPos&&mTit&&mStatus;
           });
           setRows(filtered); gridApi?.paginationGoToFirstPage?.();
         }
         function doReset(){
           ['keyword','srchDept','srchPosition','srchTitle'].forEach(id=>{$(id).value='';});
+          if ($('srchStatus')) $('srchStatus').value='ALL';
           setRows(rowDataCache); gridApi?.paginationGoToFirstPage?.(); gridApi?.deselectAll?.(); $('btnEditOpen').disabled=true;
         }
         $('btnSearch').addEventListener('click', applyFrontFilter);
@@ -150,6 +178,7 @@
         ['keyword','srchDept','srchPosition','srchTitle'].forEach(id=>{
           $(id).addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); applyFrontFilter(); } });
         });
+        $('srchStatus')?.addEventListener('change', applyFrontFilter);
 
         // 모달 열기
         function openCreate(){ window.EmpModal?.openCreate?.(); }
