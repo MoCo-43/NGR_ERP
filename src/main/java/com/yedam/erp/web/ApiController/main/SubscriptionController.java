@@ -21,6 +21,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.main.CompanyService;
+import com.yedam.erp.service.main.EmpLoginService;
 import com.yedam.erp.service.main.SubscriptionService;
 import com.yedam.erp.vo.main.CompanyVO;
 import com.yedam.erp.vo.main.SubPlanVO;
@@ -37,6 +38,7 @@ public class SubscriptionController {
     
     private final SubscriptionService subscriptionService;
     private final CompanyService companyService;
+    private final EmpLoginService empLoginService;
     private Long getLoggedInMatNo() {
         return SessionUtil.companyId();
     }
@@ -154,7 +156,7 @@ public class SubscriptionController {
 //        return "main/submanager";
 //    }
     @GetMapping("/admin/subList/{matNo}")
-    public String subList(@PathVariable Long matNo, Model model) {
+    public String subLists(@PathVariable Long matNo, Model model) {
         Long sessionMatNo = SessionUtil.companyId();
         log.info("PathVariable matNo: {}, Session matNo: {}", matNo, sessionMatNo);
 
@@ -181,7 +183,35 @@ public class SubscriptionController {
         }
         return "main/submanager";
     }
-    
+//    @GetMapping("/admin/subList")
+//    public String subList(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+//        String empId = userDetails.getUsername();
+//        log.info("로그인된 사용자 empId: {}", empId);
+//
+//        // matNo만 가져오는 올바른 메소드 호출
+//        // EmpVO를 반환하는 mypageInfo() 대신 Long을 반환하는 findMatNoByEmpId() 사용
+//        Long matNo = empLoginService.findMatNoByEmpId(empId); 
+//        
+//        if (matNo == null) {
+//            log.warn("사용자 empId={}에 대한 matNo가 존재하지 않습니다.", empId);
+//            return "redirect:/access-denied"; // 또는 에러 페이지
+//        }
+//
+//        // 구독 정보 가져오기
+//        SubscriptionVO subscription = subscriptionService.findLatestSubscriptionByMatNo(matNo);
+//        model.addAttribute("subscription", subscription);
+//
+//        List<String> avaiModules = Optional.ofNullable(subscription)
+//                .map(SubscriptionVO::getSubPlan)
+//                .map(SubPlanVO::getAvaiModules)
+//                .filter(modules -> modules != null && !modules.trim().isEmpty())
+//                .map(modules -> Arrays.asList(modules.split(",")))
+//                .orElse(Collections.emptyList());
+//
+//        model.addAttribute("avaiModules", avaiModules);
+//
+//        return "main/submanager";
+//    }
     @GetMapping("/contract-html")
     @ResponseBody
     public String getContractHtml() throws IOException {
