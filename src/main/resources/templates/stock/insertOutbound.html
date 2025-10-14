@@ -61,19 +61,23 @@
         </div>
         <div class="col-md-3">
           <label for="doCode" class="form-label">지시서코드</label>
-          <input type="text" class="form-control" id="doCode" name="doCode" placeholder="지시서코드 기입">
+          <input type="text" class="form-control" id="doCodeInput" name="doCode" placeholder="지시서코드 기입">
         </div>
          <div class="col-md-3">
           <label for="businessCode" class="form-label">거래처코드</label>
           <input type="text" class="form-control" id="businessCodeInput" name="businessCode">
         </div>
         <div class="col-md-3">
-          <label for="cusName" class="form-label">거래처명</label>
-          <input type="text" class="form-control" id="cusName" name="cusName">
+          <label for="businessPartner" class="form-label">거래처명</label>
+          <input type="text" class="form-control" id="businessPartnerInput" name="businessPartner">
         </div>
         <div class="col-md-3">
           <label for="outBoundDate" class="form-label">출고일자</label>
           <input type="date" class="form-control" id="outBoundDate" name="outBoundDate">
+        </div>
+        <div class="col-md-3">
+          <label for="dueDate" class="form-label">납기일자</label>
+          <input type="date" class="form-control" id="dueDateInput" name="dueDate">
         </div>
         <div class="col-md-3">
           <label for="empId" class="form-label">담당자명</label>
@@ -243,10 +247,10 @@ document.addEventListener("DOMContentLoaded", () => {
 	                console.log("선택된 지시 :", event.data);
 	                const selectedRow = event.data;
 	                // 필요하면 선택한 데이터를 상단 input에 반영
-	               	document.getElementById('doCode').value = selectedRow.doCode || "";
+	               	document.getElementById('doCodeInput').value = selectedRow.doCode || "";
 				    document.getElementById('businessCodeInput').value = selectedRow.cusCode || "";
-				    document.getElementById('cusName').value = selectedRow.cusName || "";
-				    // document.getElementById('dueDate').value = selectedRow.dueDate || "";
+				    document.getElementById('businessPartnerInput').value = selectedRow.cusName || "";
+				    document.getElementById('dueDateInput').value = selectedRow.dueDate || "";
 	                await addDetailRow(selectedRow); // 디테일 테이블에 새 row 추가;
 	                orderListModal.hide();
 	            }
@@ -274,7 +278,6 @@ document.addEventListener("DOMContentLoaded", () => {
 	            const eGridDiv = document.getElementById('outListGrid');
 	            const columnDefs = [
 	            	  { headerName: "No.", valueGetter: "node.rowIndex + 1", width: 70 },
-	            	  { headerName: "출고예정일", field: "dueDate" },
 	                  { headerName: "제품코드", field: "productCode" },
 	                  { headerName: "제품명", field: "productName" },
 	                  { headerName: "규격", field: "specification" },
@@ -323,7 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const toast = new bootstrap.Toast(toastEl);
 	
 	submitBtn.addEventListener('click', async (event) => {
-		console.log(event.data);
+		console.log(event);
 		event.preventDefault(); // 페이지 새로고침 방지
 	        // confirm 먼저
 	        const res = await cuteAlert({
@@ -338,29 +341,29 @@ document.addEventListener("DOMContentLoaded", () => {
 	        if(res !== true) {
 	            return; // 취소 시 함수 종료
 	        }
-	        // 1️⃣ 헤더 데이터
-	        const header = {
-	            outboundCode: document.getElementById('doCode').value,
-	            businessCode: document.getElementById('businessCodeInput').value,
-	            cusName: document.getElementById('cusName').value,
-	            outboundDate: document.getElementById('outBoundDate').value,
-	            empId: document.getElementById('empId').value,
-	            companyCode: Number(document.getElementById('compCode').value) || 0
-	        };
 	        const details = [];
 	        if (orderDetailGridApi) {
 	            orderDetailGridApi.forEachNode((node) => {
 	                details.push({
-	 			    dueDate: document.getElementById('dueDate').value,
+	 			    //dueDate: node.data.dueDate,
 	                productCode: node.data.productCode,
 	                productName: node.data.productName,
 	                specification: node.data.specification,
-	                amount: Number(node.data.amount) || 0,
+	                qty: Number(node.data.amount) || 0,
 	                companyCode: Number(document.getElementById('compCode').value) || 0
 	                });
 	            });
 	        }
-		  const payload = { header, details };
+		  const payload = {
+					    doCode: document.getElementById('doCodeInput').value,
+			            dueDate: document.getElementById('dueDateInput').value,
+			            businessCode: document.getElementById('businessCodeInput').value,
+			            businessPartner: document.getElementById('businessPartnerInput').value,
+			            outboundDate: document.getElementById('outBoundDate').value,
+			            empId: document.getElementById('empId').value,
+			            companyCode: Number(document.getElementById('compCode').value) || 0,
+			            details : details 
+		            };
 		  console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
 		  //console.log("payload.orderPrice: "+payload.orderPrice);
 		  try {

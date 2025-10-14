@@ -80,12 +80,18 @@ public interface StockMapper {
 	public void insertInbound(InboundVO inbound);
 	
 	
+	// 출고 조회
+	public List<OutboundHeaderVO> getDeliveryNote(); // 전체조회
+	public List<OutboundVO> selectOutboundByOutbHeaderCode(@Param("outCode") String outbHeaderCode ,
+			                                               @Param("doCode")String doCode);
+	
+	
 	// 출고 등록
 	public void insertOutbound(OutboundHeaderVO payload);// 헤더
 	public int insertOutboundDetail(OutboundVO item);// 상세
 	public int insertLotOutbound(LotoutboundVO lot); // 제품별 LOT 출고내역
 	public List<InboundVO> selectAvailableLots(@Param("productCode") String productCode);// LOT 조회용
-	public int updateInboundQty(@Param("lotCode")String lotCode , @Param("qty")Long qty);
+	
 	
 	// 출하 지시시 조회
 	public List<ComOrderVO> getDeliveryOrderList();

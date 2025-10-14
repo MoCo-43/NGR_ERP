@@ -135,18 +135,75 @@ public class StockController {
 	
 	@PostMapping("/outboundInsert")
 	public ResponseEntity<?> insertOutbound(@RequestBody OutboundHeaderVO payload){
-		service.insertOutbound(payload);
-		return ResponseEntity.ok("출고등록 완료!");
+		System.out.println("넘어온 payload : "+payload);
+//		if (payload.toString().isEmpty()) {
+		// NULL || empty CHECK
+//			System.out.println("payload의 값이 비어있습니다.\n다시 확인해주세요.");
+//		}
+		try {
+			service.insertOutbound(payload);
+			return ResponseEntity.ok("출고등록 완료!");
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("등록 실패: " + e.getMessage());
+		}
+	}
+	
+	@GetMapping("/outboundList")
+	public List<OutboundHeaderVO> getOutboundList(){
+		return service.getOutboundList();
 	}
 	
 	
-//	@PostMapping("/requestOrderInsert")
-//	public ResponseEntity<String> insertOrder(@RequestBody OrderPlanVO plan) {
-//        
-//            // 1️⃣ DB에 발주 등록
-//            service.insertOrderPlan(plan);
-//            return ResponseEntity.ok("발주 등록 완료");
-//    }
+	@GetMapping("/outboundList/{selectedRow}/{doCode}")
+	public List<OutboundVO> getOutboundDetailList(@PathVariable String selectedRow , @PathVariable String doCode){
+		return service.selectOutboundByOutbHeaderCode(selectedRow, doCode);
+	}
+	
+	
+	@GetMapping("/outboundSheet/{outbHeaderCode}/{businessCode}/{doCode}") // 발주 조회시 발주서 상세 조회()
+	public void outboundListReport(@PathVariable String outbHeaderCode,@PathVariable String businessCode , @PathVariable String doCode ,HttpServletRequest request, HttpServletResponse response) throws Exception { 
+	 //Connection conn = datasource.getConnection();
+	 // 소스 컴파일 jrxml -> jasper
+	 InputStream stream = getClass().getResourceAsStream("/reports/deliveryNoteSheet.jrxml"); 
+	 JasperReport jasperReport = JasperCompileManager.compileReport(stream); // jrxml 용
+	 //JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream); // jasper 용
+	 
+	 // 상세 조회
+	 List<OutboundVO> detailList = service.selectOutboundByOutbHeaderCode(outbHeaderCode, doCode);
+	 
+	 //데이터 조회
+	 JRDataSource jRdataSource = new JRBeanCollectionDataSource(detailList);
+	 
+	 // 세션 회사 정보 조회
+	 CompanyVO comp = service.selectComp(SessionUtil.companyId());
+	 
+	 // 발주서 발주넣을 거래처 정보 조회
+	 CustomerVO cust = service.selectCutomer(businessCode);
+	 
+	 //파라미터 맵
+	 HashMap<String,Object> map = new HashMap<>(); 
+	 map.put("outbHeaderCodeParam", outbHeaderCode); // 출고코드
+	 map.put("doCodeParam", doCode); // 지시코드
+	 
+	 map.put("brmParam",comp.getBrm()); // 회사 사업자번호
+	 map.put("compNameCeoParam", comp.getCompName()+"/"+comp.getCeo()); // 회사명 / 대표명
+	 map.put("compAddrParam",comp.getCompAddr()); // 회사 주소
+	 map.put("compMatParam",comp.getMatName()+"/"+comp.getMatTel()); // 회사담당자 / 담당자회선번호
+	 
+	 map.put("cusNameParam",cust.getCusName()); // 거래명세서 구매처 회사명
+	 map.put("telParam",cust.getTel()); // 거래명세서 구매처 전화번호
+	 map.put("emailParam",cust.getEmail()); // 거래명세서 구매처 이메일
+     
+     // 조회건 반환
+	 response.setContentType("application/pdf");
+	 response.setHeader("Content-Disposition", "inline; filename=deliveryNoteSheet.pdf");
+     JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, map, jRdataSource);
+     //JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, map, conn);
+	 JasperExportManager.exportReportToPdfStream( jasperPrint, response.getOutputStream());
+	}
 	
 	
 	@GetMapping("/orderListSheet/{orderCode}/{businessCode}") // 발주 조회시 발주서 상세 조회()
@@ -315,6 +372,7 @@ public class StockController {
 	            if (!dir.exists()) dir.mkdirs();
 	            file.transferTo(new File(dir, newFileName));
 	        }
+	        product.setCompanyCode(SessionUtil.empId());
 	        return service.insertProduct(product);
 	        
 	    }

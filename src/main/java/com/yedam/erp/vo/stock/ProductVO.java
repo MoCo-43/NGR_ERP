@@ -26,5 +26,6 @@ public class ProductVO {
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private Date insertDate;
 	private int leadTime;
+	private String companyCode;
 	
 }
