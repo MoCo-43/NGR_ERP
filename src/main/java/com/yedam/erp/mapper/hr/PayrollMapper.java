@@ -38,8 +38,6 @@ public interface PayrollMapper {
     // 사원별 상세
     List<Map<String,Object>> selectPayrollDetailPivot(Map<String,Object> param);
 
-    // 부서합계
-    Map<String,Object> selectDeptSum(PayrollVO vo);
 
     // 공제 저장
     int upsertDeduct(PayrollSummaryVO vo);

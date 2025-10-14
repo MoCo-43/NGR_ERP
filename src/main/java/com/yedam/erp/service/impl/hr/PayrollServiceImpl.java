@@ -90,10 +90,6 @@ public class PayrollServiceImpl implements PayrollService {
         return payrollMapper.selectPayrollDetailPivot(param);
     }
 
-    @Override
-    public Map<String, Object> selectDeptSum(PayrollVO vo) {
-        return payrollMapper.selectDeptSum(vo);
-    }
 
     @Override
     public int upsertDeduct(PayrollSummaryVO vo) {

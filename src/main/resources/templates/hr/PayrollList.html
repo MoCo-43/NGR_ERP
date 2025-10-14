@@ -1,195 +1,182 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/base}">
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}">
 <head>
 <title layout:fragment="title">급여대장 리스트</title>
 
 <th:block layout:fragment="head_extra">
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
 
-	<style>
-.toolbar { padding: 1.0rem 1.0rem 0.25rem 1.0rem; }
-
-#payrollGrid.ag-theme-quartz {
-	height: 32rem;
-	width: 100%;
-}
-
-.status-wait {
-	color: red;
-	font-weight: bold;
-}
-
-.status-confirm {
-	color: blue;
-	font-weight: bold;
-}
-</style>
+  <style>
+  .toolbar { padding: 1.0rem 1.0rem 0.25rem 1.0rem; }
+  #payrollGrid.ag-theme-quartz { height: 32rem; width: 100%; }
+  .status-wait { color: red; font-weight: bold; }
+  .status-confirm { color: blue; font-weight: bold; }
+  </style>
 </th:block>
 </head>
 
 <body>
-	<section layout:fragment="content">
+  <section layout:fragment="content">
 
-		<div class="card shadow mb-3">
-			<div class="card-header py-3 d-flex justify-content-between align-items-center">
-				<h6 class="m-0 font-weight-bold text-primary">급여대장 리스트</h6>
-				<button class="btn btn-primary btn-sm" id="btnRegister">등록</button>
-			</div>
+    <div class="card shadow mb-3">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">급여대장 리스트</h6>
+        <button class="btn btn-primary btn-sm" id="btnRegister">등록</button>
+      </div>
 
-			<div class="toolbar btn-bar">
-				<div class="row g-2 align-items-center">
-					<div class="col-12 col-sm-4 col-xl-3">
-						<input id="srchMonth" type="month" class="form-control" placeholder="귀속연월">
-					</div>
-					<div class="col-12 col-sm-4 col-xl-3">
-						<input id="srchDeptName" class="form-control" placeholder="부서명">
-					</div>
-					<div class="col-12 col-xl-auto">
-						<div class="actions">
-							<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
-							<button id="btnReset" class="btn btn-danger btn-sm">초기화</button>
-						</div>
-					</div>
-				</div>
-			</div>
+      <div class="toolbar btn-bar">
+        <div class="row g-2 align-items-center">
+          <div class="col-12 col-sm-4 col-xl-3">
+            <input id="srchMonth" type="month" class="form-control" placeholder="귀속연월">
+          </div>
+          <div class="col-12 col-sm-4 col-xl-3">
+            <input id="srchDeptName" class="form-control" placeholder="부서명">
+          </div>
+          <div class="col-12 col-xl-auto">
+            <div class="actions">
+              <button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
+              <button id="btnReset" class="btn btn-danger btn-sm">초기화</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-			<div class="card-body pt-3">
-				<div id="payrollGrid" class="ag-theme-quartz"></div>
-			</div>
-		</div>
+      <div class="card-body pt-3">
+        <div id="payrollGrid" class="ag-theme-quartz"></div>
+      </div>
+    </div>
 
-		<th:block th:replace="~{hr/payrollModal :: payrollModal}"></th:block>
+    <th:block th:replace="~{hr/payrollModal :: payrollModal}"></th:block>
 
-	</section>
+  </section>
 
-	<th:block layout:fragment="body_extra">
-		<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+  <th:block layout:fragment="body_extra">
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 
-		<script>
-		document.addEventListener('DOMContentLoaded', () => {
-		  const gridDiv      = document.getElementById('payrollGrid');
-		  const btnSearch    = document.getElementById('btnSearch');
-		  const btnReset     = document.getElementById('btnReset');
-		  const btnRegister  = document.getElementById('btnRegister');
-		  const srchMonth    = document.getElementById('srchMonth');
-		  const srchDeptName = document.getElementById('srchDeptName');
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // API 베이스 
+      const API_BASE = '/api/v1/payrolls';
 
-		  let gridApi = null;
-		  let rowDataCache = [];
+      const gridDiv      = document.getElementById('payrollGrid');
+      const btnSearch    = document.getElementById('btnSearch');
+      const btnReset     = document.getElementById('btnReset');
+      const btnRegister  = document.getElementById('btnRegister');
+      const srchMonth    = document.getElementById('srchMonth');
+      const srchDeptName = document.getElementById('srchDeptName');
 
-		  const formatDate = (v) => v ? String(v).slice(0,10) : '';
+      let gridApi = null;
+      let rowDataCache = [];
 
-		  // 컬럼 정의
-		  const columnDefs = [
-			{ headerName:'귀속연월', field:'yearMonth', width:120 },
-			{ headerName:'대장 명칭', field:'title', flex:1, minWidth:220 },
-			{ headerName:'부서', width:140, valueGetter:(p)=> p.data?.deptName ?? p.data?.dept_code ?? '' },
-			{ headerName:'지급일', field:'payDate', width:140, valueFormatter:(p)=>formatDate(p.value) },
-			{ headerName:'인원수', field:'empCount', width:100 },
-			{ headerName:'상태', field:'status', width:100,
-			  cellRenderer:(p)=> p.value==='CONFIRMED'
-				? '<span class="status-confirm">확정</span>'
-				: '<span class="status-wait">대기</span>' },
-			{ headerName:'급여대장', width:100,
-			  cellRenderer:(p)=> {
-				const no = p.data?.payrollNo ?? p.data?.payroll_no;
-				if (!no) return '';
-				const a = document.createElement('a');
-				a.href = 'javascript:void(0)';
-				a.textContent = '보기';
-				a.addEventListener('click', (e)=>{
-				  e.preventDefault();
-				  window.PayrollDetail?.open?.(Number(no));
-				});
-				return a;
-			  } }
-		  ];
+      const formatDate = (v) => v ? String(v).slice(0,10) : '';
 
-		  // 그리드 옵션
-		  const gridOptions = {
-			columnDefs,
-			rowData: [],
-			pagination: true,
-			paginationPageSize: 10,
-			defaultColDef: { sortable:true, resizable:true, filter:false, suppressMenu:true },
-			onGridReady: (params) => { gridApi = params.api; initLoad(); }
-		  };
+      // 컬럼 정의
+      const columnDefs = [
+        { headerName:'귀속연월', field:'yearMonth', width:120 },
+        { headerName:'대장 명칭', field:'title', flex:1, minWidth:220 },
+        { headerName:'부서', width:140, valueGetter:(p)=> p.data?.deptName ?? p.data?.dept_code ?? '' },
+        { headerName:'지급일', field:'payDate', width:140, valueFormatter:(p)=>formatDate(p.value) },
+        { headerName:'인원수', field:'empCount', width:100 },
+        { headerName:'상태', field:'status', width:100,
+          cellRenderer:(p)=> p.value==='CONFIRMED'
+            ? '<span class="status-confirm">확정</span>'
+            : '<span class="status-wait">대기</span>' },
+        { headerName:'급여대장', width:100,
+          cellRenderer:(p)=> {
+            const no = p.data?.payrollNo ?? p.data?.payroll_no;
+            if (!no) return '';
+            const a = document.createElement('a');
+            a.href = 'javascript:void(0)';
+            a.textContent = '보기';
+            a.addEventListener('click', (e)=>{
+              e.preventDefault();
+              window.PayrollDetail?.open?.(Number(no));
+            });
+            return a;
+          } }
+      ];
 
-		  new agGrid.Grid(gridDiv, gridOptions);
+      // 그리드 옵션
+      const gridOptions = {
+        columnDefs,
+        rowData: [],
+        pagination: true,
+        paginationPageSize: 10,
+        defaultColDef: { sortable:true, resizable:true, filter:false, suppressMenu:true },
+        onGridReady: (params) => { gridApi = params.api; initLoad(); }
+      };
 
-		  async function initLoad(){
-			const now = new Date();
-			srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-			await loadFromServer();
-		  }
+      new agGrid.Grid(gridDiv, gridOptions);
 
-		  async function loadFromServer(){
-			const monthVal  = srchMonth.value;
-			const yearMonth = monthVal ? monthVal.replace('-','') : '';
+      async function initLoad(){
+        const now = new Date();
+        srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+        await loadFromServer();
+      }
 
-			const params = new URLSearchParams();
-			if (yearMonth) params.append('yearMonth', yearMonth);
-			params.append('companyCode', 1001); // ※ 실제 로그인 회사코드로 대체
+      async function loadFromServer(){
+        const monthVal  = srchMonth.value;
+        const yearMonth = monthVal ? monthVal.replace('-','') : '';
+        const url = yearMonth ? `${API_BASE}?yearMonth=${encodeURIComponent(yearMonth)}` : `${API_BASE}`;
+        const { data } = await axios.get(url, { validateStatus:s=>s>=200&&s<500 });
+        rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
+        applyFrontFilter();
+      }
 
-			const url = `/api/hr/payroll/list?${params.toString()}`;
-			const { data } = await axios.get(url, { validateStatus:s=>s>=200&&s<500 });
-			rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
-			applyFrontFilter();
-		  }
+      function applyFrontFilter(){
+        const deptKw = (srchDeptName.value||'').trim().toLowerCase();
+        const filtered = deptKw
+          ? rowDataCache.filter(r => ((r.deptName ?? r.dept_code ?? '')+'').toLowerCase().includes(deptKw))
+          : rowDataCache;
+        setRows(filtered);
+        gridApi?.paginationGoToFirstPage?.();
+      }
 
-		  function applyFrontFilter(){
-			const deptKw = (srchDeptName.value||'').trim().toLowerCase();
-			const filtered = deptKw
-			  ? rowDataCache.filter(r => ((r.deptName ?? r.dept_code ?? '')+'').toLowerCase().includes(deptKw))
-			  : rowDataCache;
-			setRows(filtered);
-			gridApi?.paginationGoToFirstPage?.();
-		  }
+      function doReset(){
+        const now = new Date();
+        srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+        srchDeptName.value = '';
+        loadFromServer();
+      }
 
-		  function doReset(){
-			const now = new Date();
-			srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-			srchDeptName.value = '';
-			loadFromServer();
-		  }
+      function setRows(rows){
+        if (!gridApi) return;
+        gridApi.setRowData(rows);
+      }
 
-		  function setRows(rows){
-			if (!gridApi) return;
-			gridApi.setRowData(rows);
-		  }
+      btnSearch.addEventListener('click', loadFromServer);
+      btnReset .addEventListener('click', doReset);
 
-		  btnSearch.addEventListener('click', loadFromServer);
-		  btnReset .addEventListener('click', doReset);
+      // 급여대장 등록
+      btnRegister.addEventListener('click', async ()=>{
+    	  const monthVal = srchMonth.value;
+    	  if (!monthVal) {
+    	    alert('귀속연월을 먼저 선택해주세요.');
+    	    return;
+    	  }
 
-	
-		  //  급여대장 등록 버튼
-	
-		  btnRegister.addEventListener('click', async ()=>{
-			const monthVal = srchMonth.value;
-			if (!monthVal) {
-			  alert('귀속연월을 먼저 선택해주세요.');
-			  return;
-			}
-			const yearMonth = monthVal.replace('-','');
-			const payload = { yearMonth: yearMonth, companyCode: 1001 };
+    	  const yearMonth = monthVal.replace('-', '');
+    	  //지급일
+    	  const payDate = `${monthVal}-25`;
+    	  const payload = { yearMonth, payDate };
 
-			try {
-			  await axios.post('/api/hr/payroll', payload);
-			  alert('급여대장이 등록되었습니다.');
-			  await loadFromServer();
-			} catch (e) {
-			  console.error(e);
-			  alert('등록 중 오류가 발생했습니다.');
-			}
-		  });
-		});
-		</script>
-	</th:block>
+    	  try {
+    	    await axios.post('/api/v1/payrolls', payload);
+    	    alert('급여대장이 등록되었습니다.');
+    	    await loadFromServer();
+    	  } catch (e) {
+    	    console.error(e);
+    	    alert('등록 중 오류가 발생했습니다.');
+    	  }
+    	});
+    });
+    </script>
+  </th:block>
 </body>
 </html>
