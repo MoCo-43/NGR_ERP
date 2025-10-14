@@ -110,7 +110,6 @@
       </div>
 
       <!-- 입력영역 (1~7,10) -->
-      <!-- 입력영역 (정렬 완료 버전) -->
       <div class="card shadow mb-4">
         <div class="card-body">
           <div class="rounded-box">
@@ -222,15 +221,23 @@
               </div>
             </div>
 
-            <!-- 비고 (한 줄 전체) -->
-            <div class="row g-3">
-              <div class="col-12">
+            <!-- 비고 + 할인적용여부 : 부가세유형과 동일 디자인/레이아웃 -->
+            <div class="row g-3 align-items-end mb-2">
+              <div class="col-md-6">
                 <label for="notes" class="form-label">비고</label>
                 <input
                   id="notes"
                   class="form-control"
                   placeholder="특이사항 메모"
                 />
+              </div>
+
+              <div class="col-md-6">
+                <label for="crActiveType" class="form-label">할인적용</label>
+                <select id="crActiveType" class="form-control">
+                  <option value="Y">적용</option>
+                  <option value="N" selected>미적용</option>
+                </select>
               </div>
             </div>
           </div>

@@ -174,7 +174,7 @@
                   />
                 </div>
 
-                <!-- 4. 담당자(돋보기) / 취급제품 -->
+                <!-- 4. 담당자(돋보기) -->
                 <div class="col-md-6">
                   <label for="managerName" class="form-label">담당자</label>
                   <div class="input-group">
@@ -194,15 +194,6 @@
                       <i class="bi bi-search"></i>
                     </button>
                   </div>
-                </div>
-                <div class="col-md-6">
-                  <label for="product" class="form-label">취급제품</label>
-                  <input
-                    type="text"
-                    id="product"
-                    name="product"
-                    class="form-control"
-                  />
                 </div>
 
                 <!-- 비고 -->
@@ -232,35 +223,145 @@
               </div>
             </div>
 
-            <!-- ====== 탭: 여신 (간단 필드) ====== -->
-            <div id="paneCredit" class="d-none">
+            <!-- ====== 여신 탭 ====== -->
+            <div id="paneCredit" class="">
               <div class="row g-3">
+                <!-- (1) 거래처코드 -->
                 <div class="col-md-6">
-                  <label for="creditLimit" class="form-label">여신한도</label>
+                  <label for="cr_cusCode" class="form-label fw-semibold"
+                    >거래처코드</label
+                  >
+                  <input
+                    type="text"
+                    id="cr_cusCode"
+                    class="form-control"
+                    placeholder="등록 시 자동기입"
+                    disabled
+                  />
+                </div>
+
+                <!-- (2) 여신한도 -->
+                <div class="col-md-6">
+                  <label for="cr_creditLimit" class="form-label fw-semibold"
+                    >여신한도</label
+                  >
                   <input
                     type="number"
-                    id="creditLimit"
-                    name="creditLimit"
-                    class="form-control"
-                    value="0"
+                    id="cr_creditLimit"
+                    class="form-control text-end"
+                    placeholder="0"
                     min="0"
                   />
                 </div>
+
+                <!-- (3) 담당자 -->
                 <div class="col-md-6">
-                  <label for="payTerm" class="form-label">결제조건</label>
-                  <input
-                    type="text"
-                    id="payTerm"
-                    name="payTerm"
-                    class="form-control"
-                    placeholder="예: 월말 30일"
-                  />
+                  <label for="cr_manager" class="form-label fw-semibold"
+                    >담당자</label
+                  >
+                  <div class="input-group">
+                    <input
+                      type="text"
+                      id="cr_manager"
+                      class="form-control"
+                      placeholder="담당자 선택"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary"
+                      id="cr_btnFindManager"
+                    >
+                      <i class="bi bi-search"></i>
+                    </button>
+                  </div>
                 </div>
+
+                <!-- 신용등급 -->
                 <div class="col-md-6">
-                  <label for="billUse" class="form-label">어음사용</label>
-                  <select id="billUse" name="billUse" class="form-select">
-                    <option value="">선택</option>
-                    <option value="Y">Y</option>
+                  <label for="cr_creditGrade" class="form-label"
+                    >신용등급</label
+                  >
+                  <select
+                    id="cr_creditGrade"
+                    class="form-control"
+                    title="A:5억 / B:1억 / C:5천만 / D:1천만 / E:여신불가"
+                  >
+                    <option value="A">A (5억)</option>
+                    <option value="B">B (1억)</option>
+                    <option value="C" selected>C (5천만)</option>
+                    <option value="D">D (1천만)</option>
+                    <option value="E">E (여신 불가)</option>
+                  </select>
+                </div>
+
+                <!-- 적용시작일 -->
+                <div class="col-md-6">
+                  <label for="cr_startDate" class="form-label fw-semibold"
+                    >적용시작일</label
+                  >
+                  <div class="input-group">
+                    <input type="date" id="cr_startDate" class="form-control" />
+                  </div>
+                </div>
+
+                <!-- 적용만료일 -->
+                <div class="col-md-6">
+                  <label for="cr_endDate" class="form-label fw-semibold"
+                    >적용만료일</label
+                  >
+                  <div class="input-group">
+                    <input type="date" id="cr_endDate" class="form-control" />
+                  </div>
+                </div>
+              </div>
+              <!-- (4) 수금일 -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">수금예정일</label>
+
+                <!-- 사용함 -->
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <input
+                    type="radio"
+                    id="cr_useY"
+                    name="cr_use"
+                    value="Y"
+                    checked
+                  />
+                  <label for="cr_useY" class="mb-0">사용함</label>
+
+                  <select
+                    id="cr_monthSel"
+                    class="form-select"
+                    style="max-width: 140px"
+                  >
+                    <option value="0">당월</option>
+                    <option value="3">3개월</option>
+                    <option value="6">6개월</option>
+                    <option value="EOM">월말</option>
+                  </select>
+                </div>
+
+                <!-- 사용안함 -->
+                <div class="d-flex align-items-center gap-2">
+                  <input type="radio" id="cr_useN" name="cr_use" value="N" />
+                  <label for="cr_useN" class="mb-0">사용안함</label>
+                </div>
+
+                <div class="form-text">
+                  ※ 기본값은 <b>1개월 후 1일</b>. “월말” 선택 시 일자는 자동
+                  비활성화.
+                </div>
+
+                <!-- 사용여부 -->
+                <div class="col-md-6">
+                  <label for="useYn" class="form-label">사용여부</label>
+                  <select
+                    id="useYn"
+                    name="useYn"
+                    class="form-control"
+                    style="max-width: 180px"
+                  >
+                    <option value="Y" selected>Y</option>
                     <option value="N">N</option>
                   </select>
                 </div>
