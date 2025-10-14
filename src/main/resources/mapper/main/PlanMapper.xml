@@ -11,25 +11,13 @@
 			SELECT plan_seq.NEXTVAL FROM DUAL
 		</selectKey>
 		INSERT INTO plan (
-		PLAN_NO,
-		TITLE,
-		DESCRIPTION,
-		START_DATE,
-		END_DATE,
-		EMP_ID_NO,
-		CATEGORY,
-		CREATED_AT,
-		UPDATED_AT
-		) VALUES (
-		#{planNo},
-		#{title},
-		#{description},
-		TO_DATE(#{startDate}, 'YYYY-MM-DD'),
-		TO_DATE(#{endDate}, 'YYYY-MM-DD')
-		#{empIdNo},
-		#{category},
-		#{createdAt, jdbcType=TIMESTAMP},
-		#{updatedAt, jdbcType=TIMESTAMP}
+		PLAN_NO, TITLE, DESCRIPTION, START_DATE, END_DATE, EMP_ID_NO, CATEGORY,
+		CREATED_AT, UPDATED_AT
+		)
+		VALUES (
+		#{planNo}, #{title}, #{description},
+		#{startDate}, #{endDate},
+		#{empIdNo}, #{category}, SYSTIMESTAMP, SYSTIMESTAMP
 		)
 	</insert>
 
@@ -38,7 +26,8 @@
 		parameterType="com.yedam.erp.vo.main.PlanVO">
 		UPDATE plan
 		SET TITLE = #{title},
-		DESCRIPTION = #{description},
+		DESCRIPTION =
+		#{description},
 		START_DATE = #{startDate},
 		END_DATE = #{endDate},
 		CATEGORY = #{category},
@@ -50,7 +39,8 @@
 	<!-- 삭제 (empIdNo 기준 체크 포함, map parameter 사용) -->
 	<delete id="deletePlan" parameterType="map">
 		DELETE FROM plan
-		WHERE PLAN_NO = #{planNo}
+		WHERE
+		PLAN_NO = #{planNo}
 		AND EMP_ID_NO = #{empIdNo}
 	</delete>
 
@@ -91,7 +81,8 @@
 		EMP_ID_NO,
 		CATEGORY
 		FROM plan
-		WHERE PLAN_NO = #{planNo}
+		WHERE PLAN_NO =
+		#{planNo}
 	</select>
 
 </mapper>
