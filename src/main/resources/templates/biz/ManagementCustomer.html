@@ -368,10 +368,6 @@
               "managerName",
               ""
             );
-            customerModalEl.querySelector("#product").value = get(
-              "product",
-              ""
-            );
             customerModalEl.querySelector("#remark").value = get(
               "remark",
               "note",
@@ -396,7 +392,6 @@
               addr: f.addr.value,
               zipCode: f.zipCode.value,
               managerName: f.managerName.value,
-              product: f.product.value,
               remark: f.remark.value,
               activeStatus: f.useYn.value || "Y", // useYn → activeStatus
               // 여신(있다면)
@@ -526,6 +521,91 @@
           customerModalEl.addEventListener("hidden.bs.modal", () => {
             resetCustomerForm();
             customerModalEl.dataset.mode = "create";
+          });
+
+          // 여신 관련
+          document.addEventListener("DOMContentLoaded", () => {
+            const monthSel = document.getElementById("cr_monthSel");
+            const daySel = document.getElementById("cr_daySel");
+            const creditGrade = document.getElementById("cr_creditGrade");
+            const creditLimit = document.getElementById("cr_creditLimit");
+            const useY = document.getElementById("cr_useY");
+            const useN = document.getElementById("cr_useN");
+
+            // 1~31일 select 생성
+            daySel.innerHTML = Array.from({ length: 31 }, (_, i) => i + 1)
+              .map((d) => `<option value="${d}">${d}</option>`)
+              .join("");
+            daySel.value = "1";
+
+            // 월말 선택시 일 비활성화
+            monthSel.addEventListener("change", () => {
+              daySel.disabled = monthSel.value === "EOM";
+            });
+
+            // 수금일 사용여부
+            function toggleUse() {
+              const disabled = useN.checked;
+              monthSel.disabled = disabled;
+              daySel.disabled = disabled || monthSel.value === "EOM";
+            }
+            useY.addEventListener("change", toggleUse);
+            useN.addEventListener("change", toggleUse);
+            toggleUse();
+
+            // 신용등급 → 여신한도 자동 설정
+            const limitByGrade = {
+              A: 500000000,
+              B: 100000000,
+              C: 50000000,
+              D: 10000000,
+              E: 0,
+            };
+
+            creditGrade.addEventListener("change", () => {
+              const g = creditGrade.value;
+              creditLimit.value = limitByGrade[g];
+              creditLimit.max = limitByGrade[g];
+              if (g === "E") creditLimit.disabled = true;
+              else creditLimit.disabled = false;
+            });
+
+            // 초기화 버튼
+            document
+              .getElementById("btnCreditReset")
+              .addEventListener("click", () => {
+                creditGrade.value = "C";
+                creditLimit.value = limitByGrade["C"];
+                document.getElementById("cr_payMethod").value = "";
+                document.getElementById("cr_tel").value = "";
+                document.getElementById("cr_manager").value = "";
+                monthSel.value = "1";
+                daySel.value = "1";
+                useY.checked = true;
+                toggleUse();
+              });
+
+            // 등록 버튼 (예시)
+            document
+              .getElementById("btnCreditSave")
+              .addEventListener("click", async () => {
+                const payload = {
+                  cusCode: document.getElementById("cr_cusCode").value,
+                  manager: document.getElementById("cr_manager").value,
+                  creditLimit: creditLimit.value,
+                  payMethod: document.getElementById("cr_payMethod").value,
+                  tel: document.getElementById("cr_tel").value,
+                  creditGrade: creditGrade.value,
+                  monthSel: monthSel.value,
+                  daySel: daySel.value,
+                  useYn: useY.checked ? "Y" : "N",
+                  startDate: document.getElementById("cr_startDate").value,
+                  endDate: document.getElementById("cr_endDate").value,
+                };
+                console.log("payload =>", payload);
+                await axios.post("/api/sales/credit", payload);
+                alert("등록 완료!");
+              });
           });
 
           // ===== 모달창 신규 거래처 등록 열기 =====

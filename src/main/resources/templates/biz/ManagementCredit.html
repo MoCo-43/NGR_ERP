@@ -1,4 +1,3 @@
-<!-- templates/sales/credit/customer-credit.html -->
 <!DOCTYPE html>
 <html
   lang="ko"
@@ -8,7 +7,7 @@
 >
   <head>
     <meta charset="UTF-8" />
-    <title layout:fragment="title">거래처 여신 등록</title>
+    <title layout:fragment="title">거래처 여신 현황</title>
 
     <th:block layout:fragment="head_extra">
       <link
@@ -19,39 +18,19 @@
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
       />
-
       <style>
-        .form-grid {
-          display: grid;
-          grid-template-columns: 140px 1fr 140px 1fr;
-          gap: 12px 16px;
+        #creditGrid.ag-theme-quartz {
+          height: 560px;
+          width: 100%;
         }
-        .section {
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          padding: 18px;
-          background: #fafafa;
+        .btn-filter-group .btn {
+          min-width: 108px;
         }
-        .btn-slim {
-          padding: 0.4rem 0.8rem;
+        .search-box .form-control {
+          min-width: 240px;
         }
-        .w-150 {
-          width: 150px;
-        }
-        .w-120 {
-          width: 120px;
-        }
-        .muted {
-          color: #6b7280;
-          font-size: 12px;
-        }
-        .radio-line {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .right {
-          text-align: right;
+        .search-box .input-group-text {
+          cursor: pointer;
         }
       </style>
     </th:block>
@@ -59,165 +38,72 @@
 
   <body>
     <section layout:fragment="content">
-      <div class="d-flex gap-2 mb-3">
-        <a
-          th:href="@{/sales/customer/list}"
-          class="btn btn-outline-secondary btn-slim"
-          >거래처정보</a
-        >
-        <button class="btn btn-primary btn-slim" disabled>여신</button>
-        <div class="ms-auto d-flex gap-2">
-          <button id="btnReset" class="btn btn-warning">초기화</button>
-          <button id="btnSave" class="btn btn-primary">등록</button>
+      <!-- 상단 검색/정렬 박스 -->
+      <div class="card shadow mb-3">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <!-- 1. 정렬 버튼: 신용등급 / 상태 -->
+            <div
+              class="btn-group btn-filter-group"
+              role="group"
+              aria-label="sorters"
+            >
+              <button type="button" class="btn btn-primary" id="btnSortGrade">
+                신용등급
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                id="btnSortState"
+              >
+                상태
+              </button>
+            </div>
+
+            <!-- 2. 초기화 -->
+            <button class="btn btn-danger ms-auto" id="btnReset">초기화</button>
+          </div>
+
+          <!-- 상호 / 담당자 검색 -->
+          <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label">상호</label>
+              <input
+                type="text"
+                id="qName"
+                class="form-control"
+                placeholder="거래처명(상호)"
+              />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">담당자</label>
+              <div class="input-group search-box">
+                <input
+                  type="text"
+                  id="qManager"
+                  class="form-control"
+                  placeholder="담당자명"
+                />
+                <span class="input-group-text" id="btnFindManager">
+                  <i class="bi bi-search"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-end mt-3">
+            <button class="btn btn-dark" id="btnSearch">조회</button>
+          </div>
         </div>
       </div>
 
-      <div class="section">
-        <div class="form-grid">
-          <!-- 1. 거래처코드 -->
-          <label class="form-label">거래처코드</label>
-          <div class="d-flex gap-2">
-            <input
-              id="cusCode"
-              class="form-control w-150"
-              placeholder="CUS0001"
-            />
-            <button id="btnPickCus" class="btn btn-outline-secondary btn-slim">
-              <i class="bi bi-search"></i> 찾기
-            </button>
-          </div>
-
-          <!-- 2. 거래처구분 -->
-          <label class="form-label">거래처구분</label>
-          <select id="cusType" class="form-select w-150">
-            <option value="구매처">구매처</option>
-            <option value="판매처">판매처</option>
-          </select>
-
-          <!-- 3. 담당자 -->
-          <label class="form-label">담당자</label>
-          <div class="d-flex gap-2">
-            <input
-              id="contactName"
-              class="form-control w-150"
-              placeholder="담당자명"
-            />
-            <button
-              id="btnPickContact"
-              class="btn btn-outline-secondary btn-slim"
-            >
-              <i class="bi bi-search"></i>
-            </button>
-          </div>
-
-          <!-- 여신한도 -->
-          <label class="form-label">여신한도</label>
-          <input
-            id="creditLimit"
-            type="number"
-            class="form-control w-150 right"
-            placeholder="0"
-          />
-
-          <!-- 결제방식 -->
-          <label class="form-label">결제방식</label>
-          <select id="payMethod" class="form-select w-150">
-            <option value="">선택</option>
-            <option>현금</option>
-            <option>계좌이체</option>
-            <option>어음</option>
-            <option>카드</option>
-          </select>
-
-          <!-- 연락처 -->
-          <label class="form-label">연락처</label>
-          <input
-            id="tel"
-            class="form-control w-150"
-            placeholder="010-0000-0000"
-          />
-
-          <!-- 4. 수금예정일 -->
-          <label class="form-label">수금예정일</label>
-          <div class="d-flex flex-column gap-2">
-            <div class="radio-line">
-              <input type="radio" name="plan" value="DAY" checked />
-              <span>일 후</span>
-              <input
-                id="afterDays"
-                type="number"
-                class="form-control w-120"
-                min="0"
-                value="30"
-              />
-            </div>
-
-            <div class="radio-line">
-              <input type="radio" name="plan" value="WEEK" />
-              <span>주 후</span>
-              <input
-                id="afterWeeks"
-                type="number"
-                class="form-control w-120"
-                min="0"
-                value="4"
-              />
-              <span>요일</span>
-              <select id="weekday" class="form-select w-120">
-                <option value="1">월</option>
-                <option value="2">화</option>
-                <option value="3">수</option>
-                <option value="4">목</option>
-                <option value="5">금</option>
-                <option value="6">토</option>
-                <option value="7">일</option>
-              </select>
-            </div>
-
-            <div class="radio-line">
-              <input type="radio" name="plan" value="MONTH" />
-              <span>개월 후</span>
-              <input
-                id="afterMonths"
-                type="number"
-                class="form-control w-120"
-                min="0"
-                value="1"
-              />
-              <span>일</span>
-              <input
-                id="dayOfMonth"
-                type="number"
-                class="form-control w-120"
-                min="1"
-                max="31"
-                value="1"
-              />
-            </div>
-
-            <div class="radio-line">
-              <input type="radio" name="plan" value="NONE" />
-              <span>사용안함</span>
-            </div>
-
-            <div class="muted">
-              ※ 기본값은 “1개월 후 1일”과 동일(설계 설명 반영)
-            </div>
-          </div>
-
-          <!-- 5. 신용등급 -->
-          <label class="form-label">신용등급</label>
-          <select id="creditGrade" class="form-select w-150">
-            <option>A</option>
-            <option>B</option>
-            <option selected>C</option>
-            <option>D</option>
-            <option>E</option>
-          </select>
-
-          <!-- 비고 -->
-          <label class="form-label">비고</label>
-          <input id="remark" class="form-control" placeholder="메모" />
+      <!-- 3. 여신 현황 그리드 -->
+      <div class="card shadow">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">거래처 여신 현황</h6>
+        </div>
+        <div class="card-body">
+          <div id="creditGrid" class="ag-theme-quartz"></div>
         </div>
       </div>
     </section>
@@ -225,146 +111,184 @@
     <th:block layout:fragment="body_extra">
       <script
         defer
+        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"
+      ></script>
+      <script
+        defer
         src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
       ></script>
+
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
-          // ===== 라디오 전환에 따른 서브 입력 enable/disable =====
-          const planRadios = document.querySelectorAll('input[name="plan"]');
-          const afterDays = document.getElementById("afterDays");
-          const afterWeeks = document.getElementById("afterWeeks");
-          const weekday = document.getElementById("weekday");
-          const afterMonths = document.getElementById("afterMonths");
-          const dayOfMonth = document.getElementById("dayOfMonth");
+          // ====== 컬럼 정의 (설계서 순서) ======
+          const columnDefs = [
+            {
+              headerName: "거래처코드",
+              field: "cusCode",
+              width: 120,
+              pinned: "left",
+            },
+            {
+              headerName: "거래처명",
+              field: "cusName",
+              minWidth: 150,
+              flex: 1,
+            },
+            {
+              headerName: "신용등급",
+              field: "creditGrade",
+              width: 110,
+              cellClass: "text-center",
+            },
+            {
+              headerName: "여신한도",
+              field: "creditLimit",
+              width: 140,
+              type: "numericColumn",
+              valueFormatter: moneyFmt,
+            },
+            { headerName: "적용시작일", field: "startDate", width: 130 },
+            { headerName: "적용만료일", field: "endDate", width: 130 },
+            {
+              headerName: "잔여한도",
+              field: "remainLimit",
+              width: 140,
+              type: "numericColumn",
+              valueFormatter: moneyFmt,
+            },
+            { headerName: "담당자", field: "managerName", width: 140 },
+            {
+              headerName: "할인잔여횟수",
+              field: "discountRemainCnt",
+              width: 130,
+              type: "numericColumn",
+              cellClass: "text-center",
+            },
+          ];
 
-          function refreshPlanInputs() {
-            const v = document.querySelector(
-              'input[name="plan"]:checked'
-            )?.value;
-            const on = (el, ok) => {
-              el.disabled = !ok;
-              el.classList.toggle("disabled", !ok);
-            };
-            on(afterDays, v === "DAY");
-            on(afterWeeks, v === "WEEK");
-            on(weekday, v === "WEEK");
-            on(afterMonths, v === "MONTH");
-            on(dayOfMonth, v === "MONTH");
+          // 그리드 생성
+          const gridDiv = document.getElementById("creditGrid");
+          let gridApi;
+          const gridOptions = {
+            columnDefs,
+            rowData: [],
+            pagination: true,
+            paginationPageSize: 12,
+            defaultColDef: { sortable: true, resizable: true, filter: true },
+            onGridReady: (p) => {
+              gridApi = p.api;
+              fetchAndRender(); // 최초 조회
+            },
+          };
+          if (window.agGrid?.createGrid) {
+            gridApi = agGrid.createGrid(gridDiv, gridOptions);
+          } else {
+            new agGrid.Grid(gridDiv, gridOptions);
+            gridApi = gridOptions.api;
           }
-          planRadios.forEach((r) =>
-            r.addEventListener("change", refreshPlanInputs)
-          );
-          refreshPlanInputs();
+          const setRows = (rows) =>
+            gridApi?.setGridOption
+              ? gridApi.setGridOption("rowData", rows)
+              : gridApi.setRowData(rows);
 
-          // ===== 버튼 =====
+          // ====== 포맷터 ======
+          function moneyFmt(p) {
+            const v = Number(p.value ?? 0);
+            return v ? v.toLocaleString("ko-KR") : "0";
+          }
+
+          // ====== DOM ======
+          const qName = document.getElementById("qName");
+          const qManager = document.getElementById("qManager");
+          const btnSearch = document.getElementById("btnSearch");
           const btnReset = document.getElementById("btnReset");
-          const btnSave = document.getElementById("btnSave");
+          const btnSortGrade = document.getElementById("btnSortGrade");
+          const btnSortState = document.getElementById("btnSortState");
 
+          // 검색
+          btnSearch.addEventListener("click", fetchAndRender);
+          [qName, qManager].forEach((el) =>
+            el.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") fetchAndRender();
+            })
+          );
+          document
+            .getElementById("btnFindManager")
+            .addEventListener("click", fetchAndRender);
+
+          // 초기화
           btnReset.addEventListener("click", () => {
-            document.getElementById("cusType").value = "구매처";
-            document.getElementById("contactName").value = "";
-            document.getElementById("creditLimit").value = "";
-            document.getElementById("payMethod").value = "";
-            document.getElementById("tel").value = "";
-            document.querySelector(
-              'input[name="plan"][value="MONTH"]'
-            ).checked = true;
-            document.getElementById("afterMonths").value = 1;
-            document.getElementById("dayOfMonth").value = 1;
-            document.getElementById("creditGrade").value = "C";
-            document.getElementById("remark").value = "";
-            refreshPlanInputs();
+            qName.value = "";
+            qManager.value = "";
+            fetchAndRender();
           });
 
-          // ===== 저장 =====
-          btnSave.addEventListener("click", async () => {
+          // 정렬: 신용등급 / 상태(잔여한도 desc → 등급 asc)
+          btnSortGrade.addEventListener("click", () => {
+            btnSortGrade.classList.replace(
+              "btn-outline-secondary",
+              "btn-primary"
+            );
+            btnSortState.classList.replace(
+              "btn-primary",
+              "btn-outline-secondary"
+            );
+            gridApi.setGridOption("sortModel", [
+              { colId: "creditGrade", sort: "asc" },
+            ]);
+          });
+          btnSortState.addEventListener("click", () => {
+            btnSortState.classList.replace(
+              "btn-outline-secondary",
+              "btn-primary"
+            );
+            btnSortGrade.classList.replace(
+              "btn-primary",
+              "btn-outline-secondary"
+            );
+            gridApi.setGridOption("sortModel", [
+              { colId: "remainLimit", sort: "desc" },
+              { colId: "creditGrade", sort: "asc" },
+            ]);
+          });
+
+          // ====== 데이터 조회 ======
+          async function fetchAndRender() {
             try {
-              const cusCode = document.getElementById("cusCode").value.trim();
-              if (!cusCode) {
-                alert("거래처코드를 입력하세요.");
-                return;
-              }
-              const planType = document.querySelector(
-                'input[name="plan"]:checked'
-              ).value;
-
-              const payload = {
-                cusCode,
-                cusType: document.getElementById("cusType").value,
-                contactName:
-                  document.getElementById("contactName").value || null,
-                creditLimit: Number(
-                  document.getElementById("creditLimit").value || 0
-                ),
-                payMethod: document.getElementById("payMethod").value || null,
-                tel: document.getElementById("tel").value || null,
-
-                planType,
-                afterDays:
-                  planType === "DAY" ? Number(afterDays.value || 0) : null,
-                afterWeeks:
-                  planType === "WEEK" ? Number(afterWeeks.value || 0) : null,
-                weekday: planType === "WEEK" ? Number(weekday.value) : null,
-                afterMonths:
-                  planType === "MONTH" ? Number(afterMonths.value || 0) : null,
-                dayOfMonth:
-                  planType === "MONTH" ? Number(dayOfMonth.value || 1) : null,
-                usePlan: planType === "NONE" ? "N" : "Y",
-
-                creditGrade: document.getElementById("creditGrade").value,
-                remark: document.getElementById("remark").value || null,
-              };
-
-              await axios.post("/api/sales/credit", payload, {
-                withCredentials: true,
+              const res = await axios.get("/api/biz/crdlist", {
+                params: {
+                  name: qName.value?.trim() || "",
+                  manager: qManager.value?.trim() || "",
+                },
               });
-              alert("저장되었습니다.");
+              const list = Array.isArray(res.data) ? res.data : [];
+
+              // 서버키 → 화면키 매핑(유연)
+              const rows = list.map((r) => ({
+                cusCode: r.cusCode ?? r.code ?? "",
+                cusName: r.cusName ?? r.name ?? "",
+                creditGrade: r.creditGrade ?? r.grade ?? "",
+                creditLimit: num(r.creditLimit ?? r.limit),
+                startDate: r.startDate ?? r.applyStart ?? "",
+                endDate: r.endDate ?? r.applyEnd ?? "",
+                remainLimit: num(r.remainLimit ?? r.balance ?? 0),
+                managerName: r.managerName ?? r.manager ?? "",
+                discountRemainCnt: Number(
+                  r.discountRemainCnt ?? r.discountLeft ?? 0
+                ),
+              }));
+              console.log("rows 내용" + rows);
+              setRows(rows);
             } catch (e) {
               console.error(e);
-              alert("저장 중 오류가 발생했습니다.");
+              setRows([]);
             }
-          });
+          }
 
-          // (선택) 특정 거래처코드를 입력하면 기존 값 로드 (업서트 UX)
-          const cusCodeEl = document.getElementById("cusCode");
-          cusCodeEl.addEventListener("change", async () => {
-            const code = cusCodeEl.value.trim();
-            if (!code) return;
-            try {
-              const res = await axios.get("/api/sales/credit", {
-                params: { cusCode: code },
-                withCredentials: true,
-              });
-              if (!res.data) return;
-              const d = res.data;
-
-              document.getElementById("cusType").value = d.cusType ?? "구매처";
-              document.getElementById("contactName").value =
-                d.contactName ?? "";
-              document.getElementById("creditLimit").value =
-                d.creditLimit ?? "";
-              document.getElementById("payMethod").value = d.payMethod ?? "";
-              document.getElementById("tel").value = d.tel ?? "";
-              document.getElementById("creditGrade").value =
-                d.creditGrade ?? "C";
-              document.getElementById("remark").value = d.remark ?? "";
-
-              const pt = (d.planType || "MONTH").toUpperCase();
-              document.querySelector(
-                `input[name="plan"][value="${pt}"]`
-              ).checked = true;
-              if (pt === "DAY") afterDays.value = d.afterDays ?? 30;
-              if (pt === "WEEK") {
-                afterWeeks.value = d.afterWeeks ?? 4;
-                weekday.value = d.weekday ?? 5;
-              }
-              if (pt === "MONTH") {
-                afterMonths.value = d.afterMonths ?? 1;
-                dayOfMonth.value = d.dayOfMonth ?? 1;
-              }
-              refreshPlanInputs();
-            } catch (ignore) {}
-          });
+          function num(v) {
+            const n = Number(v);
+            return isNaN(n) ? 0 : n;
+          }
         });
       </script>
     </th:block>

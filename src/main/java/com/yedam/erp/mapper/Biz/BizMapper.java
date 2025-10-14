@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.DoInsertVO;
@@ -37,4 +38,6 @@ public interface BizMapper {
   int insertCustomer(CustomerVO cvo);
   // 거래처관리 수정
   int updateCustomerByCode(CustomerVO cvo);
+  // 거래처여신 조회
+  List<CustomerCreditVO> selectCrdMaster(Long companyCode);
 }

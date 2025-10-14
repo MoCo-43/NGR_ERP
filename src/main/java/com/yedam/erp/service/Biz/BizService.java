@@ -2,6 +2,7 @@ package com.yedam.erp.service.Biz;
 
 import java.util.List;
 
+import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.DoInsertVO;
@@ -44,4 +45,7 @@ public interface BizService {
 
   // 거래처관리 수정
   int updateCustomerByCode(CustomerVO cvo);
+
+  // 거래처여신 조회
+  List<CustomerCreditVO> selectCrdMaster(Long companyCode);
 }
