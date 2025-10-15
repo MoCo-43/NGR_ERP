@@ -95,7 +95,7 @@ public class LoginController {
         // 관리자 버튼 클릭 시만 CAPTCHA 생성되므로 초기 로드 시 생성하지 않음
         return "main/login";
     }
-    @GetMapping("/sal/salLogin")
+    @GetMapping("/salLogin")
     public String sallogin() {
         // 관리자 버튼 클릭 시만 CAPTCHA 생성되므로 초기 로드 시 생성하지 않음
         return "main/salLogin";

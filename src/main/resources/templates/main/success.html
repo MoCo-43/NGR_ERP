@@ -2,12 +2,14 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
+    <title>처리 완료</title>
   </head>
   <body>
-    <h2>결제 성공</h2>
-    <p id="paymentKey"></p>
+    <h2>처리 중...</h2>
+    <p id="message"></p>
     <p id="orderId"></p>
     <p id="amount"></p>
+    <p id="paymentKey"></p>
 
      <script>
       const urlParams = new URLSearchParams(window.location.search);
@@ -15,14 +17,24 @@
       const orderId = urlParams.get("orderId");
       const amount = urlParams.get("amount");
 
-      async function confirm() {
+      // ✨ [수정] paymentKey가 있는 경우에만 결제 승인 함수를 호출합니다.
+      if (paymentKey) {
+        // 일반결제 성공 시
+        document.querySelector('h2').textContent = '결제 승인 중...';
+        confirmPayment();
+      } else {
+        // 정기결제(카드 등록) 성공 시
+        document.querySelector('h2').textContent = '카드 등록 성공';
+        document.getElementById("message").textContent = "카드가 성공적으로 등록되었습니다. 자동결제가 활성화됩니다.";
+      }
+
+      async function confirmPayment() {
         const requestData = {
           paymentKey: paymentKey,
           orderId: orderId,
           amount: amount,
         };
 
-        //컨트롤러 경로에 맞게 
         const response = await fetch("/api/payment/confirm", {
           method: "POST",
           headers: {
@@ -35,21 +47,18 @@
 
         if (!response.ok) {
           console.log(json);
+          // 실패 시 실패 페이지로 이동
           window.location.href = `/payment/fail?message=${encodeURIComponent(json.message)}&code=${encodeURIComponent(json.code)}`;
-          return; // 실패 시 함수 종료
+          return;
         }
 
         console.log(json);
-        // 성공 시 화면에 "결제 완료" 등 메시지 표시
+        // 성공 시 최종 완료 메시지 표시
         document.querySelector('h2').textContent = '결제가 성공적으로 완료되었습니다.';
+        document.getElementById("orderId").textContent = "주문번호: " + orderId;
+        document.getElementById("amount").textContent = "결제 금액: " + amount;
+        document.getElementById("paymentKey").textContent = "paymentKey: " + paymentKey;
       }
-      confirm();
-
-      // 아래 코드는 요청 결과와 상관없이 바로 실행되므로,
-      // 최종 결과 표시를 위해 confirm 함수 내부로 옮기는 것이 더 좋습니다.
-      document.getElementById("orderId").textContent = "주문번호: " + orderId;
-      document.getElementById("amount").textContent = "결제 금액: " + amount;
-      document.getElementById("paymentKey").textContent = "paymentKey: " + paymentKey;
     </script>
   </body>
 </html>

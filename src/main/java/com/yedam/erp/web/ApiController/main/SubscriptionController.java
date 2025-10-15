@@ -3,20 +3,27 @@ package com.yedam.erp.web.ApiController.main;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.yedam.erp.security.SessionUtil;
@@ -43,6 +50,8 @@ public class SubscriptionController {
         return SessionUtil.companyId();
     }
 
+    @Value("${toss.biling.secretKey}")
+    private String tossBilingSecretKey;
     /**
      * [GET] /sub/api/subDetail : Step 2 회사 정보 조회 API
      */
@@ -210,7 +219,59 @@ public class SubscriptionController {
 
         return "main/submanager"; // 화면 이름
     }   
-    
+    // ✨ 1. [이 메서드를 추가하세요] 정기결제 성공 시 호출되는 핸들러
+    @GetMapping("/billing-success")
+    public String handleBillingSuccess(@RequestParam String customerKey,
+                                       @RequestParam("authKey") String authKey,
+                                       Model model) {
+        try {
+            // authKey를 사용하여 토스페이먼츠에 빌링키 발급 요청
+            String billingKey = issueBillingKey(authKey, customerKey);
+
+            // [중요] 발급받은 billingKey와 customerKey를 DB에 저장하는 서비스 로직 호출
+            // 예시: subscriptionService.saveBillingKey(customerKey, billingKey);
+            log.info("정기결제 카드 등록 성공! customerKey: {}, billingKey: {}", customerKey, billingKey);
+
+            // 성공 페이지로 사용자 안내
+            model.addAttribute("message", "자동결제 카드 등록이 성공적으로 완료되었습니다.");
+            return "main/success"; // 성공 안내 페이지 (예: success.html)
+
+        } catch (Exception e) {
+            log.error("빌링키 발급 또는 DB 저장 실패. customerKey: {}", customerKey, e);
+            
+            // 실패 페이지로 에러 정보와 함께 안내
+            model.addAttribute("errorMessage", "카드 등록에 실패했습니다: " + e.getMessage());
+            model.addAttribute("errorCode", "BILLING_KEY_ISSUE_FAILED");
+            return "main/fail"; // 실패 안내 페이지 (예: fail.html)
+        }
+    }
+
+    // ✨ 2. [이 메서드도 추가하세요] 빌링키 발급 API를 호출하는 내부 헬퍼 메서드
+    private String issueBillingKey(String authKey, String customerKey) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "https://api.tosspayments.com/v1/billing/authorizations/" + authKey;
+
+        // HTTP 헤더 설정 (Basic Auth)
+        HttpHeaders headers = new HttpHeaders();
+        String encodedSecretKey = Base64.getEncoder().encodeToString((tossBilingSecretKey + ":").getBytes(StandardCharsets.UTF_8));
+        headers.set("Authorization", "Basic " + encodedSecretKey);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        // HTTP 요청 본문 설정
+        Map<String, String> body = new HashMap<>();
+        body.put("customerKey", customerKey);
+
+        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(body, headers);
+
+        // API 호출
+        ResponseEntity<Map> response = restTemplate.postForEntity(url, requestEntity, Map.class);
+        
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            return (String) response.getBody().get("billingKey");
+        } else {
+            throw new Exception("빌링키 발급 API 호출 실패: " + response.getBody());
+        }
+    }
     
     
     @GetMapping("/contract-html")
