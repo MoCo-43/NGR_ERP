@@ -39,7 +39,7 @@ public class SubPageController {
         }
         model.addAttribute("subPlan", subPlan);
 
-        // --- [수정] 현재 로그인한 사용자의 회사 정보를 조회하여 Model에 추가 ---
+        // 현재 로그인한 사용자의 회사 정보를 조회하여 Model에 추가 
         // SessionUtil을 사용하여 현재 로그인된 사용자의 고유 번호(matNo)를 가져옵니다.
         Long matNo = SessionUtil.companyId(); 
         

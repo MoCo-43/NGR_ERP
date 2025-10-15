@@ -35,4 +35,6 @@ public interface EmpLoginMapper {
     EmpVO mypageInfo(String empId);
     
     Long findMatNoByEmpId(String empId); 
+    //중복체크
+    int idChecks(String empId);
 }

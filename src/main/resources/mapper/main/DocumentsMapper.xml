@@ -9,18 +9,18 @@
         doc_no,
         doc_name,
         file_path,
-        create_at,
         mat_no,
+        sign_date,
         sign_path,
-        sign_date
+        status
     ) VALUES (
-        #{docNo},     
+       #{docNo},    
         #{docName},
-        #{filePath},    
-        #{createAt},   
-        #{matNo},     
-        #{signPath},   
-        #{signDate}    
+        #{filePath},
+        #{matNo}, 
+        SYSDATE,   
+        #{signPath},
+        #{status}   
     )
 </insert>
 </mapper>

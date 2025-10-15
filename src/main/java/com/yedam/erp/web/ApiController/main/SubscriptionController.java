@@ -155,63 +155,64 @@ public class SubscriptionController {
 //        model.addAttribute("subscription", subscription);
 //        return "main/submanager";
 //    }
-    @GetMapping("/admin/subList/{matNo}")
-    public String subLists(@PathVariable Long matNo, Model model) {
+//    @GetMapping("/admin/subList/{matNo}")
+//    public String subLists(@PathVariable Long matNo, Model model) {
+//        Long sessionMatNo = SessionUtil.companyId();
+//        log.info("PathVariable matNo: {}, Session matNo: {}", matNo, sessionMatNo);
+//
+//        if (sessionMatNo == null) {
+//            log.error("세션에 matNo가 없습니다. 로그인이 필요합니다.");
+//            return "redirect:/login";
+//        }
+//
+//        // PathVariable과 세션 matNo가 일치하는지 검증
+//        if (!matNo.equals(sessionMatNo)) {
+//            log.warn("비정상 접근: path matNo={}, session matNo={}", matNo, sessionMatNo);
+//            return "redirect:/access-denied";
+//        }
+//        //구독정보가져오는 부분
+//        SubscriptionVO subscription = subscriptionService.findLatestSubscriptionByMatNo(matNo);
+//        model.addAttribute("subscription", subscription);
+//        // 사용 가능한 모듈 리스트 생성 후 model에 추가
+//        if (subscription != null && subscription.getSubPlan() != null 
+//            && subscription.getSubPlan().getAvaiModules() != null
+//            && !subscription.getSubPlan().getAvaiModules().isEmpty()) {
+//            
+//            List<String> avaiModules = Arrays.asList(subscription.getSubPlan().getAvaiModules().split(","));
+//            model.addAttribute("avaiModules", avaiModules);
+//        }
+//        return "main/submanager";
+//    }
+
+    @GetMapping("/admin/subList")
+    public String subListsBySession(Model model) {
+        // 세션에서 회사 ID 가져오기
         Long sessionMatNo = SessionUtil.companyId();
-        log.info("PathVariable matNo: {}, Session matNo: {}", matNo, sessionMatNo);
+        log.info("Session matNo: {}", sessionMatNo);
 
         if (sessionMatNo == null) {
             log.error("세션에 matNo가 없습니다. 로그인이 필요합니다.");
             return "redirect:/login";
         }
 
-        // PathVariable과 세션 matNo가 일치하는지 검증
-        if (!matNo.equals(sessionMatNo)) {
-            log.warn("비정상 접근: path matNo={}, session matNo={}", matNo, sessionMatNo);
-            return "redirect:/access-denied";
-        }
-        //구독정보가져오는 부분
-        SubscriptionVO subscription = subscriptionService.findLatestSubscriptionByMatNo(matNo);
+        // 구독 정보 가져오기
+        SubscriptionVO subscription = subscriptionService.findLatestSubscriptionByMatNo(sessionMatNo);
         model.addAttribute("subscription", subscription);
+
         // 사용 가능한 모듈 리스트 생성 후 model에 추가
-        if (subscription != null && subscription.getSubPlan() != null 
-            && subscription.getSubPlan().getAvaiModules() != null
-            && !subscription.getSubPlan().getAvaiModules().isEmpty()) {
+        if (subscription != null && subscription.getSubPlan() != null
+                && subscription.getSubPlan().getAvaiModules() != null
+                && !subscription.getSubPlan().getAvaiModules().isEmpty()) {
             
             List<String> avaiModules = Arrays.asList(subscription.getSubPlan().getAvaiModules().split(","));
             model.addAttribute("avaiModules", avaiModules);
         }
-        return "main/submanager";
-    }
-//    @GetMapping("/admin/subList")
-//    public String subList(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-//        String empId = userDetails.getUsername();
-//        log.info("로그인된 사용자 empId: {}", empId);
-//
-//        // matNo만 가져오는 올바른 메소드 호출
-//        // EmpVO를 반환하는 mypageInfo() 대신 Long을 반환하는 findMatNoByEmpId() 사용
-//        Long matNo = empLoginService.findMatNoByEmpId(empId); 
-//        
-//        if (matNo == null) {
-//            log.warn("사용자 empId={}에 대한 matNo가 존재하지 않습니다.", empId);
-//            return "redirect:/access-denied"; // 또는 에러 페이지
-//        }
-//
-//        // 구독 정보 가져오기
-//        SubscriptionVO subscription = subscriptionService.findLatestSubscriptionByMatNo(matNo);
-//        model.addAttribute("subscription", subscription);
-//
-//        List<String> avaiModules = Optional.ofNullable(subscription)
-//                .map(SubscriptionVO::getSubPlan)
-//                .map(SubPlanVO::getAvaiModules)
-//                .filter(modules -> modules != null && !modules.trim().isEmpty())
-//                .map(modules -> Arrays.asList(modules.split(",")))
-//                .orElse(Collections.emptyList());
-//
-//        model.addAttribute("avaiModules", avaiModules);
-//
-//        return "main/submanager";
-//    }
+
+        return "main/submanager"; // 화면 이름
+    }   
+    
+    
+    
     @GetMapping("/contract-html")
     @ResponseBody
     public String getContractHtml() throws IOException {

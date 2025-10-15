@@ -218,6 +218,41 @@
       const emailSelect = document.getElementById('email_select');
       const hiddenEmailInput = document.getElementById('mat_mail');
 
+      // 아이디 중복확인 관련 요소
+      const empIdInput = document.getElementById('emp_id');
+      const checkBtn = document.querySelector('.btn-check-username');
+
+      // 아이디 중복확인 이벤트 
+      checkBtn.addEventListener('click', function() {
+        const empId = empIdInput.value.trim();
+
+        if (!empId) {
+          alert('아이디를 입력해주세요.');
+          empIdInput.focus();
+          return;
+        }
+
+        fetch(`/checkId?empId=${encodeURIComponent(empId)}`)
+          .then(res => {
+            if (!res.ok) throw new Error('서버 오류');
+            return res.json();
+          })
+          .then(data => {
+            if (data.exists) {
+              alert('이미 사용 중인 아이디입니다.');
+              empIdInput.focus();
+              empIdInput.classList.add('invalid');
+            } else {
+              alert('사용 가능한 아이디입니다!');
+              empIdInput.classList.remove('invalid');
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            alert('아이디 중복확인 중 오류가 발생했습니다.');
+          });
+      });
+   
       // STEP 전환
       btnNext.addEventListener('click', () => {
         const inputs = formStep1.querySelectorAll('input[required]');

@@ -33,9 +33,9 @@
             <div>
                 <select id="dept-filter" class="form-select d-inline-block w-auto">
                     <option value="">전체 부서</option>
-                    <option value="D001">인사</option> 
-                    <option value="D002">재고</option>
-                    <option value="D003">회계</option>
+                    <option value="경영팀">경영팀</option> 
+                    <option value="재고팀">재고팀</option>
+                    <option value="인사팀">인사팀</option>
                 </select>
                 <button id="search-btn" class="btn btn-primary">검색</button>
             </div>
@@ -57,7 +57,8 @@
                 { headerName: '', checkboxSelection: true, headerCheckboxSelection: true, maxWidth: 50 },
                 { field: 'name', headerName: '사원이름' }, // EmpVO 필드명에 맞게 수정 (예: name -> empName)
                 { field: 'empId', headerName: '사번 (로그인ID)' },
-                { field: 'deptCode', headerName: '부서번호' }, // EmpVO 필드명에 맞게 수정 (예: deptName -> deptCode)
+                {field: 'title',headerName:'직급'},
+                { field: 'deptName', headerName: '부서이름' }, // EmpVO 필드명에 맞게 수정 (예: deptName -> deptCode)
                 { field: 'email', headerName: '이메일' }
             ];
 

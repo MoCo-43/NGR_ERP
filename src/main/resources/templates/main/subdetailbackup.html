@@ -825,7 +825,7 @@ main {
 
 	<div th:replace="~{layout/main_footer :: footerFragment}"></div>
 
-<script>
+	<script>
     // ------------------------------------
     //  1. 전역 변수 설정
     // ------------------------------------
@@ -843,7 +843,6 @@ main {
     // Toss Payments 전역 변수
     const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; 
     const customerKey = "USER_ERP_1001"; // 실제 로그인한 사용자 고유 ID로 변경
-    let tossPayments; // TossPayments SDK 인스턴스를 저장할 변수
     let widgets; // 위젯 객체를 담을 변수
     
     // ------------------------------------
@@ -869,10 +868,11 @@ main {
             discount = Math.round(baseUserInputPrice * 0.1);
         }
         
-        adjustmentCharge = localAdjustmentCharge;
+        adjustmentCharge = localAdjustmentCharge; // 전역 변수에 최종 조정금액 저장
         finalPayment = baseUserInputPrice - discount + adjustmentCharge;
         finalPayment = Math.max(0, finalPayment);
 
+        // 계산 결과를 화면에 반영
         document.getElementById('base-price-display').textContent = baseUserInputPrice.toLocaleString() + '원';
         document.getElementById('summary-discount-price').textContent = '- ' + discount.toLocaleString() + '원';
         
@@ -894,6 +894,7 @@ main {
     //  3. UI 업데이트 및 페이지 이동 함수
     // ------------------------------------
     function updateSummary() {
+        // 모든 요약 정보 업데이트
         const durationElements = document.querySelectorAll('#summary-duration, #summary-duration-final');
         durationElements.forEach(el => el.textContent = selectedDurationText);
 
@@ -909,6 +910,7 @@ main {
         updateStepUI(stepNumber);
         currentStep = stepNumber;
         
+        // 다음 단계로 넘어갈 때마다 요약 정보 업데이트 및 금액 재계산
         if (stepNumber >= 2 && stepNumber <= 4) {
             updateSummary();
             if (basePriceFromDB > 0) {
@@ -941,14 +943,11 @@ main {
     }
 
     // ------------------------------------
-    //  4. 결제 처리 함수들
+    //  4. 결제 모달 열기 함수
     // ------------------------------------
-
-    /**
-     * "일반 결제" 모달을 열고 위젯을 렌더링합니다. (기존 함수)
-     */
     async function openPaymentModal() {
         try {
+            const tossPayments = TossPayments(clientKey);
             widgets = tossPayments.widgets({ customerKey }); 
 
             await widgets.setAmount({
@@ -975,50 +974,12 @@ main {
             alert("결제창을 여는 중 오류가 발생했습니다. 다시 시도해 주세요.");
         }
     }
-    
-    /**
-     * [신규] "정기 결제(빌링)"를 위한 카드 등록창을 요청합니다.
-     */
-    async function requestBillingAuth() {
-        const customerName = document.getElementById('matName').value || "김토스";
-        const customerEmail = document.getElementById('matMail').value || "customer@example.com";
 
-        try {
-            const payment = tossPayments.payment({ customerKey });
-            await payment.requestBillingAuth({
-              method: "CARD",
-              successUrl: window.location.origin + "/payment/billing-success",
-              failUrl: window.location.origin + "/payment/fail",
-              customerEmail: customerEmail,
-              customerName: customerName,
-            });
-        } catch (error) {
-            console.error("정기결제 카드 등록 요청 실패:", error);
-            alert("카드 등록창을 여는 중 오류가 발생했습니다. 다시 시도해 주세요.");
-        }
-    }
-    
-    /**
-     * [신규] 선택된 결제 방식에 따라 적절한 함수를 호출합니다.
-     */
-    function handlePaymentRequest() {
-        const selectedOption = document.querySelector('#payment-type-options .payment-option.selected');
-        const paymentType = selectedOption.getAttribute('data-type');
-        
-        if (paymentType === 'NORMAL') {
-            openPaymentModal(); // 일반결제
-        } else if (paymentType === 'RECURRING') {
-            requestBillingAuth(); // 정기결제
-        }
-    }
 
     // ------------------------------------
     //  5. DOMContentLoaded 이벤트 핸들러
     // ------------------------------------
     document.addEventListener('DOMContentLoaded', async function() {
-        
-        // 페이지 로드 시 TossPayments SDK 인스턴스 생성
-        tossPayments = TossPayments(clientKey);
         
     	const basePriceElement = document.querySelector('.premium-section .price');
     	if (basePriceElement && basePriceElement.textContent) {
@@ -1070,10 +1031,8 @@ main {
         
         calculatePayment(); 
         
-        // "결제하기" 버튼 클릭 시 handlePaymentRequest 함수 호출하도록 변경
-        document.getElementById('payment-button').addEventListener('click', handlePaymentRequest);
+        document.getElementById('payment-button').addEventListener('click', openPaymentModal);
         
-        // (일반 결제) 모달 내의 "결제하기" 버튼 이벤트 (기존 코드 유지)
         document.getElementById('modal-payment-button').addEventListener('click', async function () {
             
             if (!widgets) {

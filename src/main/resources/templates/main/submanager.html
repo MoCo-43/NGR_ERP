@@ -123,6 +123,20 @@
 					<div class="subscription-box-header">구독 패키지 확인</div>
 					<div class="package-button"
 						th:text="${subscription?.subPlan?.planName} ?: '-'"></div>
+					<div class="subscription-box">
+						<div class="subscription-box-header">구독 모듈</div>
+
+						<div th:if="${avaiModules != null and !avaiModules.isEmpty()}">
+							<ul class="list-group list-group-flush">
+								<li class="list-group-item" th:each="module : ${avaiModules}"
+									th:text="${module.trim()}"></li>
+							</ul>
+						</div>
+
+						<div th:unless="${avaiModules != null and !avaiModules.isEmpty()}"
+							style="padding: 15px; text-align: center; color: #6c757d;">
+							사용 가능한 모듈이 없습니다.</div>
+					</div>
 				</div>
 
 				<!-- 계약 정보 -->
@@ -175,12 +189,12 @@
 	<div id="contract-document"
 		th:replace="main/content :: contractFragment" style="display: none;"></div>
 
-<th:block layout:fragment="body_extra">
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script>
+	<th:block layout:fragment="body_extra">
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+		<script>
 document.addEventListener('DOMContentLoaded', function() {
     let contractHtmlContent = null; // 완성된 계약서 HTML 문자열을 저장할 변수
 
@@ -202,7 +216,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('btnDownloadContractPdf').disabled = true;
         });
 
-    // 2️⃣ 새 창 미리보기 (원래 방식으로 되돌림)
+    // 2️.새 창 미리보기 
     document.getElementById('btnPreviewContract').addEventListener('click', function() {
         if (!contractHtmlContent) return alert('계약서 내용을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
 
@@ -274,6 +288,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-</th:block>
+	</th:block>
 
-</th:block>
+	</th:block>

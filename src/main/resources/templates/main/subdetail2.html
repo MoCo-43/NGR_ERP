@@ -417,6 +417,7 @@ main {
 						및 결제완료</span></li>
 			</ol>
 
+			<!-- STEP 1: 구독정보 -->
 			<div id="step-1" class="step-section active">
 				<div class="inner-layout">
 					<div class="subscription-form">
@@ -445,6 +446,14 @@ main {
 								</div>
 							</div>
 						</div>
+						<!--  <div class="form-group">
+							<label for="user-count-select" class="form-section-label">사용자
+								수(규모)</label> <select id="user-count-select" class="custom-select">
+								<option value="10">10명</option>
+								<option value="50" selected>50명</option>
+								<option value="100">100명</option>
+							</select>
+						</div>-->
 						<div class="form-group">
 							<label for="user-count-input" class="form-section-label">사용자
 								수(규모)</label> <input type="text" id="user-count-input"
@@ -487,6 +496,7 @@ main {
 				</div>
 			</div>
 
+			<!-- STEP 2: 사용자정보 -->
 			<div id="step-2" class="step-section">
 				<div class="inner-layout">
 					<div class="main-form">
@@ -560,13 +570,27 @@ main {
 				</div>
 				<script>
 				   document.addEventListener('DOMContentLoaded', function() {
-					   // 실제 comCode 값을 어떻게 가져올지에 대한 로직 필요
-					   // 예: const companyCode = 'some-company-code'; 
-					   // fetch('/api/subDetail?comCode=' + companyCode) ...
+					   fetch('/api/subDetail?comCode=' + companyCode)
+				           .then(response => {
+							    return response.json(); // 유효한 응답일 때만 JSON 파싱 시도
+							})
+				           .then(data => {
+				               // 가져온 데이터(data)의 속성 이름이 HTML ID와 일치하지 않거나,
+				               // data 자체가 오류일 수 있습니다.
+				               document.getElementById('compName').value = data.company.compName;
+				               document.getElementById('brm').value = data.company.brm;
+				               document.getElementById('ceo').value = data.company.ceo;
+				               document.getElementById('compAddr').value = data.company.compAddr;
+				               document.getElementById('compDelAddr').value = data.company.compDelAddr;
+				               document.getElementById('matName').value = data.company.matName;
+				               document.getElementById('matMail').value = data.company.matMail;
+				           })
+				           .catch(error => console.error('Error fetching company info:', error));
 				   });
 				</script>
 			</div>
 
+			<!-- STEP 3: 전자 계약서 (수정됨) -->
 			<div id="step-3" class="step-section">
 				<div id="contract-document-wrapper">
 					<div id="contract-document">
@@ -677,6 +701,12 @@ main {
 								</ol>
 							</div>
 						</article>
+						<!--  <article>
+							<div class="form-group">
+							 고객사:<input type="text" id="compName" readonly>
+							 고객담당자:<input type="text" id="matName" readonly>
+							</div>
+						</article>-->
 					</div>
 				</div>
 				<div class="form-navigation">
@@ -686,29 +716,58 @@ main {
 						동의 및 다음단계</button>
 				</div>
 			</div>
+			<!--  <script>
+			document.getElementById("signbtn").addEventListener("click",()=>{
+				openSignModal('main',saveSign);
+			})
+				async function saveSign(signPath){
+					if(signMode === "main")
+						{
+						 await axios.post('/api/main/sign');
+						}
+		    	    bootstrap.Modal.getOrCreateInstance(document.getElementById('signModal')).hide();
+					goToStep(4); 
+				}
+			   //document.addEventListener('DOMContentLoaded', function() {
+			     // fetch('/api/subDetail?planId=' + '[[${subPlanNo}]]')
+			          // .then(response => {
+						 //   return response.json(); // 유효한 응답일 때만 JSON 파싱 시도
+						//})
+			           //.then(data => {
+			            //   document.getElementById('compName').value = data.company.compName;
+			            //   document.getElementById('matName').value = data.company.matName;
+			          // })
+			  // });
+			</script>-->
 			<script>
-                document.getElementById("signbtn").addEventListener("click", () => {
-                    openSignModal('main', saveSign);
-                });
-
-                async function saveSign(signPath) {
-                    if (signMode === "main") {
-                        const dataToSend = {
-                            filePath: signPath,
-                            docName: "전자 서명"
-                        };
-                        try {
-                            await axios.post('/api/main/sign', dataToSend);
-                            bootstrap.Modal.getOrCreateInstance(document.getElementById('signModal')).hide();
-                            goToStep(4);
-                        } catch (error) {
-                            console.error("서명 저장에 실패했습니다:", error);
-                            alert("서명 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
-                        }
-                    }
-                }
-            </script>
-			
+		    document.getElementById("signbtn").addEventListener("click", () => {
+		        openSignModal('main', saveSign);
+		    });
+		
+		    async function saveSign(signPath) { // signPath는 서명 파일 경로일 것입니다.
+		        if (signMode === "main") {
+		            // 1. 서버로 보낼 데이터 객체를 만듭니다.
+		            const dataToSend = {
+		                filePath: signPath, // 전달받은 서명 경로를 filePath 필드에 할당
+		                docName: "전자 서명" // 문서 이름 등 필요한 다른 데이터도 추가
+		            };
+		
+		            try {
+		                // 2. axios.post의 두 번째 인자로 데이터 객체를 전달합니다.
+		                await axios.post('/api/main/sign', dataToSend);
+						
+		                // 3. 성공적으로 완료된 후 처리
+		                bootstrap.Modal.getOrCreateInstance(document.getElementById('signModal')).hide();
+		                goToStep(4);
+						
+		            } catch (error) {
+		                console.error("서명 저장에 실패했습니다:", error);
+		                alert("서명 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+		            }
+		        }
+		    }
+		</script>
+			<!-- https://docs.stripe.com/api/errors/https://docs.stripe.com/api/errors -->
 			<div id="step-4" class="step-section">
 				<div class="inner-layout">
 					<div class="main-form">
@@ -717,19 +776,19 @@ main {
 							<div class="summary-box">
 								<div class="summary-item">
 									<span class="item-label">구독 기간</span> <span class="item-value"
-										id="summary-duration-final">6개월</span>
+										id="summary-duration">6개월</span>
 								</div>
 								<div class="summary-item">
 									<span class="item-label">사용자 수</span> <span class="item-value"
-										id="summary-user-count-final">50명</span>
+										id="summary-user-count">50명</span>
 								</div>
 								<div class="summary-item">
 									<span class="item-label">구독플랜 금액</span> <span class="price"
-										th:text="${subPlan.baseSalary}"></span>
+										th:text="${subPlan.baseSalary}"></span></span>
 								</div>
 								<div class="summary-item">
 									<span class="item-label">기본 금액</span> <span class="price"
-										id="base-price-display"></span>
+										id="base-price-display" th:text="${subPlan.baseSalary}"></span></span>
 								</div>
 								<div class="summary-item">
 									<span class="item-label">할인 금액</span> <span class="item-value"
@@ -743,6 +802,7 @@ main {
 									<span class="item-label">미만 금액</span> <span class="item-value"
 										id="summary-underage-price">- 0원</span>
 								</div>
+
 								<div class="summary-item total">
 									<span class="item-label">총 결제 금액</span> <span
 										class="item-value" id="summary-total-payment">0원</span>
@@ -763,13 +823,20 @@ main {
 								</div>
 							</div>
 						</div>
-						
+
+						<div class="form-group">
+							<label class="form-section-label"></label>
+							<div id="payment-method-widget"></div>
+							<div id="agreement-widget" style="margin-top: 16px;"></div>
+						</div>
+
 						<div class="form-navigation">
 							<button type="button" class="nav-btn prev-btn"
 								onclick="goToStep(3)">이전단계</button>
 							<button type="button" class="nav-btn next-btn"
-								id="payment-button">결제하기</button>
+								id="payment-button" onclick="">결제하기</button>
 						</div>
+
 					</div>
 					<aside class="sidebar">
 						<h3>결제 안내</h3>
@@ -781,7 +848,13 @@ main {
 					</aside>
 				</div>
 			</div>
-			
+			<script>
+			//document.getElementById("payment-button").addEventListener("click", () => {
+				//location.href = '/subpay';
+			//});
+			//goToStep(5);
+			</script>
+			<!-- STEP 5: 결제 완료 -->
 			<div id="step-5" class="step-section">
 				<div class="completion-container">
 					<h2>결제가 성공적으로 완료되었습니다!</h2>
@@ -803,31 +876,11 @@ main {
 			</div>
 		</div>
 	</main>
-	
-	<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
-	    <div class="modal-dialog modal-lg">
-	        <div class="modal-content">
-	            <div class="modal-header">
-	                <h5 class="modal-title" id="paymentModalLabel">결제 진행</h5>
-	                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-	            </div>
-	            <div class="modal-body">
-	                <div id="payment-method-widget-modal" style="min-height: 400px;"></div>
-	                <div id="agreement-widget-modal" style="margin-top: 16px;"></div>
-	            </div>
-	            <div class="modal-footer">
-	                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-	                <button type="button" class="nav-btn next-btn" id="modal-payment-button">결제하기</button>
-	            </div>
-	        </div>
-	    </div>
-	</div>
 
 	<div th:replace="~{layout/main_footer :: footerFragment}"></div>
-
-<script>
+	<script>
     // ------------------------------------
-    //  1. 전역 변수 설정
+    //  1. 전역 변수 설정 
     // ------------------------------------
     let currentStep = 1;
     let selectedDuration = 6;
@@ -840,15 +893,13 @@ main {
     let finalPayment = 0;
     let adjustmentCharge = 0;
     
-    // Toss Payments 전역 변수
+    //Toss Payments 전역 변수 (widgets is not defined 해결) ========
     const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; 
-    const customerKey = "USER_ERP_1001"; // 실제 로그인한 사용자 고유 ID로 변경
-    let tossPayments; // TossPayments SDK 인스턴스를 저장할 변수
-    let widgets; // 위젯 객체를 담을 변수
+    const customerKey = "USER_ERP_1001"; // 실제 로그인한 사용자 고유 ID로 변경해야 함
+    let widgets; // 전역으로 widgets 객체를 선언
+    // ===========================================================================
     
-    // ------------------------------------
-    //  2. 결제 계산 함수
-    // ------------------------------------
+    // 2. 결제 계산 함수 
     function calculatePayment() {
         const unitPricePerUser = basePriceFromDB;
         const duration = selectedDuration;
@@ -856,12 +907,12 @@ main {
         const maxCount = maxUsers;
 
         let baseUserInputPrice = unitPricePerUser * userCount * duration;
-        let localAdjustmentCharge = 0; 
+        let adjustmentCharge = 0; 
         
         if (userCount > maxCount) {
-            localAdjustmentCharge = (userCount - maxCount) * USER_UNIT_PRICE * duration;
+            adjustmentCharge = (userCount - maxCount) * USER_UNIT_PRICE * duration;
         } else if (userCount < maxCount) {
-            localAdjustmentCharge = -(maxCount - userCount) * USER_UNIT_PRICE * duration;
+            adjustmentCharge = -(maxCount - userCount) * USER_UNIT_PRICE * duration;
         }
         
         let discount = 0;
@@ -869,10 +920,10 @@ main {
             discount = Math.round(baseUserInputPrice * 0.1);
         }
         
-        adjustmentCharge = localAdjustmentCharge;
         finalPayment = baseUserInputPrice - discount + adjustmentCharge;
         finalPayment = Math.max(0, finalPayment);
 
+        // 6. 계산 결과를 화면에 반영
         document.getElementById('base-price-display').textContent = baseUserInputPrice.toLocaleString() + '원';
         document.getElementById('summary-discount-price').textContent = '- ' + discount.toLocaleString() + '원';
         
@@ -890,16 +941,55 @@ main {
         document.getElementById('summary-total-payment').textContent = finalPayment.toLocaleString() + '원';
     }
 
-    // ------------------------------------
-    //  3. UI 업데이트 및 페이지 이동 함수
-    // ------------------------------------
-    function updateSummary() {
-        const durationElements = document.querySelectorAll('#summary-duration, #summary-duration-final');
-        durationElements.forEach(el => el.textContent = selectedDurationText);
 
-        const userCountElements = document.querySelectorAll('#summary-user-count, #summary-user-count-final');
-        const formattedCount = (parseInt(selectedUserCount) || 0).toLocaleString() + "명";
-        userCountElements.forEach(el => el.textContent = formattedCount);
+    // 3. UI 업데이트 함수 
+    function updateSummaryDuration() {
+        const summaryElements = document.querySelectorAll('#summary-duration');
+        summaryElements.forEach(element => {
+            element.textContent = selectedDurationText;
+        });
+    }
+    
+    function updateSummaryUserCount() {
+        const userCountElements = document.querySelectorAll('#summary-user-count');
+        const count = parseInt(selectedUserCount) || 0;
+        const formattedCount = count.toLocaleString() + "명"; 
+
+        userCountElements.forEach(element => {
+            element.textContent = formattedCount;
+        });
+    }
+
+    // Toss Payments 위젯 초기화 및 렌더링 함수
+    async function initTossPaymentsWidgets() {
+        if (widgets) return; 
+
+        if (typeof TossPayments !== 'undefined') {
+            try {
+                const tossPayments = TossPayments(clientKey);
+                widgets = tossPayments.widgets({ customerKey }); 
+
+                // 1. 초기 금액 설정 (렌더링용)
+                await widgets.setAmount({
+                    currency: "KRW",
+                    value: 100, 
+                });
+
+                // 2. 결제 수단 및 약관 위젯 렌더링
+                await Promise.all([
+                    widgets.renderPaymentMethods({
+                        selector: "#payment-method-widget",
+                        variantKey: "DEFAULT",
+                    }),
+                    widgets.renderAgreement({ 
+                        selector: "#agreement-widget",
+                        variantKey: "AGREEMENT" 
+                    }),
+                ]);
+            } catch (error) {
+                console.error("Toss Payments 위젯 초기화 실패:", error);
+            }
+        }
     }
 
     function goToStep(stepNumber) {
@@ -910,10 +1000,16 @@ main {
         currentStep = stepNumber;
         
         if (stepNumber >= 2 && stepNumber <= 4) {
-            updateSummary();
+            updateSummaryDuration();
+            updateSummaryUserCount();
             if (basePriceFromDB > 0) {
                 calculatePayment(); 
             }
+        }
+        
+        // [수정] Step 4로 이동 시 위젯 초기화 및 렌더링 호출
+        if (stepNumber === 4) {
+            initTossPaymentsWidgets();
         }
     }
 
@@ -940,100 +1036,30 @@ main {
         }
     }
 
-    // ------------------------------------
-    //  4. 결제 처리 함수들
-    // ------------------------------------
 
-    /**
-     * "일반 결제" 모달을 열고 위젯을 렌더링합니다. (기존 함수)
-     */
-    async function openPaymentModal() {
-        try {
-            widgets = tossPayments.widgets({ customerKey }); 
-
-            await widgets.setAmount({
-                currency: "KRW",
-                value: finalPayment, 
-            });
-
-            await Promise.all([
-                widgets.renderPaymentMethods({
-                    selector: "#payment-method-widget-modal",
-                    variantKey: "DEFAULT",
-                }),
-                widgets.renderAgreement({ 
-                    selector: "#agreement-widget-modal",
-                    variantKey: "AGREEMENT" 
-                }),
-            ]);
-
-            const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
-            paymentModal.show();
-
-        } catch (error) {
-            console.error("Toss Payments 위젯 렌더링 실패:", error);
-            alert("결제창을 여는 중 오류가 발생했습니다. 다시 시도해 주세요.");
-        }
-    }
-    
-    /**
-     * [신규] "정기 결제(빌링)"를 위한 카드 등록창을 요청합니다.
-     */
-    async function requestBillingAuth() {
-        const customerName = document.getElementById('matName').value || "김토스";
-        const customerEmail = document.getElementById('matMail').value || "customer@example.com";
-
-        try {
-            const payment = tossPayments.payment({ customerKey });
-            await payment.requestBillingAuth({
-              method: "CARD",
-              successUrl: window.location.origin + "/payment/billing-success",
-              failUrl: window.location.origin + "/payment/fail",
-              customerEmail: customerEmail,
-              customerName: customerName,
-            });
-        } catch (error) {
-            console.error("정기결제 카드 등록 요청 실패:", error);
-            alert("카드 등록창을 여는 중 오류가 발생했습니다. 다시 시도해 주세요.");
-        }
-    }
-    
-    /**
-     * [신규] 선택된 결제 방식에 따라 적절한 함수를 호출합니다.
-     */
-    function handlePaymentRequest() {
-        const selectedOption = document.querySelector('#payment-type-options .payment-option.selected');
-        const paymentType = selectedOption.getAttribute('data-type');
-        
-        if (paymentType === 'NORMAL') {
-            openPaymentModal(); // 일반결제
-        } else if (paymentType === 'RECURRING') {
-            requestBillingAuth(); // 정기결제
-        }
-    }
-
-    // ------------------------------------
-    //  5. DOMContentLoaded 이벤트 핸들러
-    // ------------------------------------
+    //  4. DOMContentLoaded 이벤트 핸들러 
     document.addEventListener('DOMContentLoaded', async function() {
         
-        // 페이지 로드 시 TossPayments SDK 인스턴스 생성
-        tossPayments = TossPayments(clientKey);
-        
-    	const basePriceElement = document.querySelector('.premium-section .price');
+    	// DB 변수 초기화 로직 유지
+    	const basePriceElement = document.getElementById('base-price-display');
     	if (basePriceElement && basePriceElement.textContent) {
     	    const rawValue = basePriceElement.textContent.replace(/[^0-9]/g, '');
     	    basePriceFromDB = parseInt(rawValue, 10) || 0;
     	}
 
     	const maxUsersHidden = document.getElementById('max-users-hidden');
-    	if (maxUsersHidden) maxUsers = parseInt(maxUsersHidden.value, 10) || 0;
-    	
+    	if (maxUsersHidden) {
+    	    maxUsers = parseInt(maxUsersHidden.value, 10) || 0;
+    	}
     	const minUsersHidden = document.getElementById('min-users-hidden');
-    	if (minUsersHidden) minUsers = parseInt(minUsersHidden.value, 10) || 0;
+    	if (minUsersHidden) {
+    	    minUsers = parseInt(minUsersHidden.value, 10) || 0;
+    	}
 
+        // 초기 활성 섹션 설정
         document.getElementById(`step-${currentStep}`).classList.add('active');
 
+        // ... (durationButtons 리스너 유지) ...
         const durationButtons = document.querySelectorAll('#duration-options .option-button');
         durationButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -1051,6 +1077,7 @@ main {
             selectedDuration = parseInt(selectedDurationText.replace(/[^0-9]/g, '')) || 1;
         }
         
+        // 사용자 수 입력 필드 값 변경 리스너
         const userCountInput = document.getElementById('user-count-input');
         if (userCountInput) {
             selectedUserCount = userCountInput.value.replace(/[^0-9]/g, '');
@@ -1060,6 +1087,7 @@ main {
             });
         }
 
+        // 결제 방식 선택 이벤트 핸들러
         const paymentTypeOptions = document.querySelectorAll('#payment-type-options .payment-option');
         paymentTypeOptions.forEach(option => {
             option.addEventListener('click', () => {
@@ -1068,16 +1096,18 @@ main {
             });
         });
         
+        // 초기 계산 실행
         calculatePayment(); 
         
-        // "결제하기" 버튼 클릭 시 handlePaymentRequest 함수 호출하도록 변경
-        document.getElementById('payment-button').addEventListener('click', handlePaymentRequest);
         
-        // (일반 결제) 모달 내의 "결제하기" 버튼 이벤트 (기존 코드 유지)
-        document.getElementById('modal-payment-button').addEventListener('click', async function () {
+        // '결제하기' 버튼 이벤트 핸들러
+        const paymentButton = document.getElementById('payment-button');
+        paymentButton.addEventListener('click', async function () {
             
+            // ReferenceError 방지
             if (!widgets) {
-                alert("결제 위젯이 초기화되지 않았습니다. 잠시 후 다시 시도해 주세요.");
+                console.error("결제 위젯이 초기화되지 않았습니다.");
+                alert("결제 위젯 로딩 중입니다. 잠시 후 다시 시도해 주세요.");
                 return; 
             }
         
@@ -1090,9 +1120,17 @@ main {
             };
         
             try {
+                // 1. 최종 금액을 위젯에 업데이트
+                await widgets.setAmount({
+                    currency: "KRW",
+                    value: finalPayment, 
+                });
+                
+                // 2. 결제 준비 API 호출 ([경로 수정 적용])
                 const response = await axios.post('/payment/api/payment/prepare', requestData);
-                const { orderId, orderName } = response.data;
+                const { orderId, orderName, amount } = response.data;
         
+                // 3. 결제 요청
                 await widgets.requestPayment({
                     orderId: orderId,
                     orderName: orderName,
@@ -1101,7 +1139,7 @@ main {
                 });
         
             } catch (error) {
-                console.error("결제 요청 중 오류 발생:", error);
+                console.error("결제 준비 중 오류 발생:", error);
                 alert("결제를 진행하는 중 문제가 발생했습니다. 콘솔을 확인해 주세요.");
             }
         });
@@ -1109,3 +1147,4 @@ main {
 </script>
 </body>
 </html>
+

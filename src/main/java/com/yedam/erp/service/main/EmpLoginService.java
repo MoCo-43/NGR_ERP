@@ -30,4 +30,5 @@ public interface EmpLoginService {
     Long findMatNOByEmpId(String empId);
 
 	Long findMatNoByEmpId(String empId);
-}
+	
+	boolean idChecks(String empId);}

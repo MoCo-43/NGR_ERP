@@ -94,6 +94,7 @@
 	    <result property="name" column="NAME"/> 
 	    <result property="dept_code" column="DEPT_CODE"/>
 	    <result property="email" column="EMAIL"/>
+	    <result property="title" column="TITLE"/>
 	    <result property="companyCode" column="COMPANY_CODE"/> 
 	    <result property="position" column="POSITION"/>
 	    <result property="dept_name" column="DEPT_NAME"/> 
@@ -101,19 +102,22 @@
     
  <!-- 사원정보 조회 -->
 <select id="findEmployeesByDept" parameterType="String" resultMap="EmpVOResultMap">
-    SELECT
-        EMP_ID,
-        NAME,
-        DEPT_CODE,
-        EMAIL
-    FROM
-        EMP
-    <where>
-        <if test="deptCode != null and !deptCode.equals('')">
-            DEPT_CODE = #{deptCode}
-        </if>
-    </where>
-    ORDER BY NAME
+	SELECT
+		e.EMP_ID,
+		e.NAME,
+		e.DEPT_CODE,
+		e.TITLE,
+		e.EMAIL,
+		d.DEPT_NAME
+	FROM emp e
+	JOIN dept d
+		ON e.DEPT_CODE = d.DEPT_CODE
+	<where>
+		<if test="deptCode != null and deptCode != ''">
+			e.DEPT_CODE = #{deptCode}
+		</if>
+	</where>
+	ORDER BY e.NAME
 </select>    
     
 <!-- 신규 아이디 계정 생성 -->
@@ -191,5 +195,9 @@
     WHERE 
         emp_id = #{empId}
 </select>
-
+<select id="idChecks" parameterType="String" resultType="int">
+    SELECT COUNT(*)
+    FROM emp_login
+    WHERE emp_id = #{empId}
+</select>
 </mapper>

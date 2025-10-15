@@ -113,7 +113,7 @@ mains: {
     title: "마이페이지",
     content: "마이페이지대시보드",
     groups: [
-        { title: "구독관리", items: [["구독관리", "/admin/subList"]] },
+        { title: "구독관리", items: [["구독정보관리", "/sub/admin/subList"]] },
         { title: "계정관리", items: [["계정관리", "/admin/hrmanager"]] },
         { 
             title: "마이페이지", 

@@ -11,13 +11,16 @@
 			SELECT plan_seq.NEXTVAL FROM DUAL
 		</selectKey>
 		INSERT INTO plan (
-		PLAN_NO, TITLE, DESCRIPTION, START_DATE, END_DATE, EMP_ID_NO, CATEGORY,
+		PLAN_NO, TITLE, DESCRIPTION, START_DATE, END_DATE,
+		EMP_ID_NO, CATEGORY,
 		CREATED_AT, UPDATED_AT
 		)
 		VALUES (
-		#{planNo}, #{title}, #{description},
+		#{planNo},
+		#{title}, #{description},
 		#{startDate}, #{endDate},
-		#{empIdNo}, #{category}, SYSTIMESTAMP, SYSTIMESTAMP
+		#{empIdNo},
+		#{category}, SYSTIMESTAMP, SYSTIMESTAMP
 		)
 	</insert>
 
@@ -60,7 +63,7 @@
 		CATEGORY
 		FROM plan
 		<where>
-			<if test="empIdNo != null">
+			<if test="empIdNo != null and empIdNo != ''"> 
 				EMP_ID_NO = #{empIdNo}
 			</if>
 		</where>

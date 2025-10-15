@@ -132,6 +132,11 @@ public class EmpLoginServiceImpl implements EmpLoginService {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	//아이디 중복체크
+	@Override
+	public boolean idChecks(String empId) {
+	    return empLoginMapper.idChecks(empId) > 0;
+	}
 
 
 }
