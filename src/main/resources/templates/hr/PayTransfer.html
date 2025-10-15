@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}">
+<head>
+  <title layout:fragment="title">급여 이체현황</title>
+
+  <th:block layout:fragment="head_extra">
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+    <style>
+      .toolbar { padding: 1rem 1rem .25rem 1rem; }
+      #transferGrid.ag-theme-quartz { height: 32rem; width: 100%; }
+      .toolbar .form-control { height: 38px; font-size: .95rem; line-height: 1.4; }
+      #total-area { padding: .75rem 1rem; background: #f8f9fa; font-weight: bold; text-align: right; color: navy; }
+      .ag-row-pinned.ag-row { font-weight: 700; background: #f8fafc;border-bottom: 2px solid #e5e7eb;}
+    </style>
+  </th:block>
+</head>
+
+<body>
+<section layout:fragment="content">
+  <div class="card shadow mb-3">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+      <h6 class="m-0 font-weight-bold text-primary">급여 이체현황</h6>
+      <button id="btnExportPdf" class="btn btn-secondary btn-sm">PDF</button>
+    </div>
+
+    <!-- 검색 영역 -->
+    <div class="toolbar">
+      <div class="row g-2 align-items-center">
+        <div class="col-12 col-sm-4 col-xl-3">
+          <input id="srchMonth" type="month" class="form-control" placeholder="귀속연월">
+        </div>
+        <div class="col-12 col-xl-auto">
+          <div class="actions">
+            <button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
+            <button class="btn btn-danger btn-sm" id="btnReset">초기화</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body pt-3">
+      <div id="transferGrid" class="ag-theme-quartz"></div>
+    </div>
+    <div id="total-area">총 합계: 0 원</div>
+  </div>
+
+</section>
+
+<th:block layout:fragment="body_extra">
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script> 
+
+<script th:inline="none">
+  	
+  document.addEventListener('DOMContentLoaded', () => {
+    // API: 회사코드 
+    const API_VIEW = '/api/hr/pay-transfer/view';
+
+    const gridDiv = document.getElementById('transferGrid');
+    const btnSearch = document.getElementById('btnSearch');
+    const btnReset = document.getElementById('btnReset');
+    const btnExportPdf = document.getElementById('btnExportPdf');
+    const srchMonth = document.getElementById('srchMonth');
+
+    let gridApi = null;
+    let rowDataCache = [];
+
+    const columnDefs = [
+      { headerName:'선택', width:70, checkboxSelection:true, headerCheckboxSelection:false, filter:false, suppressMenu:true, pinned:'left' },
+      { headerName:'은행코드', field:'bankCode', width:120 },
+      { headerName:'계좌번호', field:'accountNo', flex:1, minWidth:180 },
+      { headerName:'예금주', field:'accountHolder', width:150 },
+      { headerName:'실지급액', field:'netPay', width:140,
+        valueFormatter:(p)=>p.value ? Number(p.value).toLocaleString() + ' 원' : '' },
+      { headerName:'사원번호', field:'empId', width:160 },
+      { headerName:'급여연월', field:'payYm', width:120 },
+    ];
+
+    const gridOptions = {
+      columnDefs,
+      rowData: [],
+      pagination: true,
+      paginationPageSize: 10,
+      defaultColDef: { sortable:true, resizable:true, filter:false, suppressMenu:true },
+      onGridReady: (params) => { gridApi = params.api; initLoad(); }
+    };
+
+    new agGrid.Grid(gridDiv, gridOptions);
+
+    async function initLoad(){
+      const now = new Date();
+      srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      await loadFromServer();
+    }
+
+    async function loadFromServer(){
+      const monthVal  = srchMonth.value;
+      const payYm = monthVal ? monthVal.replace('-','') : '';
+      if (!payYm) {
+        rowDataCache = [];
+        applyRows();
+        return;
+      }
+
+      const url = `${API_VIEW}?payYm=${encodeURIComponent(payYm)}`;
+      const { data, status } = await axios.get(url, { validateStatus:s=>s>=200&&s<500 });
+      if (status >= 400) {
+        alert('이체현황 조회 중 오류가 발생했습니다.');
+        rowDataCache = [];
+        applyRows();
+        return;
+      }
+      rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
+      applyRows();
+    }
+
+    function applyRows(){
+      gridApi.setRowData(rowDataCache);
+      gridApi.paginationGoToFirstPage();
+      updateTotal();
+    }
+
+    function updateTotal(){
+      const total = rowDataCache.reduce((sum, r)=> sum + (Number(r.netPay)||0), 0);
+      document.getElementById('total-area').textContent = `총 합계: ${total.toLocaleString()} 원`;
+    }
+
+    function doReset(){
+      const now = new Date();
+      srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      rowDataCache = [];
+      applyRows();
+    }
+
+    btnSearch.addEventListener('click', loadFromServer);
+    btnReset.addEventListener('click', doReset);
+
+ // PDF 
+    let __krFontBase64 = null;
+    const KR_FONT_URL = '/fonts/NotoSansKR-Regular.ttf';
+
+    async function __fetchAsBase64(url) {
+      const res = await fetch(url, { cache: 'force-cache' });
+      if (!res.ok) throw new Error('Font fetch failed: ' + res.status);
+      const buf = await res.arrayBuffer();
+      let binary = '';
+      const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+      return btoa(binary);
+    }
+    async function __ensureKoreanFont() {
+      if (__krFontBase64) return __krFontBase64;
+      __krFontBase64 = await __fetchAsBase64(KR_FONT_URL);
+      return __krFontBase64;
+    }
+
+    // PDF 
+    btnExportPdf.addEventListener('click', async () => {
+      const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      if (!jsPDFCtor) { alert('jsPDF가 로드되지 않았습니다.'); return; }
+      if (!('autoTable' in (jsPDFCtor.API || {}))) { alert('jspdf-autotable이 로드되지 않았습니다.'); return; }
+
+      // 제목 라벨
+      const monthVal = srchMonth.value;
+      const payYm = monthVal ? monthVal.replace('-', '') : '';
+      const label = payYm ? `${payYm.slice(0,4)}-${payYm.slice(4)} 기준` : '';
+
+      // 표 데이터 
+      const body = (rowDataCache || []).map(r => ([
+        r.bankCode ?? '',
+        r.accountNo ?? '',
+        r.accountHolder ?? '',
+        r.netPay ? Number(r.netPay).toLocaleString() : '',
+        r.empId ?? '',
+        r.payYm ?? ''
+      ]));
+      
+      const total = (rowDataCache || []).reduce((sum, r) => sum + (Number(r.netPay) || 0), 0);
+
+      const doc = new jsPDFCtor({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+      try {
+        // 한글 폰트 등록
+        const base64 = await __ensureKoreanFont();
+        doc.addFileToVFS('NotoSansKR-Regular.ttf', base64);
+        doc.addFont('NotoSansKR-Regular.ttf', 'NotoSansKR', 'normal');
+        doc.setFont('NotoSansKR');
+
+        // 제목
+        doc.setFontSize(14);
+        doc.text(`급여 이체현황 ${label ? '(' + label + ')' : ''}`, 40, 40);
+
+        // 표
+        doc.setFontSize(10);
+        doc.autoTable({
+          startY: 60,
+          head: [['은행코드', '계좌번호', '예금주', '실지급액', '사원번호', '급여연월']],
+          body,
+          theme: 'striped',
+          styles: { font: 'NotoSansKR', fontSize: 9, cellPadding: 4 },
+          headStyles: { font: 'NotoSansKR', fillColor: [55, 65, 81], textColor: 255 },
+          columnStyles: {
+            0: { cellWidth: 90 },
+            1: { cellWidth: 180 },
+            2: { cellWidth: 120 },
+            3: { halign: 'left', cellWidth: 110 },
+            4: { cellWidth: 120 },
+            5: { cellWidth: 90 } 
+          },
+          didDrawPage: () => {
+              const y = doc.internal.pageSize.getHeight() - 20;
+              doc.setFontSize(9);
+              doc.text(`총 합계: ${total.toLocaleString()} 원`, 40, y); 
+            }
+          });
+
+
+        // 저장
+        doc.save(`급여이체현황_${payYm || ''}.pdf`);
+      } catch (e) {
+        console.error(e);
+        alert('PDF 생성 중 오류가 발생했습니다.');
+      }
+    });
+
+  });
+  </script>
+</th:block>
+</body>
+</html>
