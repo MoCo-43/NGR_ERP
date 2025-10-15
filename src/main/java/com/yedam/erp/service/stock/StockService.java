@@ -62,7 +62,7 @@ public interface StockService {
 	public List<InvenDetailVO> getIcDetailList(Long companyCode , String seletedRow);
 	
 	// 결산 등록
-	public void insertInvenClosing(InvenVO inven);
+	public void insertInvenClosing(String empId , Long compCode);
 	
 	// 입고조회
 	public List<InboundVO> getInboundList(Long companyCode);

@@ -8,9 +8,9 @@ import lombok.Data;
 @Data
 public class InvenDetailVO {
 	
-	
-	private String finalSign;
-	private String empSign;
+	private int icDetailNo;
+	//private String finalSign;
+	//private String empSign;
 	private Date insDate;
 	private String empId;
 	private String deptName;
@@ -20,7 +20,7 @@ public class InvenDetailVO {
 	private Long stock;
 	private BigDecimal valuationAmount;
 	private String icCode;
-	private String companyCode;
+	private Long companyCode;
 	
 	
 }

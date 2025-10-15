@@ -262,7 +262,8 @@ GROUP BY
     orr.vat_type,
     orr.xp_code
     
-ORDER BY TO_NUMBER(REGEXP_SUBSTR(orr.order_code, '\d+')) DESC
+<!-- ORDER BY TO_NUMBER(REGEXP_SUBSTR(orr.order_code, '\d+')) DESC -->
+ORDER BY orr.order_code DESC
 
 </select>
 <resultMap id="orderListResultMap" type="OrderVO">
@@ -476,7 +477,7 @@ ORDER BY d.product_code
         USING (SELECT  #{businessCode} AS businessCode, #{productCode} AS productCode , TRUNC(SYSDATE) AS inboundDate FROM dual) src
         ON (t.product_code = src.productCode AND t.business_code = src.businessCode AND TRUNC(t.inbound_date) = src.inboundDate)
         WHEN MATCHED THEN
-            UPDATE SET t.qty = t.qty + #{qty} 
+            UPDATE SET t.qty = t.qty + #{qty} , t.remain_qty = t.remain_qty + #{qty} 
         WHEN NOT MATCHED THEN
             INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, due_date, company_code, business_partner, business_code,purchase_price, remain_qty)
             VALUES (v_lotCode, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode}, #{orderPrice}, #{qty});
@@ -618,8 +619,8 @@ VALUES
 )
 
 </insert>
-
-<!-- 거래명세서 조회용 쿼리 -->
+<!-- 
+     거래명세서 조회용 쿼리
 <select id="getDeliveryNote" resultMap = "deliveryResultMap">
 SELECT 
        oh.outb_header_code AS outb_header_code,
@@ -658,7 +659,6 @@ ORDER BY oh.outb_header_code DESC
 
 </select>
 
-<!-- ResultMap -->
 <resultMap id="deliveryResultMap" type="OutboundHeaderVO">
     <id property="outbHeaderCode" column="outb_header_code"/>
     <result property="doCode" column="do_code"/>
@@ -668,9 +668,8 @@ ORDER BY oh.outb_header_code DESC
     <result property="businessPartner" column="business_partner"/>
     <result property="qty" column="qty"/>
     <result property="dueDate" column="due_date"/>
-    <result property="hasSheet" column="has_sheet"/> <!-- 추가 -->
-    
-    <!-- 디테일 매핑 -->
+    <result property="hasSheet" column="has_sheet"/>
+
     <collection property="details" ofType="OutboundVO" 
         select="selectOutboundByOutbHeaderCode" column="outb_header_code"/>
 </resultMap>
@@ -704,5 +703,142 @@ ON do.do_no = dod.do_no
 WHERE oh.outb_header_code = #{outCode}
 
 </select>
+ -->
+ <!-- 거래명세서 조회용 쿼리 -->
+<select id="getDeliveryNote" resultType="OutboundHeaderVO">
+SELECT 
+    oh.outb_header_code AS outbHeaderCode,
+    oh.outbound_date AS outboundDate,
+    oh.do_code AS doCode,
+    oh.business_code AS businessCode,
+    oh.business_partner AS businessPartner,
+    oh.due_date AS dueDate,
+    CASE
+        WHEN COUNT(o.outbound_no) > 1 
+            THEN MIN(o.product_name) || ' 외 ' || (COUNT(o.outbound_no) - 1) || '건'
+        ELSE MIN(o.product_name)
+    END AS productName,
+    SUM(o.qty) AS qty,
+    CASE 
+        WHEN EXISTS (
+            SELECT 1
+            FROM delivery_order do2
+            JOIN do_detail dod2 ON do2.do_no = dod2.do_no
+            WHERE do2.do_code = oh.do_code
+        ) THEN 'Y'
+        ELSE 'N'
+    END AS hasSheet
+FROM outbound_header oh
+JOIN outbound o ON oh.outb_header_code = o.outb_header_code
+GROUP BY oh.outb_header_code, oh.outbound_date, oh.business_code,
+         oh.business_partner, oh.due_date, oh.do_code
+ORDER BY oh.outb_header_code DESC
+</select>
+
+<!-- 그리드 행 클릭시 출고 상세내역 조회 -->
+<select id="selectOutboundByOutbHeaderCode" parameterType="string" resultType="OutboundVO">
+SELECT DISTINCT 
+       o.product_code AS productCode,
+       o.product_name AS productName,
+       o.specification AS specification,
+       oh.business_code AS businessCode,
+       oh.business_partner AS businessPartner,
+       oh.do_code AS doCode,
+       o.qty AS qty,
+       oh.due_date AS dueDate,
+       dod.vat_amt AS vatAmt,
+       dod.sup_amt AS supAmt,
+       dod.unit_price AS orderPrice,
+       CASE WHEN EXISTS(
+                SELECT 1 FROM do_detail d2 
+                WHERE d2.do_no = (SELECT do_no FROM delivery_order WHERE do_code = #{doCode} AND vat_amt > 0)
+            ) THEN 'VAT 포함'
+            ELSE '면세'
+       END AS taxType
+FROM outbound_header oh
+JOIN outbound o ON oh.outb_header_code = o.outb_header_code
+JOIN delivery_order do ON do.do_code = oh.do_code
+JOIN do_detail dod ON do.do_no = dod.do_no
+WHERE oh.outb_header_code = #{outCode}
+</select>
+
+<!-- 이달 결산 데이터 존재여부 조회 -->
+<select id="checkThisMonthSettlement"  resultType="int">
+<![CDATA[
+SELECT CASE WHEN EXISTS (
+		        SELECT 1
+		        FROM inventory_closing
+		        WHERE ic_date >= TRUNC(SYSDATE,'MM')
+		          AND ic_date < TRUNC(ADD_MONTHS(SYSDATE,1),'MM') 
+		                   )   
+	        THEN 1 
+            ELSE 0 END  AS exist_data
+    FROM dual
+]]>
+</select>
+
+<!-- 결산 마스터(헤더) 생성 -->
+<insert id="insertInvenClosing">
+<selectKey keyProperty="icCode" resultType="String" order="AFTER">
+        SELECT ic_code
+        FROM inventory_closing
+        WHERE company_code = #{compCode}
+          AND ic_status = 'T' 
+        ORDER BY ic_date DESC 
+</selectKey>
+ INSERT INTO inventory_closing (
+        ic_code,         <!-- 결산 코드 -->
+        emp_id,
+        ic_status,
+        ic_date,
+        company_code
+    )
+  VALUES(
+       'IC'||TO_CHAR(SYSDATE ,'YYYYMMDD')
+       ,#{empId}
+       ,'T'
+       ,TRUNC(SYSDATE)
+       ,#{compCode}
+  )  
+</insert>
+
+<!-- 결산 상세(디테일) 등록 -->
+<insert id="insertInvenClosingDetail">
+<selectKey keyProperty="icDetailNo" resultType="int" order="BEFORE">
+        SELECT seq_ic_detail.nextval FROM dual
+</selectKey>
+INSERT INTO inventory_closing_detail(
+      IC_DETAIL_NO
+      ,INS_DATE
+      ,EMP_ID
+      ,DEPT_NAME
+      ,PRODUCT_CODE
+      ,PRODUCT_NAME
+      ,OPENING_STOCK
+      ,STOCK
+      ,VALUATION_AMOUNT
+      ,IC_CODE
+      ,COMPANY_CODE
+)
+SELECT
+      #{icDetailNo}
+      ,TRUNC(sysdate)
+      ,#{empId}
+      ,'재고부'
+      ,product_code
+      ,product_name
+      ,NVL(prev.opening_stock, 0) AS opening_stock,   -- 이전달 이월재고
+      ,remain_qty
+      ,(remain_qty * purchase_price) AS valuation_amount
+      ,#{icCode}
+      ,#{compCode}
+FROM INBOUND i
+LEFT JOIN INVENTORY_CLOSING_DETAIL prev
+  ON prev.product_code = i.product_code
+ AND TRUNC(prev.ins_date, 'MM') = TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM')
+</insert>
+
+
+
 
 </mapper>

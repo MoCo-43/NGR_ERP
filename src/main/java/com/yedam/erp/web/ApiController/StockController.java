@@ -67,8 +67,12 @@ public class StockController {
 
 	final private StockService service;
 	final private JasperService jasper;
+	
 	@Autowired
 	DataSource datasource;
+	
+	@Value("${file.upload.dir}")
+    private String uploadDir;   // application.properties 경로 읽기
 	
 	// 세션 회사코드 불러오기
 	@GetMapping("/getCompId")
@@ -76,6 +80,8 @@ public class StockController {
 		 Long compId = SessionUtil.companyId();
 	        return compId != null ? compId : 0L; // null 방지
 	}
+	
+	
 	// 세션 사원이름 불러오기
 	@GetMapping("/getEmpName")
 	public String getEmpName(Model model) {
@@ -85,12 +91,23 @@ public class StockController {
 		// return empName;
 	}
 	
+	// 결산 생성
+	@PostMapping("/createICData")
+	public ResponseEntity<?> createICData() {
+		String empId = SessionUtil.empId();
+		Long compCode = SessionUtil.companyId();
+		service.insertInvenClosing(empId , compCode);
+		return ResponseEntity.ok("생성완료");
+	}
+	
+	
 	@GetMapping("/icList") // 결산 리스트
 	public List<InvenVO> getIcList(){
 		Long companyCode = SessionUtil.companyId();
 		System.out.println(companyCode);
 		return service.getIcList(companyCode);
 	}
+	
 	
 	@GetMapping("/icDetailList/{selectedRow}") // 결산 상세 리스트
 	public List<InvenDetailVO> getIcDetailList(@PathVariable String selectedRow){
@@ -106,15 +123,18 @@ public class StockController {
 		return service.getInboundList(companyCode);
 	}
 	
+	
 	@GetMapping("/inDetailList/{selectedRow}")
 	public List<InboundVO> getInDetail(@PathVariable String selectedRow) {
 		return service.getInboundDetail(selectedRow);
 	}
 	
+	
 	@GetMapping("/orderDetail/{orderCode}")
 	public List<OrderDetailVO> getOrderDetailList(@PathVariable String orderCode){
 		return service.getOrderDetailByXpCode(orderCode);
 	}
+	
 	
 	@PostMapping("/inboundInsert")
 	public ResponseEntity<?> insertInbound(@RequestBody Map<String, List<InboundVO>> payload) {
@@ -123,15 +143,18 @@ public class StockController {
 	    return ResponseEntity.ok("등록 성공");
 	}
 	
+	
 	@GetMapping("/delOrderList")
 	public List<ComOrderVO> getDeliveryOrderList(){
 		return service.getDeliveryOrderList();
 	}
 	
+	
 	@GetMapping("/deliveryOrderDetail/{doCode}")
 	public List<ComOrderDetailVO> getDeliOrderDetailList(@PathVariable String doCode){
 		return service.getComOrderDetailList(doCode);
 	}
+	
 	
 	@PostMapping("/outboundInsert")
 	public ResponseEntity<?> insertOutbound(@RequestBody OutboundHeaderVO payload){
@@ -150,6 +173,7 @@ public class StockController {
                     .body("등록 실패: " + e.getMessage());
 		}
 	}
+	
 	
 	@GetMapping("/outboundList")
 	public List<OutboundHeaderVO> getOutboundList(){
@@ -343,9 +367,6 @@ public class StockController {
 		 return service.customerAll(params);
 	 }
 	
-	 @Value("${file.upload.dir}")
-	    private String uploadDir;   // application.properties 경로 읽기
-	
 	
 	 @PostMapping("/productInsert") // 제품등록
 	    public int insertProduct(@ModelAttribute ProductVO product) throws IOException {
@@ -362,7 +383,7 @@ public class StockController {
 	        	// UUID 생성 + 확장자 유지
 	            String uuid = UUID.randomUUID().toString();
 	            String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
-	            String newFileName = uuid + "_" + ext;
+	            String newFileName = uuid + "." + ext;
 
 	            // DB에 저장할 이름 설정
 	            product.setProductImageName(newFileName);

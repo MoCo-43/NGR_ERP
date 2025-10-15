@@ -3,10 +3,12 @@ package com.yedam.erp.service.impl.stock;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.stock.StockMapper;
+import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.main.CompanyVO;
@@ -139,31 +141,48 @@ public class StockImpl implements StockService{
 		return mapper.getIcDetailList(companyCode, selectedRow);
 	}
 
-
+	@Transactional
 	@Override
-	public void insertInvenClosing(InvenVO inven) {
+	public void insertInvenClosing(String empId , Long compCode) {
 		// TODO Auto-generated method stub
+		System.out.println("[결산생성] 월말 재고결산 데이터 생성 시작");
+		System.out.println("[데이터체크] 이월된 결산 데이터 조회 시작");
+		 int exists = mapper.checkThisMonthSettlement();
+	        if (exists > 0) {
+	        	System.out.println("[데이터체크] 이월된 결산 데이터 조회 완료");
+	            System.out.println("[결산생성] 이번 달 결산 데이터가 이미 존재합니다.");
+	            return;
+	        }
+	    System.out.println("[데이터체크] 이월된 결산 데이터 조회 완료");
+	    System.out.println("[결산생성] 이번 달 결산 데이터가 존재하지 않습니다.");
+	    System.out.println("empId , compCode check : "+empId+", "+compCode);
+	    InvenVO instance = new InvenVO();
+	    instance.setCompanyCode(compCode);
+	    instance.setEmpId(empId);
+		mapper.insertInvenClosing(instance); // 마스터 처리
 		
+		mapper.insertInvenClosingDetail(instance); // 상세 처리
+		
+		System.out.println("[결산생성] 재고결산 데이터 생성 완료");
 	}
+	
+	
 
 
 	@Override
 	public List<InboundVO> getInboundList(Long companyCode) {
-		// TODO Auto-generated method stub
 		return mapper.getInboundList(companyCode);
 	}
 
 
 	@Override
 	public List<InboundVO> getInboundDetail(String selectedRow) {
-		// TODO Auto-generated method stub
 		return mapper.getInboundDetail(selectedRow);
 	}
 
 
 	@Override
 	public List<OrderDetailVO> getOrderDetailByXpCode(String orderCode) {
-		// TODO Auto-generated method stub
 		return mapper.getOrderDetailListByOrderCode(orderCode);
 	}
 
@@ -178,14 +197,12 @@ public class StockImpl implements StockService{
 
 	@Override
 	public List<ComOrderVO> getDeliveryOrderList() {
-		// TODO Auto-generated method stub
 		return mapper.getDeliveryOrderList();
 	}
 
 
 	@Override
 	public List<ComOrderDetailVO> getComOrderDetailList(String doCode) {
-		// TODO Auto-generated method stub
 		return mapper.getComOrderDetailList(doCode);
 	}
 
@@ -193,7 +210,6 @@ public class StockImpl implements StockService{
 	@Transactional
 	@Override
 	public void insertOutbound(OutboundHeaderVO payload) {
-		// TODO Auto-generated method stub
 		
 		System.out.println("Header doCode=" + payload.getDoCode());
 		System.out.println("Header dueDate=" + payload.getDueDate());
@@ -229,14 +245,12 @@ public class StockImpl implements StockService{
 
 	@Override
 	public List<OutboundHeaderVO> getOutboundList() {
-		// TODO Auto-generated method stub
 		return mapper.getDeliveryNote();
 	}
 
 
 	@Override
 	public List<OutboundVO> selectOutboundByOutbHeaderCode(String outbHeaderCode , String doCode) {
-		// TODO Auto-generated method stub
 		return mapper.selectOutboundByOutbHeaderCode(outbHeaderCode, doCode);
 	}
 
