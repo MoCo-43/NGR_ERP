@@ -306,4 +306,101 @@ ORDER BY d.DO_CREATED DESC
     WHERE cm.company_code = #{companyCode}
     ORDER BY cm.cus_code
   </select>
+
+
+<!-- 여신페이지 Mapper -->
+  <!-- ================== ResultMaps ================== -->
+  <!-- 그리드(현황) -->
+  <!-- type 은 VO FQCN: com.example.credit.vo.CreditExposureVo -->
+  <!-- <resultMap id="ExposureMap" type="CreditExposureVO">
+    <result column="company_code"   property="companyCode"/>
+    <result column="cus_code"       property="cusCode"/>
+    <result column="cus_name"       property="cusName"/>
+    <result column="credit_grade"   property="creditGrade"/>
+    <result column="credit_limit"   property="creditLimit"/>
+    <result column="start_date"     property="startDate"/>
+    <result column="expire_date"    property="expireDate"/>
+    <result column="remain_limit"   property="remainLimit"/>
+    <result column="manager_name"   property="managerName"/>
+    <result column="status"         property="status"/>
+  </resultMap>
+
+  <!-- 단건 상세 -->
+  <!-- type: com.example.credit.vo.CreditMasterVo -->
+  <resultMap id="MasterMap" type="CreditMasterVO">
+    <result column="company_code"   property="companyCode"/>
+    <result column="cus_code"       property="cusCode"/>
+    <result column="credit_grade"   property="creditGrade"/>
+    <result column="credit_limit"   property="creditLimit"/>
+    <result column="due_date"       property="dueDate"/>
+    <result column="start_date"     property="startDate"/>
+    <result column="expire_date"    property="expireDate"/>
+    <result column="left_price"     property="leftPrice"/>
+    <result column="active_status"  property="activeStatus"/>
+    <result column="emp_name"       property="empName"/>
+  </resultMap>
+
+  <!-- ================== SELECTS ================== -->
+
+  <!-- 1) 거래처별 여신 현황 (뷰 권장: V_CREDIT_EXPOSURE) -->
+  <select id="selectExposureList" resultMap="ExposureMap">
+    SELECT company_code, cus_code, cus_name, credit_grade, credit_limit,
+           start_date, expire_date, remain_limit, manager_name, status
+    FROM   V_CREDIT_EXPOSURE
+    WHERE  company_code = #{companyCode}
+    <if test="grade != null and grade != ''">
+      AND credit_grade = #{grade}
+    </if>
+    <if test="name != null and name != ''">
+      AND (UPPER(cus_name) LIKE '%'||UPPER(#{name})||'%'
+           OR TO_CHAR(cus_code) LIKE '%'||#{name}||'%')
+    </if>
+    <if test="manager != null and manager != ''">
+      AND (UPPER(manager_name) LIKE '%'||UPPER(#{manager})||'%')
+    </if>
+    ORDER BY cus_name
+  </select>
+
+  <!-- 2) 단건 조회(수정 모달/페이지) -->
+  <select id="selectCreditMaster" resultMap="MasterMap">
+    SELECT company_code, cus_code, credit_grade, credit_limit, due_date,
+           start_date, expire_date, left_price, NVL(active_status,'Y') AS active_status,
+           emp_name
+    FROM   credit_master
+    WHERE  company_code = #{companyCode}
+      AND  cus_code     = #{cusCode}
+  </select>
+
+  <!-- ================== UPSERT / UPDATE ================== -->
+
+  <!-- 3) 등록/수정 (MERGE) -->
+  <!-- parameterType 은 VO FQCN: com.example.credit.vo.CreditMasterVo -->
+  <update id="upsertCreditMaster" parameterType="com.example.credit.vo.CreditMasterVo">
+    MERGE INTO credit_master t
+    USING (SELECT #{companyCode} AS company_code, #{cusCode} AS cus_code FROM dual) s
+      ON (t.company_code = s.company_code AND t.cus_code = s.cus_code)
+    WHEN MATCHED THEN UPDATE SET
+         credit_grade  = #{creditGrade},
+         credit_limit  = #{creditLimit},
+         due_date      = #{dueDate},
+         start_date    = #{startDate},
+         expire_date   = #{expireDate},
+         emp_name      = #{empName},
+         active_status = NVL(#{activeStatus}, 'Y')
+    WHEN NOT MATCHED THEN
+      INSERT (credit_no, company_code, cus_code, credit_grade, credit_limit,
+              due_date, start_date, expire_date, left_price, created_date, active_status, emp_name)
+      VALUES (SEQ_CREDIT_NO.NEXTVAL, #{companyCode}, #{cusCode}, #{creditGrade}, #{creditLimit},
+              #{dueDate}, #{startDate}, #{expireDate}, 0, SYSDATE, NVL(#{activeStatus}, 'Y'), #{empName})
+  </update>
+
+  <!-- 4) 비활성화(실삭제 X) -->
+  <update id="deactivateCredit">
+    UPDATE credit_master
+       SET active_status = 'N',
+           expire_date   = NVL(expire_date, SYSDATE)
+     WHERE company_code = #{companyCode}
+       AND cus_code     = #{cusCode}
+  </update> -->
+
 </mapper>

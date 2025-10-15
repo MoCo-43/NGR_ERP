@@ -146,12 +146,12 @@
             <div class="row g-3 align-items-end mb-2">
               <div class="col-md-6">
                 <label for="creater" class="form-label">담당자</label>
-                <input
+                <span
                   id="creater"
                   class="form-control"
-                  placeholder="세션로그인사용자"
-                  disabled
-                />
+                  th:text="${#authentication.principal.empLoginVO.name}"
+                >
+                </span>
               </div>
               <div class="col-md-6">
                 <label for="bizType" class="form-label">거래유형</label>

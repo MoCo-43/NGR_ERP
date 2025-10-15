@@ -3,6 +3,10 @@ package com.yedam.erp.service.Biz;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.yedam.erp.vo.Biz.CreditExposureVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -11,6 +15,8 @@ import com.yedam.erp.vo.Biz.JoinPoVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
+
+import lombok.RequiredArgsConstructor;
 
 public interface BizService {
 
@@ -48,6 +54,18 @@ public interface BizService {
   int updateCustomerByCode(CustomerVO cvo);
 
   // 거래처여신 조회
-    List<CustomerCreditVO> selectCrdMaster(Long companyCode, LocalDate monthBase);
+  List<CustomerCreditVO> selectCrdMaster(Long companyCode, LocalDate monthBase);
+
+  // 여신관리페이지
+  // 1. 거래처별 관리 페이지
+  // List<CreditExposureVO> list(Long companyCode, String grade, String name, String manager);
+
+  // CreditExposureVO get(Long companyCode, Long cusCode);
+
+  // void save(CreditExposureVO vo, String user);   // 등록/수정 (필요 시 이력 저장 포함)
+
+  // void deactivate(Long companyCode, Long cusCode, String user);
+
+
 }
 
