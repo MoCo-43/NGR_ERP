@@ -12,7 +12,7 @@
             SUB_PLAN_NO, TOTAL_PAY, MAT_NO, MON, COM_CODE
         ) VALUES (
             #{subCode}, SYSDATE, ADD_MONTHS(SYSDATE, #{mon}), #{totalUsers}, #{subStatus}, 
-            #{subPlanNo}, #{TotalPay}, #{MatNo}, #{Mon}, #{comCode}
+            #{subPlanNo}, #{totalPay}, #{matNo}, #{mon}, #{comCode}
         )
     </insert>
 

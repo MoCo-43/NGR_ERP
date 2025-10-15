@@ -37,7 +37,7 @@ public class EmpLoginController {
         List<EmpVO> empList = empLoginService.findEmployeesByDept(deptCode);
 
         for (EmpVO emp : empList) {
-            System.out.println("emp_id=" + emp.getEmp_id() + ", name=" + emp.getName() 
+            System.out.println("emp_id=" + emp.getEmp_id() + ", name=" + emp.getName() +",title="+emp.getTitle() 
                 + ", dept_code=" + emp.getDept_code() + ", email=" + emp.getEmail());
         }
 
@@ -46,7 +46,8 @@ public class EmpLoginController {
             Map<String, Object> map = new HashMap<>();
             map.put("empId", emp.getEmp_id());
             map.put("name", emp.getName());
-            map.put("deptCode", emp.getDept_code());
+            map.put("title", emp.getTitle());
+            map.put("deptName", emp.getDept_name());
             map.put("email", emp.getEmail());
             result.add(map);
         }
@@ -76,6 +77,13 @@ public class EmpLoginController {
         // 컨트롤러는 "새로운 ID로 활성화 해줘" 라는 요청만 전달합니다.
         empIds.forEach(empLoginService::activateCustomLogin);
         return ResponseEntity.ok("선택된 사원들의 계정을 [신규 ID]로 생성하고, 초기 비밀번호를 발송했습니다.");
+    }
+    
+    //아이디 중복체크
+    @GetMapping("/checkId")
+    public Map<String, Boolean> checkUsername(@RequestParam String empId) {
+        boolean exists = empLoginService.idChecks(empId);
+        return Map.of("exists", exists);
     }
 	
 }

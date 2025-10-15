@@ -27,6 +27,7 @@ public class ApprovalServiceImpl implements ApprovalService {
 
         switch (docType.toLowerCase()) {
             case "journal":   return approvalMapper.updateJournalStatus(param);
+            case "documents": return approvalMapper.updateJournalStatus(param);
             // case "purchase": return approvalMapper.updatePurchaseStatus(param);
             default: throw new IllegalArgumentException("지원하지 않는 문서 유형: " + docType);
         }
