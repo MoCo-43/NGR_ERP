@@ -16,6 +16,10 @@ public class InvenVO {
 	 @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
 	private Date icDate;
 	private Long companyCode;
+	private String finalSign;
+	private String empSign;
+	
+	
 	
 	private List<InvenDetailVO> detail;
 	

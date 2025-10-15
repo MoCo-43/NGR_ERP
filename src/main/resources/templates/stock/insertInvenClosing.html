@@ -126,6 +126,8 @@
 
   <!-- 모달 include              경로             ::  div id 부분  -->   
   <div th:replace="~{stock/modals/orderListModal :: orderListModal}"></div>
+  <!-- 모달 include              경로             ::  div id 부분  -->   
+  <div th:replace="~{stock/modals/invenClosingSignModal :: icsModal}"></div>
   
 </section>
   
@@ -305,7 +307,59 @@ document.addEventListener("DOMContentLoaded", () => {
 	document.getElementById('createIcBtn').addEventListener('click', async () => {
 	//	console.log("loadICDetailData > selectedRow : "+selectedRow);
 	  //  await loadICDetailData();
+	  
+	  await createICData();
+	  
+	  
+	  
 	});
+	
+	async function createICData(){
+			try{
+				const res = await axios.post('/api/v1/stock/createICData', { withCredentials: true });
+				 if (res.status === 200) {
+				      toastr.success('결산 데이터가 생성되었습니다.');
+				      
+				      icListGrid.gridOptions.api.showLoadingOverlay();
+				      
+				      // 결산 목록 다시 불러오기
+				      const listRes = await axios.get('/api/v1/stock/icList', { withCredentials: true });
+
+				      //  데이터 갱신
+				      icListGrid.gridOptions.api.setRowData(listRes.data);
+
+				      // 최신 결산 자동 선택 + 상세 그리드 로드
+				      if (listRes.data && listRes.data.length > 0) {
+				        const latest = listRes.data[0]; // 최신 결산이 첫 번째라고 가정
+				        selectedRow = latest.icCode;
+
+				        // 해당 행 선택
+				        icListGrid.gridOptions.api.forEachNode((node) => {
+				          if (node.data.icCode === latest.icCode) {
+				            node.setSelected(true);
+				          }
+				        });
+
+				        // 상세데이터 자동 로드
+				        await loadICDetailData(selectedRow);
+				      }
+
+				      // 로딩 종료
+				      icListGrid.gridOptions.api.hideOverlay();
+				    }
+				  } 
+				catch (err) {
+				   console.error('❌ 결산 생성 실패:', err);
+				    toastr.error('결산 생성 중 오류가 발생했습니다.', '에러', {
+								   timeOut: 2000,
+								   closeButton: true,
+								   progressBar: true
+				    			});
+				    icListGrid.gridOptions.api.hideOverlay();
+				  }
+		
+	}// END OF createICData
+	
 	
  	//let gridCreated = false;
  	// withCredentials: true를 추가해야 쿠키 기반 세션을 함께 보내서 로그인 상태를 유지
@@ -339,33 +393,18 @@ document.addEventListener("DOMContentLoaded", () => {
 	            return; // 취소 시 함수 종료
 	        }
 	        
-	     // master + details
-	      const details = [];
-		  document.querySelectorAll('#orderItemsTable tbody tr').forEach(row => {
-			  details.push({
-				  productCode: row.querySelector('.productCode').value,
-				  productName: row.querySelector('.productName').value,
-				  specification: row.querySelector('.specification').value,
-				  qty: Number(row.querySelector('.qty').value) || 0,
-				  orderPrice: Number(row.querySelector('.orderPrice').value) || 0,
-				  supAmt: Number(row.querySelector('.supAmt').value) || 0,
-				  vatAmt: Number(row.querySelector('.vatAmt').value) || 0,
-				  note : row.querySelector('.note').value,
-				  companyCode: Number(document.getElementById('compCode').value) || 0
-		    });
-		  });
-		  const payload = {
+	     // Payload
+	    const payload = {
 				  	xpCode: document.getElementById('xpCode').value,
 		            empId: document.getElementById('empId').value,
 		            businessPartner : document.getElementById('businessPartnerInput').value,
 		            cusCode : document.getElementById('businessCodeInput').value,
 		            dueDate: document.getElementById('dueDate').value,
 		            vatType: document.getElementById('taxType').value,
-		            companyCode: Number(document.getElementById('compCode').value),
-		            details:details
+		            companyCode: Number(document.getElementById('compCode').value)
 		        };
 		  console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
-		  console.log("payload.dueDate: "+payload.dueDate);
+		  
 		  try {
 			  	
 			    await axios.post('/api/v1/stock/orderInsert', payload, {
