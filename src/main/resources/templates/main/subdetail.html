@@ -839,15 +839,19 @@ main {
     const USER_UNIT_PRICE = 5000;
     let finalPayment = 0;
     let adjustmentCharge = 0;
-    
-    // Toss Payments 전역 변수
-    const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; 
+
+    // ✨ [수정됨] Toss Payments 키를 기능별로 분리하여 정의
+    const widgetClientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; // 일반결제(결제위젯)용 클라이언트 키
+    const billingClientKey = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq"; // 정기결제(API)용 토스 테스트용 키
     const customerKey = "USER_ERP_1001"; // 실제 로그인한 사용자 고유 ID로 변경
-    let tossPayments; // TossPayments SDK 인스턴스를 저장할 변수
+
+    // ✨ [수정됨] 기능별 TossPayments 인스턴스를 저장할 변수
+    let tossWidgetPayments; // 일반결제용
+    let tossBillingPayments; // 정기결제용
     let widgets; // 위젯 객체를 담을 변수
-    
+
     // ------------------------------------
-    //  2. 결제 계산 함수
+    //  2. 결제 계산 함수 (변경 없음)
     // ------------------------------------
     function calculatePayment() {
         const unitPricePerUser = basePriceFromDB;
@@ -856,26 +860,26 @@ main {
         const maxCount = maxUsers;
 
         let baseUserInputPrice = unitPricePerUser * userCount * duration;
-        let localAdjustmentCharge = 0; 
-        
+        let localAdjustmentCharge = 0;
+
         if (userCount > maxCount) {
             localAdjustmentCharge = (userCount - maxCount) * USER_UNIT_PRICE * duration;
         } else if (userCount < maxCount) {
             localAdjustmentCharge = -(maxCount - userCount) * USER_UNIT_PRICE * duration;
         }
-        
+
         let discount = 0;
         if (duration === 12) {
             discount = Math.round(baseUserInputPrice * 0.1);
         }
-        
+
         adjustmentCharge = localAdjustmentCharge;
         finalPayment = baseUserInputPrice - discount + adjustmentCharge;
         finalPayment = Math.max(0, finalPayment);
 
         document.getElementById('base-price-display').textContent = baseUserInputPrice.toLocaleString() + '원';
         document.getElementById('summary-discount-price').textContent = '- ' + discount.toLocaleString() + '원';
-        
+
         if (adjustmentCharge > 0) {
             document.getElementById('summary-excess-price').textContent = '+' + adjustmentCharge.toLocaleString() + '원';
             document.getElementById('summary-underage-price').textContent = '- 0원';
@@ -886,12 +890,12 @@ main {
             document.getElementById('summary-excess-price').textContent = '+ 0원';
             document.getElementById('summary-underage-price').textContent = '- 0원';
         }
-        
+
         document.getElementById('summary-total-payment').textContent = finalPayment.toLocaleString() + '원';
     }
 
     // ------------------------------------
-    //  3. UI 업데이트 및 페이지 이동 함수
+    //  3. UI 업데이트 및 페이지 이동 함수 (변경 없음)
     // ------------------------------------
     function updateSummary() {
         const durationElements = document.querySelectorAll('#summary-duration, #summary-duration-final');
@@ -905,18 +909,18 @@ main {
     function goToStep(stepNumber) {
         document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
         document.getElementById(`step-${stepNumber}`).classList.add('active');
-        
+
         updateStepUI(stepNumber);
         currentStep = stepNumber;
-        
+
         if (stepNumber >= 2 && stepNumber <= 4) {
             updateSummary();
             if (basePriceFromDB > 0) {
-                calculatePayment(); 
+                calculatePayment();
             }
         }
     }
-
+    
     function updateStepUI(targetStep) {
         const steps = document.querySelectorAll('.steps .step');
         const uiTargetStep = targetStep > 4 ? 4 : targetStep;
@@ -933,7 +937,7 @@ main {
 
         if (targetStep === 5) {
             const step4UI = document.getElementById('step-ui-4');
-            if (step4UI) { 
+            if (step4UI) {
                 step4UI.classList.remove('active');
                 step4UI.classList.add('completed');
             }
@@ -945,15 +949,16 @@ main {
     // ------------------------------------
 
     /**
-     * "일반 결제" 모달을 열고 위젯을 렌더링합니다. (기존 함수)
+     * "일반 결제" 모달을 열고 위젯을 렌더링합니다.
      */
     async function openPaymentModal() {
         try {
-            widgets = tossPayments.widgets({ customerKey }); 
+            // ✨ [수정됨] 일반결제용 인스턴스(tossWidgetPayments) 사용
+            widgets = tossWidgetPayments.widgets({ customerKey });
 
             await widgets.setAmount({
                 currency: "KRW",
-                value: finalPayment, 
+                value: finalPayment,
             });
 
             await Promise.all([
@@ -961,9 +966,9 @@ main {
                     selector: "#payment-method-widget-modal",
                     variantKey: "DEFAULT",
                 }),
-                widgets.renderAgreement({ 
+                widgets.renderAgreement({
                     selector: "#agreement-widget-modal",
-                    variantKey: "AGREEMENT" 
+                    variantKey: "AGREEMENT"
                 }),
             ]);
 
@@ -975,16 +980,17 @@ main {
             alert("결제창을 여는 중 오류가 발생했습니다. 다시 시도해 주세요.");
         }
     }
-    
+
     /**
-     * [신규] "정기 결제(빌링)"를 위한 카드 등록창을 요청합니다.
+     * "정기 결제(빌링)"를 위한 카드 등록창을 요청합니다.
      */
     async function requestBillingAuth() {
         const customerName = document.getElementById('matName').value || "김토스";
         const customerEmail = document.getElementById('matMail').value || "customer@example.com";
 
         try {
-            const payment = tossPayments.payment({ customerKey });
+            // ✨ [수정됨] 정기결제용 인스턴스(tossBillingPayments) 사용
+            const payment = tossBillingPayments.payment({ customerKey });
             await payment.requestBillingAuth({
               method: "CARD",
               successUrl: window.location.origin + "/payment/billing-success",
@@ -997,18 +1003,18 @@ main {
             alert("카드 등록창을 여는 중 오류가 발생했습니다. 다시 시도해 주세요.");
         }
     }
-    
+
     /**
-     * [신규] 선택된 결제 방식에 따라 적절한 함수를 호출합니다.
+     * 선택된 결제 방식에 따라 적절한 함수를 호출합니다.
      */
     function handlePaymentRequest() {
         const selectedOption = document.querySelector('#payment-type-options .payment-option.selected');
         const paymentType = selectedOption.getAttribute('data-type');
-        
+
         if (paymentType === 'NORMAL') {
-            openPaymentModal(); // 일반결제
+            openPaymentModal();
         } else if (paymentType === 'RECURRING') {
-            requestBillingAuth(); // 정기결제
+            requestBillingAuth();
         }
     }
 
@@ -1016,10 +1022,12 @@ main {
     //  5. DOMContentLoaded 이벤트 핸들러
     // ------------------------------------
     document.addEventListener('DOMContentLoaded', async function() {
-        
-        // 페이지 로드 시 TossPayments SDK 인스턴스 생성
-        tossPayments = TossPayments(clientKey);
-        
+
+        // ✨ [수정됨] 페이지 로드 시 각 기능에 맞는 키로 TossPayments 인스턴스를 생성
+        tossWidgetPayments = TossPayments(widgetClientKey);
+        tossBillingPayments = TossPayments(billingClientKey);
+
+        // --- (이하 코드는 이전과 동일) ---
     	const basePriceElement = document.querySelector('.premium-section .price');
     	if (basePriceElement && basePriceElement.textContent) {
     	    const rawValue = basePriceElement.textContent.replace(/[^0-9]/g, '');
@@ -1028,7 +1036,7 @@ main {
 
     	const maxUsersHidden = document.getElementById('max-users-hidden');
     	if (maxUsersHidden) maxUsers = parseInt(maxUsersHidden.value, 10) || 0;
-    	
+
     	const minUsersHidden = document.getElementById('min-users-hidden');
     	if (minUsersHidden) minUsers = parseInt(minUsersHidden.value, 10) || 0;
 
@@ -1039,7 +1047,7 @@ main {
             button.addEventListener('click', () => {
                 durationButtons.forEach(btn => btn.classList.remove('selected'));
                 button.classList.add('selected');
-                selectedDurationText = button.getAttribute('data-duration'); 
+                selectedDurationText = button.getAttribute('data-duration');
                 selectedDuration = parseInt(selectedDurationText.replace(/[^0-9]/g, '')) || 1;
                 calculatePayment();
             });
@@ -1050,7 +1058,7 @@ main {
             selectedDurationText = initialSelectedDuration.getAttribute('data-duration');
             selectedDuration = parseInt(selectedDurationText.replace(/[^0-9]/g, '')) || 1;
         }
-        
+
         const userCountInput = document.getElementById('user-count-input');
         if (userCountInput) {
             selectedUserCount = userCountInput.value.replace(/[^0-9]/g, '');
@@ -1067,39 +1075,36 @@ main {
                 option.classList.add('selected');
             });
         });
-        
-        calculatePayment(); 
-        
-        // "결제하기" 버튼 클릭 시 handlePaymentRequest 함수 호출하도록 변경
+
+        calculatePayment();
+
         document.getElementById('payment-button').addEventListener('click', handlePaymentRequest);
-        
-        // (일반 결제) 모달 내의 "결제하기" 버튼 이벤트 (기존 코드 유지)
+
         document.getElementById('modal-payment-button').addEventListener('click', async function () {
-            
             if (!widgets) {
                 alert("결제 위젯이 초기화되지 않았습니다. 잠시 후 다시 시도해 주세요.");
-                return; 
+                return;
             }
-        
+
             const requestData = {
-                subPlanNo: 1, // 실제 선택한 플랜 번호로 변경 필요
+                subPlanNo: 1,
                 userCount: selectedUserCount,
                 duration: selectedDuration,
                 finalAmount: finalPayment,
                 adjustmentCharge: adjustmentCharge
             };
-        
+
             try {
                 const response = await axios.post('/payment/api/payment/prepare', requestData);
                 const { orderId, orderName } = response.data;
-        
+
                 await widgets.requestPayment({
                     orderId: orderId,
                     orderName: orderName,
                     successUrl: window.location.origin + "/payment/success",
                     failUrl: window.location.origin + "/payment/fail",
                 });
-        
+
             } catch (error) {
                 console.error("결제 요청 중 오류 발생:", error);
                 alert("결제를 진행하는 중 문제가 발생했습니다. 콘솔을 확인해 주세요.");
