@@ -99,7 +99,22 @@
 	    let baseApi, debitApi, creditApi, journalApi;
 	    let baseCache = [];  // ✅ 원본 데이터 캐시
 	    let selectedPayrollNo = null;  // ✅ 전역변수로 선언
-	    let selectedRowData = null; // ✅ 추가
+	    let selectedRowData = null; 
+	    let journalCache = [];
+	    
+	    
+	    function formatDate(d) {
+	    	  const y = d.getFullYear();
+	    	  const m = String(d.getMonth() + 1).padStart(2, '0');
+	    	  const day = String(d.getDate()).padStart(2, '0');
+	    	  return `${y}-${m}-${day}`;
+	    	}
+	    function getThisMonthYM(){
+	    	  const now = new Date();
+	    	  return `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}`;
+	    	}
+	    
+	    
 	    const API_BASE = '/api/v1/payrolls';
 	    
 	    document.addEventListener("DOMContentLoaded", () => {
@@ -110,9 +125,9 @@
 	        columnDefs: [
 	        { headerName:'급여번호', field:'payrollNo', hide:true },   // ✅ 숨김 컬럼
 	          { headerName:'귀속연월', field:'period', flex:0.8 },
-	          { headerName:'지급일', field:'payDate', flex:0.7,valueFormatter:p=>p.value?.substring(5)},
+	          { headerName:'지급일', field:'payDate', flex:0.7, valueFormatter:p => (p.value ? String(p.value).substring(5) : '') },
 	          { headerName:'부서', field:'dept', flex:0.7 },
-	          { headerName:'전표발생일', field:'jrnDate', flex:1,valueFormatter:p=>p.value?.substring(0,10) },
+	          { headerName:'전표발생일', field:'jrnDate', flex:1, valueFormatter:p => (p.value ? String(p.value).substring(0,10) : '') },
 	          { headerName:'전표번호', field:'jrnNo', flex:1 }
 	        ],
 	        rowData: [],
@@ -181,7 +196,11 @@
 	              { headerName:'금액', field:'amount', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() }
 	        ],
 	        rowData: [],
-	        defaultColDef:{resizable:true}
+	        defaultColDef:{resizable:true},
+	        onRowClicked: async (event) => {
+	        	console.log(event.data);
+	        
+	        }
 	      });
 	
 	      creditApi = agGrid.createGrid(document.getElementById("creditGrid"), {
@@ -230,23 +249,32 @@
 	    	});
 	  });
 	
-	 // === baseGrid 데이터 로드 함수 ===
-	    async function initBaseGrid(yearMonth) {
+	 // ✅ baseGrid 데이터 로드 (파라미터 우선 → 입력값 → 이번 달)
+	    async function initBaseGrid(passedYM) {
 	      try {
-	    	const monthVal  = srchMonth.value;
-	        const yearMonth = monthVal ? monthVal.replace('-','') : '';
-	        const url = yearMonth ? `${API_BASE}?yearMonth=${encodeURIComponent(yearMonth)}` : ``;
+	        const inputEl = document.getElementById('srchMonth');
+	        const inputYM = inputEl?.value ? inputEl.value.replace('-', '') : '';
+	        const ym = passedYM || inputYM || getThisMonthYM();
+
+	        // 입력창 표시까지 동기화 (UX)
+	        if (inputEl && !inputEl.value) {
+	          inputEl.value = `${ym.slice(0,4)}-${ym.slice(4)}`;
+	        }
+
+	        const url = `${API_BASE}${ym ? `?yearMonth=${encodeURIComponent(ym)}` : ''}`;
 	        const { data } = await axios.get(url);
+
 	        const rows = (Array.isArray(data) ? data : []).map(item => ({
-	          payrollNo :item.payrollNo,
-	          deptCode: item.deptCode,   // ✅ 부서코드	
-	          jrnNo: item.jrnNo,
-	          period: item.yearMonth || "",
-	          dept: item.deptName || item.dept_name || "",
-	          jrnDate: item.jrnDate,
-	          payDate: `${yearMonth.slice(0,4)}-${yearMonth.slice(4)}-25` // 지급일 하드코딩
+	          payrollNo : item.payrollNo,
+	          deptCode  : item.deptCode,
+	          jrnNo     : item.jrnNo,
+	          period    : item.yearMonth || "",
+	          dept      : item.deptName || item.dept_name || "",
+	          jrnDate   : item.jrnDate, // 서버가 yyyy-MM-dd 형식이면 그대로, 아니면 아래 formatter에서 자름
+	          // 지급일: YM 기준 25일
+	          payDate   : `${ym.slice(0,4)}-${ym.slice(4)}-25`
 	        }));
-			console.log(rows);
+
 	        baseApi.setGridOption("rowData", rows);
 	      } catch (err) {
 	        console.error("급여대장 조회 실패", err);
@@ -300,14 +328,19 @@ document.getElementById("btnRegister").addEventListener("click", async () => {
     alert(`⚠️ 이미 전표가 등록된 급여대장입니다.\n전표번호: ${selectedRowData.jrnNo}`);
     return;
   }
-  
+  if (!Array.isArray(journalCache) || journalCache.length === 0) {
+	    return alert("전표결과가 없습니다. 급여대장을 선택해 지급/공제 항목을 먼저 불러오세요.");
+	  }
   const totalDebit = journalCache
     .filter(r => r.gbn === "차변")
     .reduce((sum, r) => sum + Number(r.debit || 0), 0);
   const totalCredit = journalCache
     .filter(r => r.gbn === "대변")
     .reduce((sum, r) => sum + Number(r.credit || 0), 0);
-
+  
+  const ymInput = document.getElementById("srchMonth").value;
+  const ym = ymInput ? ymInput.replace("-", "") : getThisMonthYM();
+  
   const payload = {
     payrollNo: selectedPayrollNo,
     yearMonth: document.getElementById("srchMonth").value.replace("-", ""),
@@ -327,9 +360,7 @@ document.getElementById("btnRegister").addEventListener("click", async () => {
 
   try {
     const res = await axios.post("/api/account/payrollHist/save", payload);
-    const monthVal  = srchMonth.value;
-    const yearMonth = monthVal ? monthVal.replace('-','') : '';
-    initBaseGrid(yearMonth);
+    await initBaseGrid(ym);
     alert(`✅ 급여전표 등록 완료\n전표번호: ${res.data}`);
   } catch (err) {
     console.error(err);

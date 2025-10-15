@@ -16,7 +16,7 @@
       CREATED_AT, UPDATED_AT, COMPANY_CODE, POSTED_FLAG
     FROM INVOICE_HEADER
     WHERE COMPANY_CODE = #{companyCode}
-    ORDER BY INVOICE_DATE DESC
+    ORDER BY CREATED_AT DESC
   </select>
 
   
@@ -33,16 +33,16 @@
       INVOICE_CODE, INVOICE_NO, TYPE, INVOICE_DATE,
       ORDER_CODE, DEPT_NAME, CUS_CODE, BIZ_NO, CUS_NAME,
       VAT_TYPE, DUE_DATE, SUBTOTAL_AMT, VAT_AMT, TOTAL_AMT,
-      PAY_METHOD, MEMO, AR_AP_ACCT, CASH_ACCOUNT, STATUS,
-      CREATED_AT, COMPANY_CODE, POSTED_FLAG, UNPAID_AMT
+      PAY_METHOD, MEMO, CASH_ACCOUNT, STATUS,
+      CREATED_AT, COMPANY_CODE, POSTED_FLAG, UNPAID_AMT,BANK_NAME
     )
     VALUES (
       SEQ_INVOICE_HEADER.NEXTVAL,   -- 헤더 PK
       #{invoiceNo}, #{type}, #{invoiceDate},
       #{orderCode}, #{deptName}, #{cusCode}, #{bizNo}, #{cusName},
       #{vatType}, #{dueDate}, #{subtotalAmt}, #{vatAmt}, #{totalAmt},
-      #{payMethod}, #{memo}, #{arApAcct}, #{cashAccount}, 'open',
-      SYSDATE, #{companyCode}, 'N', #{totalAmt}
+      #{payMethod}, #{memo}, #{cashAccount}, 'open',
+      SYSDATE, #{companyCode}, 'N', #{totalAmt},{bankName}
     )
 
     <foreach collection="lines" item="line">
@@ -82,7 +82,6 @@
       ih.TOTAL_AMT,
       ih.PAY_METHOD,
       ih.MEMO,
-      ih.AR_AP_ACCT,
       ih.CASH_ACCOUNT,
       ih.STATUS,
       ih.CREATED_AT,

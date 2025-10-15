@@ -1,0 +1,176 @@
+<div th:fragment="salesDeliveryModal">
+  <div class="modal fade" id="salesDeliveryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5 class="modal-title">출고 조회</h5>
+          <button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- ✅ AG Grid -->
+          <div id="deliveryGridWrapper" style="position:relative;">
+            <div id="deliveryListGrid" class="ag-theme-quartz mb-2" style="height:250px;"></div>
+            <div id="deliveryDetailGrid" class="ag-theme-quartz" style="height:200px;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #deliveryListGrid.ag-theme-quartz {
+      width: 100%;
+      height: 250px;
+    }
+
+    #deliveryDetailGrid.ag-theme-quartz {
+      width: 100%;
+      height: 200px;
+      margin-top: 8px;
+    }
+  </style>
+
+  <script th:inline="none">
+  // ===== 출고모달(salesDeliveryModal) 전역변수 =====
+  let deliveryModal;        // bootstrap modal instance
+  let deliveryListApi;      // 목록 grid
+  let deliveryDetailApi;    // 상세 grid
+  let selectedDeliveryCode; // 출고번호
+
+  // ===== 출고 모달 내부 Grid 초기화 =====
+  function initDeliveryGrid() {
+    const listDiv   = document.getElementById("deliveryListGrid");
+    const detailDiv = document.getElementById("deliveryDetailGrid");
+    if (!listDiv || !detailDiv) return;
+
+    const listOptions = {
+      columnDefs: [
+        { headerName: "No.", valueGetter: "node.rowIndex + 1", flex: 1 },
+        { headerName: "출고일자", field: "outboundDate", flex: 1 },
+        { headerName: "출고번호", field: "outbHeaderCode", flex: 1 },
+        { headerName: "지시코드", field: "doCode", flex: 1 },
+        { headerName: "거래처명", field: "businessPartner", flex: 1 },
+      ],
+      rowSelection: "single",
+      pagination: true,
+      paginationPageSize: 10,
+
+      // 행 클릭 시 상세 표시
+      onRowClicked: async (e) => {
+        selectedDeliveryCode = e.data?.outbHeaderCode;
+        if (selectedDeliveryCode) await loadDeliveryDetail(selectedDeliveryCode);
+      },
+
+      // 더블클릭 시 invoiceModal로 반영
+      onRowDoubleClicked: async (e) => {
+        selectedDeliveryCode = e.data?.outbHeaderCode;
+        if (!selectedDeliveryCode) return;
+
+        const res = await axios.get(`/api/v1/stock/outboundList/${selectedDeliveryCode}/${e.data.doCode}`, { withCredentials: true });
+        applyDeliveryToInvoiceModal(e.data, res.data);
+        document.getElementById('memoInput').value = e.data.businessPartner + " 매출";
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById("salesDeliveryModal")).hide();
+      },
+
+      // Grid 준비 시 최초 1회 로드
+      onGridReady: (e) => {
+        deliveryListApi = e.api;
+        loadDeliveryList();
+      },
+
+      defaultColDef: { resizable: true, sortable: true, minWidth: 100 },
+    };
+
+    const detailOptions = {
+      columnDefs: [
+        { headerName: "제품코드", field: "productCode", flex: 1 },
+        { headerName: "제품명", field: "productName", flex: 1 },
+        { headerName: "규격", field: "specification", flex: 1 },
+        { headerName: "출고수량", field: "qty", type: "numericColumn", flex: 1 },
+      ],
+      pagination: false,
+      onGridReady: (e) => (deliveryDetailApi = e.api),
+      defaultColDef: { resizable: true, sortable: true, minWidth: 100 },
+    };
+
+    new agGrid.Grid(listDiv, listOptions);
+    new agGrid.Grid(detailDiv, detailOptions);
+  }
+
+  // ✅ 출고 목록 로딩 (모달 다시 열릴 때마다 로더 표시)
+  async function loadDeliveryList() {
+    if (!deliveryListApi) return;
+    showLoader("deliveryGridWrapper", "출고 데이터를 불러오는 중입니다...");
+    try {
+      const res = await axios.get("/api/v1/stock/outboundList", { withCredentials: true });
+      deliveryListApi.setRowData(Array.isArray(res.data) ? res.data : []);
+      deliveryListApi.sizeColumnsToFit();
+    } catch (err) {
+      console.error("출고 목록 로드 실패", err);
+    } finally {
+      hideLoader("deliveryGridWrapper");
+    }
+  }
+
+  // ❌ 상세 로딩은 빠르므로 로딩바 없음
+  async function loadDeliveryDetail(deliveryCode) {
+    if (!deliveryDetailApi) return;
+    try {
+      const res = await axios.get(`/api/v1/stock/outboundList/${deliveryCode}/detail`, { withCredentials: true });
+      deliveryDetailApi.setRowData(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("출고 상세 로드 실패", err);
+    }
+  }
+
+  // ===== invoiceModal 반영 (매출전표용) =====
+  function applyDeliveryToInvoiceModal(header, detailList) {
+    try {
+      document.getElementById("orderCode").value = header?.outbHeaderCode ?? "";
+      document.getElementById("invoiceDate").value = header?.outboundDate ?? "";
+      document.getElementById("cusCodeInput").value = header?.businessCode ?? "";
+      document.getElementById("cusNameInput").value = header?.businessPartner ?? "";
+
+      if (window.invoiceGridApi && Array.isArray(detailList)) {
+        const rows = detailList.map(d => ({
+          productCode: d.productCode,
+          productName: d.productName,
+          specification: d.specification,
+          qty: d.qty,
+          price: d.supAmt && d.qty ? d.supAmt / d.qty : 0,
+          supply: d.supAmt,
+          vat: d.vatAmt,
+          note: ""
+        }));
+        window.invoiceGridApi.setRowData(rows);
+      }
+    } catch (err) {
+      console.error("invoiceModal 반영 중 오류", err);
+    }
+  }
+
+  // ===== 모달 오픈 시 처리 =====
+  document.addEventListener("DOMContentLoaded", () => {
+    const modalEl = document.getElementById("salesDeliveryModal");
+    if (!modalEl) return;
+
+    deliveryModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    // ✅ 모달이 열릴 때마다 항상 최신화 + 로딩 표시
+    modalEl.addEventListener("shown.bs.modal", () => {
+      if (!deliveryListApi) {
+        initDeliveryGrid(); // 최초 1회
+      } else {
+        deliveryListApi.sizeColumnsToFit();
+        loadDeliveryList(); // ✅ 다시 열릴 때마다 로더 표시 후 최신 데이터 로드
+      }
+    });
+  });
+  </script>
+</div>

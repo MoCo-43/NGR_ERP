@@ -61,6 +61,7 @@ h6 {
 .card-header h6 {
 	font-weight: bold;
 }
+
 h6 {
 	margin: 0.5rem 0;
 	font-weight: bold;
@@ -68,7 +69,7 @@ h6 {
 }
 /* ✅ 오른쪽 버튼 띄우기용 */
 .text-end {
-  text-align: right !important;
+	text-align: right !important;
 }
 
 .btn-bar {
@@ -76,6 +77,10 @@ h6 {
 	align-items: center;
 	gap: 0.5rem;
 	margin-bottom: 0.75rem;
+}
+
+#formAmount {
+	text-align: left !important;
 }
 </style>
 </th:block>
@@ -126,17 +131,19 @@ h6 {
 							</div>
 
 							<div class="mb-2">
-								<label class="form-label">결제방식</label> <select id="formMethod"
-									class="form-select form-select-sm">
-									<option value="현금">현금</option>
-									<option value="이체">어음</option>
-									<option value="카드">현금&어음</option>
-								</select>
+								<label class="form-label">결제방식</label> <input type="text"
+									id="formMethod" class="form-control form-control-sm" readonly>
 							</div>
 
 							<div class="mb-2">
-								<label class="form-label">계좌번호</label> <input type="text"
-									id="formAccount" class="form-control form-control-sm">
+								<label class="form-label">계좌 정보</label>
+								<div class="d-flex align-items-center" style="gap: 1rem;"> 
+									<input type="text" id="formAccount"
+										class="form-control form-control-sm" placeholder="계좌번호"
+										style="flex: 0.8;" readonly> <input type="text"
+										id="formBank" class="form-control form-control-sm"
+										placeholder="은행명" style="flex: 0.8;" readonly>
+								</div>
 							</div>
 
 							<div class="mb-2">
@@ -161,11 +168,11 @@ h6 {
 
 					<!-- 🔹 자금전표 적용내역 -->
 				</div>
-					<h6 class="mt-3">적용내역</h6>
-		
-					
-					<div id="journalPreviewGrid" class="ag-theme-quartz"
-						style="height: 16rem; width: 100%;"></div>
+				<h6 class="mt-3">적용내역</h6>
+
+
+				<div id="journalPreviewGrid" class="ag-theme-quartz"
+					style="height: 16rem; width: 100%;"></div>
 			</div>
 	</section>
 
@@ -222,7 +229,8 @@ function initUnpaidGrid() {
 		rowData: [],
 		rowSelection: "single",
 		defaultColDef: { resizable: true, sortable: true },
-		onRowClicked: e => fillPaymentForm(e.data) // ✅ 클릭 시 폼 채우기
+		onRowClicked: e =>fillPaymentForm(e.data) // ✅ 클릭 시 폼 채우기
+		
 	});
 }
 
@@ -233,6 +241,7 @@ function fillPaymentForm(data) {
 	document.getElementById("formCusName").value = data.cusName || "";
 	document.getElementById("formMethod").value   = data.method || "현금";
 	document.getElementById("formAccount").value  = data.cashAccount || "";
+	document.getElementById("formBank").value  = data.bankName || "";
 	document.getElementById("formMemo").value     = data.memo || "";
 	document.getElementById("formAmount").value   = data.unpaidAmt || 0;
 }
@@ -266,13 +275,19 @@ async function savePayment() {
 	    alert("결제금액을 입력하세요.");
 	    return;
 	  }
-
+	  
+	  let methodText = document.getElementById("formMethod").value?.trim();
+	  let methodCode = "CASH"; // 기본값
+	  if (methodText === "현금") methodCode = "CASH";
+	  else if (methodText === "어음") methodCode = "BILL";
+	  else if (methodText === "이체") methodCode = "BANK"; // 혹시 나중을 위해 추가
+	  
 	  const header = {
 	    payDate: new Date().toISOString().substring(0,10),
 	    payType: selectedInvoice.type === 'S' ? 'IN' : 'OUT',
 	    cusCode: selectedInvoice.cusCode,
 	    cusName: selectedInvoice.cusName,
-	    method: document.getElementById("formMethod").value,
+	    method: methodCode, // ✅ 변환된 코드로 전달
 	    cashAccount: document.getElementById("formAccount").value,
 	    amount: payAmount,
 	    memo: document.getElementById("formMemo").value

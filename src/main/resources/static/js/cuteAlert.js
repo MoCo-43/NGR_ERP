@@ -6,7 +6,7 @@ function cuteAlert({ type='question', title='알림', message='', imgUrl=null, c
  	        document.body.appendChild(overlay);
 
  	        // 모달 박스 생성
- 	        const box = document.createElement('div');
+ 	        const box = document.createElement('div');	
  	        box.className = 'cute-alert-box';
 
  	        // 아이콘 이미지

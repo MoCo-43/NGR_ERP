@@ -27,7 +27,6 @@ public class InvoiceHeaderVO {
 
     private String payMethod;     // 결제방식
     private String memo;          // 메모/적요
-    private String arApAcct;      // 채권/채무 계정
     private String cashAccount;   // 현금계정
     private String status;        // 상태 (OPEN, CLOSED, POSTED 등)
 
@@ -36,23 +35,17 @@ public class InvoiceHeaderVO {
     private Long companyCode;   // 회사코드
     private String postedFlag;    // 전표반영 여부
     private Long unpaidAmt; // 미결금액
-
+    private String bankName;
     // 1:N 매핑
     private List<InvoiceLineVO> lines;
     
     // 거래처
-    // ✅ Buyer (구매자)
     private String buyerCeoName;
     private String buyerAddr;
     private String buyerBizType;
     private String buyerBizCategory;
     private String buyerEmail;
 
-    // ✅ Seller (판매처)
-    private String sellerCeoName;
-    private String sellerAddr;
-    private String sellerBizType;
-    private String sellerBizCategory;
-    private String sellerEmail;
+
     
 }
