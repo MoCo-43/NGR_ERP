@@ -28,8 +28,8 @@
       AND R.MODULE_TYPE = #{moduleType}
       AND R.PAY_TYPE = #{payType}
       <if test="payMethod != null and payMethod != ''">
-        AND (R.PAY_METHOD = #{payMethod} OR R.PAY_METHOD IS NULL)
-      </if>
+  AND R.PAY_METHOD = #{payMethod}
+</if>
     ORDER BY R.PRIORITY
     </select>
 

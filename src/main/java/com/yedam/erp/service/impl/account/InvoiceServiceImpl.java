@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class InvoiceServiceImpl implements InvoiceService {
 
 	 private final InvoiceMapper invoiceMapper;
-
+	
 	    @Override
 	    public List<InvoiceHeaderVO> getInvoiceHeaders(Long companyCode) {
 	        return invoiceMapper.selectInvoiceHeaders(companyCode);

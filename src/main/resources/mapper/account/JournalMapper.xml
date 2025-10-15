@@ -236,4 +236,23 @@
         #{createdBy, jdbcType=VARCHAR}
       ) }
 </select>
+
+<select id="selectJournalListByInvoice" resultType="com.yedam.erp.vo.account.JournalVO">
+  SELECT 
+      j.jrn_no,
+      j.line_no,
+      j.dc_type,
+      j.acct_code,
+      a.acct_name,
+      j.amount,
+      j.remarks,
+      j.cus_code,
+      c.cus_name
+  FROM journal j
+  LEFT JOIN account a ON j.acct_code = a.acct_code
+  LEFT JOIN customer c ON j.cus_code = c.cus_code
+  WHERE j.company_code = #{companyCode}
+    AND j.origin_invoice_code = #{invoiceCode}   <!-- ✅ origin_invoice_code 컬럼 필요 -->
+  ORDER BY j.line_no
+</select>
 </mapper>

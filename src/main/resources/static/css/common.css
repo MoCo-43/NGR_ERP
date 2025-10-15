@@ -1,0 +1,50 @@
+/* ===============================
+   🌐 공통 로딩 오버레이 스타일
+   (모든 Grid, Modal, Page에서 사용 가능)
+================================= */
+
+.erp-loader {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(2px);
+}
+
+.erp-loader.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ✅ 내부 컨텐츠 (스피너 + 문구) */
+.erp-loader .loader-content {
+  text-align: center;
+  color: #333;
+}
+
+.erp-loader .spinner {
+  width: 54px;
+  height: 54px;
+  border: 5px solid #e5e7eb;
+  border-top: 5px solid #6366f1; /* indigo tone */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 12px;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.2);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.erp-loader p {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+  letter-spacing: 0.2px;
+}

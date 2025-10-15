@@ -23,6 +23,7 @@ import com.yedam.erp.service.account.JournalCloseLogService;
 import com.yedam.erp.service.account.JournalService;
 import com.yedam.erp.service.account.MoneyService;
 import com.yedam.erp.service.account.PayrollAccountService;
+import com.yedam.erp.service.account.ProfitStatementService;
 import com.yedam.erp.service.stock.StockService;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
 import com.yedam.erp.vo.account.InvoiceLineVO;
@@ -31,6 +32,7 @@ import com.yedam.erp.vo.account.JournalVO;
 import com.yedam.erp.vo.account.PaymentHeaderVO;
 import com.yedam.erp.vo.account.PayrollJournalVO;
 import com.yedam.erp.vo.account.PayrollLineVO;
+import com.yedam.erp.vo.account.ProfitStatementVO;
 import com.yedam.erp.vo.account.accountVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderVO;
@@ -49,6 +51,7 @@ public class AccountController {
 	private final StockService stockService;
 	private final PayrollAccountService payrollService;
 	private final MoneyService moneyService;
+	private final ProfitStatementService profitStatementService;
 	
 	
 	@GetMapping("/list")
@@ -301,6 +304,25 @@ public class AccountController {
 	                    .body("전표 등록 중 오류: " + e.getMessage());
 	        }
 	    }  
+
+	    @GetMapping("/profit-statement")
+	    public List<ProfitStatementVO> getProfitStatement(
+	        @RequestParam String curYm,
+	        @RequestParam String prevYm, Long companyCode) {
+
+	        Map<String, Object> param = new HashMap<>();
+	        param.put("curYm", curYm);
+	        param.put("prevYm", prevYm);
+	        param.put("companyCode", SessionUtil.companyId());
+
+	        return profitStatementService.getMonthlyProfit(param);
+	    }
+
+
+
+
+
+
 }
 
 	

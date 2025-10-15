@@ -11,7 +11,9 @@
 <link rel="stylesheet"
 	href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" />
 <base>
+<style>
 
+</style>
 </head>
 
 <body>
@@ -173,6 +175,7 @@
 			</div>
 		</div>
 		<div th:replace="~{account/orderModal :: orderModal}"></div>
+		<div th:replace="~{account/salesDeliveryModal :: salesDeliveryModal}"></div>
 		<div th:replace="~{stock/modals/productModal :: productModal}"></div>
 
 		<!--  매입매출 모달 -->
@@ -210,7 +213,14 @@ document.addEventListener("DOMContentLoaded", () => {
       cusNameInput.placeholder = "구매처";
     }
   }
-
+  document.getElementById("btnOrderLookup").addEventListener("click", () => {
+	  const isSales = document.getElementById("voucherTypeSwitch").checked;
+	  if (isSales) {
+	    bootstrap.Modal.getOrCreateInstance(document.getElementById("salesDeliveryModal")).show();
+	  } else {
+	    bootstrap.Modal.getOrCreateInstance(document.getElementById("orderModal")).show();
+	  }
+	});
   // 토글 변경될 때마다 실행
   toggle.addEventListener("change", updateCustomerFields);
   // 페이지 로드 시 초기 실행
@@ -420,7 +430,7 @@ document.getElementById("resetInvoiceBtn")?.addEventListener("click", () => {
 document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () => {
 	let subtotal = 0;
 	let vatTotal = 0;
-
+	invoiceGridApi.forEachNode(node => console.log(node.data));
 	invoiceGridApi.forEachNode(node => {
 	  subtotal += Number(node.data.supply) || 0;
 	  vatTotal += Number(node.data.vat) || 0;
@@ -438,7 +448,7 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	      vatType: document.querySelector(".form-select-invoice").value,
 	      payMethod: document.getElementById("payMethodInput").value,
 	      memo: document.getElementById("memoInput").value,
-	      bankCode: document.getElementById("bankNameInput").value,
+	      bankName: document.getElementById("bankNameInput").value,
 	      cashAccount: document.getElementById("accountNoInput").value,
 	      type: type,   // ✅ 동적으로 넣기
 	      subtotalAmt: subtotal,
@@ -450,6 +460,7 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 
 	    // 📌 라인 데이터 수집
 	    const lines = [];
+	   
 	    invoiceGridApi.forEachNode(node => {
 	      if (node.data.productCode && node.data.qty && node.data.price) {
 	        lines.push({
@@ -461,6 +472,7 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	        });
 	      }
 	    });
+	    
 	    header.lines = lines;
 
 	    if (lines.length === 0) {
@@ -469,7 +481,7 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	    }
 
 	    // ✅ URL 분기
-	    const url = type === "S" ? "/api/account/sales" : "/api/account/invoice";
+	    const url = "/api/account/invoice";
 	    const res = await axios.post(url, header, { withCredentials: true });
 
 	    if (res.data.success) {

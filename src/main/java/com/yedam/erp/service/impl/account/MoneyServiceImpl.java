@@ -50,7 +50,7 @@ public class MoneyServiceImpl implements MoneyService {
                 moneyMapper.updateInvoiceUnpaid(apply);
             }
         }
-
+        System.out.println("🔥 AutoJournalService 호출됨 : " + payment.getPayType() + "/" + payment.getMethod());
         // 3️⃣ 자동분개 생성
         List<JournalVO> journals = autoJournalService.createFromPayment(payment);
 

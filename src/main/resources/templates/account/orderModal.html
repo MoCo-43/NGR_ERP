@@ -14,6 +14,7 @@
 
 				<div class="modal-body">
 					<!-- AG Grid -->
+					<div id="orderGridWrapper" style="position:relative;">
 					<div id="orderListGrid" class="ag-theme-quartz mb-2"
 						style="height: 250px;"></div>
 					<div id="orderDetailGrid" class="ag-theme-quartz"
@@ -74,7 +75,7 @@
         // ✅ invoiceModal로 반영
         console.log(res.data);
         applyOrderToInvoiceModal(e.data, res.data);
-
+        document.getElementById('memoInput').value = e.data.businessPartner + " 매입";
         // 닫기
         bootstrap.Modal.getOrCreateInstance(document.getElementById("orderModal")).hide();
       },
@@ -103,6 +104,7 @@
 
   // 목록 재로딩(입고 헤더)
   async function loadOrderData() {
+	  showLoader("orderGridWrapper", "입고 데이터를 불러오는 중입니다...");
     if (!orderGridApi) return;
     try {
       const res = await axios.get("/api/v1/stock/inboundList", { withCredentials: true });
@@ -110,6 +112,8 @@
       orderGridApi.sizeColumnsToFit();
     } catch (err) {
       console.error("입고 목록 로드 실패", err);
+    } finally {
+      hideLoader("orderGridWrapper");
     }
   }
 
@@ -157,12 +161,6 @@
     if (!orderModalEl) return;
 
     orderModal = bootstrap.Modal.getOrCreateInstance(orderModalEl);
-
-    const openBtn = document.getElementById("btnOrderLookup");
-    if (openBtn && !openBtn.dataset.bound) {
-      openBtn.dataset.bound = "1"; // 중복 바인딩 방지
-      openBtn.addEventListener("click", () => orderModal.show());
-    }
 
     orderModalEl.addEventListener("shown.bs.modal", () => {
       if (!orderGridApi) {

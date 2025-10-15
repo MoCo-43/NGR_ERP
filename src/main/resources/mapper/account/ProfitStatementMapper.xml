@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.account.ProfitStatementMapper">
+
+  <select id="selectMonthlyProfit" parameterType="map"
+          resultType="com.yedam.erp.vo.account.ProfitStatementVO">
+
+    SELECT
+        acctCode,
+        acctName,
+        acctGroup,
+        SUM(CASE WHEN yearMonth = #{prevYm} THEN amount ELSE 0 END) AS prevAmt,
+        SUM(CASE WHEN yearMonth = #{curYm}  THEN amount ELSE 0 END) AS currAmt
+    FROM (
+        -- 일반 전표
+        SELECT
+            TO_CHAR(J.JRN_DATE, 'YYYYMM') AS yearMonth,
+            J.ACCT_CODE AS acctCode,
+            A.ACCT_NAME AS acctName,
+            SUBSTR(J.ACCT_CODE, 1, 1) AS acctGroup,
+            CASE WHEN J.DC_TYPE = 'D' THEN J.AMOUNT ELSE J.AMOUNT END AS amount
+        FROM JOURNAL J
+        JOIN ACCOUNT A ON J.ACCT_CODE = A.ACCT_CODE
+        WHERE J.COMPANY_CODE = #{companyCode}
+          AND (TO_CHAR(J.JRN_DATE, 'YYYYMM') = #{prevYm} OR TO_CHAR(J.JRN_DATE, 'YYYYMM') = #{curYm})
+		  AND J.STATUS = 'closed'
+		  	
+        UNION ALL
+
+        -- 급여 전표
+        SELECT
+            TO_CHAR(H.PAY_DATE, 'YYYYMM') AS yearMonth,
+            P.ACCT_CODE AS acctCode,
+            A.ACCT_NAME AS acctName,
+            SUBSTR(P.ACCT_CODE, 1, 1) AS acctGroup,
+            CASE WHEN P.DC_TYPE = 'D' THEN H.TOTAL_DEBIT ELSE -H.TOTAL_DEBIT END AS amount
+        FROM PAYROLL_HIST H
+        JOIN PAYROLL_JRN_HIST P ON H.HIST_CODE = P.HIST_CODE
+        JOIN ACCOUNT A ON P.ACCT_CODE = A.ACCT_CODE
+        WHERE H.COMPANY_CODE = #{companyCode}
+          AND (TO_CHAR(H.PAY_DATE, 'YYYYMM') = #{prevYm} OR TO_CHAR(H.PAY_DATE, 'YYYYMM') = #{curYm})
+    )
+    GROUP BY acctCode, acctName, acctGroup
+    ORDER BY acctGroup, acctCode
+  </select>
+
+</mapper>

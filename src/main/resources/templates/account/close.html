@@ -226,13 +226,13 @@
           { headerName: '적요', field: 'remarks', flex: 1 },
           { 
               headerName: '차변', 
-              field : 'credit',
+              field : 'debit',
               flex: 1, 
               valueFormatter: p => p.value ? Number(p.value).toLocaleString() : "" 
             },
             { 
               headerName: '대변', 
-              field : 'debit',
+              field : 'credit',
               flex: 1, 
               valueFormatter: p => p.value ? Number(p.value).toLocaleString() : "" 
             }
@@ -250,13 +250,13 @@
           { headerName: '건수', field: 'count', flex: 1 },
           { 
               headerName: '차변', 
-              field:'creditSum',
+              field:'debitSum',
               flex: 1, 
               valueFormatter: p => p.value ? Number(p.value).toLocaleString() : 0
             },
             { 
               headerName: '대변', 
-              field:'debitSum',
+              field:'creditSum',
               flex: 1, 
               valueFormatter: p => p.value ? Number(p.value).toLocaleString() : 0 
             },
