@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.data.repository.query.Param;
 
+import com.yedam.erp.vo.Biz.CreditExposureVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -47,5 +48,25 @@ public interface BizMapper {
      * @param monthBase 기준월의 1일(예: 2025-10-01). null이면 SYSDATE 기준.
      * @return 여신현황 리스트
      */
-    List<CustomerCreditVO> selectCrdMaster(Long companyCode, @Param("monthBase") LocalDate monthBase);
+  List<CustomerCreditVO> selectCrdMaster(Long companyCode, @Param("monthBase") LocalDate monthBase);
+
+  // 여신관리페이지
+  // 1. 거래처별 관리 페이지
+  // 1) 현황 그리드
+  // List<CreditExposureVO> selectExposureList(@Param("companyCode") Long companyCode,
+  //                                           @Param("grade") String grade,
+  //                                           @Param("name") String name,
+  //                                           @Param("manager") String manager);
+
+  // // 2) 단건 상세
+  // CreditExposureVO selectCreditMaster(@Param("companyCode") Long companyCode,
+  //                                   @Param("cusCode") Long cusCode);
+
+  // // 3) 등록/수정
+  // int upsertCreditMaster(CreditExposureVO vo);
+
+  // // 4) 비활성화
+  // int deactivateCredit(@Param("companyCode") Long companyCode,
+  //                      @Param("cusCode") Long cusCode);
+
 }

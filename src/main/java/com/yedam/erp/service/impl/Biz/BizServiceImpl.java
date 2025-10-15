@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.Biz.BizMapper;
 import com.yedam.erp.service.Biz.BizService;
+import com.yedam.erp.vo.Biz.CreditExposureVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -100,4 +101,35 @@ public class BizServiceImpl implements BizService {
         }
         return bizMapper.selectCrdMaster(companyCode, monthBase);
     }
+
+  // 여신관리페이지
+  // 1. 거래처별 관리 페이지
+  // @Override
+  // public List<CreditExposureVO> list(Long companyCode, String grade, String name, String manager) {
+  //   return bizMapper.selectExposureList(companyCode, grade, name, manager);
+  // }
+
+  // @Override
+  // public CreditExposureVO get(Long companyCode, Long cusCode) {
+  //   return bizMapper.selectCreditMaster(companyCode, cusCode);
+  // }
+
+  // @Override
+  // @Transactional
+  // public void save(CreditExposureVO vo, String user) {
+  //   // 간단 검증/기본값
+  //   if (vo.getCompanyCode() == null || vo.getCusCode() == null) {
+  //     throw new IllegalArgumentException("companyCode/cusCode is required");
+  //   }
+
+  //   // TODO: 변경 전후 이력 저장이 필요하면 여기서 'select → history insert → upsert' 순으로 처리
+  //   bizMapper.upsertCreditMaster(vo);
+  // }
+
+  // @Override
+  // @Transactional
+  // public void deactivate(Long companyCode, Long cusCode, String user) {
+  //   bizMapper.deactivateCredit(companyCode, cusCode);
+  //   // TODO: 비활성화 이력 필요 시 별도 history insert
+  // }
 }
