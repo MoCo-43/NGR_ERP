@@ -19,12 +19,16 @@
 		<result property="leaveDate" column="leaveDate" />
 		<result property="leaveReason" column="leaveReason" />
 		<result property="bankCode" column="bankCode" />
+		<result property="bankName" column="bankName" />
 		<result property="accountNo" column="accountNo" />
 		<result property="zipCode" column="zipCode" />
 		<result property="address" column="address" />
 		<result property="addressDetail" column="addressDetail" />
 		<result property="accountName" column="accountName" />
 		<result property="companyCode" column="companyCode" />
+		<result property="familyCnt" column="family_cnt" />
+		<result property="maritalStatus" column="marital_status" />
+		<result property="childrenCnt" column="children_cnt" />
 	</resultMap>
 
 	<!-- 전체조회 -->
@@ -37,20 +41,29 @@
 		e.POSITION AS position,
 		e.TITLE AS title,
 		e.BIRTH AS birth,
-		e.PHONE AS phone,
+		e.PHONE AS
+		phone,
 		e.EMAIL AS email,
 		e.JOIN_DATE AS joinDate,
-		e.LEAVE_DATE AS leaveDate,
+		e.LEAVE_DATE AS
+		leaveDate,
 		e.LEAVE_REASON AS leaveReason,
 		e.BANK_CODE AS bankCode,
+		bk.CODE_NAME AS bankName,
 		e.ACCOUNT_NO AS accountNo,
 		e.ZIP_CODE AS zipCode,
 		e.ADDRESS AS address,
 		e.ADDRESS_DETAIL AS addressDetail,
 		e.ACCOUNT_NAME AS accountName,
+		e.FAMILY_CNT AS family_cnt,
+		e.MARITAL_STATUS AS marital_status,
+		e.CHILDREN_CNT AS children_cnt,
 		e.COMPANY_CODE AS companyCode
 		FROM EMP e
 		LEFT JOIN DEPT d ON e.DEPT_CODE = d.DEPT_CODE
+		LEFT JOIN COMMONCODE bk
+		ON bk.GROUP_ID='BK'
+		AND bk.CODE_ID = LPAD(TO_CHAR(e.BANK_CODE),2,'0')
 		WHERE e.COMPANY_CODE = #{companyCode}
 		ORDER BY e.EMP_ID DESC
 	</select>
@@ -61,25 +74,39 @@
 		SELECT
 		e.EMP_ID AS emp_id,
 		e.NAME AS name,
-		e.DEPT_CODE AS dept_code,
+		e.DEPT_CODE AS
+		dept_code,
 		d.DEPT_NAME AS dept_name,
 		e.POSITION AS position,
-		e.TITLE AS title,
+		e.TITLE AS
+		title,
 		e.BIRTH AS birth,
 		e.PHONE AS phone,
 		e.EMAIL AS email,
-		e.JOIN_DATE AS joinDate,
+		e.JOIN_DATE
+		AS joinDate,
 		e.LEAVE_DATE AS leaveDate,
 		e.LEAVE_REASON AS leaveReason,
 		e.BANK_CODE AS bankCode,
-		e.ACCOUNT_NO AS accountNo,
+		bk.CODE_NAME AS bankName,
+		e.ACCOUNT_NO AS
+		accountNo,
 		e.ZIP_CODE AS zipCode,
 		e.ADDRESS AS address,
-		e.ADDRESS_DETAIL AS addressDetail,
+		e.ADDRESS_DETAIL
+		AS addressDetail,
 		e.ACCOUNT_NAME AS accountName,
+		e.FAMILY_CNT AS
+		family_cnt,
+		e.MARITAL_STATUS AS marital_status,
+		e.CHILDREN_CNT AS
+		children_cnt,
 		e.COMPANY_CODE AS companyCode
 		FROM EMP e
 		LEFT JOIN DEPT d ON e.DEPT_CODE = d.DEPT_CODE
+		LEFT JOIN COMMONCODE bk
+		ON bk.GROUP_ID='BK'
+		AND bk.CODE_ID = LPAD(TO_CHAR(e.BANK_CODE),2,'0')
 		WHERE e.EMP_ID = #{emp_id}
 	</select>
 
@@ -93,10 +120,12 @@
 		e.POSITION AS position,
 		e.TITLE AS title,
 		e.BIRTH AS birth,
-		e.PHONE AS phone,
+		e.PHONE AS
+		phone,
 		e.EMAIL AS email,
 		e.JOIN_DATE AS joinDate,
-		e.LEAVE_DATE AS leaveDate,
+		e.LEAVE_DATE AS
+		leaveDate,
 		e.LEAVE_REASON AS leaveReason,
 		e.BANK_CODE AS bankCode,
 		e.ACCOUNT_NO AS accountNo,
@@ -104,10 +133,14 @@
 		e.ADDRESS AS address,
 		e.ADDRESS_DETAIL AS addressDetail,
 		e.ACCOUNT_NAME AS accountName,
+		e.FAMILY_CNT AS family_cnt,
+		e.MARITAL_STATUS AS marital_status,
+		e.CHILDREN_CNT AS children_cnt,
 		e.COMPANY_CODE AS companyCode
 		FROM EMP e
 		LEFT JOIN DEPT d ON e.DEPT_CODE = d.DEPT_CODE
-		WHERE e.COMPANY_CODE = #{companyCode}
+		WHERE e.COMPANY_CODE =
+		#{companyCode}
 		AND e.TITLE = '팀장'
 		ORDER BY e.EMP_ID DESC
 	</select>
@@ -115,13 +148,21 @@
 	<!-- 등록 -->
 	<insert id="insertEmp" parameterType="com.yedam.erp.vo.hr.EmpVO">
 		INSERT INTO EMP (
-		NAME, DEPT_CODE, POSITION, TITLE, BIRTH, PHONE,
-		EMAIL, JOIN_DATE, LEAVE_DATE, LEAVE_REASON,
-		BANK_CODE, ACCOUNT_NO, ACCOUNT_NAME,ZIP_CODE, ADDRESS,ADDRESS_DETAIL, COMPANY_CODE
+		NAME,
+		DEPT_CODE, POSITION, TITLE, BIRTH, PHONE,
+		EMAIL, JOIN_DATE, LEAVE_DATE,
+		LEAVE_REASON,
+		BANK_CODE, ACCOUNT_NO, ACCOUNT_NAME,ZIP_CODE,
+		ADDRESS,ADDRESS_DETAIL, FAMILY_CNT, MARITAL_STATUS,
+		CHILDREN_CNT,COMPANY_CODE
 		) VALUES (
-		#{name}, #{dept_code}, #{position}, #{title}, #{birth}, #{phone},
-		#{email}, #{joinDate}, #{leaveDate}, #{leaveReason},
-		#{bankCode}, #{accountNo},#{accountName}, #{zipCode}, #{address},#{addressDetail}, #{companyCode}
+		#{name}, #{dept_code}, #{position},
+		#{title}, #{birth}, #{phone},
+		#{email}, #{joinDate}, #{leaveDate},
+		#{leaveReason},
+		#{bankCode}, #{accountNo},#{accountName}, #{zipCode},
+		#{address},#{addressDetail}, #{familyCnt}, #{maritalStatus},
+		#{childrenCnt} ,#{companyCode}
 		)
 	</insert>
 
@@ -146,6 +187,9 @@
 			<if test="addressDetail != null"> ADDRESS_DETAIL = #{addressDetail},</if>
 			<if test="accountName != null"> ACCOUNT_NAME = #{accountName},</if>
 			<if test="companyCode != null"> COMPANY_CODE = #{companyCode},</if>
+			<if test="familyCnt != null"> FAMILY_CNT = #{familyCnt},</if>
+			<if test="maritalStatus != null"> MARITAL_STATUS = #{maritalStatus},</if>
+			<if test="childrenCnt != null"> CHILDREN_CNT = #{childrenCnt},</if>
 		</set>
 		WHERE EMP_ID = #{emp_id}
 	</update>

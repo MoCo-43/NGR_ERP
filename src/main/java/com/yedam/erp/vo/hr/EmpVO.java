@@ -21,9 +21,13 @@ public class EmpVO {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date joinDate;      // 입사일자
     @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Integer familyCnt;     // 부양가족수 
+    private String maritalStatus;  // 결혼여부
+    private Integer childrenCnt;   // 자녀 수
     private Date leaveDate;     // 퇴사일자
     private String leaveReason; // 퇴사사유
-    private String bankCode;    // 은행코드
+    private String bankCode;    // 은행코드	
+    private String bankName;    // 은행명
     private String accountNo;   // 계좌번호
     private String zipCode;     // 우편번호
     private String address;     // 주소

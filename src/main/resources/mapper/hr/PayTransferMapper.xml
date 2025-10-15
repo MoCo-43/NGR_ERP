@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.hr.PayTransferMapper">
+ 
+  <!--확정 건 조회 -->
+<select id="selectTransferViewFromConfirmed"
+        parameterType="map"
+        resultType="com.yedam.erp.vo.hr.PayTransferVO">
+  SELECT
+      NULL               AS transferNo,
+      #{payYm}           AS payYm,
+      ps.emp_id          AS empId,
+      e.bank_code        AS bankCode,
+      e.account_no       AS accountNo,
+      e.name             AS accountHolder,
+      ps.net_pay         AS netPay,
+      p.company_code     AS companyCode
+  FROM payroll p
+  JOIN payroll_summary ps
+    ON ps.payroll_no   = p.payroll_no
+   AND ps.company_code = p.company_code
+  JOIN emp e
+    ON e.emp_id        = ps.emp_id
+   AND e.company_code  = ps.company_code
+  WHERE p.year_month   = #{payYm}
+    AND p.company_code = #{companyCode}  
+    AND p.status       = 'CONFIRMED'
+  ORDER BY e.bank_code, e.name
+</select>
+  
+
+</mapper>

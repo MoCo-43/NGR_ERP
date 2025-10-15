@@ -14,7 +14,7 @@
 				</div>
 
 				<div class="modal-body">
-					<!-- 공통코드 조회 모달 포함 -->
+			
 					<th:block th:replace="~{hr/codeLookup :: codeLookupModal}"></th:block>
 
 					<ul class="nav nav-tabs mb-3" id="empTabs" role="tablist">
@@ -46,9 +46,9 @@
 										<div class="col-md-6">
 											<label for="f_emp_id" class="form-label">사번</label> <input
 												id="f_emp_id" name="emp_id" class="form-control"
-												placeholder="EMP-YYYY-###" readonly>
+												placeholder="EMP-****-###" readonly>
 										</div>
-										<div class="col-md-6">
+											<div class="col-md-6">
 											<label for="f_name" class="form-label">성명 <span
 												class="text-danger">*</span></label> <input id="f_name" name="name"
 												class="form-control" required>
@@ -102,6 +102,26 @@
 											<label for="f_phone" class="form-label">전화번호</label> <input
 												id="f_phone" name="phone" class="form-control"
 												placeholder="010-0000-0000">
+										</div>
+										<div class="col-md-6">
+											<label for="f_family_cnt" class="form-label">부양가족수</label> <input
+												id="f_family_cnt" name="familyCnt" type="number" min="0"
+												step="1" class="form-control" value="0">
+										</div>
+
+										<div class="col-md-6">
+											<label for="f_marital_status" class="form-label">결혼
+												여부</label> <select id="f_marital_status" name="maritalStatus"
+												class="form-control">
+												<option value="SINGLE">미혼</option>
+												<option value="MARRIED">기혼</option>
+											</select>
+										</div>
+
+										<div class="col-md-6">
+											<label for="f_children_cnt" class="form-label">자녀 수</label> <input
+												id="f_children_cnt" name="childrenCnt" type="number" min="0"
+												step="1" class="form-control" value="0" disabled>
 										</div>
 
 										<div class="col-md-6">
@@ -172,7 +192,6 @@
 							</form>
 						</div>
 
-						<!-- 급여 / 교육 / 자격증 탭 -->
 						<div class="tab-pane fade" id="tab-pay"
 							th:insert="~{hr/payFix :: payFix}" role="tabpanel"></div>
 						<div class="tab-pane fade" id="tab-edu" role="tabpanel">
@@ -222,7 +241,7 @@
 	<script
 		src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
-	<script>
+<script>
   (function(){
     const $  = (id)=>document.getElementById(id);
     const qs = (sel,root=document)=>root.querySelector(sel);
@@ -258,7 +277,10 @@
         accountName:v('f_accountName').trim(),
         zipCode:v('f_zipCode').trim(),
         address:v('f_address').trim(),
-        addressDetail:v('f_address_detail').trim()
+        addressDetail:v('f_address_detail').trim(),
+        familyCnt: Number(v('f_family_cnt')) || 0,
+        maritalStatus: v('f_marital_status') || 'SINGLE',
+        childrenCnt: Number(v('f_children_cnt')) || 0,
       };
       if(includeId) p.emp_id=v('f_emp_id');
       return p;
@@ -333,10 +355,13 @@
         $('empModalTitle').textContent='사원 등록 기본사항';
         [
           'f_emp_id','f_name','f_dept_code','f_position','f_title','f_birth','f_phone','f_email',
-          'f_joinDate','f_leaveDate','f_leaveReason','f_bankCode','f_accountNo','f_accountName',
-          'f_zipCode','f_address','f_address_detail'
+          'f_joinDate','f_leaveDate','f_leaveReason','f_bankCode', 'f_bankName','f_accountNo','f_accountName',
+          'f_zipCode','f_address','f_family_cnt','f_address_detail','f_marital_status','f_children_cnt'
         ].forEach(id=>{ const el=$(id); if(el) el.value=''; });
         $('f_joinDate').value=new Date().toISOString().slice(0,10);
+        // 결혼 여부/자녀 수 기본값
+        if($('f_marital_status')) $('f_marital_status').value='SINGLE';
+        if($('f_children_cnt')){ $('f_children_cnt').value=0; $('f_children_cnt').disabled=true; }
         window.__payFix?.clear?.(); window.EduForm?.clear?.(); window.CertForm?.clear?.();
         const t=document.querySelector('#empTabs button[data-bs-target="#tab-basic"]');
         if(t) new bootstrap.Tab(t).show();
@@ -355,9 +380,18 @@
         set('f_joinDate',row.joinDate?String(row.joinDate).slice(0,10):'');
         set('f_leaveDate',row.leaveDate?String(row.leaveDate).slice(0,10):'');
         set('f_leaveReason',row.leaveReason||'');
-        set('f_bankCode',row.bankCode||''); set('f_accountNo',row.accountNo||''); set('f_accountName',row.accountName||'');
+        set('f_bankCode',row.bankCode||''); set('f_bankName', row.bankName || ''); set('f_accountNo',row.accountNo||''); set('f_accountName',row.accountName||'');
         set('f_zipCode',row.zipCode||''); set('f_address',row.address||'');
+        // 결혼 여부/자녀 수 값 세팅
+        set('f_marital_status', row.maritalStatus || 'SINGLE');
+        set('f_children_cnt',   row.childrenCnt ?? 0);
+        
         const d=$('f_address_detail'); if(d) d.value=row.addressDetail||'';
+
+        // 결혼 여부에 따른 자녀 수 활성/비활성
+        const msVal=$('f_marital_status')?.value || 'SINGLE';
+        const childEl=$('f_children_cnt');
+        if(childEl) childEl.disabled = (msVal !== 'MARRIED');
 
         window.EduForm?.setEmpId?.(row.emp_id||'');
         window.CertForm?.setEmpId?.(row.emp_id||'');
@@ -372,7 +406,7 @@
 
     window.openZipSearch = function({ onSelect } = {}) {
     	  if (!window.daum || !daum.Postcode) {
-    	    alert('주소 검색 스크립트가 로드되지 않았습니다.\n네트워크를 확인하세요.');
+    	    alert('주소 검색 스크립트가 로드되지 않았습니다.');
     	    return;
     	  }
     	  new daum.Postcode({
@@ -465,12 +499,34 @@
       });
     }
 
+    // 결혼 여부 변경 시 자녀 수 활성/비활성 토글
+    function bindMaritalToggle(){
+      const ms = $('f_marital_status');
+      const cc = $('f_children_cnt');
+      if (!ms || !cc) return;
+      const toggle = ()=>{
+        if (ms.value === 'MARRIED') {
+          cc.disabled = false;
+        } else {
+          cc.disabled = true;
+          cc.value = 0;
+        }
+      };
+      ms.addEventListener('change', toggle);
+      toggle();
+    }
+
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', bindLookupButtons, { once:true });
+      document.addEventListener('DOMContentLoaded', ()=>{
+        bindLookupButtons();
+        bindMaritalToggle();
+      }, { once:true });
     } else {
       bindLookupButtons();
+      bindMaritalToggle();
     }
 
   })();
   </script>
+
 </div>

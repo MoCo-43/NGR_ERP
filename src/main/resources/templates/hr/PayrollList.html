@@ -32,9 +32,6 @@
           <div class="col-12 col-sm-4 col-xl-3">
             <input id="srchMonth" type="month" class="form-control" placeholder="귀속연월">
           </div>
-          <div class="col-12 col-sm-4 col-xl-3">
-            <input id="srchDeptName" class="form-control" placeholder="부서명">
-          </div>
           <div class="col-12 col-xl-auto">
             <div class="actions">
               <button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
@@ -64,7 +61,6 @@
       const btnReset = document.getElementById('btnReset');
       const btnRegister = document.getElementById('btnRegister');
       const srchMonth = document.getElementById('srchMonth');
-      const srchDeptName = document.getElementById('srchDeptName');
 
       let gridApi = null;
       let rowDataCache = [];
@@ -119,22 +115,13 @@
         const url = yearMonth ? `${API_BASE}?yearMonth=${encodeURIComponent(yearMonth)}` : `${API_BASE}`;
         const { data } = await axios.get(url, { validateStatus:s=>s>=200&&s<500 });
         rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
-        applyFrontFilter();
-      }
-
-      function applyFrontFilter(){
-        const deptKw = (srchDeptName.value||'').trim().toLowerCase();
-        const filtered = deptKw
-          ? rowDataCache.filter(r => ((r.deptName ?? r.dept_code ?? '')+'').toLowerCase().includes(deptKw))
-          : rowDataCache;
-        gridApi.setRowData(filtered);
+        gridApi.setRowData(rowDataCache);
         gridApi.paginationGoToFirstPage();
       }
 
       function doReset(){
         const now = new Date();
         srchMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-        srchDeptName.value = '';
         loadFromServer();
       }
 
