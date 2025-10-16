@@ -91,6 +91,15 @@
 	border-radius: 8px;
 	padding: 2px 8px;
 }
+#voucherGridWrapper {
+  position: relative;
+  height: 100%;
+}
+.erp-loader {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
 </style>
 </th:block>
 </head>
@@ -126,7 +135,9 @@
 					<!-- 좌측: 전표 리스트 -->
 					<div class="voucher-left">
 						<div class="section-title">전표 리스트</div>
+						<div id="voucherGridWrapper" style="position:relative;">
 						<div id="voucherGrid" class="ag-theme-quartz grid-md"></div>
+						</div>
 					</div>
 
 					<!-- 우측: 전표 상세 -->
@@ -276,6 +287,7 @@
 
  // 전표 리스트 조회 (전체 불러온 뒤 날짜 필터링)
     async function loadVoucherList() {
+    showLoader("voucherGridWrapper", "데이터를 불러오는 중입니다...");
       try {
         const searchDate = document.getElementById('searchDate').value;
         const { data } = await axios.get('/api/account/journalClose');
@@ -294,7 +306,7 @@
         console.error(err);
         alert('전표 리스트 조회 실패');
       }
-      
+      hideLoader("voucherGridWrapper");
     }
     
  
@@ -374,28 +386,46 @@
  // 승인 , 역분개시 canvasAPI
     async function saveClose(signPath) {
 	 	const selected = voucherApi.getSelectedRows();
-	 	const pendingIds = selected[0].jrnNo;
-    	  // 2) approve / reverse API 분기
-    	  try {
-    	    if (signMode === "approve") {
-    	      await axios.put('/api/approval/journal/approve', {
-    	        ids: [pendingIds],
-    	        signPath: signPath
-    	      });
-    	      alert('승인 완료');
-    	    } else if (signMode === "reverse") {
-    	      await axios.post('/api/account/journal/reverse', {
-    	    	  originJrnNos: pendingIds,
-    	    	  signPath: signPath
-    	      }); 
-    	    }
-    	    bootstrap.Modal.getOrCreateInstance(document.getElementById('signModal')).hide();
-    	    loadVoucherList();
-    	  } catch (e) {
-    	    console.error(e);
-    	    alert('처리 실패');
-    	  }
-    	}
+
+	 	  // 1️⃣ 승인 모드일 때
+	 	  if (signMode === "approve") {
+	 	    const pendingIds = selected.map(r => r.jrnNo); // ✅ 여러 전표
+	 	    try {
+	 	      await axios.put('/api/approval/journal/approve', {
+	 	        ids: pendingIds,
+	 	        signPath: signPath
+	 	      });
+	 	      alert(`${pendingIds.length}건 승인 완료`);
+	 	    } catch (e) {
+	 	      console.error(e);
+	 	      alert('승인 실패');
+	 	    }
+	 	  }
+
+	 	  // 2️⃣ 역분개 모드일 때
+	 	  else if (signMode === "reverse") {
+	 	    // ✅ 단건만 허용
+	 	    if (selected.length !== 1) {
+	 	      alert("역분개는 한 건씩만 처리할 수 있습니다.");
+	 	      return;
+	 	    }
+
+	 	    const pendingId = selected[0].jrnNo;
+	 	    try {
+	 	      await axios.post('/api/account/journal/reverse', {
+	 	        originJrnNos: pendingId, // ✅ 단건 문자열로 보냄
+	 	        signPath: signPath
+	 	      });
+	 	      alert(`전표 ${pendingId} 역분개 완료`);
+	 	    } catch (e) {
+	 	      console.error(e);
+	 	      alert('역분개 실패');
+	 	    }
+	 	  }
+
+	 	  bootstrap.Modal.getOrCreateInstance(document.getElementById('signModal')).hide();
+	 	  loadVoucherList();
+	 	} 
     
  // 제출 버튼은 기존 그대로 (상태만 바꾸면 됨)
 

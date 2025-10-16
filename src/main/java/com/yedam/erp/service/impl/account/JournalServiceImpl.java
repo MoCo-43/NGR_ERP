@@ -99,14 +99,27 @@ public class JournalServiceImpl implements JournalService {
         params.put("status", status);
         params.put("companyCode", SessionUtil.companyId());
         int result = journalMapper.updateStatusBatch(params);
-       
+     // 상태에 따라 로그 메시지 구분
+        String actionType;
+        String remarks;
+        
+        if ("submit".equalsIgnoreCase(status)) {
+            actionType = "submit";
+            remarks = "전표 제출";
+        } else if ("closed".equalsIgnoreCase(status)) {
+            actionType = "closed";
+            remarks = "전표 승인";
+        } else {
+            actionType = status;
+            remarks = "전표 상태 변경";
+        }
         // 승인 로그 기록
             logService.insertLog(
-                SessionUtil.companyId(),
-                jrnNoList,
-                "closed", // ✅ "approve" 또는 "closed" 그대로 저장
-                createdBy,
-                "전표 승인"
+            		SessionUtil.companyId(),
+                    jrnNoList,
+                    actionType,
+                    createdBy,
+                    remarks
             );
         return result;
     }
