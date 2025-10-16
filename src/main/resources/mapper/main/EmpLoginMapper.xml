@@ -100,26 +100,27 @@
 	    <result property="dept_name" column="DEPT_NAME"/> 
     </resultMap>    
     
- <!-- 사원정보 조회 -->
-<select id="findEmployeesByDept" parameterType="String" resultMap="EmpVOResultMap">
-	SELECT
-		e.EMP_ID,
-		e.NAME,
-		e.DEPT_CODE,
-		e.TITLE,
-		e.EMAIL,
-		d.DEPT_NAME
-	FROM emp e
-	JOIN dept d
-		ON e.DEPT_CODE = d.DEPT_CODE
-	<where>
-		<if test="deptCode != null and deptCode != ''">
-			e.DEPT_CODE = #{deptCode}
-		</if>
-	</where>
-	ORDER BY e.NAME
-</select>    
-    
+<select id="findEmployeesByDept" resultMap="EmpVOResultMap">
+    SELECT
+        e.EMP_ID,
+        e.NAME,
+        e.DEPT_CODE,
+        e.TITLE,
+        e.EMAIL,
+        d.DEPT_NAME
+    FROM emp e
+    JOIN dept d
+        ON e.DEPT_CODE = d.DEPT_CODE
+    <where>
+        <if test="deptName != null and deptName != ''">
+            d.DEPT_NAME = #{deptName}
+        </if>
+        <if test="title != null and title != ''">
+            AND e.TITLE = #{title}
+        </if>
+    </where>
+    ORDER BY e.NAME
+</select>
 <!-- 신규 아이디 계정 생성 -->
 <insert id="insertNewEmployeeLogin" parameterType="com.yedam.erp.vo.main.EmpLoginVO">
         

@@ -2,13 +2,14 @@ package com.yedam.erp.service.main;
 
 import java.util.List;
 
+import org.springframework.data.repository.query.Param;
+
 import com.yedam.erp.vo.hr.EmpVO;
 import com.yedam.erp.vo.main.EmpLoginVO;
 
 public interface EmpLoginService {
     // 사원 조회
-    List<EmpVO> findEmployeesByDept(String deptCode);
-
+	List<EmpVO> findEmployeesByDept(@Param("deptName") String deptName, @Param("title") String title);
     // 아이디  생성 (관리자가 클릭했을 때)
     void insertNewEmployeeLogin(EmpLoginVO empLoginVO);
 

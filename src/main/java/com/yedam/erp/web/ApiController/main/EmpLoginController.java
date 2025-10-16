@@ -33,12 +33,19 @@ public class EmpLoginController {
 //        return empLoginService.findEmployeesByDept(deptCode);
 //    }
     @GetMapping("/hrLists")
-    public List<Map<String, Object>> getEmployees(@RequestParam(required = false) String deptCode) {
-        List<EmpVO> empList = empLoginService.findEmployeesByDept(deptCode);
+    public List<Map<String, Object>> getEmployees(
+            // 1. deptName으로 수정
+            @RequestParam(value = "deptName", required = false) String deptName,
+            // 2. title 파라미터 추가
+            @RequestParam(value = "title", required = false) String title) {
+        
+        // 3. 서비스 호출 시 두 파라미터 모두 전달
+        List<EmpVO> empList = empLoginService.findEmployeesByDept(deptName, title);
 
+        // (System.out.println 로그는 문제 없음)
         for (EmpVO emp : empList) {
             System.out.println("emp_id=" + emp.getEmp_id() + ", name=" + emp.getName() +",title="+emp.getTitle() 
-                + ", dept_code=" + emp.getDept_code() + ", email=" + emp.getEmail());
+                + ", dept_code=" + emp.getDept_code() + ", email=" + emp.getEmail() + ", dept_name=" + emp.getDept_name());
         }
 
         List<Map<String, Object>> result = new ArrayList<>();
@@ -47,7 +54,7 @@ public class EmpLoginController {
             map.put("empId", emp.getEmp_id());
             map.put("name", emp.getName());
             map.put("title", emp.getTitle());
-            map.put("deptName", emp.getDept_name());
+            map.put("deptName", emp.getDept_name()); // deptName이 정상적으로 매핑됨
             map.put("email", emp.getEmail());
             result.add(map);
         }
