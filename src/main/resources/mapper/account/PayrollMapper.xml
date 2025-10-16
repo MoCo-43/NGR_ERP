@@ -3,103 +3,105 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper
-	namespace="com.yedam.erp.mapper.account.PayrollAccountMapper">
+<mapper namespace="com.yedam.erp.mapper.account.PayrollAccountMapper">
 
-	<!-- 전표번호 뽑기 -->
-	<select id="getNextPayrollNo" resultType="string">
-		SELECT FN_NEXT_VOUCHER_NO('P', SYSDATE) FROM dual
-	</select>
+  <!-- 전표번호 생성 -->
+  <select id="getNextPayrollNo" resultType="string">
+    SELECT FN_NEXT_VOUCHER_NO('P', SYSDATE) FROM dual
+  </select>
 
+  <!-- 급여 확정건을 회계 전표라인으로 변환 -->
+  <select id="selectDeptJournalLines"
+    resultType="com.yedam.erp.vo.account.PayrollLineVO">
+  <![CDATA[
+  WITH P AS (
+    SELECT company_code, dept_code
+    FROM PAYROLL
+    WHERE payroll_no   = #{payrollNo}
+      AND company_code = #{companyCode}
+  ),
+  SRC AS (
+    SELECT 
+      TRIM(f.emp_allow_label) AS label,
+      f.pay_type,
+      NVL(f.emp_allow_pay, 0) AS amt
+    FROM EMP_PAY_FIX f
+    JOIN EMP e
+      ON e.emp_id       = f.emp_id
+     AND e.company_code = f.company_code
+    JOIN P
+      ON P.company_code = e.company_code
+     AND P.dept_code    = e.dept_code
+    WHERE f.company_code = #{companyCode}
+  )
+  SELECT
+    ROW_NUMBER() OVER (ORDER BY am.dc_type DESC, am.item_label ASC) AS lineNo,
+    am.dc_type     AS dcType,       -- 차/대 구분
+    am.acct_code   AS acctCode,     -- 계정코드
+    a.acct_name    AS acctName,     -- 계정명
+    s.label        AS itemKey,      -- ✅ 급여항목명 (표준명칭)
+    s.pay_type     AS payType,      -- ALLOW / DEDUCT
+    SUM(s.amt)     AS amount,       -- ✅ 항목별 금액
+    NULL           AS remarks
+  FROM SRC s
+  JOIN acct_map am
+    ON am.item_label = s.label
+   AND am.company_code = #{companyCode}
+   AND am.use_yn = 'Y'
+  LEFT JOIN account a
+    ON a.acct_code = am.acct_code
+   AND a.company_code = #{companyCode}
+  GROUP BY am.dc_type, am.acct_code, a.acct_name, s.label, s.pay_type, am.item_label
+  ORDER BY lineNo
+  ]]>
+  </select>
 
-	<!-- 급여 확정건을 회계 전표라인으로 변환 -->
-	<select id="selectDeptJournalLines"
-		resultType="com.yedam.erp.vo.account.PayrollLineVO">
- <![CDATA[
-WITH P AS (
-  SELECT company_code, dept_code
-  FROM PAYROLL
-  WHERE payroll_no   = #{payrollNo}
-    AND company_code = #{companyCode}
-),
-SRC AS (
-  SELECT 
-    TRIM(f.emp_allow_label) AS label,
-    f.pay_type,
-    NVL(f.emp_allow_pay, 0) AS amt
-  FROM EMP_PAY_FIX f
-  JOIN EMP e
-    ON e.emp_id       = f.emp_id
-   AND e.company_code = f.company_code
-  JOIN P
-    ON P.company_code = e.company_code
-   AND P.dept_code    = e.dept_code
-  WHERE f.company_code = #{companyCode}
-)
-SELECT
-  ROW_NUMBER() OVER (ORDER BY am.dc_type DESC, am.item_label ASC) AS lineNo,
-  am.dc_type     AS dcType,       -- 차/대 구분
-  am.acct_code   AS acctCode,     -- 계정코드
-  a.acct_name    AS acctName,     -- 계정명
-  s.label        AS itemLabel,    -- 급여항목명
-  s.pay_type     AS payType,      -- ALLOW / DEDUCT
-  SUM(s.amt)     AS amount
-FROM SRC s
-JOIN acct_map am
-  ON am.item_label = s.label       -- ✅ 핵심: label 기반 매핑
- AND am.company_code = #{companyCode}
- AND am.use_yn = 'Y'
-LEFT JOIN account a
-  ON a.acct_code = am.acct_code
- AND a.company_code = #{companyCode}
-GROUP BY am.dc_type, am.acct_code, a.acct_name, s.label, s.pay_type, am.item_label
-ORDER BY lineNo
-]]>
-	</select>
+  <!-- 급여 전표 헤더 등록 -->
+  <insert id="insertPayrollHist" parameterType="com.yedam.erp.vo.account.PayrollJournalVO">
+    <selectKey keyProperty="histCode" resultType="long" order="BEFORE">
+      SELECT SEQ_PAYROLL_HIST.NEXTVAL FROM dual
+    </selectKey>
 
-	<insert id="insertPayrollHist"
-		parameterType="com.yedam.erp.vo.account.PayrollJournalVO">
-		<selectKey keyProperty="histCode" resultType="long"
-			order="BEFORE">
-			SELECT SEQ_PAYROLL_HIST.NEXTVAL FROM dual
-		</selectKey>
+    INSERT INTO payroll_hist (
+      hist_code, hist_no, payroll_no, year_month, pay_date,
+      total_debit, total_credit, created_at, created_by, company_code
+    ) VALUES (
+      #{histCode},
+      #{histNo},
+      #{payrollNo},
+      #{yearMonth},
+      #{payDate},
+      #{totalDebit},
+      #{totalCredit},
+      SYSDATE,
+      #{createdBy},
+      #{companyCode}
+    )
+  </insert>
 
-		INSERT INTO payroll_hist (
-		hist_code, hist_no, payroll_no, year_month, pay_date,
-		total_debit, total_credit, created_at,
-		created_by, company_code
-		) VALUES (
-		#{histCode},
-		#{histNo},         <!-- ✅ 전표번호가 여기 들어감 -->
-		#{payrollNo},      <!-- ✅ 원래 급여대장 번호 -->
-		#{yearMonth},
-		#{payDate},
-		#{totalDebit},
-		#{totalCredit},
-		SYSDATE,
-		#{createdBy},
-		#{companyCode}
-		)
-	</insert>
-	<insert id="insertPayrollJrnHist"
-		parameterType="PayrollJournalLineVO">
-		INSERT INTO payroll_jrn_hist (
-		line_no, item_key, acct_code, dc_type, remarks,
-		hist_code, company_code
-		) VALUES (
-		#{lineNo}, #{itemKey}, #{acctCode}, #{dcType}, #{remarks},
-		#{histCode}, #{companyCode}
-		)
-	</insert>
+  <!-- 급여 전표 상세 등록 -->
+  <insert id="insertPayrollJrnHist" parameterType="com.yedam.erp.vo.account.PayrollJournalLineVO">
+    INSERT INTO payroll_jrn_hist (
+      line_no, item_key, acct_code, dc_type, amount, remarks, hist_code, company_code
+    ) VALUES (
+      #{lineNo},
+      #{itemKey},
+      #{acctCode},
+      #{dcType},
+      #{amount},
+      #{remarks},
+      #{histCode},
+      #{companyCode}
+    )
+  </insert>
 
-	<!--  PAYROLL 테이블 전표번호/일자 업데이트 -->
-	<update id="updatePayrollJournalInfo"
-		parameterType="com.yedam.erp.vo.account.PayrollJournalVO">
-		UPDATE PAYROLL
-		SET JRN_NO = #{histNo},
-		JRN_DATE = SYSDATE
-		WHERE PAYROLL_NO = #{payrollNo}
-		AND COMPANY_CODE = #{companyCode}
-	</update>
+  <!-- PAYROLL 테이블에 전표번호 업데이트 -->
+  <update id="updatePayrollJournalInfo" parameterType="com.yedam.erp.vo.account.PayrollJournalVO">
+    UPDATE PAYROLL
+    SET JRN_NO = #{histNo},
+        JRN_DATE = SYSDATE
+    WHERE PAYROLL_NO = #{payrollNo}
+      AND COMPANY_CODE = #{companyCode}
+  </update>
 
 </mapper>

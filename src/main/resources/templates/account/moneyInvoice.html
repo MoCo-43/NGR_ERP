@@ -117,8 +117,10 @@ h6 {
 					<!-- 왼쪽: 미결전표 목록 -->
 					<div class="col-md-7">
 						<h6>미결전표 목록</h6>
+						<div id="unpaidGridWrapper" style="position:relative;">
 						<div id="unpaidGrid" class="ag-theme-quartz"
 							style="height: 24rem; width: 100%;"></div>
+							</div>
 					</div>
 
 					<!-- 오른쪽: 결제 등록 폼 -->
@@ -174,6 +176,7 @@ h6 {
 				<div id="journalPreviewGrid" class="ag-theme-quartz"
 					style="height: 16rem; width: 100%;"></div>
 			</div>
+			
 	</section>
 
 	<th:block layout:fragment="body_extra">
@@ -186,6 +189,7 @@ h6 {
 let journalPreviewApi;
 let unpaidApi;
 let selectedInvoice = null;
+
 
 // ✅ 페이지 초기화
 document.addEventListener("DOMContentLoaded", () => {
@@ -202,10 +206,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	
 	document.getElementById("btnSearch").addEventListener("click", loadUnpaidList);
 	document.getElementById("btnSavePayment").addEventListener("click", savePayment);
+	document.getElementById("btnResetForm").addEventListener("click", resetPaymentForm);
+	
 });
 
 // === 미결전표 Grid ===
 function initUnpaidGrid() {
+	showLoader("unpaidGridWrapper", "입고 데이터를 불러오는 중입니다...");
 	const cols = [
 		{ headerName: "전표번호", field: "invoiceNo", flex: 1 },
 		{ headerName: "유형", field: "type", flex: .8,
@@ -232,6 +239,7 @@ function initUnpaidGrid() {
 		onRowClicked: e =>fillPaymentForm(e.data) // ✅ 클릭 시 폼 채우기
 		
 	});
+	hideLoader("unpaidGridWrapper");
 }
 
 // === 오른쪽 폼 채우기 ===
@@ -239,7 +247,7 @@ function fillPaymentForm(data) {
 	selectedInvoice = data;
 
 	document.getElementById("formCusName").value = data.cusName || "";
-	document.getElementById("formMethod").value   = data.method || "현금";
+	document.getElementById("formMethod").value   = data.payMethod || "현금";
 	document.getElementById("formAccount").value  = data.cashAccount || "";
 	document.getElementById("formBank").value  = data.bankName || "";
 	document.getElementById("formMemo").value     = data.memo || "";
@@ -266,13 +274,13 @@ async function loadUnpaidList() {
 
 async function savePayment() {
 	  if (!selectedInvoice) {
-	    alert("전표를 선택하세요.");
+		  toastr.info("전표를 선택하세요");
 	    return;
 	  }
 
 	  const payAmount = Number(document.getElementById("formAmount").value || 0);
 	  if (payAmount <= 0) {
-	    alert("결제금액을 입력하세요.");
+		  toastr.info("결제금액을 선택하세요");
 	    return;
 	  }
 	  
@@ -301,6 +309,7 @@ async function savePayment() {
 
 	  try {
 	    const payment = { ...header, applies: [apply] };
+	    console.log(payment);
 	    const { data } = await axios.post("/api/account/payment/save", payment);
 		
 	    // ✅ 서버에서 분개 데이터(journals)까지 반환되도록 설정했을 경우
@@ -316,11 +325,11 @@ async function savePayment() {
 	      })));
 	    }
 
-	    alert("자금전표 및 일반전표 자동반영 완료!");
+	    toastr.success("자금전표 및 일반전표 자동반영 완료!");
 	    loadUnpaidList();
 	  } catch (err) {
 	    console.error(err);
-	    alert("저장 실패: " + err.message);
+	    toastr.error("저장 실패: " + (err.response?.data?.message || err.message));
 	  }
 	}
 
@@ -342,7 +351,23 @@ function initJournalPreviewGrid() {
 	});
 }
 
-	
+//=== 폼 & 미리보기 초기화 ===
+function resetPaymentForm() {
+  // 폼 리셋
+  const form = document.getElementById("paymentForm");
+  if (form) form.reset();
+
+  // 선택된 전표 해제
+  selectedInvoice = null;
+
+  // 하단 미리보기 그리드 비우기
+  if (journalPreviewApi) {
+    journalPreviewApi.setGridOption("rowData", []);
+  }
+
+  // 피드백 메시지
+  toastr.info("초기화되었습니다.");
+}
 
 </script>
 	</th:block>
