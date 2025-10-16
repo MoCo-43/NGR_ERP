@@ -27,7 +27,7 @@ public interface BizService {
   List<JoinPoVO> selectPO(Long companyCode);
 
   // 주문서 등록
-  int insertPO(PoInsertVO pvo);
+  Long createPo(PoInsertVO pvo);
 
   // 주문서 이력 조회
   List<PurchaseOrderVO> getPOHistory(Long companyCode);

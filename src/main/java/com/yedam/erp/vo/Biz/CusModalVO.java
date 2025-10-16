@@ -13,4 +13,6 @@ public class CusModalVO {
   private String creditGrade;
   /** 잔여 금액 */
   private int leftPrice;
+
+  private int discountRate;  // 할인율
 }

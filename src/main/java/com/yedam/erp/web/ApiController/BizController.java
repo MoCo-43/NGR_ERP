@@ -1,32 +1,26 @@
 package com.yedam.erp.web.ApiController;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.Biz.BizService;
-import com.yedam.erp.vo.Biz.CreditExposureVO;
-import com.yedam.erp.vo.Biz.CreditMasterVO;
+import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
-import com.yedam.erp.vo.Biz.DoDetailVO;
 import com.yedam.erp.vo.Biz.DoInsertVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
-import com.yedam.erp.vo.Biz.PoDetailVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
@@ -56,20 +50,27 @@ public class BizController {
   
   // 주문서 등록 처리
   @PostMapping(value = "/poinsert", consumes = "application/json")
-  public ResponseEntity<Integer> insertPO(@RequestBody PoInsertVO pvo) {
+  public ResponseEntity<?> createPO(@RequestBody PoInsertVO pvo) {
 
     // 세션에서 회사코드 꺼내오기
     Long companyCode = SessionUtil.companyId();
+    String creater = SessionUtil.empName();
+    Long poId = service.createPo(pvo);
 
-    // VO에 세팅
+    // 회사코드적용
     pvo.setCompanyCode(companyCode);
-    for (PoDetailVO detail : pvo.getPoDetails()) {
-        detail.setCompanyCode(companyCode);
-    }
+    // 작성자적용
+    pvo.setCreater(creater);
+    // 디테일 poId전달
+    pvo.setPoId(poId);
 
-    int result = service.insertPO(pvo);
-    return ResponseEntity.ok(result);  
+    return ResponseEntity.ok().body(pvo);
+
   }
+
+
+
+
 
   // 주문서 이력 조회
   @GetMapping("/pohistory")
@@ -106,24 +107,19 @@ public class BizController {
     // 세션에서 회사코드 꺼내오기
     Long companyCode = SessionUtil.companyId();
     dovo.setCompanyCode(companyCode);
-    
-    // Detail테이블 settings
-    for(DoDetailVO detail : dovo.getDodetails()) {
-    	detail.setCompanyCode(companyCode);
-    }
-
+  
     int result = service.insertDO(dovo);
     return ResponseEntity.ok(result);
   }
 
-  // 거래처관리 조회
+  // 거래처 조회
   @GetMapping("/mngcustomer")
   public List<CustomerVO> getCustomerManagement() {
     Long companyCode = SessionUtil.companyId();
     return service.getCustomerManagement(companyCode);
   }
 
-  // 거래처관리 등록
+  // 거래처 등록
   @PostMapping(value = "/mngcustomer", consumes = "application/json")
   public ResponseEntity<Integer> insertCustomer(@RequestBody CustomerVO cvo) {
 
@@ -136,15 +132,12 @@ public class BizController {
     return ResponseEntity.ok(result);
   }
 
-  // 코드별 거래처관리 수정
+  // 거래처 수정
  @PutMapping("/mngcustomer/{cusCode}")
     public ResponseEntity<?> updateCustomerByCode(
             @PathVariable String cusCode,
             @RequestBody CustomerVO cvo
     ) {
-        // 회사코드가 세션이면 여기서 주입하고, 바디에서 받는다면 그대로 사용
-        Long companyCode = SessionUtil.companyId();
-        cvo.setCompanyCode(companyCode);
         cvo.setCusCode(cusCode);
 
         int updated = service.updateCustomerByCode(cvo);
@@ -155,17 +148,17 @@ public class BizController {
   }
 
     // 거래처여신관리 조회
-    // @GetMapping("/crdlist")
-    // /**
-    //  * 예: GET /api/sales/credit/status?companyCode=1001&month=2025-10-01
-    //  * month는 yyyy-MM-01 형태(첫날) 전달을 권장
-    //  */
-    // public List<CustomerCreditVO> status(
-    //         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate month
-    // ) {
-    //   Long companyCode = SessionUtil.companyId();
-    //     return service.selectCrdMaster(companyCode, month);
-    // }
+     @GetMapping("/crdlist")
+     /**
+      * 예: GET /api/sales/credit/status?month=2025-10-01
+      * month는 yyyy-MM-01 형태(첫날) 전달을 권장
+      */
+     public List<CustomerCreditVO> status(
+             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate month     ) {
+    	 
+       Long companyCode = SessionUtil.companyId();
+         return service.selectCrdMaster(companyCode, month);
+     }
 
   // 여신관리페이지
   // 1. 거래처별 관리 페이지

@@ -107,7 +107,7 @@ body{
 .team-logo{ width:40px; height:40px; object-fit:contain; }
 .team-name{ font-size:18px; font-weight:700; color:var(--text); }
 
-.nav{ display:flex; flex-direction:column; gap:10px; }
+.sidebar .nav{ display:flex; flex-direction:column; gap:10px; }
 
 /* 그룹 타이틀 */
 .group-title{

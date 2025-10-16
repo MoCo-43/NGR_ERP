@@ -38,40 +38,103 @@ LEFT JOIN
      GROUP BY PO_ID)pd_counts
 ON
     p.PO_ID = pd_counts.PO_ID
-WHERE c.COMPANY_CODE = #{companyCode} AND p.COMPANY_CODE = #{companyCode} AND pod.COMPANY_CODE = #{companyCode}
+WHERE c.COMPANY_CODE = #{companyCode}
 ORDER BY PO_START DESC
 </select>
 
 
 <!-- 주문서 등록 -->
-<insert id="insertPO" parameterType="PoInsertVO">
+<!-- <insert id="insertPO" parameterType="PoInsertVO">
   INSERT ALL
     INTO purchase_order (
-      PO_ID, COMPANY_CODE, PO_CODE, CUS_CODE, CUS_NAME, CREATER, PO_START, EX_DATE, PO_DATE,
-      TOTAL_PRICE, PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, PO_TYPE
+      PO_ID, COMPANY_CODE, PO_CODE, CUS_CODE, CREATER, PO_START, EX_DATE, PO_DATE,
+      PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, CREDIT_ACTIVE
     )
     VALUES (
       PO_ID_SEQ.NEXTVAL, #{companyCode}, fn_generate_code('PO', ''),
-      #{cusCode}, #{cusName}, #{creater}, #{poStart}, #{exDate}, #{poDate},
-      #{totalPrice}, '작성완료',
-      #{payMethod}, #{notes}, #{vatType}, #{poType}
+      #{cusCode}, #{creater}, #{poStart}, #{exDate}, #{poDate},
+      '작성완료',
+      #{payMethod}, #{notes}, #{vatType}, #{creditActive}
     )
     
     <foreach collection="poDetails" item="pod">
       INTO po_detail (
         POD_ID, PO_ID, COMPANY_CODE, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
-        DC_PRICE, SUP_AMT, VAT_AMT, PRODUCT_NAME, CREDIT_ACTIVE
+        DC_AMT, SUP_AMT, VAT_AMT, PRODUCT_NAME
       )
       VALUES (
         POD_ID_SEQ.NEXTVAL,
         PO_ID_SEQ.CURRVAL,
         #{companyCode},
         #{pod.productCode}, #{pod.orderQty}, #{pod.unitPrice},
-        #{pod.dcPrice}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.productName}, #{pod.creditActive}
+        #{pod.dcAmt}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.productName}
       )
     </foreach>
   SELECT 1 FROM DUAL
+</insert> -->
+
+<!-- 새로 짠 쿼리 -->
+<!-- 헤더 insert: purchase_order -->
+  <!-- 2-1. 헤더 INSERT: 시퀀스로 PO_ID 먼저 생성 -->
+  <insert id="insertPOHeader" parameterType="PoInsertVO">
+    <selectKey keyProperty="poId" resultType="long" order="BEFORE">
+      SELECT PO_ID_SEQ.NEXTVAL FROM DUAL
+    </selectKey>
+
+    INSERT INTO purchase_order (
+      PO_ID, COMPANY_CODE, PO_CODE, CUS_CODE, CREATER, PO_START, EX_DATE, PO_DATE,
+      PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, CREDIT_ACTIVE
+    )
+    VALUES (
+      #{poId},
+      #{companyCode},
+      fn_generate_code('PO', #{companyCode}),
+      #{cusCode},
+      #{creater},
+      #{poStart},
+      #{exDate},
+      #{poDate},
+      '작성완료',
+      #{payMethod},
+      #{notes},
+      #{vatType},
+      #{creditActive}
+    )
+  </insert>
+
+<insert id="insertPODetails" parameterType="PoInsertVO">
+  INSERT INTO po_detail (
+    POD_ID, PO_ID, COMPANY_CODE, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
+    DC_AMT, SUP_AMT, VAT_AMT, PRODUCT_NAME
+  )
+  SELECT
+    POD_ID_SEQ.NEXTVAL,
+    #{poId},
+    #{companyCode},
+    t.productCode,
+    t.orderQty,
+    t.unitPrice,
+    t.dcAmt,
+    t.supAmt,
+    t.vatAmt,
+    t.productName
+  FROM (
+    <foreach collection="poDetails" item="d" separator=" UNION ALL ">
+      SELECT
+        #{d.productCode} AS productCode,
+        #{d.orderQty}   AS orderQty,
+        #{d.unitPrice}  AS unitPrice,
+        #{d.dcAmt}      AS dcAmt,
+        #{d.supAmt}     AS supAmt,
+        #{d.vatAmt}     AS vatAmt,
+        #{d.productName}   AS productName
+      FROM DUAL
+    </foreach>
+  ) t
 </insert>
+
+
+
 
 
 <!-- 주문서 이력 조회 -->
@@ -84,16 +147,29 @@ WHERE po.COMPANY_CODE = #{companyCode}
 
 <!-- 품목조회 -->
 <select id="getProducts" resultType="ProductCodeVO">
-  SELECT PRODUCT_CODE, PRODUCT_NAME
+  SELECT PRODUCT_CODE,
+          PRODUCT_NAME,
+          SPECIFICATION,
+          EMP_NAME,
+          PRODUCT_IMAGE,
+          PURCHASE_PRICE,
+          SALES_PRICE,
+          NOTE,
+          INSERT_DATE,
+          LEAD_TIME,
+          COMPANY_CODE,
+          VAT_TYPE
   FROM PRODUCT
   WHERE COMPANY_CODE = #{companyCode}
 </select>
 
 <!-- 거래처 조회 -->
 <select id="getCustomers" resultType="CusModalVO">
-  SELECT c.CUS_CODE, c.CUS_NAME, cm.CREDIT_GRADE, cm.LEFT_PRICE
+  SELECT c.CUS_CODE, c.CUS_NAME, cm.CREDIT_GRADE, cm.LEFT_PRICE, cp.DISCOUNT_RATE
   FROM CUSTOMER c
-  LEFT JOIN CREDIT_MASTER cm ON c.CUS_NO = cm.CUS_NO
+  JOIN CREDIT_MASTER cm ON c.CUS_NO = cm.CUS_NO
+  JOIN CREDIT_POLICY cp ON cp.COMPANY_CODE = c.COMPANY_CODE 
+                    AND cp.GRADE = cm.CREDIT_GRADE
   WHERE c.COMPANY_CODE = #{companyCode}
   </select>
 
@@ -145,7 +221,7 @@ ORDER BY d.DO_CREATED DESC
         (DOD_NO, DO_NO, PRODUCT_CODE, QTY, UNIT_PRICE, SUP_AMT, VAT_AMT, DC_PRICE, COMPANY_CODE)
       VALUES
         (DOD_NO_SEQ.NEXTVAL, DO_NO_SEQ.CURRVAL, #{dod.productCode}, #{dod.qty},
-         #{dod.unitPrice}, #{dod.supAmt}, #{dod.vatAmt}, #{dod.dcPrice}, #{dod.companyCode})
+         #{dod.unitPrice}, #{dod.supAmt}, #{dod.vatAmt}, #{dod.dcPrice}, #{companyCode})
     </foreach>
   SELECT 1 FROM DUAL
 </insert>
@@ -191,28 +267,11 @@ ORDER BY d.DO_CREATED DESC
       <if test="activeStatus != null">   ACTIVE_STATUS = #{activeStatus},</if>
     </set>
     WHERE CUS_CODE = #{cusCode}
-      AND COMPANY_CODE = #{companyCode}
   </update>
-
-<!-- 여신관리 조회 MAP-->
- <resultMap id="CreditStatusMap" type="CustomerCreditVO">
-    <result column="COMPANY_CODE"   property="companyCode"/>
-    <result column="CUS_CODE"       property="cusCode"/>
-    <result column="CUS_NAME"       property="cusName"/>
-    <result column="CREDIT_GRADE"   property="creditGrade"/>
-    <result column="CREDIT_LIMIT"   property="creditLimit"/>
-    <result column="START_DATE"     property="startDate"/>
-    <result column="EXPIRE_DATE"    property="expireDate"/>
-    <result column="USED_LIMIT"     property="usedLimit"/>
-    <result column="REMAIN_LIMIT"   property="remainLimit"/>
-    <result column="DISC_LIMIT_CNT" property="discLimitCnt"/>
-    <result column="DISC_USED_CNT"  property="discUsedCnt"/>
-    <result column="DISC_LEFT_CNT"  property="discLeftCnt"/>
-  </resultMap>
 
 <!-- 여신관리 조회 -->
   <!-- 기준월 파라미터가 null이면 SYSDATE 사용 -->
-  <select id="selectCrdMaster" resultMap="CreditStatusMap">
+  <select id="selectCrdMaster" resultType="CustomerCreditVO">
     /* 여신현황 + 할인잔여횟수 */
     WITH inv AS (  /* 송장별 금액 (중복 방지) */
       SELECT
@@ -312,7 +371,7 @@ ORDER BY d.DO_CREATED DESC
   <!-- ================== ResultMaps ================== -->
   <!-- 그리드(현황) -->
   <!-- type 은 VO FQCN: com.example.credit.vo.CreditExposureVo -->
-  <!-- <resultMap id="ExposureMap" type="CreditExposureVO">
+   <resultMap id="ExposureMap" type="CreditExposureVO">
     <result column="company_code"   property="companyCode"/>
     <result column="cus_code"       property="cusCode"/>
     <result column="cus_name"       property="cusName"/>
@@ -323,7 +382,7 @@ ORDER BY d.DO_CREATED DESC
     <result column="remain_limit"   property="remainLimit"/>
     <result column="manager_name"   property="managerName"/>
     <result column="status"         property="status"/>
-  </resultMap> -->
+  </resultMap> 
 
   <!-- 단건 상세 -->
   <!-- type: com.example.credit.vo.CreditMasterVo -->
