@@ -190,9 +190,10 @@
 					<button id="openTaxInvoiceBtn" class="btn btn-success btn-sm">
 						전자세금</button>
 				</div>
-
+				<div id="invoiceGridWrapper" style="position:relative;">
 				<!-- 전표 목록 Grid -->
 				<div id="voucherGrid" class="ag-theme-quartz"></div>
+				</div>
 				<div id="actionBar" class="d-flex justify-content-end gap-2 my-2">
 					<button id="btnRegisterDetail" type="button"
 						class="btn btn-primary btn-sm">등록</button>
@@ -230,6 +231,7 @@ const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
     
   // === 전표 데이터 불러오기 ===
   async function loadAndRenderVoucher() {
+	  showLoader("invoiceGridWrapper", "입고 데이터를 불러오는 중입니다...");
 	  try {
 		    const fromDate = document.getElementById("fromDate").value;
 		    const toDate   = document.getElementById("toDate").value;
@@ -252,7 +254,8 @@ const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
 		  } catch (err) {
 		    console.error(err);
 		    alert("전표 데이터를 불러오지 못했습니다.");
-		  }
+		  } 
+		  hideLoader("invoiceGridWrapper");
   }
 
   document.addEventListener("DOMContentLoaded", () => {

@@ -111,7 +111,9 @@
 					<button class="btn btn-outline-danger btn-sm" id="btnToggleDiff">차액별</button>
 				</div>
 				<!-- 일반전표 목록 Grid -->
+				<div id="generalGridWrapper" style="position:relative;">
 				<div id="generalVoucherGrid" class="ag-theme-quartz"></div>
+				</div>
 			</div>
 			 <input class="form-control" id="compCode" name="compCode" type="hidden">
 		</div>
@@ -179,6 +181,7 @@ function newInputRow(){
 
 // 목록 로드 + 차액행 처리
 async function loadList() {
+	showLoader("generalGridWrapper", "데이터를 불러오는 중입니다...");
 	const today = todayStr();
     document.getElementById("fromDate").value = today;
     document.getElementById("toDate").value = today;
@@ -188,7 +191,7 @@ async function loadList() {
 
   // 오늘 날짜만 필터
   rows = rows.filter(r => r.jrnDate.substring(0,10) === today);
-
+  hideLoader("generalGridWrapper")
   // === 전표별 차변/대변 합계 계산 ===
   const grouped = {};
   rows.forEach(r => {

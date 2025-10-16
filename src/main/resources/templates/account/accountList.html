@@ -82,8 +82,9 @@
 							업로드</button>
 					</form>
 				</div>
-
-				<div id="grid" class="ag-theme-quartz"></div>
+				<div id="gridWrapper" style="position:relative;">
+				 <div id="grid" class="ag-theme-quartz"></div>
+				</div>
 			</div>
 		</div>
 	</section>
@@ -100,11 +101,13 @@
         let gridApi;
         
         window.loadAndRender = async function () {
+         showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
           const { data } = await axios.get("/api/account/list");
           const rows = Array.isArray(data) ? data : [];
           gridApi?.setGridOption
             ? gridApi.setGridOption("rowData", rows)
             : gridApi.setRowData(rows);
+         hideLoader("gridWrapper");
         };
 
         document.addEventListener("DOMContentLoaded", () => {

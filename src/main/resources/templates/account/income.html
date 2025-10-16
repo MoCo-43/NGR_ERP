@@ -151,7 +151,7 @@ h2 { margin: 0 0 .75rem; }
     rows.push(makeRow('Ⅳ. 영업이익 (Ⅰ-Ⅱ-Ⅲ)', opCur, opPrev, '30', 0, 'subtotal'));
 
     rows.push({rowType:'header', label:'영업 외', level:0});
-    rows.push(makeRow('Ⅴ. 영업외수익', noiCur, noiPrev, '60', 0, 'subtotal'));
+    rows.push(makeRow('Ⅴ. 영업외수	익', noiCur, noiPrev, '60', 0, 'subtotal'));
     Object.entries(cur.nonOpIncome).forEach(([k,v])=>{
       const p = prev.nonOpIncome[k] || {prev:0};
       rows.push(makeRow(v.label, v.cur, p.prev, v.code, 1));

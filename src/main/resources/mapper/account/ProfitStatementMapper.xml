@@ -7,43 +7,52 @@
   <select id="selectMonthlyProfit" parameterType="map"
           resultType="com.yedam.erp.vo.account.ProfitStatementVO">
 
+SELECT
+    acctCode,
+    acctName,
+    acctGroup,
+    SUM(CASE WHEN yearMonth = #{prevYm} THEN amount ELSE 0 END) AS prevAmt,
+    SUM(CASE WHEN yearMonth = #{curYm}  THEN amount ELSE 0 END) AS currAmt
+FROM (
+    /* ===== 일반 전표 ===== */
     SELECT
-        acctCode,
-        acctName,
-        acctGroup,
-        SUM(CASE WHEN yearMonth = #{prevYm} THEN amount ELSE 0 END) AS prevAmt,
-        SUM(CASE WHEN yearMonth = #{curYm}  THEN amount ELSE 0 END) AS currAmt
-    FROM (
-        -- 일반 전표
-        SELECT
-            TO_CHAR(J.JRN_DATE, 'YYYYMM') AS yearMonth,
-            J.ACCT_CODE AS acctCode,
-            A.ACCT_NAME AS acctName,
-            SUBSTR(J.ACCT_CODE, 1, 1) AS acctGroup,
-            CASE WHEN J.DC_TYPE = 'D' THEN J.AMOUNT ELSE J.AMOUNT END AS amount
-        FROM JOURNAL J
-        JOIN ACCOUNT A ON J.ACCT_CODE = A.ACCT_CODE
-        WHERE J.COMPANY_CODE = #{companyCode}
-          AND (TO_CHAR(J.JRN_DATE, 'YYYYMM') = #{prevYm} OR TO_CHAR(J.JRN_DATE, 'YYYYMM') = #{curYm})
-		  AND J.STATUS = 'closed'
-		  	
-        UNION ALL
+        TO_CHAR(J.JRN_DATE, 'YYYYMM') AS yearMonth,
+        J.ACCT_CODE AS acctCode,
+        A.ACCT_NAME AS acctName,
+        SUBSTR(J.ACCT_CODE, 1, 1) AS acctGroup,
+        CASE
+            WHEN SUBSTR(J.ACCT_CODE, 1, 1) IN ('4','6') THEN
+                CASE WHEN J.DC_TYPE = 'C' THEN J.AMOUNT ELSE -J.AMOUNT END
+            ELSE
+                CASE WHEN J.DC_TYPE = 'D' THEN J.AMOUNT ELSE -J.AMOUNT END
+        END AS amount
+    FROM JOURNAL J
+    JOIN ACCOUNT A ON J.ACCT_CODE = A.ACCT_CODE
+    WHERE J.COMPANY_CODE = #{companyCode}
+      AND (TO_CHAR(J.JRN_DATE, 'YYYYMM') = #{prevYm} OR TO_CHAR(J.JRN_DATE, 'YYYYMM') = #{curYm})
 
-        -- 급여 전표
-        SELECT
-            TO_CHAR(H.PAY_DATE, 'YYYYMM') AS yearMonth,
-            P.ACCT_CODE AS acctCode,
-            A.ACCT_NAME AS acctName,
-            SUBSTR(P.ACCT_CODE, 1, 1) AS acctGroup,
-            CASE WHEN P.DC_TYPE = 'D' THEN H.TOTAL_DEBIT ELSE -H.TOTAL_DEBIT END AS amount
-        FROM PAYROLL_HIST H
-        JOIN PAYROLL_JRN_HIST P ON H.HIST_CODE = P.HIST_CODE
-        JOIN ACCOUNT A ON P.ACCT_CODE = A.ACCT_CODE
-        WHERE H.COMPANY_CODE = #{companyCode}
-          AND (TO_CHAR(H.PAY_DATE, 'YYYYMM') = #{prevYm} OR TO_CHAR(H.PAY_DATE, 'YYYYMM') = #{curYm})
-    )
-    GROUP BY acctCode, acctName, acctGroup
-    ORDER BY acctGroup, acctCode
+    UNION ALL
+
+    /* ===== 급여 전표 (PAYROLL_JRN_HIST 기준) ===== */
+    SELECT
+        TO_CHAR(H.PAY_DATE, 'YYYYMM') AS yearMonth,
+        L.ACCT_CODE AS acctCode,
+        A.ACCT_NAME AS acctName,
+        SUBSTR(L.ACCT_CODE, 1, 1) AS acctGroup,
+        CASE
+            WHEN SUBSTR(L.ACCT_CODE, 1, 1) IN ('4','6') THEN
+                CASE WHEN L.DC_TYPE = 'C' THEN L.AMOUNT ELSE -L.AMOUNT END
+            ELSE
+                CASE WHEN L.DC_TYPE = 'D' THEN L.AMOUNT ELSE -L.AMOUNT END
+        END AS amount
+    FROM PAYROLL_HIST H
+    JOIN PAYROLL_JRN_HIST L ON H.HIST_CODE = L.HIST_CODE
+    JOIN ACCOUNT A ON L.ACCT_CODE = A.ACCT_CODE
+    WHERE H.COMPANY_CODE = #{companyCode}
+      AND (TO_CHAR(H.PAY_DATE, 'YYYYMM') = #{prevYm} OR TO_CHAR(H.PAY_DATE, 'YYYYMM') = #{curYm})
+)
+GROUP BY acctCode, acctName, acctGroup
+ORDER BY acctGroup, acctCode
   </select>
 
 </mapper>
