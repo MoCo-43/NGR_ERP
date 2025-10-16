@@ -140,9 +140,9 @@
       // 저장 후 모달 닫기
       (bootstrap.Modal.getInstance($('eduFormModal')) || new bootstrap.Modal($('eduFormModal'))).hide();
       await refresh();  // 목록 다시 불러오기
-      alert('저장되었습니다.');
+      toastr.success('저장되었습니다.');
     }catch(err){ 
-      alert(err?.message || '저장 실패'); 
+      toastr.error(err?.message || '저장 실패'); 
     }
     finally{ 
       btn.disabled=false; 

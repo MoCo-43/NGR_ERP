@@ -48,7 +48,7 @@
     <div class="card shadow mb-3">
       <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">급여 이체현황</h6>
-        <button id="btnExportPdf" class="btn btn-secondary btn-sm">PDF</button>
+        <button id="btnExportPdf" class="btn btn-outline-danger btn-sm"  >PDF</button>
       </div>
 
       <!-- 검색 영역 -->
@@ -139,7 +139,7 @@
         applyRows(); // 데이터 적용
       } catch (e) {
         console.error('이체현황 조회 실패', e);
-        alert('이체현황 조회 중 오류가 발생했습니다.');
+        toastr.error('이체현황 조회 중 오류가 발생했습니다.');
         rowDataCache = [];
         applyRows();
       } finally {
@@ -200,8 +200,8 @@
     // PDF 
     btnExportPdf.addEventListener('click', async () => {
       const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF; // jsPDF 생성자
-      if (!jsPDFCtor) { alert('jsPDF가 로드되지 않았습니다.'); return; } // jsPDF 로드 확인
-      if (!('autoTable' in (jsPDFCtor.API || {}))) { alert('jspdf-autotable이 로드되지 않았습니다.'); return; }
+      if (!jsPDFCtor) {  toastr.warning('jsPDF가 로드되지 않았습니다.'); return; } // jsPDF 로드 확인
+      if (!('autoTable' in (jsPDFCtor.API || {}))) {  toastr.warning('jspdf-autotable이 로드되지 않았습니다.'); return; }
 
       // 제목 라벨
       const monthVal = srchMonth.value; // 현재 선택된 월
@@ -263,7 +263,7 @@
         doc.save(`급여이체현황_${payYm || ''}.pdf`); // 파일명: 급여이체현황_yyyymm.pdf
       } catch (e) {
         console.error(e); // 콘솔에 에러 출력
-        alert('PDF 생성 중 오류가 발생했습니다.'); // 사용자 알림
+        toastr.error('PDF 생성 중 오류가 발생했습니다.'); // 사용자 알림
       }
     });   
   });
