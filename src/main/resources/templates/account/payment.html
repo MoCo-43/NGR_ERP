@@ -70,7 +70,9 @@
 					<div class="row">
 						<div class="col-md-4">
 							<div class="section-title">기본정보</div>
+							<div id="paymentGridWrapper" style="position:relative;">
 							<div id="baseGrid" class="ag-theme-quartz grid-sm"></div>
+							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="section-title">지급항목(차변)</div>
@@ -89,7 +91,6 @@
 				</div>
 			</div>
 		</section>
-	
 		<th:block layout:fragment="body_extra">
 			<script
 				src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
@@ -164,7 +165,7 @@
 	                  acct: d.acctName,
 	                  debit: d.amount,
 	                  credit:'',
-	                  note: d.itemLabel
+	                  note: d.itemKey
 	                })),
 	                ...data.credit.map(c => ({
 	                  gbn: "대변",
@@ -172,7 +173,7 @@
 	                  acct: c.acctName,
 	                  debit: '',
 	                  credit: c.amount,
-	                  note: c.itemLabel
+	                  note: c.itemKey
 	                }))
 	              ];
 	              journalCache = journal;
@@ -190,7 +191,7 @@
 	
 	      debitApi = agGrid.createGrid(document.getElementById("debitGrid"), {
 	        columnDefs: [
-	        	  { headerName:'지급항목', field:'itemLabel', flex:1 },
+	        	  { headerName:'지급항목', field:'itemKey', flex:1 },
 	              { headerName:'코드', field:'acctCode', width:100 },
 	              { headerName:'계정과목명', field:'acctName', flex:1 },
 	              { headerName:'금액', field:'amount', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() }
@@ -205,7 +206,7 @@
 	
 	      creditApi = agGrid.createGrid(document.getElementById("creditGrid"), {
 	        columnDefs: [
-	          { headerName:'공제항목', field:'itemLabel', flex:1 },
+	          { headerName:'공제항목', field:'itemKey', flex:1 },
 	          { headerName:'코드', field:'acctCode', width:100 },
 	          { headerName:'계정과목명', field:'acctName', flex:1 },
 	          { headerName:'금액', field:'amount', width:120, type:'numericColumn', valueFormatter:p=>p.value?.toLocaleString() }
@@ -251,6 +252,7 @@
 	
 	 // ✅ baseGrid 데이터 로드 (파라미터 우선 → 입력값 → 이번 달)
 	    async function initBaseGrid(passedYM) {
+	    	showLoader("paymentGridWrapper", "데이터를 불러오는 중입니다...");
 	      try {
 	        const inputEl = document.getElementById('srchMonth');
 	        const inputYM = inputEl?.value ? inputEl.value.replace('-', '') : '';
@@ -280,6 +282,7 @@
 	        console.error("급여대장 조회 실패", err);
 	        baseApi.setGridOption("rowData", []);
 	      }
+	      hideLoader("paymentGridWrapper");
 	    }
 	 
 	    function applyJournalFilter() {
@@ -320,7 +323,7 @@
 	    	  journalApi.setGridOption("rowData", result);
 	    	}
 	    
-	    // 등록 버튼
+// 등록 버튼
 document.getElementById("btnRegister").addEventListener("click", async () => {
   if (!selectedRowData) return alert("급여대장을 먼저 선택하세요.");
 
@@ -328,33 +331,37 @@ document.getElementById("btnRegister").addEventListener("click", async () => {
     alert(`⚠️ 이미 전표가 등록된 급여대장입니다.\n전표번호: ${selectedRowData.jrnNo}`);
     return;
   }
+
   if (!Array.isArray(journalCache) || journalCache.length === 0) {
-	    return alert("전표결과가 없습니다. 급여대장을 선택해 지급/공제 항목을 먼저 불러오세요.");
-	  }
+    return alert("전표결과가 없습니다. 급여대장을 선택해 지급/공제 항목을 먼저 불러오세요.");
+  }
+  // ✅ 차변 / 대변 합계
   const totalDebit = journalCache
     .filter(r => r.gbn === "차변")
     .reduce((sum, r) => sum + Number(r.debit || 0), 0);
   const totalCredit = journalCache
     .filter(r => r.gbn === "대변")
     .reduce((sum, r) => sum + Number(r.credit || 0), 0);
-  
+
   const ymInput = document.getElementById("srchMonth").value;
   const ym = ymInput ? ymInput.replace("-", "") : getThisMonthYM();
-  
+
+  // ✅ payload 구성
   const payload = {
     payrollNo: selectedPayrollNo,
-    yearMonth: document.getElementById("srchMonth").value.replace("-", ""),
-    payDate: new Date(),
+    yearMonth: ym,
+    payDate: formatDate(new Date()),    // ← ISO 문자열 대신 yyyy-MM-dd
     totalDebit,
     totalCredit,
-    createdBy: "ADMIN",
-    companyCode: "1001",
+ // createdBy는 세션으로
+                // NUMBER 타입
     lines: journalCache.map((r, i) => ({
       lineNo: i + 1,
-      itemKey: r.note,
+      itemKey: r.note || r.acct,        // ✅ 항목명 (ex. 기본급, 식대 등)
       acctCode: r.code,
       dcType: r.gbn === "차변" ? "D" : "C",
-      remarks: r.note
+      amount: Number(r.debit || r.credit || 0),  // ✅ 금액 컬럼 추가 (필수!)
+      remarks: r.note || ''
     }))
   };
 
@@ -363,8 +370,8 @@ document.getElementById("btnRegister").addEventListener("click", async () => {
     await initBaseGrid(ym);
     alert(`✅ 급여전표 등록 완료\n전표번호: ${res.data}`);
   } catch (err) {
-    console.error(err);
-    alert("전표 등록 중 오류 발생");
+    console.error("전표 등록 오류:", err);
+    alert("전표 등록 중 오류 발생\n" + (err.response?.data?.message || ""));
   }
 });
 	  </script>

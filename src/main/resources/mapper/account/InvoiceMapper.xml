@@ -42,7 +42,7 @@
       #{orderCode}, #{deptName}, #{cusCode}, #{bizNo}, #{cusName},
       #{vatType}, #{dueDate}, #{subtotalAmt}, #{vatAmt}, #{totalAmt},
       #{payMethod}, #{memo}, #{cashAccount}, 'open',
-      SYSDATE, #{companyCode}, 'N', #{totalAmt},{bankName}
+      SYSDATE, #{companyCode}, 'N', #{totalAmt},#{bankName}
     )
 
     <foreach collection="lines" item="line">

@@ -21,14 +21,14 @@
   <script>
   ;(function(){
     // include 방지
-    if (window.__payFix) return;
+    if (window.__payFix) return;  //payFix가 있으면 즉시 종료
 
     // 계산용 환경설정 
     const CONFIG = {
       // 국민연금
       NPS_RATE_EMP: 0.045,        // 근로자요율 4.5%
-      NPS_BASE_MIN: 350000,       // 기준소득월액 하한(예시)
-      NPS_BASE_MAX: 5900000,      // 기준소득월액 상한(예시)
+      NPS_BASE_MIN: 350000,       // 기준소득월액 하한
+      NPS_BASE_MAX: 5900000,      // 기준소득월액 상한
       // 건강보험
       HI_RATE_EMP: 0.03545,       // 근로자요율
       // 장기요양(건강보험료 × 요율)
@@ -37,7 +37,7 @@
       EI_RATE_EMP: 0.009,         // 근로자요율 0.9%
       // 반올림/절사 규칙
       ROUND_UNIT: 10,             // 10원 단위
-      ROUND_MODE: 'floor',
+      ROUND_MODE: 'floor',        // 내림 사용
 
       // 가족/자녀 수당 규칙
       FAMILY_ALLOW_PER: 50000,    // 부양가족 1명당 5만원
@@ -46,47 +46,47 @@
         { max: Infinity, per: 50000 }  // 3명 이상: 인당 5만원
       ],
       // 해당 수당의 화면 라벨 
-      LABEL_FAMILY_ALLOW: '부양가족수당',
-      LABEL_CHILD_ALLOW: '출산보육수당'
+      LABEL_FAMILY_ALLOW: '부양가족수당', // 화면에서 찾을 라벨명
+      LABEL_CHILD_ALLOW: '출산보육수당'   // 화면에서 찾을 라벨명
     };
 
-    const $ = (id)=>document.getElementById(id);
-    const allowArea  = ()=>$('payfix-list');
-    const deductArea = ()=>$('deductfix-list');
+    const $ = (id)=>document.getElementById(id);        // DOM 헬퍼
+    const allowArea  = ()=>$('payfix-list');            // 수당 영역 컨테이너 반환
+    const deductArea = ()=>$('deductfix-list');         // 공제 영역 컨테이너 반환
 
     // 공통: empId 보관/획득
-    function setEmpIdHidden(empId){ if($('pf_emp_id')) $('pf_emp_id').value = empId || ''; }
+    function setEmpIdHidden(empId){ if($('pf_emp_id')) $('pf_emp_id').value = empId || ''; } // 숨김 input에 empId 저장
     function getEmpId(){
-      let v = ($('pf_emp_id')?.value || '').trim();
-      if(!v) v = (document.getElementById('f_emp_id')?.value || '').trim();
+      let v = ($('pf_emp_id')?.value || '').trim();   // 숨김 input에서 우선 가져옴
+      if(!v) v = (document.getElementById('f_emp_id')?.value || '').trim(); // 없으면 기본 정보 탭의 f_emp_id에서
       return v;
     }
 
     //반올림/절사 
     function roundToUnit(val, unit, mode){
-      const x = Number(val) || 0;
-      const u = unit || 1;
-      const q = x / u;
-      if (mode === 'round') return Math.round(q) * u;
-      if (mode === 'ceil')  return Math.ceil(q)  * u;
-      return Math.floor(q) * u; 
+      const x = Number(val) || 0;   // 숫자 변환 실패 시 0
+      const u = unit || 1;          // 단위 기본 1
+      const q = x / u;              // 단위로 나눈 값
+      if (mode === 'round') return Math.round(q) * u; // 반올림
+      if (mode === 'ceil')  return Math.ceil(q)  * u; // 올림
+      return Math.floor(q) * u;                       // 기본은 내림
     }
 
-    // 유틸: 숫자 안전 변환
-    function num(v){ const n = Number(v); return isFinite(n) ? n : 0; }
+    // 유틸: 숫자변환
+    function num(v){ const n = Number(v); return isFinite(n) ? n : 0; } 
 
     // 수당/공제 한 섹션 렌더 
     function renderList(box, rows, kind ){
-      box.innerHTML = '';
+      box.innerHTML = '';               // 기존 목록 비우기
       rows.forEach(item=>{
-        const has  = item.payFixNo != null ? 'true' : 'false';
-        const lbl  = item.empAllowLabel || '';
-        const code = item.empAllowCode  || '';
-        const isTax = (item.taxType?.toUpperCase?.() === '과세' || item.taxType === 'Y')
+        const has  = item.payFixNo != null ? 'true' : 'false'; // 기존 저장 여부
+        const lbl  = item.empAllowLabel || '';                  // 라벨
+        const code = item.empAllowCode  || '';                  // 코드
+        const isTax = (item.taxType?.toUpperCase?.() === '과세' || item.taxType === 'Y') // 과세 여부 판정
                       ? 'Y'
                       : (lbl.includes('식대') ? 'N' : (item.taxType === 'N' ? 'N' : 'Y'));
 
-        const row = document.createElement('div');
+        const row = document.createElement('div');  // 행 컨테이너
         row.className = 'row mb-2';
         row.innerHTML = `
           <div class="col-md-6">
@@ -100,183 +100,184 @@
                    data-tax="${kind==='ALLOW' ? isTax : ''}"
                    data-has-value="${has}"
                    value="${item.empAllowPay || 0}">
-          </div>`;
-        box.appendChild(row);
+          </div>`;                                  // 각 항목의 입력 상자 생성
+        box.appendChild(row);                       // 섹션에 추가
       });
     }
 
     // 기본급 가져오기: ALLOW 중 '기본급' 라벨 또는 코드로 식별
     function getBasePay(){
-      const el = document.querySelector('#payfix-list input[data-kind="ALLOW"][data-name="기본급"]');
-      return num(el?.value);
+      const el = document.querySelector('#payfix-list input[data-kind="ALLOW"][data-name="기본급"]'); // 라벨 '기본급'
+      return num(el?.value);                                                                        // 숫자 변환
     }
 
     // 과세 수당 합계 
     function getTaxableAllowSum(){
-      const nodes = document.querySelectorAll('#payfix-list input[data-kind="ALLOW"][data-code]');
+      const nodes = document.querySelectorAll('#payfix-list input[data-kind="ALLOW"][data-code]'); // 모든 수당 입력
       let sum = 0;
       nodes.forEach(n=>{
-        const tax = n.getAttribute('data-tax') || 'Y';
+        const tax = n.getAttribute('data-tax') || 'Y';                                              // 과세/비과세
         // 기본급 제외
-        const isBase = (n.getAttribute('data-name') === '기본급') || (n.getAttribute('data-code') === '01');
-        if (tax === 'Y' && !isBase) sum += num(n.value);
+        const isBase = (n.getAttribute('data-name') === '기본급') || (n.getAttribute('data-code') === '01'); // 기본급 제외
+        if (tax === 'Y' && !isBase) sum += num(n.value);                                            // 과세 수당만 합산
       });
       return sum;
     }
 
     // 보수월액 = 기본급 + 과세수당합 
     function getWageBase(){
-      return getBasePay() + getTaxableAllowSum();
+      return getBasePay() + getTaxableAllowSum(); // 4대보험 계산의 기준 소득
     }
 
     //공제 Input 찾기(라벨 우선, 코드 보조)
     function findDeductInput(nameHints = [], codeHints = []){
       for (const h of nameHints){
         const el = Array.from(document.querySelectorAll('#deductfix-list input[data-kind="DEDUCT"]'))
-                        .find(n => (n.getAttribute('data-name') || '').includes(h));
+                        .find(n => (n.getAttribute('data-name') || '').includes(h)); // 라벨 포함 검색
         if (el) return el;
       }
       for (const c of codeHints){
-        const el = document.querySelector(`#deductfix-list input[data-kind="DEDUCT"][data-code="${c}"]`);
+        const el = document.querySelector(`#deductfix-list input[data-kind="DEDUCT"][data-code="${c}"]`); // 코드 정확 일치
         if (el) return el;
       }
-      return null;
+      return null; // 못 찾으면 null
     }
 
     // ALLOW 인풋 찾기(라벨/코드 힌트)
     function findAllowInput(nameHints = [], codeHints = []){
       for (const h of nameHints){
         const el = Array.from(document.querySelectorAll('#payfix-list input[data-kind="ALLOW"]'))
-                        .find(n => (n.getAttribute('data-name') || '').includes(h));
+                        .find(n => (n.getAttribute('data-name') || '').includes(h)); // 라벨 포함 검색
         if (el) return el;
       }
       for (const c of codeHints){
-        const el = document.querySelector(`#payfix-list input[data-kind="ALLOW"][data-code="${c}"]`);
+        const el = document.querySelector(`#payfix-list input[data-kind="ALLOW"][data-code="${c}"]`); // 코드 정확 일치
         if (el) return el;
       }
-      return null;
+      return null; // 못 찾으면 null
     }
 
-    // ===== [추가] 가족/자녀 입력값
-    function getFamilyCnt()   { return num(document.getElementById('f_family_cnt')?.value); }
-    function getChildrenCnt() { return num(document.getElementById('f_children_cnt')?.value); }
+    //  가족/자녀 입력값
+    function getFamilyCnt()   { return num(document.getElementById('f_family_cnt')?.value); }   // 부양가족 수
+    function getChildrenCnt() { return num(document.getElementById('f_children_cnt')?.value); } // 자녀 수
 
-    // ===== [추가] 자녀 수에 따른 단가 결정
+    // 자녀 수에 따른 단가 결정
     function getPerChildAmount(cnt){
       for (const tier of CONFIG.CHILD_TIER){
-        if (cnt <= tier.max) return tier.per;
+        if (cnt <= tier.max) return tier.per; //단가 반환
       }
-      return 0;
+      return 0; // 기본 0
     }
 
-    // ===== [추가] 부양가족/자녀 수당 자동 계산 & 반영
+    //부양가족/자녀 수당 자동 계산 & 반영
     function recalcFamilyAllowances(){
-      const famCnt   = getFamilyCnt();
-      const childCnt = getChildrenCnt();
+      const famCnt   = getFamilyCnt();    // 부양가족 수
+      const childCnt = getChildrenCnt();  // 자녀 수
 
-      const familyAmount = famCnt   * (CONFIG.FAMILY_ALLOW_PER || 0);
-      const childPer     = getPerChildAmount(childCnt);
-      const childAmount  = childCnt * childPer;
+      const familyAmount = famCnt   * (CONFIG.FAMILY_ALLOW_PER || 0); // 가족 수당 총액
+      const childPer     = getPerChildAmount(childCnt);               // 자녀 1인당 단가
+      const childAmount  = childCnt * childPer;                       // 자녀 수당 총액
 
-      const $family = findAllowInput([CONFIG.LABEL_FAMILY_ALLOW]); // 라벨로 찾음
-      const $child  = findAllowInput([CONFIG.LABEL_CHILD_ALLOW]);
+      const $family = findAllowInput([CONFIG.LABEL_FAMILY_ALLOW]); // 라벨로 수당 input 찾음
+      const $child  = findAllowInput([CONFIG.LABEL_CHILD_ALLOW]);  // 라벨로 수당 input 찾음
 
-      if ($family) $family.value = familyAmount;
-      if ($child)  $child.value  = childAmount;
+      if ($family) $family.value = familyAmount; // 화면 반영
+      if ($child)  $child.value  = childAmount;  // 화면 반영
 
-      // 가족/자녀 수당이 과세면 보수월액 변동 → 4대보험 재계산
+      // 가족/자녀 수당이 과세면 보수월액 변동 
       recalcDeductions();
     }
 
     //4대보험 계산 후 화면 세팅
     function recalcDeductions(){
-      const base = getWageBase();
+      const base = getWageBase(); // 보수월액
 
       // 1) 국민연금
-      const npsBase = Math.max(CONFIG.NPS_BASE_MIN, Math.min(CONFIG.NPS_BASE_MAX, base));
-      let nps = npsBase * CONFIG.NPS_RATE_EMP;
-      nps = roundToUnit(nps, CONFIG.ROUND_UNIT, CONFIG.ROUND_MODE);
+      const npsBase = Math.max(CONFIG.NPS_BASE_MIN, Math.min(CONFIG.NPS_BASE_MAX, base)); // 하한/상한 적용
+      let nps = npsBase * CONFIG.NPS_RATE_EMP;                                            // 요율 적용
+      nps = roundToUnit(nps, CONFIG.ROUND_UNIT, CONFIG.ROUND_MODE);                       // 반올림 규칙 적용
 
       // 2) 건강보험
-      let hi = base * CONFIG.HI_RATE_EMP;
-      hi = roundToUnit(hi, CONFIG.ROUND_UNIT, CONFIG.ROUND_MODE);
+      let hi = base * CONFIG.HI_RATE_EMP;                   // 요율 적용
+      hi = roundToUnit(hi, CONFIG.ROUND_UNIT, CONFIG.ROUND_MODE); // 반올림 규칙
 
       // 3) 장기요양 
-      let ltc = hi * CONFIG.LTC_RATE;
-      ltc = roundToUnit(ltc, CONFIG.ROUND_UNIT, CONFIG.ROUND_MODE);
+      let ltc = hi * CONFIG.LTC_RATE;                       // 건강보험료 기준
+      ltc = roundToUnit(ltc, CONFIG.ROUND_UNIT, CONFIG.ROUND_MODE); // 반올림 규칙
 
       // 4) 고용보험
-      let ei = base * CONFIG.EI_RATE_EMP;
-      ei = roundToUnit(ei, CONFIG.ROUND_UNIT, CONFIG.ROUND_MODE);
+      let ei = base * CONFIG.EI_RATE_EMP;                   // 요율 적용
+      ei = roundToUnit(ei, CONFIG.ROUND_UNIT, CONFIG.ROUND_MODE); // 반올림 규칙
 
-      // 대상 input 매핑
+      //  input 매핑
       const $nps = findDeductInput(['국민연금'], ['03']);
       const $hi  = findDeductInput(['건강보험'], ['04']);
       const $ltc = findDeductInput(['장기요양'], ['05']);
       const $ei  = findDeductInput(['고용보험'], ['06']);
 
-      if ($nps) $nps.value = nps;
-      if ($hi)  $hi.value  = hi;
-      if ($ltc) $ltc.value = ltc;
-      if ($ei)  $ei.value  = ei;
+      if ($nps) $nps.value = nps; // 국민연금 세팅
+      if ($hi)  $hi.value  = hi;  // 건강보험 세팅
+      if ($ltc) $ltc.value = ltc; // 장기요양 세팅
+      if ($ei)  $ei.value  = ei;  // 고용보험 세팅
     }
 
     // 수당/기본급 변경 시 자동계산 바인딩 
     function bindAutoRecalc(){
+      // 수당 입력값이 바뀌면 4대보험 재계산
       document.querySelectorAll('#payfix-list input[data-kind="ALLOW"]').forEach(inp=>{
         ['change','blur','keyup'].forEach(ev=>inp.addEventListener(ev, recalcDeductions));
       });
-      const extBase = document.querySelector('#f_base_pay');
+      const extBase = document.querySelector('#f_base_pay'); // 외부 기본급 필드가 따로 있을 경우
       if (extBase){
         ['change','blur','keyup'].forEach(ev=>extBase.addEventListener(ev, recalcDeductions));
       }
 
-      // ===== [추가] 가족/자녀 입력 변경 시 자동 반영
+      //가족/자녀 입력 변경 시 자동 반영
       ['f_family_cnt','f_children_cnt'].forEach(id=>{
         const el = document.getElementById(id);
         if (el){
-          ['change','blur','keyup'].forEach(ev=> el.addEventListener(ev, recalcFamilyAllowances));
+          ['change','blur','keyup'].forEach(ev=> el.addEventListener(ev, recalcFamilyAllowances)); // 값 바뀌면 가족/자녀 수당 재계산
         }
       });
 
-      // 초기 1회 세팅
+      // 초기 1회 세팅(폼이 떴을 때 현재 값 기준으로 자동 반영)
       recalcFamilyAllowances();
     }
 
     // 초기화
     async function init(empId){
       try{
-        setEmpIdHidden(empId);
+        setEmpIdHidden(empId); // 숨김 input에 empId 저장
         const [allowRes, deductRes] = await Promise.all([
-          axios.get('/api/v1/emp-pay-fix/allow-list',  { params:{ empId } }),
-          axios.get('/api/v1/emp-pay-fix/deduct-list', { params:{ empId } })
+          axios.get('/api/v1/emp-pay-fix/allow-list',  { params:{ empId } }), // 수당 항목 조회
+          axios.get('/api/v1/emp-pay-fix/deduct-list', { params:{ empId } })  // 공제 항목 조회
         ]);
-        const allowBox  = allowArea();  if (allowBox)  renderList(allowBox,  allowRes.data||[],  'ALLOW');
-        const deductBox = deductArea(); if (deductBox) renderList(deductBox, deductRes.data||[], 'DEDUCT');
+        const allowBox  = allowArea();  if (allowBox)  renderList(allowBox,  allowRes.data||[],  'ALLOW');  // 수당 섹션 렌더
+        const deductBox = deductArea(); if (deductBox) renderList(deductBox, deductRes.data||[], 'DEDUCT'); // 공제 섹션 렌더
 
         // 렌더 완료 후 바인딩 & 1회 계산
-        bindAutoRecalc();
-        recalcDeductions();
-        // ===== [추가] 가족/자녀 수당 초기 계산 1회
+        bindAutoRecalc();          // 입력 이벤트 바인딩(자동 계산 연결)
+        recalcDeductions();        // 4대보험 1회 계산
+        //가족/자녀 수당 초기 계산 1회
         recalcFamilyAllowances();
       }catch(err){
-        console.error('init error:', err?.response?.status, err?.response?.data || err);
-        alert('급여지급/공제 목록 조회 중 오류가 발생했습니다.');
+        console.error('init error:', err?.response?.status, err?.response?.data || err); 
+        alert('급여지급/공제 목록 조회 중 오류가 발생했습니다.');                         
       }
     }
 
     // 저장
     async function save(){
-      const empId = getEmpId();
-      if(!empId){ alert('사번이 없습니다.'); return; }
+      const empId = getEmpId(); // 현재 사번
+      if(!empId){ alert('사번이 없습니다.'); return; }// 사번 없으면 저장 불가
 
-      const inputs = document.querySelectorAll('#payfix-list input[data-code], #deductfix-list input[data-code]');
-      const errors = [];
+      const inputs = document.querySelectorAll('#payfix-list input[data-code], #deductfix-list input[data-code]'); // 모든 항목 입력
+      const errors = []; // 실패 항목 수집
       for (const input of inputs){
-        const code  = input.getAttribute('data-code');
-        const kind  = input.getAttribute('data-kind');
-        const pay   = Number(input.value) || 0;
-        const label = input.closest('.row').querySelector('label')?.textContent || '';
+        const code  = input.getAttribute('data-code'); // 코드
+        const kind  = input.getAttribute('data-kind'); // ALLOW/DEDUCT
+        const pay   = Number(input.value) || 0;        // 금액(숫자)
+        const label = input.closest('.row').querySelector('label')?.textContent || ''; // 라벨(항목명)
         const body  = {
           empId,
           empAllowCode:  code,
@@ -284,34 +285,34 @@
           empAllowPay:   pay,
           payType:       kind
         };
-        const isUpdate = input.getAttribute('data-has-value') === 'true';
+        const isUpdate = input.getAttribute('data-has-value') === 'true'; // 기존 존재 여부
 
         try{
-          if (isUpdate) await axios.put('/api/v1/emp-pay-fix', body);
+          if (isUpdate) await axios.put('/api/v1/emp-pay-fix', body); // 수정
           else {
-            await axios.post('/api/v1/emp-pay-fix', body);
-            input.setAttribute('data-has-value', 'true');
+            await axios.post('/api/v1/emp-pay-fix', body);            // 신규
+            input.setAttribute('data-has-value', 'true');             // 저장 후 상태 갱신
           }
         }catch(e){
           console.error(`[pay-fix save error] code=${code}, kind=${kind}, isUpdate=${isUpdate}`,
-                        e?.response?.status, e?.response?.data || e);
-          errors.push(`${kind}:${code}`);
+                        e?.response?.status, e?.response?.data || e); 
+          errors.push(`${kind}:${code}`); 
         }
       }
 
       if (errors.length){
-        alert(`저장 중 오류가 발생했습니다. 문제 항목: ${errors.join(', ')}`);
-        throw new Error('pay-fix save failed');
+        alert(`저장 중 오류가 발생했습니다. 문제 항목: ${errors.join(', ')}`); // 실패 항목 안내
+        throw new Error('pay-fix save failed'); // 호출측에서 감지 가능하도록 에러 throw
       }
     }
 
     function clear(){
-      const a = allowArea();  if (a) a.innerHTML = '';
-      const d = deductArea(); if (d) d.innerHTML = '';
-      const hid = $('pf_emp_id'); if (hid) hid.value = '';
+      const a = allowArea();  if (a) a.innerHTML = ''; // 수당 섹션 비우기
+      const d = deductArea(); if (d) d.innerHTML = ''; // 공제 섹션 비우기
+      const hid = $('pf_emp_id'); if (hid) hid.value = ''; // 숨김 empId 초기화
     }
 
-    window.__payFix = { init, save, clear };
+    window.__payFix = { init, save, clear }; //API: 초기화/저장/초기화(클리어)
   })();
   </script>
 </div>

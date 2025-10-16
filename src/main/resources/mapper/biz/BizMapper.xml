@@ -312,7 +312,8 @@ ORDER BY d.DO_CREATED DESC
   <!-- ================== ResultMaps ================== -->
   <!-- 그리드(현황) -->
   <!-- type 은 VO FQCN: com.example.credit.vo.CreditExposureVo -->
- <resultMap id="ExposureMap" type="CreditExposureVO">
+
+  <resultMap id="ExposureMap" type="CreditExposureVO">
     <result column="company_code"   property="companyCode"/>
     <result column="cus_code"       property="cusCode"/>
     <result column="cus_name"       property="cusName"/>
@@ -375,7 +376,7 @@ ORDER BY d.DO_CREATED DESC
 
   <!-- 3) 등록/수정 (MERGE) -->
   <!-- parameterType 은 VO FQCN: com.example.credit.vo.CreditMasterVo -->
-  <update id="upsertCreditMaster" parameterType="CreditMasterVO">
+ <!--   <update id="upsertCreditMaster" parameterType="CreditMasterVO">
     MERGE INTO credit_master t
     USING (SELECT #{companyCode} AS company_code, #{cusCode} AS cus_code FROM dual) s
       ON (t.company_code = s.company_code AND t.cus_code = s.cus_code)
@@ -392,7 +393,7 @@ ORDER BY d.DO_CREATED DESC
               due_date, start_date, expire_date, left_price, created_date, active_status, emp_name)
       VALUES (SEQ_CREDIT_NO.NEXTVAL, #{companyCode}, #{cusCode}, #{creditGrade}, #{creditLimit},
               #{dueDate}, #{startDate}, #{expireDate}, 0, SYSDATE, NVL(#{activeStatus}, 'Y'), #{empName})
-  </update>
+  </update>  -->
 
   <!-- 4) 비활성화(실삭제 X) -->
   <update id="deactivateCredit">

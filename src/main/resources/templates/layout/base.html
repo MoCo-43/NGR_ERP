@@ -108,9 +108,72 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-sb-admin-2/4.1.4/js/sb-admin-2.min.js"></script>
-
+ <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+      ></script>
   <script th:src="@{/sidebar.js}"></script>
+    <th:block layout:fragment="body_extra">
+    </th:block>
+  
+      <!-- Toast -->
+      <div class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
+        <div
+          id="successToast"
+          class="toast align-items-center text-bg-success border-0"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          <div class="toast-body" id="toastMessage">처리가 완료되었습니다.</div>
+        </div>
+      </div>
+</div>
+<script>
+toastr.options = {
+  closeButton: false,
+  debug: false,
+  newestOnTop: true,
+  progressBar: false,
+  positionClass: "toast-top-right",
+  preventDuplicates: false,
+  showDuration: "200",
+  hideDuration: "200",
+  timeOut: "2000",
+  extendedTimeOut: "500",
+  showEasing: "swing",
+  hideEasing: "linear",
+  showMethod: "fadeIn",
+  hideMethod: "fadeOut"
+};
 
-    <th:block layout:fragment="body_extra"></th:block>
+// ✅ 항상 nav 아래에서 표시되도록 강제 감시
+document.addEventListener("DOMContentLoaded", () => {
+  const nav = document.querySelector(".navbar, .topbar");
+  const navHeight = nav ? nav.offsetHeight : 60;
+  
+  const adjustToastPosition = () => {
+    const container = document.querySelector("#toast-container");
+    if (container) {
+      container.style.position = "fixed";
+      container.style.top = `${navHeight + 5}px`;
+      container.style.right = "1rem";
+      container.style.zIndex = "2000"; // SB Admin의 nav보다 약간 위
+    }
+  };
+
+  // ✅ 1) DOM 변화를 감지해서 새로 생긴 toastr 컨테이너에도 즉시 적용
+  const observer = new MutationObserver(() => {
+    adjustToastPosition();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // ✅ 2) 최초 로드 시에도 적용
+  adjustToastPosition();
+});
+</script>
+
   </body>
+
 </html>

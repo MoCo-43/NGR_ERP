@@ -26,39 +26,6 @@
 	font-size: 0.95rem;
 	line-height: 1.4;
 }
-/* ▲ 끝 */
-
-/* ===== cuteAlert 스타일 추가 (기존 스타일에 영향 없음) ===== */
-.cute-alert-overlay{
-	position:fixed; inset:0;
-	background:rgba(0,0,0,.45);
-	display:flex; align-items:center; justify-content:center;
-	opacity:0; transition:opacity .25s ease;
-	z-index:1055;
-}
-.cute-alert-overlay.active{ opacity:1; }
-.cute-alert-box{
-	width:min(92vw,360px);
-	background:#fff;
-	border-radius:14px;
-	padding:18px 18px 16px;
-	text-align:center;
-	box-shadow:0 10px 26px rgba(0,0,0,.18);
-}
-.cute-alert-icon{
-	font-size:42px; line-height:1; margin-bottom:8px;
-	width:56px; height:56px; object-fit:contain;
-	margin-left:auto; margin-right:auto;
-}
-.cute-alert-title{ font-weight:700; font-size:18px; margin-bottom:6px; }
-.cute-alert-message{ font-size:14px; color:#444; white-space:pre-line; margin-bottom:14px; }
-.cute-alert-buttons{ display:flex; gap:8px; justify-content:center; }
-.cute-alert-buttons .confirm-btn,
-.cute-alert-buttons .cancel-btn{
-	border:none; border-radius:8px; padding:8px 14px; cursor:pointer; font-weight:600;
-}
-.cute-alert-buttons .confirm-btn{ background:#4c7cf3; color:#fff; }
-.cute-alert-buttons .cancel-btn { background:#e9ecef; color:#222; }
 	</style>
 
 </th:block>
@@ -101,7 +68,9 @@
 			</div>
 
 			<div class="card-body pt-3">
+				<div id="empGridWrapper" style="position:relative;">
 				<div id="empGrid" class="ag-theme-quartz"></div>
+			</div>
 			</div>
 
 			<div class="d-flex justify-content-end gap-2 my-2 mr-3">
@@ -121,75 +90,6 @@
 			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
 		<script defer
 			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
-
-		<!-- cuteAlert 함수 추가 (전역) -->
-		<script>
-		if (!window.cuteAlert) {
-			window.cuteAlert = function cuteAlert({ type='question', title='알림', message='', imgUrl=null, confirmText='확인', cancelText='취소' }) {
-				return new Promise((resolve) => {
-					const overlay = document.createElement('div');
-					overlay.className = 'cute-alert-overlay';
-					document.body.appendChild(overlay);
-
-					const box = document.createElement('div');
-					box.className = 'cute-alert-box';
-
-					if (imgUrl) {
-						const icon = document.createElement('img');
-						icon.src = imgUrl;
-						icon.className = 'cute-alert-icon';
-						box.appendChild(icon);
-					} else {
-						const icon = document.createElement('div');
-						icon.className = 'cute-alert-icon';
-						icon.innerHTML = type === 'question' ? '❓' :
-														 type === 'success'  ? '✅' :
-														 type === 'warning'  ? '⚠️' :
-														 type === 'error'    ? '❌' : '';
-						box.appendChild(icon);
-					}
-
-					const t = document.createElement('div');
-					t.className = 'cute-alert-title';
-					t.innerText = title;
-					box.appendChild(t);
-
-					const m = document.createElement('div');
-					m.className = 'cute-alert-message';
-					m.innerText = message;
-					box.appendChild(m);
-
-					const btnWrap = document.createElement('div');
-					btnWrap.className = 'cute-alert-buttons';
-
-					const okBtn = document.createElement('button');
-					okBtn.className = 'confirm-btn';
-					okBtn.innerText = confirmText;
-
-					const cancelBtn = document.createElement('button');
-					cancelBtn.className = 'cancel-btn';
-					cancelBtn.innerText = cancelText;
-
-					btnWrap.appendChild(okBtn);
-					btnWrap.appendChild(cancelBtn);
-					box.appendChild(btnWrap);
-					overlay.appendChild(box);
-
-					requestAnimationFrame(()=> overlay.classList.add('active'));
-
-					okBtn.addEventListener('click', ()=>{
-						overlay.classList.remove('active');
-						setTimeout(()=>{ document.body.removeChild(overlay); resolve(true); }, 250);
-					});
-					cancelBtn.addEventListener('click', ()=>{
-						overlay.classList.remove('active');
-						setTimeout(()=>{ document.body.removeChild(overlay); resolve(false); }, 250);
-					});
-				});
-			};
-		}
-		</script>
-
 		<script>
       document.addEventListener('DOMContentLoaded', () => {
         const $ = (id)=>document.getElementById(id);
@@ -224,19 +124,17 @@
 
         // API 초기 로드 
         async function initLoad(){
+        	showLoader("empGridWrapper", "사원 데이터를 불러오는 중입니다...");
           try{
             const {data}=await axios.get('/api/v1/emps');
             rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
             setRows(rowDataCache);
           }catch(e){
-            console.error(e);
-            await cuteAlert({
-              type:'error',
-              title:'조회 실패',
-              message:'사원 목록 조회 중 오류가 발생했습니다.'
-            });
-            setRows([]);
+        	  console.error(e);
+        	  toastr.error('사원 목록 조회 중 오류가 발생했습니다.');
+        	  setRows([]);
           }
+            hideLoader("empGridWrapper");
           gridApi?.deselectAll?.(); $('btnEditOpen').disabled=true;
         }
         function setRows(rows){
@@ -245,7 +143,7 @@
           else gridApi.setRowData?.(rows);
         }
 
-        // ▼ 퇴사 여부 (퇴사일자 존재시 퇴사자로 판단)
+        // ▼ 퇴사 여부
         function isResigned(row){
           return !!(row && row.leaveDate);
         }
@@ -289,13 +187,9 @@
         async function openEdit(row){
           const r=row || (gridApi?.getSelectedRows?.()[0]);
           if (!r){
-            await cuteAlert({
-              type:'warning',
-              title:'선택 필요',
-              message:'수정할 사원을 선택하세요.'
-            });
-            return;
-          }
+        		  toastr.warning('수정할 사원을 선택하세요.');
+        		  return;
+        		}
           await window.EmpModal?.openEdit?.(r);
         }
         $('btnCreateOpen').addEventListener('click', openCreate);
