@@ -320,9 +320,7 @@ public class AccountController {
 	        return profitStatementService.getMonthlyProfit(param);
 	    }
 
-
-
-
+	    
 
 
 }

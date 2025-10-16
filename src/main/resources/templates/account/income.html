@@ -15,7 +15,6 @@
   <style>
 h2 { margin: 0 0 .75rem; }
 .btn-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
-.btn { padding: .35rem .7rem; border: 1px solid #111827; background: #111827; color: #fff; border-radius: 8px; cursor: pointer; }
 .btn-outline { background: #fff; color: #111827; }
 
 .note { color: #9ca3af; font-size: .85rem; }
@@ -53,16 +52,18 @@ h2 { margin: 0 0 .75rem; }
       <div class="btn-bar">
         <label class="form-label">기준</label>
         <input type="month" id="srchMonth" class="form-control form-control-sm" style="max-width: 180px">
-        <button id="btnRecalc" class="btn btn-sm">조회</button>
-        <button id="btnCsv" class="btn btn-outline btn-sm">CSV</button>
-        <button id="btnPdf" class="btn btn-outline btn-sm" style="border-color:#b91c1c;color:#b91c1c;">PDF</button>
+        <button id="btnRecalc" class="btn btn-dark btn-sm">조회</button>
+        <button id="btnCsv" class="btn btn-outline-success btn-sm">CSV</button>
+        <button id="btnPdf" class="btn btn-outline-danger btn-sm" >PDF</button>
       </div>
-
+		<div id="profitGridWrapper" style="position:relative;">
       <div id="profitGrid" class="ag-theme-quartz"></div>
+      </div>
     </div>
   </div>
-</section>
+<input id="profit" type="text"><input id="curProfit" type="text"><input id="prvProfit" type="text">
 
+</section>
 <th:block layout:fragment="body_extra">
   <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
@@ -151,7 +152,7 @@ h2 { margin: 0 0 .75rem; }
     rows.push(makeRow('Ⅳ. 영업이익 (Ⅰ-Ⅱ-Ⅲ)', opCur, opPrev, '30', 0, 'subtotal'));
 
     rows.push({rowType:'header', label:'영업 외', level:0});
-    rows.push(makeRow('Ⅴ. 영업외수	익', noiCur, noiPrev, '60', 0, 'subtotal'));
+    rows.push(makeRow('Ⅴ. 영업외수익', noiCur, noiPrev, '60', 0, 'subtotal'));
     Object.entries(cur.nonOpIncome).forEach(([k,v])=>{
       const p = prev.nonOpIncome[k] || {prev:0};
       rows.push(makeRow(v.label, v.cur, p.prev, v.code, 1));
@@ -166,13 +167,19 @@ h2 { margin: 0 0 .75rem; }
     rows.push(makeRow('Ⅶ. 법인세차감전순이익', ordCur, ordPrev, '95', 0, 'subtotal'));
     rows.push(makeRow(cur.tax.corporate.label, cur.tax.corporate.cur, prev.tax.corporate.prev, cur.tax.corporate.code, 1));
     rows.push(makeRow('Ⅷ. 당기순손익', netCur, netPrev, '99', 0, 'total'));
-
+	document.querySelector("#prvProfit").value = netPrev;
+	document.querySelector("#curProfit").value = netCur;
+	document.querySelector("#profit").value = "당기순손익";
     return rows;
   }
 
   // ===== AG-Grid 초기화 =====
   let gridApi;
   document.addEventListener('DOMContentLoaded', ()=>{
+	  const now = new Date();
+	  const ym = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+	  document.getElementById('srchMonth').value = ym;
+
     const columnDefs=[
       { headerName:'계정과목', field:'label', flex:2,
         cellRenderer:p=>{
@@ -201,7 +208,7 @@ h2 { margin: 0 0 .75rem; }
     document.getElementById('btnRecalc').addEventListener('click', async ()=>{
       const ym = document.getElementById('srchMonth').value;
       const prevYm = prevMonth(ym);
-
+      showLoader("profitGridWrapper", "데이터를 불러오는 중입니다...");
       try {
         const { data } = await axios.get('/api/account/profit-statement', {
           params: { curYm: ym.replace('-', ''), prevYm: prevYm.replace('-', '') }
@@ -230,6 +237,7 @@ h2 { margin: 0 0 .75rem; }
         console.error(err);
         alert('손익계산서 데이터 조회 실패');
       }
+      hideLoader("profitGridWrapper")
     });
 
     // CSV Export
@@ -267,6 +275,9 @@ h2 { margin: 0 0 .75rem; }
       });
       doc.save(`월별_손익계산서_${ym.replace('-','')}.pdf`);
     });
+    
+    // ✅ 페이지 로드시 자동 조회 실행
+    document.getElementById('btnRecalc').click();
   });
   </script>
 </th:block>

@@ -6,14 +6,16 @@
 <title layout:fragment="title">재무상태표</title>
 <th:block layout:fragment="head_extra">
 
-  <!-- AG Grid -->
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"/>
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"/>
+	<!-- AG Grid -->
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
 
-  <style>
-h2 { margin: 0 0 .75rem; }
+	<style scoped="scoped">
+h2 {
+	margin: 0 0 .75rem;
+}
 
 .btn-bar {
 	display: flex;
@@ -21,18 +23,12 @@ h2 { margin: 0 0 .75rem; }
 	gap: 0.5rem;
 	margin-bottom: 0.75rem;
 }
-.btn {
-	padding: .35rem .7rem;
-	border: 1px solid #111827;
-	background: #111827;
-	color: #fff;
-	border-radius: 8px;
-	cursor: pointer;
-}
+
 .btn-outline {
 	background: #fff;
 	color: #111827;
 }
+
 .note {
 	color: #9ca3af;
 	font-size: .85rem;
@@ -42,15 +38,35 @@ h2 { margin: 0 0 .75rem; }
 	height: 38rem;
 	width: 100%;
 }
-
 /* AG Grid row styles */
-.row-header { background: #e5e7eb !important; font-weight: 800; }
-.row-subtotal { background: #f8fafc !important; font-weight: 700; }
-.row-total { background: #374151 !important; color: #fff; font-weight: 800; border-top: 2px solid #111827; }
+.row-header {
+	background: #e5e7eb !important;
+	font-weight: 800;
+}
 
-.indent-0 { padding-left: 0; }
-.indent-1 { padding-left: 16px; }
-.indent-2 { padding-left: 32px; }
+.row-subtotal {
+	background: #f8fafc !important;
+	font-weight: 700;
+}
+
+.row-total {
+	background: #374151 !important;
+	color: #fff;
+	font-weight: 800;
+	border-top: 2px solid #111827;
+}
+
+.indent-0 {
+	padding-left: 0;
+}
+
+.indent-1 {
+	padding-left: 16px;
+}
+
+.indent-2 {
+	padding-left: 32px;
+}
 
 .code-badge {
 	font-variant-numeric: tabular-nums;
@@ -61,58 +77,53 @@ h2 { margin: 0 0 .75rem; }
 	margin-left: .4rem;
 	font-size: .72rem;
 }
-
-  </style>
+</style>
 </th:block>
 </head>
 <body>
-<section layout:fragment="content">
+	<section layout:fragment="content">
 
-	<div class="card shadow mb-3">
-		<div class="card-header py-3 d-flex align-items-center justify-content-between">
-			<h6 class="m-0 font-weight-bold text-primary">재무상태표</h6>
-		</div>
-
-		<div class="card-body">
-			<!-- 툴바 -->
-			<div class="btn-bar">
-				<span>기준</span>
-				<input id="yy" type="number" min="2000" max="2100" value="2025" class="form-control form-control-sm" style="width:90px">
-				<span>년</span>
-				<select id="mm" class="form-select form-select-sm" style="width:90px">
-					<script th:inline="none">
-						for (let m = 1; m <= 12; m++) {
-							document.write(`<option value="${String(m).padStart(2,'0')}" ${m===12?'selected':''}>${m}</option>`);
-						}
-					</script>
-				</select>
-				<span>월</span>
-				<button id="btnRecalc" class="btn btn-sm">조회</button>
-				<button id="btnCsv" class="btn btn-outline btn-sm">CSV</button>
-				<button id="btnPdf" class="btn btn-outline btn-sm" style="border-color:#b91c1c;color:#b91c1c;">PDF</button>
-
-				<span style="margin-left:auto" class="note">※ 자산 = 부채 + 자본</span>
+		<div class="card shadow mb-3">
+			<div
+				class="card-header py-3 d-flex align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">재무상태표</h6>
 			</div>
 
-			<!-- 재무상태표 Grid -->
-			<div id="bsGrid" class="ag-theme-quartz"></div>
+			<div class="card-body">
+				<!-- 툴바 -->
+				<div class="btn-bar">
+
+					<label class="form-label">기준</label> <input type="month"
+						id="srchYear" class="form-control form-control-sm"
+						style="max-width: 180px">
+					<button id="btnRecalc" class="btn btn-dark btn-sm">조회</button>
+					<button id="btnCsv" class="btn btn-outline-success btn-sm">CSV</button>
+					<button id="btnPdf" class="btn btn-outline-danger btn-sm">PDF</button>
+
+				</div>
+
+				<!-- 재무상태표 Grid -->
+				<div id="bsGrid" class="ag-theme-quartz"></div>
+			</div>
 		</div>
-	</div>
 
-</section>
+	</section>
 
-<th:block layout:fragment="body_extra">
-<!-- 순서 중요: jsPDF → autotable → 폰트 -->
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+	<th:block layout:fragment="body_extra">
+		<!-- 순서 중요: jsPDF → autotable → 폰트 -->
+		<script
+			src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+		<script
+			src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
-<!-- ================= JS LIBRARIES ================= -->
-<script th:inline="none" src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
+		<!-- ================= JS LIBRARIES ================= -->
+		<script th:inline="none"
+			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
 
 
-<!-- <script th:inline="none" src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script> -->
+		<!-- <script th:inline="none" src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script> -->
 
-<script th:inline="none">
+		<script th:inline="none">
 // 한 번만 로드/캐시
 let __krFontBase64 = null;
 const KR_FONT_URL = '/fonts/NotoSansKR-Regular.ttf'; // 정적 경로
@@ -301,6 +312,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 		  });
 });
 </script>
-</th:block>
+	</th:block>
 </body>
 </html>
