@@ -8,12 +8,9 @@
 					<h5 class="modal-title title-highlight m-0">
 						급여대장 상세 <small class="text-muted ms-2" id="pd-title-suffix"></small>
 					</h5>
-					<div class="d-flex justify-content-end gap-3 my-2 mr-2">
-						<button type="button" class="btn btn-success mr-2"
-							id="pd-btn-confirm">확정</button>
-						<button type="button" class="btn btn-secondary mr-3"
-							id="pd-btn-pdf">PDF</button>
-						<button type="button" class="btn btn-light btn-sm border-0"
+					<div class="d-flex justify-content-end gap-3 my-2 mr-2">				
+						
+						<button type="button" class="btn btn-light btn-sm border-0 ml-3"
 							data-bs-dismiss="modal" aria-label="닫기">
 							<i class="fas fa-times"></i>
 						</button>
@@ -67,8 +64,12 @@
 						</div>
 					</div>
 				</div>
-
+			
 				<div class="modal-footer pt-2">
+				    <button type="button" class="btn btn-outline-danger mr-2"
+							id="pd-btn-pdf">PDF</button>
+					<button type="button" class="btn btn-primary mr-2"
+							id="pd-btn-confirm">확정</button>
 					<button type="button" class="btn btn-secondary"
 						data-bs-dismiss="modal">닫기</button>
 				</div>
@@ -328,10 +329,10 @@
       try { await loadAll(currentPayrollNo); } catch (_) {  }
       window.alert = __origAlert; // alert 원복
 
-      alert('확정되었습니다.'); // 사용자 알림
+      toastr.success('확정되었습니다.'); // 사용자 알림
     } else {
       console.error('확정 실패:', lastErr); // 콘솔 에러 출력
-      alert('확정에 실패했습니다.'); // 사용자 알림
+      toastr.error('확정에 실패했습니다.'); // 사용자 알림
     }
   }
 
@@ -358,8 +359,8 @@
   async function exportPayrollPdf() {
     // 급여대장 상세를 PDF로 내보내는 함수
     const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF; // jsPDF 생성자 참조
-    if (!jsPDFCtor) return alert('jsPDF가 로드되지 않았습니다.');
-    if (!('autoTable' in (jsPDFCtor.API || {}))) return alert('jspdf-autotable이 로드되지 않았습니다.');
+    if (!jsPDFCtor) return  toastr.warning('jsPDF가 로드되지 않았습니다.');
+    if (!('autoTable' in (jsPDFCtor.API || {}))) return  toastr.warning('jspdf-autotable이 로드되지 않았습니다.');
 
     const yearMonth = $('pd-yearMonth')?.textContent.trim() || ''; // 제목용 연월
     const deptName  = $('pd-deptName')?.textContent.trim() || ''; // 제목용 부서명
@@ -497,7 +498,7 @@
     const b = e.target.closest('button'); if (!b) return;
     if (b.id === 'pd-btn-confirm') return confirmStatus('CONFIRMED'); // 확정 버튼 → 확정 처리
     if (b.id === 'pd-btn-pdf') {
-      if (!currentPayrollNo) return alert('급여대장 번호가 유효하지 않습니다.'); // 번호 없으면 중단
+      if (!currentPayrollNo) return toastr.warning('급여대장 번호가 유효하지 않습니다.'); // 번호 없으면 중단
       exportPayrollPdf(); // PDF 내보내기
     }
   });

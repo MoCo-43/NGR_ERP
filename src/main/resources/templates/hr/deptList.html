@@ -102,8 +102,8 @@
 					</form>
 				</div>
 
-				<div class="d-flex justify-content-end gap-3 my-2 mr-2">
-					<button type="button" class="btn btn-success mr-2" id="btnSave">저장</button>
+				<div class="d-flex justify-content-center gap-3 my-2 mr-2" >
+					<button type="button" class="btn btn-primary mr-2" id="btnSave" >저장</button>
 					<button type="button" class="btn btn-danger" id="btnFormReset">초기화</button>
 				</div>
 			</div>
@@ -167,12 +167,17 @@
         try{
           // 서버에 변경 요청
           await axios.put(`${API_BASE}/${encodeURIComponent(row.dept_code)}`, { use_yn: next }, buildHeaders());
+          if (next === 'Y') {
+              toastr.success('사용 상태로 변경되었습니다.');
+            } else {
+              toastr.error('중지 상태로 변경되었습니다.');
+            }
         }catch(e){
           const prev = next === 'Y' ? 'N' : 'Y';
           row.use_yn = prev;
           btn.className  = 'btn btn-sm btn-use ' + (prev === 'Y' ? 'btn-success' : 'btn-danger');
           btn.textContent = (prev === 'Y' ? '사용' : '중지');
-          alert('사용여부 변경에 실패했습니다.');
+          toastr.error('사용여부 변경에 실패했습니다.');
         }
       });
       return btn;
@@ -225,7 +230,7 @@
         if (gridApi?.setGridOption) gridApi.setGridOption('rowData', rows);
         else gridApi.setRowData(rows);
       }catch(e){
-        alert('부서 목록 조회 중 오류가 발생했습니다.');
+    	  toastr.error('부서 목록 조회 중 오류가 발생했습니다.');
         if (gridApi?.setGridOption) gridApi.setGridOption('rowData', []);
         else gridApi.setRowData([]);
       }
@@ -254,9 +259,9 @@
         }
         await fetchList();   // 저장 후 목록 갱신
         openCreate();        // 폼 초기화
-        alert('저장되었습니다.');
+        toastr.success('저장되었습니다.');
       }catch(e){
-        alert('저장 중 오류가 발생했습니다.');
+    	  toastr.error('저장 중 오류가 발생했습니다.');
       }
     }
 

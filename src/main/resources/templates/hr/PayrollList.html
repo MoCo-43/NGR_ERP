@@ -128,7 +128,7 @@
     	    gridApi.paginationGoToFirstPage();                                    // 페이지네이션 첫 페이지로 이동
     	  } catch (e) {
     	    console.error('급여대장 조회 실패', e);    // 에러 로그
-    	    alert('급여대장 조회 중 오류가 발생했습니다.');   // 사용자 알림
+    	    toastr.error('급여대장 조회 중 오류가 발생했습니다.');   // 사용자 알림
     	    gridApi.setRowData([]);   // 실패 시 빈 배열 표시
     	  } 
     	    hideLoader("payrollGridWrapper");  
@@ -147,7 +147,7 @@
       btnRegister.addEventListener('click', async ()=>{    // [등록] 버튼 클릭 → 급여대장 생성 요청
         const monthVal = srchMonth.value;                  //월(YYYY-MM)
         if (!monthVal) {
-          alert('귀속연월을 먼저 선택해주세요.');         // 월 미입력 시 안내
+        	 toastr.warning('귀속연월을 먼저 선택해주세요.');         // 월 미입력 시 안내
           return;
         }
 
@@ -157,11 +157,11 @@
 
         try {
           await axios.post(API_BASE, payload);  // 급여대장 등록 API 호출(POST)
-          alert('급여대장이 등록되었습니다.');             // 성공 알림
+          toastr.success('급여대장이 등록되었습니다.');             // 성공 알림
           await loadFromServer();  // 등록 후 목록 재조회
         } catch (e) {
           console.error(e);// 에러 로그
-          alert('등록 중 오류가 발생했습니다.');  // 실패 알림
+          toastr.error('등록 중 오류가 발생했습니다.');  // 실패 알림
         }
       });
     });

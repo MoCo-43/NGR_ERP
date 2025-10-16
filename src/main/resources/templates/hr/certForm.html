@@ -114,7 +114,7 @@
         if (!no) return;
         if (!confirm('삭제하시겠습니까?')) return;
         const res = await fetch('/api/hr/cert/' + no, { method:'DELETE' });
-        if (!res.ok) return alert('삭제 실패');
+        if (!res.ok) return  toastr.error('삭제 실패');
         refresh(); // 삭제 후 재조회
       });
 
@@ -124,7 +124,7 @@
         const payload = Object.fromEntries(new FormData(form).entries()); 
 
         // 필수값 체크
-        if (!payload.empId) return alert('사번이 없습니다.');
+        if (!payload.empId) return  toastr.error('사번이 없습니다.');
         if (!payload.certName){ form.certName.focus(); return; }
 
         const btn = e.currentTarget;
@@ -140,9 +140,9 @@
           // 저장 성공 시 모달 닫고 목록 갱신
           (bootstrap.Modal.getInstance($('certFormModal')) || new bootstrap.Modal($('certFormModal'))).hide();
           await refresh();
-          alert('저장되었습니다.');
+          toastr.success('저장되었습니다.');
         }catch(err){
-          alert(err?.message || '저장 실패');
+        	 toastr.error(err?.message || '저장 실패');
         }finally{
           btn.disabled = false;
         }

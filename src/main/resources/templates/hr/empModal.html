@@ -204,7 +204,7 @@
 				</div>
 
 				<div class="modal-footer" id="empModalFooter">
-					<button type="button" class="btn btn-success" id="btnSave">저장</button>
+					<button type="button" class="btn btn-primary" id="btnSave">저장</button>
 					<button type="button" class="btn btn-secondary"
 						data-bs-dismiss="modal">닫기</button>
 				</div>
@@ -286,12 +286,12 @@
       return p;
     }
     function validate(p){
-      if(!p.name)      return alert('성명을 입력하세요.'),false;
-      if(!p.dept_code) return alert('부서를 입력하세요.'),false;	
-      if(!p.email)     return alert('이메일을 입력하세요.'),false;
-      if(!p.joinDate)  return alert('입사일자를 입력하세요.'),false;
-      return true;
-    }
+    	  if(!p.name)      { toastr.error('성명을 입력하세요.');      return false; }
+    	  if(!p.dept_code) { toastr.error('부서를 입력하세요.');      return false; }	
+    	  if(!p.email)     { toastr.error('이메일을 입력하세요.');    return false; }
+    	  if(!p.joinDate)  { toastr.error('입사일자를 입력하세요.');  return false; }
+    	  return true;
+    	}
     async function saveBasic(){
       const payload=readForm(true);
       const isEdit=!!(payload.emp_id && payload.emp_id.trim().length>0);
@@ -301,7 +301,7 @@
       const method= isEdit ? 'PUT' : 'POST';
 
       const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-      if(!res.ok) throw new Error('저장 실패');
+      if(!res.ok)  throw new Error('저장 실패');
 
       (bootstrap.Modal.getInstance($('empModal'))||new bootstrap.Modal($('empModal'))).hide();
       document.dispatchEvent(new CustomEvent('emp:saved'));
@@ -318,7 +318,7 @@
           await window.__payFix?.save?.();
           (bootstrap.Modal.getInstance($('empModal'))||new bootstrap.Modal($('empModal'))).hide();
           document.dispatchEvent(new CustomEvent('emp:saved'));
-          alert('저장되었습니다.');
+          toastr.success('저장되었습니다.');
         }catch(_e){}
         return;
       }
@@ -406,7 +406,7 @@
 
     window.openZipSearch = function({ onSelect } = {}) {
     	  if (!window.daum || !daum.Postcode) {
-    	    alert('주소 검색 스크립트가 로드되지 않았습니다.');
+    		  toastr.error('주소 검색 스크립트가 로드되지 않았습니다.');
     	    return;
     	  }
     	  new daum.Postcode({

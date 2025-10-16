@@ -94,7 +94,7 @@
 	    return Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
 	  } catch (e) {
 	    console.error('공제 목록 조회 실패', e);
-	    alert('공제 목록 조회 중 오류가 발생했습니다.');
+	    toastr.error('공제 목록 조회 중 오류가 발생했습니다.');
 	    return [];
 	  } finally {
 	    hideLoader("deductGridWrapper");
@@ -157,6 +157,11 @@
       try{
         const ok = await patchUseYn(row.deductCode, next);
         if(!ok) throw new Error('useYn patch fail');
+        if (next === 'Y') {
+            toastr.success('사용 상태로 변경되었습니다.');
+          } else {
+            toastr.error('중지 상태로 변경되었습니다.');
+          }
       }catch(e){
         // 실패 시 원복 + 안내
         const prev = next === 'Y' ? 'N' : 'Y';
@@ -164,7 +169,7 @@
         btn.className = 'btn btn-sm btn-use ' + (prev === 'Y' ? 'btn-success' : 'btn-danger');
         btn.textContent = (prev === 'Y' ? '사용' : '중지');
         console.error('사용여부 변경 실패', e);
-        alert('사용여부 변경 실패');
+        toastr.error('사용여부 변경 실패');
       }
     });
 
@@ -231,18 +236,18 @@
             if(!ok) throw new Error('insert fail');
             const rows = await fetchList();
             gridApi.setRowData([...rows, newInputRow()]);
-            alert('등록되었습니다.');
+            toastr.success('등록되었습니다.');
           } else if (isUpdateSavable(d)) {
             const ok = await updateRow(d);
             if(!ok) throw new Error('update fail');
             gridApi.refreshClientSideRowModel('sort');
-            alert('수정되었습니다.');
+            toastr.success('수정되었습니다.');
           } else {
-            if (d?._isInput) alert('코드와 항목명을 입력하세요.');
+            if (d?._isInput) toastr.warning('코드와 항목명을 입력하세요.');
           }
         } catch(e){
           console.error('저장 실패', e);
-          alert('저장 실패: 네트워크/서버 응답을 확인하세요.');
+          toastr.error('저장 실패: 네트워크/서버 응답을 확인하세요.');
         }
       },
 
@@ -257,7 +262,7 @@
         }catch(e){
           console.error('초기 로딩 실패', e);
           gridApi.setRowData([newInputRow()]); 
-          alert('목록 조회 실패');
+          toastr.error('목록 조회 실패');
         }
       }
     };
