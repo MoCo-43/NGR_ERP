@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.stock.StockMapper;
 import com.yedam.erp.security.SessionUtil;
+import com.yedam.erp.vo.stock.InvenDetailVO;
 import com.yedam.erp.vo.stock.InvenVO;
 
 @Component
@@ -27,8 +28,12 @@ public class Scheduler {
 	    instance.setEmpId(empId);
         mapper.insertInvenClosing(instance);// 마스터 처리
         
+        InvenDetailVO instDatail = new InvenDetailVO();
+		instDatail.setCompanyCode(compCode);
+		instDatail.setEmpId(empId);
+		instDatail.setIcCode(instance.getIcCode());
 		
-        mapper.insertInvenClosingDetail(instance); // 상세처리
+		mapper.insertInvenClosingDetail(instDatail); // 상세 처리
         System.out.println("월말 재고결산 자동 생성 완료 ✅");
     }
 	

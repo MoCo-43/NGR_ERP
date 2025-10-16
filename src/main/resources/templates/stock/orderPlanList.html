@@ -236,8 +236,9 @@ const orderPlansGrid = initGrid({
         { headerName: "공급가액", field: "supAmt",valueFormatter: (params) => {
             if (params.value == null) return '';
             return params.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-          } },
-        { headerName: "세율유형", field: "taxType" },
+          } 
+        },
+        
         {  field: "orderSheetLink",
             cellRenderer: (params) => {
             	const businessCode = params.data.businessCode;

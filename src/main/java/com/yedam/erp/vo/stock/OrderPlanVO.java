@@ -30,7 +30,7 @@ public class OrderPlanVO {
 	@NumberFormat(pattern = "#,###")
 	private int supAmt;
 	
-	private String taxType;
+	private String vatType;
 	
 	private List<OrderPlanDetailVO> details; // <- 여기에 디테일 담기
 	

@@ -22,6 +22,7 @@ public class OrderPlanDetailVO {
 	@NumberFormat(pattern = "#,###")
 	private int vatAmt;
 	private String xpCode;
+	private String vatType;
 	
 	
 	

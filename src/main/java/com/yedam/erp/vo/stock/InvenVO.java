@@ -21,6 +21,7 @@ public class InvenVO {
 	
 	
 	
+	
 	private List<InvenDetailVO> detail;
 	
 }

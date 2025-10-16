@@ -27,5 +27,6 @@ public class ProductVO {
 	private Date insertDate;
 	private int leadTime;
 	private String companyCode;
+	private String vatType;
 	
 }

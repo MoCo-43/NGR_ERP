@@ -161,7 +161,12 @@ public class StockImpl implements StockService{
 	    instance.setEmpId(empId);
 		mapper.insertInvenClosing(instance); // 마스터 처리
 		
-		mapper.insertInvenClosingDetail(instance); // 상세 처리
+		InvenDetailVO instDatail = new InvenDetailVO();
+		instDatail.setCompanyCode(compCode);
+		instDatail.setEmpId(empId);
+		instDatail.setIcCode(instance.getIcCode());
+		
+		mapper.insertInvenClosingDetail(instDatail); // 상세 처리
 		
 		System.out.println("[결산생성] 재고결산 데이터 생성 완료");
 	}
