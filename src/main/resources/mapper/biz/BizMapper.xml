@@ -312,7 +312,7 @@ ORDER BY d.DO_CREATED DESC
   <!-- ================== ResultMaps ================== -->
   <!-- 그리드(현황) -->
   <!-- type 은 VO FQCN: com.example.credit.vo.CreditExposureVo -->
-  <!-- <resultMap id="ExposureMap" type="CreditExposureVO">
+ <resultMap id="ExposureMap" type="CreditExposureVO">
     <result column="company_code"   property="companyCode"/>
     <result column="cus_code"       property="cusCode"/>
     <result column="cus_name"       property="cusName"/>
@@ -323,7 +323,7 @@ ORDER BY d.DO_CREATED DESC
     <result column="remain_limit"   property="remainLimit"/>
     <result column="manager_name"   property="managerName"/>
     <result column="status"         property="status"/>
-  </resultMap> -->
+  </resultMap> 
 
   <!-- 단건 상세 -->
   <!-- type: com.example.credit.vo.CreditMasterVo -->

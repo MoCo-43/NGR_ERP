@@ -83,4 +83,66 @@
     )
     WHERE ROWNUM = 1
 </select>
+<!-- 빌링키 정기결제 관련 -->
+<insert id="insertBiling" parameterType="com.yedam.erp.vo.main.SubscriptionVO">
+    <selectKey keyProperty="subCode" resultType="String" order="BEFORE">
+        SELECT 'SUB-' || TO_CHAR(SYSDATE, 'YYMMDDHH24MISS') || '-' || LPAD(sub_code_seq.NEXTVAL, 4, '0') FROM DUAL
+    </selectKey>
+    INSERT INTO subscription (
+        sub_code,
+        start_date,
+        sub_status,
+        sub_plan_no,
+        total_users,
+        mat_no,
+        customer_key
+    ) VALUES (
+        #{subCode},
+        SYSDATE,
+        'PENDING',  -- 'PENDING' 또는 'WAITING' 같은 대기 상태로 저장
+        #{subPlanNo},
+        #{totalUsers},
+        #{matNo},
+        #{customerKey}
+        -- 기타 값들
+    )
+</insert>
+<select id="findSubscriptionsDueForPaymentToday" resultType="com.yedam.erp.vo.main.SubscriptionVO">
+    SELECT 
+        sub_code,
+        mat_no,
+        customer_key,
+        billing_key,
+        total_pay
+    FROM 
+        subscription
+    WHERE 
+        TRUNC(next_pay_date) = TRUNC(SYSDATE)
+    AND 
+        billing_key IS NOT NULL
+    AND 
+        sub_status = 'ACTIVE'
+</select>
+
+<update id="processPayment" parameterType="com.yedam.erp.vo.main.PayLogVO">
+    {CALL process_subscription_payment(
+        #{amount, jdbcType=NUMERIC},
+        #{transactionNo, jdbcType=VARCHAR},
+        #{payMethod, jdbcType=VARCHAR},
+        #{subCode, jdbcType=VARCHAR},
+        #{billingKeyNo, jdbcType=VARCHAR}
+    )}
+</update>
+<update id="updateBillingKeyByCustomerKey">
+    UPDATE SUBSCRIPTION
+    SET    BILLING_KEY = #{billingKey}
+    WHERE  SUB_CODE = (SELECT SUB_CODE
+                       FROM (
+                           SELECT   SUB_CODE
+                           FROM     SUBSCRIPTION
+                           WHERE    CUSTOMER_KEY = #{customerKey}
+                           ORDER BY START_DATE DESC
+                       )
+                       WHERE ROWNUM = 1)
+</update>
 </mapper>

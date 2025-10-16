@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.data.repository.query.Param;
 
+import com.yedam.erp.vo.main.PayLogVO;
 import com.yedam.erp.vo.main.SubscriptionVO;
 
 @Mapper
@@ -26,4 +27,9 @@ public interface SubscriptionMapper {
     List<SubscriptionVO> findSubscriptionsByComCode(String comCode);
     //구독최신내역 
     SubscriptionVO findLatestSubscriptionByMatNo(@Param("matNo") Long matNo);
+ // 빌링키 업데이트를 위한 메서드
+    int updateBillingKeyByCustomerKey(@Param("customerKey") String customerKey, @Param("billingKey") String billingKey);
+    int insertBiling(SubscriptionVO subscriptionVO);
+    List<SubscriptionVO> findSubscriptionsDueForPaymentToday();
+    void processPayment(PayLogVO payLogVO);
 }

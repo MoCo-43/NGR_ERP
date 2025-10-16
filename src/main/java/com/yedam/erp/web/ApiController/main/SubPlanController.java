@@ -31,8 +31,8 @@ public class SubPlanController {
 
     // 회사 정보 + 구독 계획 함께 반환
     @GetMapping("/api/subDetail")
-    public ResponseEntity<Map<String, Object>> subDetail(@RequestParam String comCode) {
-        CompanyVO company = companyService.getCompanyByComCode(comCode);
+    public ResponseEntity<Map<String, Object>> subDetail(@RequestParam Long matNo) {
+        CompanyVO company = companyService.getCompanyByMatNo(matNo);
         List<SubPlanVO> plans = subPlanService.selectSubPlan();
 
         if (company == null) {

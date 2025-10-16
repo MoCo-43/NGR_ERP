@@ -1,32 +1,44 @@
 package com.yedam.erp.service.impl.main;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
 import com.yedam.erp.mapper.main.SubLogMapper;
 import com.yedam.erp.mapper.main.SubPayMapper;
 import com.yedam.erp.mapper.main.SubscriptionMapper;
 import com.yedam.erp.service.main.SubscriptionService;
 import com.yedam.erp.service.main.TossPaymentsService;
+import com.yedam.erp.vo.main.PayLogVO;
 import com.yedam.erp.vo.main.SubLogVO;
 import com.yedam.erp.vo.main.SubPayVO;
 import com.yedam.erp.vo.main.SubscriptionVO;
+import com.yedam.erp.vo.main.TossConfirmResponseVO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+@Transactional
 @Service("subscriptionService")
 @RequiredArgsConstructor
 @Slf4j
 public class SubsciptionServiceImpl implements SubscriptionService {
-    
+    @Value("${toss.biling.secretKey}")
+    private String bilingSecretKey;
     private final SubscriptionMapper subscriptionMapper;
     private final SubPayMapper subPayMapper; 
     private final SubLogMapper subLogMapper; 
@@ -187,7 +199,79 @@ public class SubsciptionServiceImpl implements SubscriptionService {
 	    log.info("DB 조회를 위해 전달된 matNo: [{}]", matNo); // 로그 추가
 	    return subscriptionMapper.findLatestSubscriptionByMatNo(matNo);
 	}
+	//빌링키 자동결제
+	@Override
+	public void saveBillingKey(String customerKey, String billingKey) {
+		// customerKey와 billingKey를 매퍼에 전달하여 DB 업데이트
+        int updatedRows = subscriptionMapper.updateBillingKeyByCustomerKey(customerKey, billingKey);
 
+        if (updatedRows > 0) {
+            log.info("DB 저장 성공 - customerKey: {}, billingKey: {}", customerKey, billingKey);
+        } else {
+            log.warn("빌링키를 업데이트할 구독 정보를 찾지 못했습니다. customerKey: {}", customerKey);
+            // 필요하다면 예외를 발생시켜 롤백 처리
+            throw new RuntimeException("Billing key update failed for customerKey: " + customerKey);
+        }
+	}
+
+	@Override
+	public SubscriptionVO createPendingSubscription(SubscriptionVO subscriptionVO) {
+		subscriptionMapper.insertBiling(subscriptionVO);
+	    // INSERT 후 생성된 subCode가 담긴 VO 객체를 반환
+	    return subscriptionVO;
+	}
+
+	@Override
+	public List<SubscriptionVO> findSubscriptionsDueForPaymentToday() {
+		return subscriptionMapper.findSubscriptionsDueForPaymentToday();	
+		}
+
+	@Override
+	public void processAutomaticPayment(SubscriptionVO subscription) {
+		log.info("구독 코드 [{}]에 대한 자동 결제를 시작합니다.", subscription.getSubCode());
+
+	    RestTemplate restTemplate = new RestTemplate();
+	    String url = "https://api.tosspayments.com/v1/billing/" + subscription.getBillingKey();
+
+	    // 1. 토스 API 호출 준비
+	    HttpHeaders headers = new HttpHeaders();
+	    String encodedSecretKey = Base64.getEncoder().encodeToString((bilingSecretKey + ":").getBytes(StandardCharsets.UTF_8));
+	    headers.set("Authorization", "Basic " + encodedSecretKey);
+	    headers.setContentType(MediaType.APPLICATION_JSON);
+
+	    Map<String, Object> body = new HashMap<>();
+	    body.put("customerKey", subscription.getCustomerKey());
+	    body.put("amount", subscription.getTotalPay());
+	    body.put("orderId", "SUB-" + subscription.getSubCode() + "-" + System.currentTimeMillis());
+
+	    HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+	    try {
+	        // 2. API 호출
+	        ResponseEntity<TossConfirmResponseVO> response = restTemplate.postForEntity(url, requestEntity, TossConfirmResponseVO.class);
+
+	        if (response.getStatusCode() == HttpStatus.OK && "DONE".equals(response.getBody().getStatus())) {
+	            // 3. 결제 성공 시, 프로시저 호출
+	            TossConfirmResponseVO tossResponse = response.getBody();
+	            log.info("결제 성공! PaymentKey: {}", tossResponse.getPaymentKey());
+
+	            PayLogVO logVO = new PayLogVO();
+	            logVO.setAmount(tossResponse.getTotalAmount());
+	            logVO.setTransactionNo(tossResponse.getPaymentKey());
+	            logVO.setPayMethod(tossResponse.getMethod());
+	            logVO.setSubCode(subscription.getSubCode());
+	            logVO.setBillingKeyNo(subscription.getBillingKey());
+
+	            subscriptionMapper.processPayment(logVO); // ✨ DB 프로시저 호출
+	            log.info("구독 코드 [{}]의 DB 처리가 완료되었습니다.", subscription.getSubCode());
+	        } else {
+	            throw new RuntimeException("API 응답 오류: " + response.getBody());
+	        }
+	    } catch (Exception e) {
+	        log.error("자동 결제 API 호출 중 예외 발생 - 구독 코드: {}", subscription.getSubCode(), e);
+	        throw new RuntimeException("자동 결제 실패", e);
+	    }		
+	}
 
 //    /**
 //     * [STEP 4-3 & 4-4] Toss 승인 및 DB 트랜잭션 처리 (핵심)

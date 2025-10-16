@@ -310,7 +310,7 @@
           body: JSON.stringify(jsonData)
         })
         .then(res=>{if(!res.ok) throw new Error('서버 오류'); return res.text();})
-        .then(data=>{ alert('회원가입 완료!'); window.location.href='/login'; })
+        .then(data=>{ alert('회원가입 완료!'); window.location.href='/salLogin'; })
         .catch(err=>{ console.error(err); alert('회원가입 실패: 서버 오류'); });
       });
     });

@@ -219,30 +219,25 @@ public class SubscriptionController {
 
         return "main/submanager"; // 화면 이름
     }   
-    // ✨ 1. [이 메서드를 추가하세요] 정기결제 성공 시 호출되는 핸들러
     @GetMapping("/billing-success")
-    public String handleBillingSuccess(@RequestParam String customerKey,
-                                       @RequestParam("authKey") String authKey,
-                                       Model model) {
+    public String handleBillingSuccess(@RequestParam String customerKey, @RequestParam("authKey") String authKey, Model model) {
         try {
-            // authKey를 사용하여 토스페이먼츠에 빌링키 발급 요청
+            // 1. 토스페이먼츠로부터 빌링키 발급
             String billingKey = issueBillingKey(authKey, customerKey);
 
-            // [중요] 발급받은 billingKey와 customerKey를 DB에 저장하는 서비스 로직 호출
-            // 예시: subscriptionService.saveBillingKey(customerKey, billingKey);
-            log.info("정기결제 카드 등록 성공! customerKey: {}, billingKey: {}", customerKey, billingKey);
+            // 2. ✨ DB의 'SUBSCRIPTION' 테이블에 빌링키를 저장하는 서비스 로직 호출!
+            subscriptionService.saveBillingKey(customerKey, billingKey);
 
-            // 성공 페이지로 사용자 안내
+            log.info("정기결제 카드 등록 및 DB 저장까지 모두 성공!");
+
             model.addAttribute("message", "자동결제 카드 등록이 성공적으로 완료되었습니다.");
-            return "main/success"; // 성공 안내 페이지 (예: success.html)
+            return "main/success"; // 성공 페이지로 이동
 
         } catch (Exception e) {
-            log.error("빌링키 발급 또는 DB 저장 실패. customerKey: {}", customerKey, e);
-            
-            // 실패 페이지로 에러 정보와 함께 안내
-            model.addAttribute("errorMessage", "카드 등록에 실패했습니다: " + e.getMessage());
-            model.addAttribute("errorCode", "BILLING_KEY_ISSUE_FAILED");
-            return "main/fail"; // 실패 안내 페이지 (예: fail.html)
+            log.error("빌링키 발급 또는 DB 저장 중 오류 발생. customerKey: {}", customerKey, e);
+            model.addAttribute("errorMessage", "카드 등록 처리 중 오류가 발생했습니다: " + e.getMessage());
+            model.addAttribute("errorCode", "BILLING_SETUP_FAILED");
+            return "main/fail"; // 실패 페이지로 이동
         }
     }
 
@@ -272,7 +267,21 @@ public class SubscriptionController {
             throw new Exception("빌링키 발급 API 호출 실패: " + response.getBody());
         }
     }
-    
+ // 정기결제를 위한 임시 구독 정보를 생성하는 API
+    @PostMapping("/create-pending")
+    @ResponseBody
+    public ResponseEntity<?> createPendingSubscription(@RequestBody SubscriptionVO subscriptionVO) {
+        try {
+            // 현재 로그인한 사용자 정보(mat_no)를 VO에 설정
+            subscriptionVO.setMatNo(getLoggedInMatNo()); 
+
+            SubscriptionVO createdSub = subscriptionService.createPendingSubscription(subscriptionVO);
+            return ResponseEntity.ok(createdSub);
+        } catch (Exception e) {
+            log.error("임시 구독 정보 생성 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create subscription");
+        }
+    }
     
     @GetMapping("/contract-html")
     @ResponseBody

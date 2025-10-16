@@ -395,6 +395,7 @@ main {
 </style>
 </head>
 <body>
+    <input type="hidden" id="targetStep" th:value="${targetStep}" />
 	<input type="hidden" id="base-users-hidden"
 		th:value="${subPlan.baseSalary}">
 	<input type="hidden" id="max-users-hidden"
@@ -840,12 +841,12 @@ main {
     let finalPayment = 0;
     let adjustmentCharge = 0;
 
-    // ✨ [수정됨] Toss Payments 키를 기능별로 분리하여 정의
+    // Toss Payments 키를 기능별로 분리하여 정의
     const widgetClientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; // 일반결제(결제위젯)용 클라이언트 키
     const billingClientKey = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq"; // 정기결제(API)용 토스 테스트용 키
     const customerKey = "USER_ERP_1001"; // 실제 로그인한 사용자 고유 ID로 변경
 
-    // ✨ [수정됨] 기능별 TossPayments 인스턴스를 저장할 변수
+    // 기능별 TossPayments 인스턴스를 저장할 변수
     let tossWidgetPayments; // 일반결제용
     let tossBillingPayments; // 정기결제용
     let widgets; // 위젯 객체를 담을 변수
@@ -895,7 +896,7 @@ main {
     }
 
     // ------------------------------------
-    //  3. UI 업데이트 및 페이지 이동 함수 (변경 없음)
+    //  3. UI 업데이트 및 페이지 이동 함수 
     // ------------------------------------
     function updateSummary() {
         const durationElements = document.querySelectorAll('#summary-duration, #summary-duration-final');
@@ -953,7 +954,7 @@ main {
      */
     async function openPaymentModal() {
         try {
-            // ✨ [수정됨] 일반결제용 인스턴스(tossWidgetPayments) 사용
+            // 일반결제용 인스턴스(tossWidgetPayments) 사용
             widgets = tossWidgetPayments.widgets({ customerKey });
 
             await widgets.setAmount({
@@ -989,7 +990,7 @@ main {
         const customerEmail = document.getElementById('matMail').value || "customer@example.com";
 
         try {
-            // ✨ [수정됨] 정기결제용 인스턴스(tossBillingPayments) 사용
+            // 정기결제용 인스턴스(tossBillingPayments) 사용
             const payment = tossBillingPayments.payment({ customerKey });
             await payment.requestBillingAuth({
               method: "CARD",
@@ -1007,23 +1008,45 @@ main {
     /**
      * 선택된 결제 방식에 따라 적절한 함수를 호출합니다.
      */
-    function handlePaymentRequest() {
-        const selectedOption = document.querySelector('#payment-type-options .payment-option.selected');
-        const paymentType = selectedOption.getAttribute('data-type');
+     async function handlePaymentRequest() { // async 키워드 추가
+    	    const selectedOption = document.querySelector('#payment-type-options .payment-option.selected');
+    	    const paymentType = selectedOption.getAttribute('data-type');
 
-        if (paymentType === 'NORMAL') {
-            openPaymentModal();
-        } else if (paymentType === 'RECURRING') {
-            requestBillingAuth();
-        }
-    }
+    	    if (paymentType === 'NORMAL') {
+    	        // 일반결제는 기존과 동일하게 진행
+    	        openPaymentModal();
+    	    } else if (paymentType === 'RECURRING') {
+    	        // --- 정기결제 로직 시작 ---
+    	        try {
+    	            // 1. 서버에 보낼 구독 정보 객체를 만듭니다.
+    	            const subscriptionData = {
+    	                subPlanNo: 1, // TODO: 실제 선택한 플랜 번호로 동적으로 변경해야 합니다.
+    	                totalUsers: parseInt(selectedUserCount) || 0,
+    	                customerKey: customerKey // 전역 변수에 저장된 customerKey 사용
+    	            };
 
+    	            console.log("서버에 임시 구독 생성을 요청합니다:", subscriptionData);
+
+    	            // 2. 서버의 '/sub/create-pending' API를 호출하여 DB에 구독 정보를 미리 생성합니다.
+    	            await axios.post('/sub/create-pending', subscriptionData);
+
+    	            console.log("임시 구독 생성 성공. 카드 등록 절차를 시작합니다.");
+
+    	            // 3. 구독 정보 생성이 성공하면, 그 후에 카드 등록창을 엽니다.
+    	            requestBillingAuth();
+
+    	        } catch (error) {
+    	            console.error("임시 구독 생성 중 오류가 발생했습니다:", error);
+    	            alert("구독 정보를 처리하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    	        }
+    	    }
+    	}
     // ------------------------------------
     //  5. DOMContentLoaded 이벤트 핸들러
     // ------------------------------------
     document.addEventListener('DOMContentLoaded', async function() {
 
-        // ✨ [수정됨] 페이지 로드 시 각 기능에 맞는 키로 TossPayments 인스턴스를 생성
+        //  페이지 로드 시 각 기능에 맞는 키로 TossPayments 인스턴스를 생성
         tossWidgetPayments = TossPayments(widgetClientKey);
         tossBillingPayments = TossPayments(billingClientKey);
 
@@ -1110,6 +1133,13 @@ main {
                 alert("결제를 진행하는 중 문제가 발생했습니다. 콘솔을 확인해 주세요.");
             }
         });
+        const targetStepInput = document.getElementById('targetStep');
+        if (targetStepInput) {
+            const targetStep = parseInt(targetStepInput.value, 10);
+            if (targetStep && targetStep > 1) {
+                goToStep(targetStep);
+            }
+        }
     });
 </script>
 </body>
