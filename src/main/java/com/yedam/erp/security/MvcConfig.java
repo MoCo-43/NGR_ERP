@@ -59,6 +59,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		registry.addViewController("/payment").setViewName("account/payment");
 		registry.addViewController("/moneyInvoice").setViewName("account/moneyInvoice");
 		registry.addViewController("/income").setViewName("account/income");
+		registry.addViewController("/income_dash").setViewName("account/income::content::body_profit");
 		registry.addViewController("/balanceSheet").setViewName("account/balanceSheet");
 		
 		

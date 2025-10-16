@@ -25,5 +25,5 @@ public class DashBoardController {
 		List<DashBoardVO> dataList = dashBoardService.selectActiveMembersByDepartment();
 		return dataList;
 	}
-	
+
 }

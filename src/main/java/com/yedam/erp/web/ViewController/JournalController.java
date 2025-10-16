@@ -15,4 +15,10 @@ public class JournalController {
         model.addAttribute("loginId", SessionUtil.empId()); // 세션에서 로그인 사용자
         return "account/journal";  // Thymeleaf 템플릿
     }
+	@GetMapping("/account/profit-statement")
+    public String profitStatementPage() {
+        // templates/account/profit-statement.html 렌더링
+        return "account/profit-statement";
+    }
+    
 }

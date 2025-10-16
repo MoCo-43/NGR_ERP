@@ -103,9 +103,7 @@
 </style>
 </th:block>
 </head>
-<script th:inline="javascript">
-  const loginUser = /*[[${loginId}]]*/ "";
-</script>
+
 <body>
 	<section layout:fragment="content">
 		<div class="card shadow mb-3">
@@ -188,12 +186,13 @@
     // ✅ 로그인 사용자 이름/ID 전역 변수로 선언
     const loginId = /*[[${#authentication.principal.empLoginVO.empId}]]*/ "";
     const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
-    console.log(loginName);
+    let auth = /*[[${#authentication.principal.empLoginVO.codeId}]]*/ "";
+    
   </script>
-		<script>
+	<script>
     let voucherApi, detailApi, logApi;
     let selected = null;
-
+    console.log(auth);
     function todayStr() {
       const d = new Date();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -364,7 +363,7 @@
     document.getElementById('btnSubmit').addEventListener('click', async () => {
       const selected = voucherApi.getSelectedRows();
       if (selected.length === 0) {
-        alert("제출할 전표를 선택하세요.");
+        toastr.warning("제출할 전표를 선택하세요.");
         return;
       }
 
@@ -433,20 +432,24 @@
 document.getElementById('btnApprove').addEventListener('click', async() => {
 
   const selected = voucherApi.getSelectedRows();
-  if (!selected.length) return alert("승인할 전표를 선택하세요.");
+  if (!selected.length) return toastr.warning("승인할 전표를 선택하세요.");
   if (selected.some(r => ["closed","reverse"].includes((r.status||"").toLowerCase())))
-    return alert("이미 승인/역분개된 전표 포함");
+    return toastr.warning("이미 승인/역분개된 전표가 포함");
   await openSignModal("approve",saveClose);
   
 });
 
 // 역분개 버튼
 document.getElementById('btnReverse').addEventListener('click', async () => {
+	if(auth == "ROLE_USER"){
+	alert("관리자 직급만 역분개가 가능합니다.");
+	return;
+	}
   const selected = voucherApi.getSelectedRows();
-  if (!selected.length) return alert("역분개할 전표를 선택하세요.");
+  if (!selected.length) return toastr.warning("역분개할 전표를 선택하세요.");
 //✅ reverseYn 값도 같이 체크
   if (selected.some(r => (r.status||"").toLowerCase()==="reverse" || (r.reversedYn||"").toUpperCase()==="Y")) {
-    return alert("이미 역분개된 전표가 포함되어 있습니다.");
+    return toastr.warning("이미 역분개된 전표가 포함되어 있습니다.");
   }
   await openSignModal("reverse",saveClose);
 
