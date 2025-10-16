@@ -14,6 +14,7 @@ INSERT INTO product(
 		,INSERT_DATE
 		,COMPANY_CODE
 		,LEAD_TIME
+		,VAT_TYPE
 )
 VALUES(CONCAT('P',LPAD(seq_product.nextval,5,'0')),
        #{productName},
@@ -25,7 +26,8 @@ VALUES(CONCAT('P',LPAD(seq_product.nextval,5,'0')),
        #{note},
        #{insertDate},
        #{companyCode},
-       #{leadTime}
+       #{leadTime},
+       #{vatType}
 )
 
 </insert>
@@ -61,6 +63,7 @@ AND company_code = #{compCode}
 SELECT PRODUCT_CODE
        ,PRODUCT_NAME
        ,SPECIFICATION
+       ,VAT_TYPE 
 FROM PRODUCT
 WHERE COMPANY_CODE = #{companyCode}
 
@@ -74,10 +77,9 @@ INSERT INTO EXPLAIN(
          XP_CODE
          ,EMP_ID
          ,INS_DATE
-         ,VAT_TYPE
          ,COMPANY_CODE
 )
-VALUES (#{xpCode}, #{empId}, #{insDate}, #{taxType}, #{companyCode})
+VALUES (#{xpCode}, #{empId}, #{insDate}, #{companyCode})
 
 
 </insert>
@@ -94,6 +96,7 @@ INSERT INTO EXPLAIN_DETAIL(
         ,SUP_AMT
         ,VAT_AMT
         ,XP_CODE
+        
 )
 VALUES (SEQ_EXPLAIN_DETAIL.nextval ,
         #{productCode}, 
@@ -106,6 +109,7 @@ VALUES (SEQ_EXPLAIN_DETAIL.nextval ,
         #{supAmt},
         #{vatAmt},
         #{xpCode}
+        
 )
 
 
@@ -151,7 +155,7 @@ ORDER BY TO_NUMBER(SUBSTR(m.xp_code, 3)) DESC
     <id property="xpCode" column="xp_code"/>
     <result property="empId" column="emp_id"/>
     <result property="insDate" column="ins_date"/>
-    <result property="taxType" column="vat_type"/>
+    <result property="vatType" column="vat_type"/>
     <result property="hasOrderSheet" column="has_order_sheet"/> <!-- 추가 -->
     
     <!-- 디테일 매핑 -->
@@ -163,16 +167,19 @@ ORDER BY TO_NUMBER(SUBSTR(m.xp_code, 3)) DESC
 <select id="selectOrderPlanDetailsByXpCode" parameterType="String" resultType="OrderPlanDetailVO">
 SELECT 
     xd_no       as xd_no,
-    product_code as product_code,
-    product_name as product_name,
-    specification as specification,
-    business_partner as business_partner,
-    business_code as business_code,
-    amount as amount,
-    purchase_price as purchase_price,
-    sup_amt as sup_amt,
-    vat_amt as vat_amt
-FROM explain_detail
+    ed.product_code as product_code,
+    ed.product_name as product_name,
+    ed.specification as specification,
+    ed.business_partner as business_partner,
+    ed.business_code as business_code,
+    ed.amount as amount,
+    ed.purchase_price as purchase_price,
+    ed.sup_amt as sup_amt,
+    ed.vat_amt as vat_amt,
+    p.vat_type as vat_type 
+FROM explain_detail ed 
+JOIN product p
+ON ed.product_code = p.product_code 
 WHERE xp_code = #{xpCode}
 </select>
 
@@ -197,11 +204,7 @@ SELECT
     od.ORDER_PRICE AS ORDER_PRICE,
     od.SUP_AMT AS SUP_AMT,
     od.VAT_AMT AS VAT_AMT,
-    om.due_date AS DUE_DATE
-    ,CASE WHEN SUBSTR(ex.VAT_TYPE,1,1) = '부' THEN 'VAT 포함'
-          WHEN SUBSTR(ex.VAT_TYPE,1,1) = '영' THEN '영세율 적용'
-          ELSE '면세'
-     END AS "taxType"
+    om.due_date AS DUE_DATE 
 FROM order_req om
 JOIN order_detail od ON om.ORDER_CODE = od.ORDER_CODE
 JOIN customer c ON om.CUS_CODE = c.CUS_CODE
@@ -780,11 +783,22 @@ SELECT CASE WHEN EXISTS (
 <!-- 결산 마스터(헤더) 생성 -->
 <insert id="insertInvenClosing">
 <selectKey keyProperty="icCode" resultType="String" order="AFTER">
+<!-- 
         SELECT ic_code
         FROM inventory_closing
-        WHERE company_code = #{compCode}
+        WHERE company_code = #{companyCode}
           AND ic_status = 'T' 
-        ORDER BY ic_date DESC 
+        ORDER BY ic_date DESC
+-->
+SELECT ic_code
+FROM (
+    SELECT ic_code
+    FROM inventory_closing
+    WHERE company_code = #{companyCode}
+      AND ic_status = 'T'
+    ORDER BY ic_date DESC
+)
+WHERE ROWNUM = 1
 </selectKey>
  INSERT INTO inventory_closing (
         ic_code,         <!-- 결산 코드 -->
@@ -798,15 +812,12 @@ SELECT CASE WHEN EXISTS (
        ,#{empId}
        ,'T'
        ,TRUNC(SYSDATE)
-       ,#{compCode}
+       ,#{companyCode}
   )  
 </insert>
 
 <!-- 결산 상세(디테일) 등록 -->
 <insert id="insertInvenClosingDetail">
-<selectKey keyProperty="icDetailNo" resultType="int" order="BEFORE">
-        SELECT seq_ic_detail.nextval FROM dual
-</selectKey>
 INSERT INTO inventory_closing_detail(
       IC_DETAIL_NO
       ,INS_DATE
@@ -821,21 +832,21 @@ INSERT INTO inventory_closing_detail(
       ,COMPANY_CODE
 )
 SELECT
-      #{icDetailNo}
+      SEQ_IC_DETAIL.nextval
       ,TRUNC(sysdate)
       ,#{empId}
       ,'재고부'
-      ,product_code
-      ,product_name
-      ,NVL(prev.opening_stock, 0) AS opening_stock,   -- 이전달 이월재고
-      ,remain_qty
-      ,(remain_qty * purchase_price) AS valuation_amount
+      ,i.product_code
+      ,i.product_name
+      ,NVL(prev.opening_stock, 0) AS opening_stock   -- 이전달 이월재고
+      ,i.remain_qty
+      ,(i.remain_qty * i.purchase_price) AS valuation_amount
       ,#{icCode}
-      ,#{compCode}
+      ,#{companyCode} 
 FROM INBOUND i
-LEFT JOIN INVENTORY_CLOSING_DETAIL prev
-  ON prev.product_code = i.product_code
- AND TRUNC(prev.ins_date, 'MM') = TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM')
+LEFT JOIN INVENTORY_CLOSING_DETAIL prev 
+  ON prev.product_code = i.product_code 
+ AND TRUNC(prev.ins_date, 'MM') = TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM') 
 </insert>
 
 

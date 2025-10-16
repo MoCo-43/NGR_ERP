@@ -152,13 +152,19 @@ document.addEventListener("DOMContentLoaded", () => {
 	const toastEl = document.getElementById('successToast');
 	const registerIcBtn = document.getElementById('registerIcBtn');
 	const toast = new bootstrap.Toast(toastEl);
+	
+	const finalBtn = document.getElementById('final');
+	const deptBtn = document.getElementById('dept');
+	const fnImg = document.getElementById('finalImage');
+	const dptImg = document.getElementById('deptImage');
+	
 	let selectedRow = null; // 전역(이벤트 바깥)으로 선언
 	//let realRowCnt = tableBody.rows.length; // 실제 테이블 행 개수
 	//let rowCount = tableBody.rows.length + 1; // 현재 행 개수 + 1
  	let gridApi = null;
  	let gridOptions = null;
  	let invenGridOptions = null;
- 	
+ 	let initICModalGridOptions = null;
  	// 공통 모달 호출 함수
  	function initGrid(config) {
  	    const eGridDiv = document.getElementById(config.el);
@@ -275,10 +281,22 @@ document.addEventListener("DOMContentLoaded", () => {
 	        el: "orderItemsDetailGrid",
 	        columnDefs: invenClosingColumnDefs,
 	        paginationPageSize: 10,
-	        domLayout: "autoHeight"
+	        domLayout: "normal"
 	    });
 
 	    invenGridOptions = gridOptions;
+	}
+	
+	// 모달창 안 그리드
+	function initICModalGrid() {
+	    const { gridOptions } = initGrid({
+	        el: "detailGrid",
+	        columnDefs: invenClosingColumnDefs,
+	        paginationPageSize: 10,
+	        domLayout: "normal"
+	    });
+
+	    initICModalGridOptions = gridOptions;
 	}
 	async function loadICDetailData(){
 		try {
@@ -304,6 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	}    
 	
 	initInvenGrid();
+	//initICModalGrid();
 	document.getElementById('createIcBtn').addEventListener('click', async () => {
 	//	console.log("loadICDetailData > selectedRow : "+selectedRow);
 	  //  await loadICDetailData();
@@ -371,19 +390,66 @@ document.addEventListener("DOMContentLoaded", () => {
 	//axios.get("/get/v1/stock/getIcList",{ withCredentials : true })
 	  //   .then(res=>{})
 
+async function loadICDetailDataInModal(selectedIcCode){
+		  try {
+		        const res = await axios.get(`/api/v1/stock/icDetailList/${selectedIcCode}`, { withCredentials: true });
+		        const detailGrid = document.getElementById('detailGrid');
+		        if (!detailGrid.__agGridInstance) {
+		            // 그리드 생성
+		            const gridOptions = {
+		                columnDefs: [
+		                    { headerName: "제품코드", field: "productCode" },
+		                    { headerName: "제품명", field: "productName" },
+		                    { headerName: "이월재고", field: "openingStock", type:'numericColumn' },
+		                    { headerName: "현재고량", field: "stock", type:'numericColumn' },
+		                    { headerName: "평가액", field: "valuationAmount", valueFormatter: (p) => Number(p.value).toLocaleString() }
+		                ],
+		                rowData: res.data,
+		                defaultColDef: { resizable:true, flex:1 },
+		                pagination:true, paginationPageSize:10
+		            };
+		            new agGrid.Grid(detailGrid, gridOptions);
+		            detailGrid.__agGridInstance = gridOptions; // 인스턴스 저장
+		        } else {
+		            detailGrid.__agGridInstance.api.setRowData(res.data);
+		        }
+		    } catch(err) {
+		        console.error(err);
+		        toastr.error('상세 데이터 로드 실패');
+		    }
+	}// END OF loadICDetailDataInModal
+
+	  
+	  [finalBtn, deptBtn].forEach(btn => {
+		  btn.addEventListener('click', e => {
+		    console.log(`${btn.id} 클릭됨`);
+		    // 공통 처리 로직
+		    console.log("id : "+e.target.id);
+		    let fileName = e.target.id;
+		    if(fileName == 'final'){
+		    	fnImg.src = "/sign/finalSign.png";
+		    	finalBtn.style.display = 'none'
+		    }else if(fileName =='dept'){
+		    	dptImg.src = "/sign/empSign.png";
+		    	deptBtn.style.display = 'none'
+		    }
+		  });
+		});
+	   
   // Axios 등록 + Toast
 	registerIcBtn.addEventListener('click', async (event) => {
 		event.preventDefault(); // 페이지 새로고침 방지
-		 const rows = tableBody.querySelectorAll('tr');
-	        if(rows.length === 0) {
-	            toastr.error('행 데이터를 추가해주세요!');
-	            return;
-	        }
+		console.log("결산 등록 모달 호출시 > selectedRow(IC_CODE) : "+selectedRow);
+		if(selectedRow == null) { 
+			  toastr.error('행을 선택해주세요');
+			  return;
+		  }
+
 	        // confirm 먼저
 	        const res = await cuteAlert({
 	        	type: "question",
-	            title: "발주 확인",
-	            message: "정말 등록하시겠습니까?",
+	            title: "결산 승인",
+	            message: "정말 진행하시겠습니까?",
 	            imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
 	            confirmText: "네",
 	            cancelText: "아니오"
@@ -392,22 +458,24 @@ document.addEventListener("DOMContentLoaded", () => {
 	        if(res !== true) {
 	            return; // 취소 시 함수 종료
 	        }
+	        const icsModalEl = document.getElementById('icsModal');
+	        if (!icsModalEl) {
+	            console.error("icsModal 요소를 찾을 수 없습니다.");
+	            return;
+	        }
 	        
-	     // Payload
-	    const payload = {
-				  	xpCode: document.getElementById('xpCode').value,
-		            empId: document.getElementById('empId').value,
-		            businessPartner : document.getElementById('businessPartnerInput').value,
-		            cusCode : document.getElementById('businessCodeInput').value,
-		            dueDate: document.getElementById('dueDate').value,
-		            vatType: document.getElementById('taxType').value,
-		            companyCode: Number(document.getElementById('compCode').value)
-		        };
-		  console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
+	        const icsModal = bootstrap.Modal.getOrCreateInstance(icsModalEl);
+	        icsModal.show();
+	        // 선택된 결산코드(selectedRow)를 모달 내부의 ag-Grid 데이터로 로드
+	       if (typeof loadICDetailDataInModal === 'function') {
+	            await loadICDetailDataInModal(selectedRow);
+	        } 
+	    
+		  // console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
 		  
-		  try {
+		/*   try {
 			  	
-			    await axios.post('/api/v1/stock/orderInsert', payload, {
+			    await axios.post('/api/v1/stock/signUpdate', payload, {
 			      headers: { 'Content-Type': 'application/json' }
 			    });
 			    //toast.show();
@@ -421,7 +489,11 @@ document.addEventListener("DOMContentLoaded", () => {
 			    //alert('등록 실패: ' + err.message);
 			   
 				toastr.error('등록 실패: ' + err.message,{timeOut: 3000});
-			  }
+			  } */
+			  
+			  
+			  
+			  
 	});
 
 });

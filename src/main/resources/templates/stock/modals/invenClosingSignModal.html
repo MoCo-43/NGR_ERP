@@ -6,33 +6,84 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/styles/ag-theme-quartz.css"
     />
+      <style>
+      /* 서명 이미지 스타일 */
+      .signature-img {
+        max-height: 60px;
+        object-fit: contain;
+      }
+      th {
+  		text-align: center;
+		}
+    </style>
   </head>
+  
   <body>
-    <!-- fragment 이름을 businessModal 로 지정 -->
+    <!-- fragment 이름을 icsModal 로 지정 -->
     <div th:fragment="icsModal">
-      <div class="modal fade" id="icsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">재고 현황 보고서</h5>
+    <!-- 모달 틀 (생략된 부분은 위 예제 동일) -->
+    <div class="modal fade" id="icsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+          <h5 class="modal-title"></h5>
               <button
                 type="button"
                 class="btn-close"
                 data-bs-dismiss="modal"
               ></button>
             </div>
+          <div class="modal-body">
+           <div class="container-fluid">
+           <div><h3>재고 현황 보고서</h3></div>
+           <div class="col-md-4 ml-auto">
+           <table class="table" border="1">
+           <tr><th colspan="2" align="center" class="table-primary">결제</th></tr>
+           <tr><th>총괄 담당자</th><th>부서 담당자</th></tr>
+           <tr>
+           <td>
+           <button type="button" id="final" class="button btn-primary">불러오기</button>
+           <img id="finalImage" src="" alt="" class="img-fluid"  style="max-width: 100px; max-height: 100px;">
+           </td>
+           <td>
+           <button type="button" id="dept" class="button btn-primary">불러오기</button>
+           <img id="deptImage" src="" alt="" class="img-fluid"  style="max-width: 100px; max-height: 100px;">
+           </td>
+           </tr>
+           </table>
+           </div>
+           </div>
+			  <div class="container-fluid">
+			    <div class="row">
+			      <div class="col-md-4">
+			      <table class="table" border="1">
+			      <tr><th class="table-primary">문서코드</th><td>123123</td></tr>
+			      <tr><th class="table-primary">작성일자</th><td>123123</td></tr>
+			      </table>
+			      </div>
+			      <div class="col-md-4 ml-auto">
+			      
+			      <table class="table" border="1">
+			      <tr><th class="table-primary">작성자</th><td>김재고</td></tr>
+			      <tr><th class="table-primary">부서명</th><td>재고부</td></tr>
+			      </table>
+			      
+			      </div>
+			    </div>
+			  </div>
 
-            <!-- 모달 바디 시작 -->
-            <div class="modal-body">
-              <!-- 버튼 영역: 카드 밖, 오른쪽 상단 고정 -->
-              <!-- <iframe id="pdfFrame" width="100%" height="600px"></iframe> -->
-              <div id="detailGrid" class="ag-theme-quartz" style="height:400px; width:100%;"></div>
-            <!-- 모달 바디 종료 -->
-            </div>
+            <!-- AG Grid -->
+            <div
+              id="detailGrid"
+              class="ag-theme-quartz"
+              style="width:100%; height:400px;"
+            ></div>
+          </div>
 
             <!-- 모달 푸터 시작-->
             <div class="modal-footer">
-            
+             <button type="button" class="btn btn-success" id="icsSubmitBtn">승인</button>
+             <button type="button" class="btn btn-danger" data-bs-dismiss="modal">취소</button>
              <!-- 모달 푸터 종료-->
             </div>
           </div>

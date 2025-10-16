@@ -73,10 +73,7 @@
        oh.due_date AS dueDate,
        dod.vat_amt AS vatAmt,
        dod.sup_amt AS supAmt,
-       dod.unit_price AS orderPrice,
-       CASE WHEN EXISTS(select vat_amt from do_detail where do_no = 1) THEN 'VAT 포함'
-            ELSE '면세' 
-       END AS taxType
+       dod.unit_price AS orderPrice 
 FROM outbound_header oh 
 JOIN outbound o
 ON oh.outb_header_code = o.outb_header_code
@@ -125,10 +122,7 @@ WHERE oh.outb_header_code = $P{outbHeaderCodeParam}]]></query>
 		<property name="com.jaspersoft.studio.field.name" value="orderPrice"/>
 		<property name="com.jaspersoft.studio.field.label" value="orderPrice"/>
 	</field>
-	<field name="taxType" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="taxType"/>
-		<property name="com.jaspersoft.studio.field.label" value="taxType"/>
-	</field>
+	
 	<variable name="dueDate1" calculation="DistinctCount" class="java.lang.Integer">
 		<expression><![CDATA[$F{dueDate}]]></expression>
 	</variable>
@@ -391,9 +385,7 @@ WHERE oh.outb_header_code = $P{outbHeaderCodeParam}]]></query>
 			<element kind="staticText" uuid="da23cb81-b57b-4799-9c78-fad41e1a585d" x="1" y="0" width="49" height="20" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
 				<text><![CDATA[금액 :]]></text>
 			</element>
-			<element kind="textField" uuid="6f22b9dd-b594-4d9a-a24d-33a1968504b5" x="366" y="1" width="80" height="19" fontSize="7.0" bold="true" hTextAlign="Left" vTextAlign="Middle" style="hangle">
-				<expression><![CDATA[$F{taxType}]]></expression>
-			</element>
+
 			<element kind="textField" uuid="b56366a6-f3ef-4dfe-ba32-bf1fc413d50e" x="53" y="1" width="197" height="19" fontSize="10.0" evaluationTime="Report" hTextAlign="Left" vTextAlign="Middle" style="hangle">
 				<expression><![CDATA[com.yedam.erp.service.JasperService.convertToKoreanV2($V{totalSumAmt})]]></expression>
 			</element>

@@ -70,7 +70,7 @@ public interface StockMapper {
 	
 	// 결산 등록
 	public void insertInvenClosing(InvenVO inven);// 마스터
-	public int insertInvenClosingDetail(InvenVO inven);// 상세
+	public int insertInvenClosingDetail(InvenDetailVO invenDetail);// 상세
 	public int checkThisMonthSettlement(); // 이번달 결산내역 존재여부 판단
 	
 	// 입고조회

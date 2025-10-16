@@ -27,6 +27,7 @@ public class OrderDetailVO {
 	private String orderCode;
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
 	private Date dueDate;
+	private String vatType;
 	private String taxType;
 	private Long stock;
 	private String xpCode;

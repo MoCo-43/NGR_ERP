@@ -69,11 +69,8 @@
        ord.order_price AS order_price, 
        ord.sup_amt AS sup_amt,
        ord.vat_amt AS vat_amt,
-       orr.due_date AS due_date, 
-       CASE WHEN SUBSTR(orr.VAT_TYPE,1,1) = '부' THEN 'VAT 포함'
-          WHEN SUBSTR(orr.VAT_TYPE,1,1) = '영' THEN '영세율 적용'
-          ELSE '면세'
-       END AS "taxType" 
+       orr.due_date AS due_date 
+        
 FROM order_detail ord 
 JOIN order_req orr 
 ON orr.order_code = ord.order_code 
@@ -106,10 +103,6 @@ ORDER BY ord.OD_NO]]></query>
 	<field name="dueDate" class="java.util.Date">
 		<property name="com.jaspersoft.studio.field.name" value="dueDate"/>
 		<property name="com.jaspersoft.studio.field.label" value="dueDate"/>
-	</field>
-	<field name="taxType" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="taxType"/>
-		<property name="com.jaspersoft.studio.field.label" value="taxType"/>
 	</field>
 	<variable name="dueDate1" calculation="DistinctCount" class="java.lang.Integer">
 		<expression><![CDATA[$F{dueDate}]]></expression>
@@ -373,9 +366,7 @@ ORDER BY ord.OD_NO]]></query>
 			<element kind="staticText" uuid="da23cb81-b57b-4799-9c78-fad41e1a585d" x="1" y="0" width="49" height="20" bold="true" hTextAlign="Center" vTextAlign="Middle" style="hangle">
 				<text><![CDATA[금액 :]]></text>
 			</element>
-			<element kind="textField" uuid="6f22b9dd-b594-4d9a-a24d-33a1968504b5" x="366" y="1" width="80" height="19" fontSize="7.0" bold="true" hTextAlign="Left" vTextAlign="Middle" style="hangle">
-				<expression><![CDATA[$F{taxType}]]></expression>
-			</element>
+			
 			<element kind="textField" uuid="b56366a6-f3ef-4dfe-ba32-bf1fc413d50e" x="53" y="1" width="197" height="19" fontSize="10.0" hTextAlign="Left" evaluationTime="Report" vTextAlign="Middle" style="hangle">
 				<expression><![CDATA[com.yedam.erp.service.JasperService.convertToKorean($V{totalSumAmt})]]></expression>
 			</element>

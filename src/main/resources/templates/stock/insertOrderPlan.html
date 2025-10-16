@@ -39,18 +39,19 @@
 
     <div class="card-body">
       <form class="row g-3" id="insertOrderPlan" enctype="application/x-www-form-urlencoded">
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label for="insDate" class="form-label">등록일자</label>
           <input type="date" class="form-control" id="insDate" name="insDate">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label for="compCode" class="form-label">회사코드</label>
           <input type="text" class="form-control" id="compCode" name="compCode" readonly>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label for="empId" class="form-label">담당자명</label>
           <input type="text" class="form-control" id="empId" name="empId">
         </div>
+        <!-- 
         <div class="col-md-3">
           <label for="taxType" class="form-label">세율유형</label>
           <select class="form-select" id="taxType" name="taxType">
@@ -60,6 +61,7 @@
             <option value="면세">면세 적용</option>
           </select>
         </div>
+         -->
       </form>
     </div>
   </div>
@@ -80,6 +82,7 @@
           <th style="width:140px;">제품코드</th>
           <th>제품명</th>
           <th style="width:160px;">규격</th>
+          <th style="width:140px;">세율유형</th>
           <th style="width:140px;">거래처코드</th>
           <th>거래처명</th>
           <th style="width:110px;">수량</th>
@@ -115,9 +118,27 @@
 
   <script th:inline="none">
     document.addEventListener("DOMContentLoaded", () => {
+    	
+    	// 현재 날짜로 초기 입력
+    	function initToday(){
+    		const today = new Date();
+    		const yyyy = today.getFullYear();
+    		const mm = String(today.getMonth() + 1).padStart(2, '0'); // 월은 0~11이므로 +1
+    		const dd = String(today.getDate()).padStart(2, '0');
+    		document.querySelector('#insDate').value = `${yyyy}-${mm}-${dd}`;
+    	}
+    	initToday();
+    	// 담당자명 셋팅 - 로그인된 세션 사용자명
+    	axios.get("/api/v1/stock/getEmpName", { withCredentials: true })
+		  .then(res => {
+			  console.log(res.data);
+  			document.getElementById("empId").value = res.data;
+			})
+		  .catch(err => console.error(err));
+    	
       const tableBody = document.querySelector('#orderItemsTable tbody');
       const addRowBtn = document.getElementById('addRowBtn');
-      const taxSelect = document.getElementById('taxType');
+      //const taxSelect = document.getElementById('taxType');
       const form = document.getElementById('insertOrderPlan');
       const submitBtn = document.getElementById('submitBtn');
       const toast = new bootstrap.Toast(document.getElementById('successToast'));
@@ -128,25 +149,42 @@
         .catch(err => console.error(err));
 
       // ---------- 금액 계산 ----------
+      
       function calculateRow(row) {
         const qty   = Number(row.querySelector('.qty').value) || 0;
         const price = Number(row.querySelector('.purchasePrice').value) || 0;
 
-        const supply = Math.floor(qty * price); // 공급가액
-        row.querySelector('.supAmt').value = supply;
+        //const supply = Math.floor(qty * price); // 공급가액
+        //row.querySelector('.supAmt').value = supply;
+        
+        
+        let supAmt = qty * price;
+        let vatAmt = 0;
 
-        let taxRate = 0;
-        if (taxSelect.value === "부가세율") taxRate = 0.1;
+        const vatType = row.querySelector('.vatType').value;
+        if (vatType === '과세') {
+          vatAmt = Math.floor(supAmt * 0.1);
+          supAmt = Math.floor(supAmt);
+          
+        } else { // 면세, 영세
+          vatAmt = 0;
+        }
+          row.querySelector('.supAmt').value = supAmt;
+          row.querySelector('.vatAmt').value = vatAmt;
+        
+//        let taxRate = 0;
+//        if (taxSelect.value === "부가세율") taxRate = 0.1;
         // 영세/면세는 0
-        const vat = Math.floor(supply * taxRate);
-        row.querySelector('.vatAmt').value = vat;
+//        const vat = Math.floor(supply * taxRate);
+//        row.querySelector('.vatAmt').value = vat;
       }
-
+      
       // 세율 바뀌면 전체 재계산
-      taxSelect.addEventListener('change', () => {
-        tableBody.querySelectorAll('tr').forEach(calculateRow);
-      });
-
+      //tableBody.addEventListener('change', () => {
+       // tableBody.querySelectorAll('tr').forEach(calculateRow);
+        
+      //});
+	 
       // ---------- 모달/그리드 준비 (1회 초기화) ----------
       const productModalEl = document.getElementById("productModal");
       const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
@@ -163,7 +201,8 @@
             columnDefs: [
               { headerName: "제품코드", field: "productCode", width: 140 },
               { headerName: "제품명", field: "productName", flex: 1, minWidth: 160 },
-              { headerName: "규격", field: "specification", width: 160 }
+              { headerName: "규격", field: "specification", width: 160 },
+              { headerName: "세율유형", field: "vatType", width: 160 }
             ],
             rowData: [],
             rowSelection: "single",
@@ -242,7 +281,8 @@
           <td class="text-center seq"></td>
           <td><input type="text" class="form-control productCode" readonly></td>
           <td><input type="text" class="form-control productName" readonly></td>
-          <td><input type="text" class="form-control specification" ></td>
+          <td><input type="text" class="form-control specification" readonly></td>
+          <td><input type="text" class="form-control vatType" readonly></td>
           <td><input type="text" class="form-control partnerCode" readonly></td>
           <td><input type="text" class="form-control partnerName" readonly></td>
           <td><input type="number" class="form-control qty" value="1" min="1"></td>
@@ -265,15 +305,15 @@
         // 제품코드 클릭 -> 제품 모달
         tr.querySelector('.productCode').addEventListener('click', async () => {
           currentRowForModal = tr;
-          productModal.show();
           await ensureProductGrid();
+          productModal.show();
         });
 
         // 거래처코드 클릭 -> 거래처 모달
         tr.querySelector('.partnerCode').addEventListener('click', async () => {
           currentRowForModal = tr;
-          businessModal.show();
           await ensureBusinessGrid();
+          businessModal.show();
         });
 
         // 삭제
@@ -293,6 +333,7 @@
           currentRowForModal.querySelector('.productCode').value = ev.data.productCode ?? '';
           currentRowForModal.querySelector('.productName').value = ev.data.productName ?? '';
           currentRowForModal.querySelector('.specification').value = ev.data.specification ?? '';
+          currentRowForModal.querySelector('.vatType').value = ev.data.vatType ?? '';
           productModal.hide();
         });
       });
@@ -331,7 +372,7 @@
         const payload = {
           empId: document.getElementById('empId').value,
           insDate: document.getElementById('insDate').value,
-          taxType: document.getElementById('taxType').value,
+          //taxType: document.getElementById('taxType').value,
           companyCode: Number(document.getElementById('compCode').value || 0),
           details
         };
