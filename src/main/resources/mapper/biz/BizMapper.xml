@@ -323,7 +323,7 @@ ORDER BY d.DO_CREATED DESC
     <result column="remain_limit"   property="remainLimit"/>
     <result column="manager_name"   property="managerName"/>
     <result column="status"         property="status"/>
-  </resultMap>
+  </resultMap> -->
 
   <!-- 단건 상세 -->
   <!-- type: com.example.credit.vo.CreditMasterVo -->
@@ -375,7 +375,7 @@ ORDER BY d.DO_CREATED DESC
 
   <!-- 3) 등록/수정 (MERGE) -->
   <!-- parameterType 은 VO FQCN: com.example.credit.vo.CreditMasterVo -->
-  <update id="upsertCreditMaster" parameterType="com.example.credit.vo.CreditMasterVo">
+  <update id="upsertCreditMaster" parameterType="CreditMasterVO">
     MERGE INTO credit_master t
     USING (SELECT #{companyCode} AS company_code, #{cusCode} AS cus_code FROM dual) s
       ON (t.company_code = s.company_code AND t.cus_code = s.cus_code)
@@ -401,6 +401,6 @@ ORDER BY d.DO_CREATED DESC
            expire_date   = NVL(expire_date, SYSDATE)
      WHERE company_code = #{companyCode}
        AND cus_code     = #{cusCode}
-  </update> -->
+  </update>
 
 </mapper>
