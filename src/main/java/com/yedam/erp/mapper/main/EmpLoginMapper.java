@@ -13,8 +13,8 @@ public interface EmpLoginMapper {
     EmpLoginVO findByEmpId(@Param("empId") String empId);
 
     // 사원 조회 (부서별)
-    List<EmpVO> findEmployeesByDept(@Param("deptCode") String deptCode);
-
+    List<EmpVO> findEmployeesByDept(@Param("deptName") String deptName, 
+            @Param("title") String title);
     // 신규 계정 생성
     void insertNewEmployeeLogin(EmpLoginVO empLoginVO);
 

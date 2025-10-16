@@ -37,14 +37,7 @@
                     <option value="재고팀">재고팀</option>
                     <option value="인사팀">인사팀</option>
                 </select>
-                
-                <select id="title-filter" class="form-select d-inline-block w-auto ms-2">
-                    <option value="">전체 직급</option>
-                    <option value="팀원">팀원</option>
-                    <option value="팀장">팀장</option>
-                    </select>
-
-                <button id="search-btn" class="btn btn-primary ms-2">검색</button>
+                <button id="search-btn" class="btn btn-primary">검색</button>
             </div>
             <div>
                 <button id="create-btn" class="btn btn-success">생성</button>
@@ -59,22 +52,22 @@
         document.addEventListener('DOMContentLoaded', () => {
             const gridDiv = document.querySelector('#employee-grid');
 
-            // AG Grid 컬럼 정의 
+            // AG Grid 컬럼 정의
             const columnDefs = [
                 { headerName: '', checkboxSelection: true, headerCheckboxSelection: true, maxWidth: 50 },
-                { field: 'name', headerName: '사원이름' }, 
+                { field: 'name', headerName: '사원이름' }, // EmpVO 필드명에 맞게 수정 (예: name -> empName)
                 { field: 'empId', headerName: '사번 (로그인ID)' },
-                { field: 'title', headerName:'직급' },
-                { field: 'deptName', headerName: '부서이름' }, 
+                {field: 'title',headerName:'직급'},
+                { field: 'deptName', headerName: '부서이름' }, // EmpVO 필드명에 맞게 수정 (예: deptName -> deptCode)
                 { field: 'email', headerName: '이메일' }
             ];
 
-            // AG Grid 옵션 
+            // AG Grid 옵션
             const gridOptions = {
                 columnDefs: columnDefs,
                 rowData: [],
                 rowSelection: 'multiple',
-                suppressRowClickSelection: true, 
+                suppressRowClickSelection: true, // 체크박스 클릭으로만 선택되도록 설정
                 defaultColDef: { sortable: true, filter: true, resizable: true },
                 pagination: true,
                 paginationPageSize: 20,
@@ -82,24 +75,22 @@
                 overlayNoRowsTemplate: '<span class="ag-overlay-no-rows-center">데이터가 없습니다.</span>'
             };
 
-            // AG Grid 생성 (동일)
+            // AG Grid 생성
             new agGrid.Grid(gridDiv, gridOptions);
 
             /**
-             *  사원 목록을 서버에서 불러와 그리드에 표시하는 함수
-             * @param {string} deptName - 검색할 부서 이름 (deptCode -> deptName)
-             * @param {string} title - 검색할 직급 (신규 추가)
+             * 사원 목록을 서버에서 불러와 그리드에 표시하는 함수
+             * @param {string} deptCode - 검색할 부서 코드 (없으면 전체 조회)
              */
-            function loadEmployees(deptName = '', title = '') {
+            function loadEmployees(deptCode = '') {
                 gridOptions.api.showLoadingOverlay();
-                
-                //  Controller의 getEmployees 메소드 호출 (deptName, title 파라미터 사용)
-                axios.get(`/hrLists?deptName=${deptName}&title=${title}`)
+                // Controller의 getEmployees 메소드 호출
+                axios.get(`/hrLists?deptCode=${deptCode}`)
                     .then(response => {
                         if (response.data && response.data.length > 0) {
                             gridOptions.api.setRowData(response.data);
                         } else {
-                            gridOptions.api.setRowData([]); 
+                            gridOptions.api.setRowData([]); // 기존 데이터 비우기
                             gridOptions.api.showNoRowsOverlay();
                         }
                     })
@@ -112,13 +103,11 @@
 
             // '검색' 버튼 클릭 이벤트
             document.getElementById('search-btn').addEventListener('click', () => {
-                const selectedDeptName = document.getElementById('dept-filter').value;
-                const selectedTitle = document.getElementById('title-filter').value; // 직급 값 가져오기
-                
-                loadEmployees(selectedDeptName, selectedTitle); // 두 인자 모두 전달
+                const selectedDept = document.getElementById('dept-filter').value;
+                loadEmployees(selectedDept);
             });
 
-            // '초기 비번 전송' 버튼 클릭 이벤트 (동일)
+            // '초기 비번 전송' 버튼 클릭 이벤트
             document.getElementById('send-btn').addEventListener('click', () => {
                 const selectedNodes = gridOptions.api.getSelectedNodes();
                 if (selectedNodes.length === 0) {
@@ -129,10 +118,11 @@
                 const selectedEmpIds = selectedNodes.map(node => node.data.empId);
 
                 if (confirm(`선택된 ${selectedEmpIds.length}명의 사원 계정을 [사번]으로 활성화하고 초기 비밀번호를 전송하시겠습니까?`)) {
+                    // Controller의 activateDefaultLogins 메소드 호출
                     axios.post('/activate-default', selectedEmpIds)
                         .then(response => {
-                            alert(response.data); 
-                            gridOptions.api.deselectAll(); 
+                            alert(response.data); // 성공 메시지 출력
+                            gridOptions.api.deselectAll(); // 선택 해제
                         })
                         .catch(error => {
                             console.error('초기 비밀번호 전송 오류:', error);
@@ -141,7 +131,7 @@
                 }
             });
 
-            // '생성' 버튼 클릭 이벤트 (동일)
+            // '생성' 버튼 클릭 이벤트
             document.getElementById('create-btn').addEventListener('click', () => {
                 const selectedNodes = gridOptions.api.getSelectedNodes();
                 if (selectedNodes.length === 0) {
@@ -152,10 +142,11 @@
                 const selectedEmpIds = selectedNodes.map(node => node.data.empId);
 
                 if (confirm(`선택된 ${selectedEmpIds.length}명의 사원 계정을 [신규 ID]로 생성하고 초기 비밀번호를 전송하시겠습니까?`)) {
+                    // Controller의 activateCustomLogins 메소드 호출
                     axios.post('/activate-custom', selectedEmpIds)
                         .then(response => {
-                            alert(response.data); 
-                            gridOptions.api.deselectAll(); 
+                            alert(response.data); // 성공 메시지 출력
+                            gridOptions.api.deselectAll(); // 선택 해제
                         })
                         .catch(error => {
                             console.error('신규 계정 생성 오류:', error);

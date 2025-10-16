@@ -25,8 +25,8 @@ public class EmpLoginServiceImpl implements EmpLoginService {
     private final EmailService emailService;
 
     @Override
-    public List<EmpVO> findEmployeesByDept(String deptCode) {
-        return empLoginMapper.findEmployeesByDept(deptCode);
+    public List<EmpVO> findEmployeesByDept(String deptName, String title) {
+        return empLoginMapper.findEmployeesByDept(deptName, title);
     }
 
     @Override
