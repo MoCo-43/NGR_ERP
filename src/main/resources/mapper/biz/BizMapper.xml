@@ -314,7 +314,6 @@ ORDER BY d.DO_CREATED DESC
   <!-- type 은 VO FQCN: com.example.credit.vo.CreditExposureVo -->
 
   <resultMap id="ExposureMap" type="CreditExposureVO">
-
     <result column="company_code"   property="companyCode"/>
     <result column="cus_code"       property="cusCode"/>
     <result column="cus_name"       property="cusName"/>

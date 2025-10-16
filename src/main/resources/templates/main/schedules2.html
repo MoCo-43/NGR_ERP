@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/base}">
 
-<!-- head 영역 -->
 <th:block layout:fragment="head_extra">
-    <title>마이페이지</title>
+    <title>일정 관리</title>
 
     <!-- FullCalendar -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/main.min.css" rel="stylesheet" />
-    <!-- Flatpickr -->
+    <!-- Flatpickr (순수 JS datepicker) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/l10n/ko.css">
 
@@ -24,114 +24,64 @@
     </style>
 </th:block>
 
-<!-- content 영역 -->
 <th:block layout:fragment="content">
-    <div class="container-fluid">
-        <h1 class="h3 mb-4 text-gray-800">마이페이지</h1>
-
-        <div class="row">
-            <!-- 사원 정보 카드 -->
-            <div class="col-lg-5">
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">사원 정보</h6>
+    <!-- 일정 추가/수정 모달 -->
+    <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="addScheduleForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="scheduleModalLabel">일정 추가/수정</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
                     </div>
-                    <div class="card-body">
-                        <div class="text-center mb-4">
-                            <img alt="프로필 이미지" class="img-fluid rounded-circle"
-                                 style="width: 150px; height: 150px; border: 3px solid #eee; object-fit: cover;" />
+                    <div class="modal-body">
+                        <input type="hidden" id="plan-no">
+                        <div class="mb-3">
+                            <label for="schedule-title" class="form-label">제목</label>
+                            <input type="text" class="form-control" id="schedule-title" required>
                         </div>
-
-                        <div class="px-3">
-                            <div class="row mb-3 align-items-center">
-                                <div class="col-4 font-weight-bold text-dark">사원 이름:</div>
-                                <div class="col-8 d-flex justify-content-between align-items-center">
-                                    <p th:text="${emp?.name ?: 'Unknown'}">Employee Name</p>
-                                    <button class="btn btn-sm btn-primary">수정</button>
-                                </div>
+                        <div class="mb-3">
+                            <label for="schedule-type" class="form-label">일정유형</label>
+                            <select class="form-select" id="schedule-type" required>
+                                <option value="">선택</option>
+                                <option value="회의">회의</option>
+                                <option value="출장">출장</option>
+                                <option value="프로젝트 마감">프로젝트 마감</option>
+                                <option value="기타">기타</option>
+                            </select>
+                        </div>
+                        <div class="mb-3 row g-2">
+                            <div class="col">
+                                <label for="schedule-start" class="form-label">시작일</label>
+                                <input type="text" class="form-control" id="schedule-start" required placeholder="YYYY-MM-DD">
                             </div>
-
-                            <div class="row mb-3">
-                                <div class="col-4 font-weight-bold text-dark">사원 번호:</div>
-                                <div class="col-8" th:text="${emp?.emp_id ?: '정보 없음'}">E001</div>
+                            <div class="col">
+                                <label for="schedule-end" class="form-label">종료일</label>
+                                <input type="text" class="form-control" id="schedule-end" required placeholder="YYYY-MM-DD">
                             </div>
-
-                            <div class="row mb-3">
-                                <div class="col-4 font-weight-bold text-dark">직급:</div>
-                                <div class="col-8" th:text="${emp.position}">사원</div>
-                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="schedule-details" class="form-label">내용</label>
+                            <textarea class="form-control" id="schedule-details"></textarea>
                         </div>
                     </div>
-                </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">저장</button>
+                        <button type="button" class="btn btn-danger" id="delete-btn">삭제</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                    </div>
+                </form>
             </div>
+        </div>
+    </div>
 
-            <!-- 일정 관리 영역 -->
-            <div class="col-lg-7">
-                <!-- 일정 추가/수정 모달 -->
-                <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <form id="addScheduleForm">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="scheduleModalLabel">일정 추가/수정</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <input type="hidden" id="plan-no">
-                                    <div class="mb-3">
-                                        <label for="schedule-title" class="form-label">제목</label>
-                                        <input type="text" class="form-control" id="schedule-title" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="schedule-type" class="form-label">일정유형</label>
-                                        <select class="form-select" id="schedule-type" required>
-                                            <option value="">선택</option>
-                                            <option value="회의">회의</option>
-                                            <option value="출장">출장</option>
-                                            <option value="프로젝트 마감">프로젝트 마감</option>
-                                            <option value="기타">기타</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3 row g-2">
-                                        <div class="col">
-                                            <label for="schedule-start" class="form-label">시작일</label>
-                                            <input type="text" class="form-control" id="schedule-start" required placeholder="YYYY-MM-DD">
-                                        </div>
-                                        <div class="col">
-                                            <label for="schedule-end" class="form-label">종료일</label>
-                                            <input type="text" class="form-control" id="schedule-end" required placeholder="YYYY-MM-DD">
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="schedule-details" class="form-label">내용</label>
-                                        <textarea class="form-control" id="schedule-details"></textarea>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-primary">저장</button>
-                                    <button type="button" class="btn btn-danger" id="delete-btn">삭제</button>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 달력 표시 -->
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">일정 관리</h6>
-                    </div>
-                    <div class="card-body">
-                        <div id="calendar"></div>
-                    </div>
-                </div>
-            </div>
+    <div class="schedule-container">
+        <div class="schedule-main">
+            <div id="calendar"></div>
         </div>
     </div>
 </th:block>
 
-<!-- body extra -->
 <th:block layout:fragment="body_extra">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
@@ -156,9 +106,11 @@
 
         const colorMap = { "회의": "#ff9f89", "출장": "#4caf50", "프로젝트 마감": "#2196f3", "기타": "#9c27b0" };
 
+        // Flatpickr 초기화
         flatpickr(startInput, { dateFormat: "Y-m-d", locale: "ko" });
         flatpickr(endInput, { dateFormat: "Y-m-d", locale: "ko" });
 
+        // FullCalendar 초기화
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
@@ -191,6 +143,7 @@
             }
         });
 
+        // DB에서 일정 불러오기
         fetch('/plan')
             .then(res => res.json())
             .then(plans => {
@@ -211,6 +164,7 @@
 
         calendar.render();
 
+        // 저장 (등록/수정)
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const data = {
@@ -223,7 +177,7 @@
             };
             const planNo = planNoInput.value;
 
-            if (planNo) {
+            if (planNo) { // 수정
                 fetch(`/plan/${planNo}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
@@ -238,7 +192,7 @@
                     ev.setEnd(endDate.toISOString().split('T')[0]);
                     ev.setExtendedProp('details', updated.description);
                 });
-            } else {
+            } else { // 추가
                 fetch('/plan', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -266,6 +220,7 @@
             form.reset();
         });
 
+        // 삭제
         deleteBtn.addEventListener('click', () => {
             const planNo = planNoInput.value;
             const empIdNo = 1001;

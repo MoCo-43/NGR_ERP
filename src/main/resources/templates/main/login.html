@@ -20,6 +20,7 @@
       .link-small a { color: #4d341e; }
       .auth-section { display: none; }
       .auth-section.active { display: block; }
+      .input-field { text-align: center;}
     </style>
   </th:block>
 </head>
@@ -27,7 +28,7 @@
 <th:block layout:fragment="content">
 <div class="auth-forms">
   <div id="login" class="auth-section active">
-    <h2>로그인</h2>
+    <h2>NGR로그인</h2>
 
     <!-- 역할 선택 -->
     <div class="role-picker">
@@ -73,7 +74,6 @@
 
     <div class="link-small">
       <a th:href="@{/findpw}">비밀번호 찾기</a>      
-      
     </div>
   </div>
 </div>

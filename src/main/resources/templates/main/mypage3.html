@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
+
+<!-- head 영역 -->
+<th:block layout:fragment="head_extra">
+	<title>마이페이지</title>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/main.min.css" rel="stylesheet" />
+</th:block>
+
+<!-- content 영역 -->
+<th:block layout:fragment="content">
+	<div class="container-fluid">
+		<h1 class="h3 mb-4 text-gray-800">마이페이지</h1>
+
+		<div class="row">
+			<!-- 사원 정보 카드 -->
+			<div class="col-lg-5">
+				<div class="card shadow mb-4">
+					<div class="card-header py-3">
+						<h6 class="m-0 font-weight-bold text-primary">사원 정보</h6>
+					</div>
+					<!-- th:src="@{${emp.profileImage != null ? emp.profileImage : '/images/default-profile.png'}}" -->
+					<div class="card-body">
+						<!-- 프로필 이미지 -->
+						<div class="text-center mb-4">
+							<img alt="프로필 이미지" class="img-fluid rounded-circle"
+								style="width: 150px; height: 150px; border: 3px solid #eee; object-fit: cover;" />
+						</div>
+
+						<!-- 사원 상세 정보 -->
+						<div class="px-3">
+							<div class="row mb-3 align-items-center">
+								<div class="col-4 font-weight-bold text-dark">사원 이름:</div>
+								<div
+									class="col-8 d-flex justify-content-between align-items-center">
+									<p th:text="${emp?.name ?: 'Unknown'}">Employee Name</p>
+									<button class="btn btn-sm btn-primary">수정</button>
+								</div>
+							</div>
+
+							<div class="row mb-3">
+								<div class="col-4 font-weight-bold text-dark">사원 번호:</div>
+								<div class="col-8" th:text="${emp?.emp_id ?: '정보 없음'}">E001</div>
+							</div>
+
+							<!-- <div class="row mb-3">
+								<div class="col-4 font-weight-bold text-dark">부서:</div>
+								<div class="col-8" th:text="${emp.deptName}">영업팀</div>
+							</div> -->
+
+							<div class="row mb-3">
+								<div class="col-4 font-weight-bold text-dark">직급:</div>
+								<div class="col-8" th:text="${emp.position}">사원</div>
+							</div>
+
+							<div class="row align-items-center">
+								<!-- <div class="col-4 font-weight-bold text-dark">비밀번호:</div>
+								 <div
+									class="col-8 d-flex justify-content-between align-items-center">
+									<span>********</span>
+									<button class="btn btn-sm btn-primary">수정</button>
+								</div> -->
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 일정 내역 카드 -->
+			<div class="col-lg-5">
+				<div class="card shadow mb-4">
+					<div class="card-header py-3">
+						<h6 class="m-0 font-weight-bold text-primary">일정내역 확인</h6>
+					</div>
+					<div class="card-body">
+						<div id="calendar"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- FullCalendar -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+<script>
+		document.addEventListener('DOMContentLoaded', function() {
+			const calendarEl = document.getElementById('calendar');
+
+			const eventsData = [ {
+				title : '회의',
+				start : '2025-10-15',
+				color : '#ff9f89'
+			}, {
+				title : '출장',
+				start : '2025-10-18',
+				color : '#4caf50'
+			}, {
+				title : '프로젝트 마감',
+				start : '2025-10-20',
+				color : '#2196f3'
+			} ];
+
+			const calendar = new FullCalendar.Calendar(calendarEl, {
+				initialView : 'dayGridMonth',
+				headerToolbar : {
+					left : 'prev,next today',
+					center : 'title',
+					right : 'dayGridMonth,timeGridWeek,timeGridDay'
+				},
+				events : eventsData, // JSON.parse 필요 없음
+				locale : 'ko'
+			});
+
+			calendar.render();
+		});
+	</script>
+	<!-- <script th:inline="javascript">
+/*<![CDATA[*/
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    
+    // 더미 이벤트 데이터
+    const eventsData = /*[[${eventsJson}]]*/ JSON.stringify([
+        { title: '회의', start: '2025-10-15', end: '2025-10-15', color: '#ff9f89' },
+        { title: '출장', start: '2025-10-18', color: '#4caf50' },
+        { title: '프로젝트 마감', start: '2025-10-20', color: '#2196f3' }
+    ]);
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: JSON.parse(eventsData),
+        locale: 'ko'
+    });
+
+    calendar.render();
+});
+/*]]>*/
+</script>-->
+</th:block>
+</html>

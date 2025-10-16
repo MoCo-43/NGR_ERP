@@ -110,21 +110,21 @@ canvas {
 				<div class="stat-card">
 					<div class="stat-label">
 						<span>근무 중 인원</span><span class="stat-icon">👥</span>
-						<div class="stat-value">10명</div>
+					<div class="stat-value">10명</div>
 					</div>
 				</div>
 
 				<div class="stat-card">
 					<div class="stat-label">
 						<span>이번 날 매출</span><span class="stat-icon">📈</span>
-						<div class="stat-value">₩ 0</div>
+					<div class="stat-value">₩ 0</div>
 					</div>
 				</div>
 
 				<div class="stat-card">
 					<div class="stat-label">
 						<span>재고 현황</span><span class="stat-icon">🛍️</span>
-						<div class="stat-value">0개</div>
+					<div class="stat-value">0개</div>
 					</div>
 				</div>
 
@@ -140,7 +140,6 @@ canvas {
 				<div class="module-card">
 					<div class="module-title">인사 모듈</div>
 					<canvas id="inventoryChart"></canvas>
-					<!-- ⭐️ 이 캔버스 ID에 DB 데이터를 로드합니다. -->
 				</div>
 
 				<div class="module-card">
@@ -171,6 +170,7 @@ canvas {
 					options : {
 						responsive : true,
 						maintainAspectRatio : false, // 캔버스 크기를 부모 컨테이너에 맞춤
+						// ✅ [수정됨] 범례를 표시하도록 변경
 						plugins : {
 							legend : {
 								display : true,
@@ -188,8 +188,7 @@ canvas {
 									font : {
 										size : 10
 									}
-								},
-								beginAtZero: true // Y축 0부터 시작하도록 추가
+								}
 							},
 							x : {
 								ticks : {
@@ -203,7 +202,7 @@ canvas {
 				});
 			}
 
-			// --- 1. 영업 모듈 ---
+			// 데이터 정의
 			const salesData = {
 				labels : [ '1Q', '2Q', '3Q', '4Q' ],
 				datasets : [ {
@@ -213,10 +212,14 @@ canvas {
 					borderWidth : 1
 				} ]
 			};
-			
-			// --- 2. 재고 모듈  ---
-			// 참고: 이 hrData는 HTML에서 "재고 모듈"에 할당된 hrChart에 사용됩니다.
-			const hrData = { 
+			const inventoryData = {
+				labels : [ 'A 상품', 'B 상품', 'C 상품' ],
+				datasets : [ {
+					data : [ 300, 50, 100 ],
+					backgroundColor : [ '#FF6384', '#36A2EB', '#FFCE56' ]
+				} ]
+			};
+			const hrData = {
 				labels : [ '월', '화', '수', '목', '금' ],
 				datasets : [ {
 					label : '휴가 사용률',
@@ -227,83 +230,27 @@ canvas {
 				} ]
 			};
 
-			// --- 3. 회계 모듈  ---
+			// ✅ [수정됨] 회계 데이터를 2개의 데이터셋을 가진 라인 차트 형식으로 변경
 			const accountingData = {
 				labels : [ '4월', '5월', '6월', '7월', '8월', '9월', '10월' ],
 				datasets : [ {
 					label : '수익',
-					data : [ 120, 190, 150, 210, 180, 200, 240 ], 
+					data : [ 120, 190, 150, 210, 180, 200, 240 ], // 임의의 수익 데이터
 					borderColor : 'rgb(54, 162, 235)',
 					backgroundColor : 'rgba(54, 162, 235, 0.5)',
 					tension : 0.1
 				}, {
 					label : '비용',
-					data : [ 80, 110, 90, 100, 120, 115, 130 ], 
+					data : [ 80, 110, 90, 100, 120, 115, 130 ], // 임의의 비용 데이터
 					borderColor : 'rgb(255, 99, 132)',
 					backgroundColor : 'rgba(255, 99, 132, 0.5)',
 					tension : 0.1
 				} ]
 			};
 
-			// ⭐️ 인사 모듈: DB에서 데이터 로드 (inventoryChart)
-			// 부서별 인원 데이터를 가져와 차트를 그리는 비동기 함수
-			async function fetchHrMembersChart() {
-				const canvasId = 'inventoryChart'; // 인사 모듈에 할당된 캔버스 ID
-				
-				try {
-					// 1. /empmembers 엔드포인트에서 데이터 로드
-					const response = await fetch('/empmembers');
-					
-					if (!response.ok) {
-						// HTTP 오류 발생 시 처리
-						throw new Error(`HTTP 요청 실패: ${response.status} ${response.statusText}`);
-					}
-					
-					// 2. JSON 데이터 파싱
-					const dataList = await response.json(); // List<DashBoardVO> 형태 (deptName, memberCount)
-
-					// 3. 차트 라벨(부서 이름)과 데이터(인원수) 추출
-					const labels = dataList.map(item => item.deptName);
-					const memberCounts = dataList.map(item => item.memberCount);
-					
-					// 차트 시각화를 위한 색상 정의 (도넛 차트에 사용)
-					const backgroundColors = [
-						'rgba(255, 99, 132, 0.8)',  // Red
-						'rgba(54, 162, 235, 0.8)',  // Blue
-						'rgba(255, 206, 86, 0.8)',  // Yellow
-						'rgba(75, 192, 192, 0.8)',  // Green
-						'rgba(153, 102, 255, 0.8)', // Purple
-						'rgba(255, 159, 64, 0.8)'   // Orange
-					];
-
-					// 4. 동적 데이터 구조 생성 (도넛 차트)
-					const dynamicHrData = {
-						labels : labels,
-						datasets : [ {
-							label: '부서별 재직 인원수',
-							data : memberCounts,
-							backgroundColor : backgroundColors.slice(0, labels.length), // 데이터 수만큼 색상 사용
-							borderWidth: 1
-						} ]
-					};
-
-					// 5. 차트 그리기
-					createChart(canvasId, 'doughnut', dynamicHrData);
-
-				} catch (error) {
-					console.error("인사 모듈 데이터를 가져오는데 실패했습니다:", error);
-					// 데이터 로드 실패 시 대체 차트 또는 오류 메시지 표시
-					const errorData = {
-						labels: ['로딩 실패'], 
-						datasets: [{ data: [1], backgroundColor: ['#ccc'] }]
-					};
-					createChart(canvasId, 'doughnut', errorData);
-				}
-			}
-			// 차트 생성 호출
+			// 차트 생성
 			createChart('salesChart', 'bar', salesData);
-			// ⭐️ 인사 모듈 (inventoryChart)은 비동기 함수로 호출
-			fetchHrMembersChart(); 
+			createChart('inventoryChart', 'doughnut', inventoryData);
 			createChart('hrChart', 'line', hrData);
 			createChart('accountingChart', 'line', accountingData);
 		</script>

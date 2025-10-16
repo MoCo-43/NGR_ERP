@@ -16,20 +16,21 @@
       .auth-forms .btn-primary { width: 100%; padding: 12px; background: #4d341e; color: #fff; border: none; cursor: pointer; margin-top: 10px; }
       .link-small { font-size: 0.9rem; text-align: center; margin-top: 1rem; }
       .link-small a { color: #4d341e; }
+      .input-field { text-align: center;}
     </style>
   </th:block>
 <body>
 <th:block layout:fragment="content">
 <div class="auth-forms">
-<h2>ERP판매자</h2>
+<h2>ERP 로그인</h2>
     <!-- 로그인 폼 -->
     <form th:action="@{/salLogin}" method="post">
       <input type="hidden" name="role" id="role-input" value="saller">
       <div class="input-field">
-        <input type="text" name="salId" placeholder="아이디" required >
+        <input type="text" name="empId" placeholder="아이디" required >
       </div>
       <div class="input-field">
-        <input type="password" name="salPw" placeholder="비밀번호" required>
+        <input type="password" name="empPw" placeholder="비밀번호" required>
       </div>
       <div class="input-field">
         <label>
@@ -39,7 +40,8 @@
             <button type="submit" class="btn-primary">로그인</button>
       </form>
        <div class="link-small">
-      	 <a th:href="@{/register}">회원가입</a>
+      	 <a th:href="@{/register}">회원가입</a> |
+      	 <a th:href="@{/findpw}">비밀번호 찾기</a>      
        </div>
       </div>
 </th:block>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.erp.mapper.DashBoardMapper">
+<!-- 부서별 재직중인 사원수 대시보드 -->
+<select id="selectActiveMembersByDepartment" resultType="com.yedam.erp.vo.common.DashBoardVO">
+        SELECT
+            T1.dept_name AS deptName,
+            COUNT(T2.dept_code) AS memberCount
+        FROM
+            dept T1        
+        LEFT JOIN
+            emp T2         
+        ON
+            T1.dept_code = T2.dept_code
+            AND T2.leave_date IS NULL
+        GROUP BY
+            T1.dept_name
+        ORDER BY
+            memberCount DESC
+    </select>
+</mapper>

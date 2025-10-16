@@ -24,5 +24,10 @@ public interface SubscriptionService {
     List<SubscriptionVO> findSubscriptionsByComCode(String comCode);
     //SubscriptionVO findLatestSubscriptionByComCode(@Param("comCode") String comCode);
     SubscriptionVO findLatestSubscriptionByMatNo(@Param("matNo") Long matNo);
+ // 빌링키를 DB에 저장하는 서비스 메서드
+    void saveBillingKey(String customerKey, String billingKey);
+    SubscriptionVO createPendingSubscription(SubscriptionVO subscriptionVO);
+    List<SubscriptionVO> findSubscriptionsDueForPaymentToday();
+    void processAutomaticPayment(SubscriptionVO subscription);
 
 }
