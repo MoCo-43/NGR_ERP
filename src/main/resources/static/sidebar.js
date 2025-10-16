@@ -119,7 +119,7 @@ mains: {
             title: "마이페이지", 
             items: [
                 ["마이페이지", /*[[@{/mypage/mylist(empId=${session.loginUser.empId})}]]*/ '/mypage/mylist'],
-                ["일정관리","/mypage/schedules"]
+                //["일정관리","/mypage/schedules"]
             ]
         }
     ],

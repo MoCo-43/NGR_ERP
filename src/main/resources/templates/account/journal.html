@@ -111,7 +111,9 @@
 					<button class="btn btn-outline-danger btn-sm" id="btnToggleDiff">차액별</button>
 				</div>
 				<!-- 일반전표 목록 Grid -->
+				<div id="generalGridWrapper" style="position:relative;">
 				<div id="generalVoucherGrid" class="ag-theme-quartz"></div>
+				</div>
 			</div>
 			 <input class="form-control" id="compCode" name="compCode" type="hidden">
 		</div>
@@ -179,6 +181,7 @@ function newInputRow(){
 
 // 목록 로드 + 차액행 처리
 async function loadList() {
+	showLoader("generalGridWrapper", "데이터를 불러오는 중입니다...");
 	const today = todayStr();
     document.getElementById("fromDate").value = today;
     document.getElementById("toDate").value = today;
@@ -188,7 +191,7 @@ async function loadList() {
 
   // 오늘 날짜만 필터
   rows = rows.filter(r => r.jrnDate.substring(0,10) === today);
-
+  hideLoader("generalGridWrapper")
   // === 전표별 차변/대변 합계 계산 ===
   const grouped = {};
   rows.forEach(r => {
@@ -249,7 +252,7 @@ async function loadFilteredList() {
     gvApi.refreshClientSideRowModel('sort');
   } catch(err) {
     console.error(err);
-    alert("조회 실패");
+    toastr.error("조회 실패");
   }
 }
 
@@ -263,12 +266,12 @@ async function saveRow(data){
   console.log("▶ saveRow 호출됨, 원본 data:", data);
 
   if (data._isDiffRow) {
-    alert("차액 행은 저장할 수 없습니다.");
+    toastr.info("차액 행은 저장할 수 없습니다.");
     return;
   }
 
   if  (data.status.toLowerCase() === "closed" || data.status.toLowerCase() === "reverse") {
-    alert("마감(CLOSE/REVERSE)된 전표는 수정할 수 없습니다.");
+    toastr.info("마감(CLOSE/REVERSE)된 전표는 수정할 수 없습니다.");
     return;
   }
 
@@ -307,6 +310,7 @@ async function saveRow(data){
     } else {
       res = await axios.put(`/api/account/journal/${payload.jrnCode}/${payload.lineNo}`, payload);
     }
+    toastr.success("저장완료");
     console.log("▶ 서버 응답:", res.data);
   } catch (err) {
     console.error("▶ 저장 중 오류:", err);
@@ -345,14 +349,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     { headerName: "계정코드", field: "acctCode", editable: true, flex: 1.1, onCellClicked: (params) => { 
     	 const status = (params.data?.status || "").toLowerCase();
  	    if (status === "closed" || status === "reverse") {
- 	      alert("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
+ 	      toastr.info("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
  	      return;
  	    }selectedRowNode = params.node; 
     bootstrap.Modal.getOrCreateInstance(document.getElementById("accountModal")).show(); }},
     { headerName: "계정", field: "acctName", editable: true, flex: 1.2, onCellClicked: (params) => { 
     	 const status = (params.data?.status || "").toLowerCase();
  	    if (status === "closed" || status === "reverse") {
- 	      alert("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
+ 	      toastr.info("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
  	      return;
  	    }selectedRowNode = params.node; 
     bootstrap.Modal.getOrCreateInstance(document.getElementById("accountModal")).show(); }},
@@ -361,7 +365,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     	  onCellClicked: (params) => { 
     	    const status = (params.data?.status || "").toLowerCase();
     	    if (status === "closed" || status === "reverse") {
-    	      alert("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
+    	      toastr.info("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
     	      return;
     	    }
     	    selectedRowNode = params.node; 
@@ -373,7 +377,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       	  onCellClicked: (params) => { 
       	    const status = (params.data?.status || "").toLowerCase();
       	    if (status === "closed" || status === "reverse") {
-      	      alert("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
+      	      toastr.info("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
       	      return;
       	    }
       	    selectedRowNode = params.node; 
@@ -423,6 +427,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 document.getElementById("btnToggleDiff").addEventListener("click", () => {
   showDiffRows = !showDiffRows;
+  toastr.info(showDiffRows ? "차액행 표시 ON" : "차액행 표시 OFF");
   loadList();
 });
 

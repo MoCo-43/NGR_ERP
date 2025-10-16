@@ -159,7 +159,7 @@ public class AccountController {
     public ResponseEntity<?> reverseJournal(@RequestBody Map<String, Object> body) {
         Long companyCode = SessionUtil.companyId();
         String originJrnNos = (String) body.get("originJrnNos"); // "JRN001,JRN002"
-        String createdBy = SessionUtil.empId();
+        String createdBy = SessionUtil.empName();
 
         journalService.reverseJournalCsv(companyCode, originJrnNos, createdBy);
         return ResponseEntity.ok(Map.of("success", true));
@@ -296,6 +296,8 @@ public class AccountController {
 	    @PostMapping("/payrollHist/save")
 	    public ResponseEntity<?> registerPayrollJournal(@RequestBody PayrollJournalVO vo) {
 	        try {
+	        	vo.setCreatedBy(SessionUtil.empName());
+	        	vo.setCompanyCode(SessionUtil.companyId());
 	            String histCode = payrollService.registerPayrollJournal(vo);
 	            return ResponseEntity.ok(histCode);
 	        } catch (Exception e) {
@@ -318,9 +320,7 @@ public class AccountController {
 	        return profitStatementService.getMonthlyProfit(param);
 	    }
 
-
-
-
+	    
 
 
 }

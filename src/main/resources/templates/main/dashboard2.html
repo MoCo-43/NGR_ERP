@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
+<head>
+<title>대시보드</title>
+
+<th:block layout:fragment="head_extra">
+	<script
+		src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+	<style>
+/* 1. 기본 레이아웃 재정의 (필요한 경우) */
+html, body {
+	height: 100%;
+	margin: 0;
+}
+
+/* 2. 대시보드 전체 컨테이너 설정 */
+.dashboard-container {
+	height: calc(100vh - 120px); /* 뷰포트 전체 높이에서 상단 메뉴바 등을 고려해 120px 제외 */
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	overflow: hidden;
+}
+
+/* 3. 상단 통계 타일 그룹 */
+.stats-group {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 20px;
+	flex-shrink: 0;
+}
+
+.stat-card {
+	background-color: #f7f7f7;
+	padding: 15px 20px;
+	border-radius: 4px;
+	border: 1px solid #ddd;
+	height: 90px;
+}
+
+.stat-label {
+	font-size: 0.9em;
+	color: #666;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 5px;
+}
+
+.stat-value {
+	font-size: 2em;
+	font-weight: bold;
+	color: #333;
+}
+
+.stat-icon {
+	font-size: 24px;
+}
+
+/* 4. 하단 모듈 그룹 (2x2 Layout) */
+.modules-group {
+	flex-grow: 1;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	gap: 20px;
+	overflow: hidden;
+}
+
+.module-card {
+	background-color: #ffffff;
+	padding: 10px;
+	border-radius: 4px;
+	border: 1px solid #ddd;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.module-title {
+	font-size: 1.1em;
+	font-weight: bold;
+	margin-bottom: 10px;
+	padding: 5px;
+	color: #333;
+	background-color: #f0f0f0;
+	flex-shrink: 0;
+}
+
+/* Chart.js 캔버스 스타일 */
+canvas {
+	flex-grow: 1;
+	width: 100% !important;
+	height: 100% !important;
+	max-height: 100%;
+}
+</style>
+</th:block>
+</head>
+<body>
+	<section layout:fragment="content">
+
+		<div class="dashboard-container">
+
+			<div class="stats-group">
+
+				<div class="stat-card">
+					<div class="stat-label">
+						<span>근무 중 인원</span><span class="stat-icon">👥</span>
+					<div class="stat-value">10명</div>
+					</div>
+				</div>
+
+				<div class="stat-card">
+					<div class="stat-label">
+						<span>이번 날 매출</span><span class="stat-icon">📈</span>
+					<div class="stat-value">₩ 0</div>
+					</div>
+				</div>
+
+				<div class="stat-card">
+					<div class="stat-label">
+						<span>재고 현황</span><span class="stat-icon">🛍️</span>
+					<div class="stat-value">0개</div>
+					</div>
+				</div>
+
+			</div>
+
+			<div class="modules-group">
+
+				<div class="module-card">
+					<div class="module-title">영업 모듈</div>
+					<canvas id="salesChart"></canvas>
+				</div>
+
+				<div class="module-card">
+					<div class="module-title">인사 모듈</div>
+					<canvas id="inventoryChart"></canvas>
+				</div>
+
+				<div class="module-card">
+					<div class="module-title">재고 모듈</div>
+					<canvas id="hrChart"></canvas>
+				</div>
+
+				<div class="module-card">
+					<div class="module-title">회계 모듈</div>
+					<canvas id="accountingChart"></canvas>
+				</div>
+
+			</div>
+
+		</div>
+
+
+		<script th:inline="javascript">
+			// Chart.js로 차트를 그리는 함수
+			function createChart(canvasId, type, data) {
+				const ctx = document.getElementById(canvasId);
+				if (!ctx)
+					return;
+
+				new Chart(ctx.getContext('2d'), {
+					type : type,
+					data : data,
+					options : {
+						responsive : true,
+						maintainAspectRatio : false, // 캔버스 크기를 부모 컨테이너에 맞춤
+						// ✅ [수정됨] 범례를 표시하도록 변경
+						plugins : {
+							legend : {
+								display : true,
+								position : 'top',
+								labels : {
+									font : {
+										size : 10
+									}
+								}
+							}
+						},
+						scales : {
+							y : {
+								ticks : {
+									font : {
+										size : 10
+									}
+								}
+							},
+							x : {
+								ticks : {
+									font : {
+										size : 10
+									}
+								}
+							}
+						}
+					}
+				});
+			}
+
+			// 데이터 정의
+			const salesData = {
+				labels : [ '1Q', '2Q', '3Q', '4Q' ],
+				datasets : [ {
+					label : '분기 매출',
+					data : [ 12, 19, 3, 5 ],
+					backgroundColor : 'rgba(75, 192, 192, 0.8)',
+					borderWidth : 1
+				} ]
+			};
+			const inventoryData = {
+				labels : [ 'A 상품', 'B 상품', 'C 상품' ],
+				datasets : [ {
+					data : [ 300, 50, 100 ],
+					backgroundColor : [ '#FF6384', '#36A2EB', '#FFCE56' ]
+				} ]
+			};
+			const hrData = {
+				labels : [ '월', '화', '수', '목', '금' ],
+				datasets : [ {
+					label : '휴가 사용률',
+					data : [ 1, 3, 2, 4, 1 ],
+					fill : false,
+					borderColor : 'rgb(255, 99, 132)',
+					tension : 0.1
+				} ]
+			};
+
+			// ✅ [수정됨] 회계 데이터를 2개의 데이터셋을 가진 라인 차트 형식으로 변경
+			const accountingData = {
+				labels : [ '4월', '5월', '6월', '7월', '8월', '9월', '10월' ],
+				datasets : [ {
+					label : '수익',
+					data : [ 120, 190, 150, 210, 180, 200, 240 ], // 임의의 수익 데이터
+					borderColor : 'rgb(54, 162, 235)',
+					backgroundColor : 'rgba(54, 162, 235, 0.5)',
+					tension : 0.1
+				}, {
+					label : '비용',
+					data : [ 80, 110, 90, 100, 120, 115, 130 ], // 임의의 비용 데이터
+					borderColor : 'rgb(255, 99, 132)',
+					backgroundColor : 'rgba(255, 99, 132, 0.5)',
+					tension : 0.1
+				} ]
+			};
+
+			// 차트 생성
+			createChart('salesChart', 'bar', salesData);
+			createChart('inventoryChart', 'doughnut', inventoryData);
+			createChart('hrChart', 'line', hrData);
+			createChart('accountingChart', 'line', accountingData);
+		</script>
+
+	</section>
+</body>
+</html>

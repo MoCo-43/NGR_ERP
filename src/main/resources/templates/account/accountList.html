@@ -82,8 +82,9 @@
 							업로드</button>
 					</form>
 				</div>
-
-				<div id="grid" class="ag-theme-quartz"></div>
+				<div id="gridWrapper" style="position:relative;">
+				 <div id="grid" class="ag-theme-quartz"></div>
+				</div>
 			</div>
 		</div>
 	</section>
@@ -100,11 +101,13 @@
         let gridApi;
         
         window.loadAndRender = async function () {
+         showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
           const { data } = await axios.get("/api/account/list");
           const rows = Array.isArray(data) ? data : [];
           gridApi?.setGridOption
             ? gridApi.setGridOption("rowData", rows)
             : gridApi.setRowData(rows);
+         hideLoader("gridWrapper");
         };
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -177,7 +180,7 @@
                       )}/useYN`
                     );
                   } catch (e) {
-                    alert("DB 반영 실패");
+                    toastr.error("DB 반영 실패");
                     console.error(e);
 
                     // 실패 시 원상복구
@@ -254,7 +257,7 @@
 
             const fileInput = document.getElementById("fileInput");
             if (!fileInput.files.length) {
-              alert("파일을 선택하세요");
+              toastr.info("파일을 선택하세요");
               return;
             }
 
@@ -266,12 +269,12 @@
                 headers: { "Content-Type": "multipart/form-data" },
               })
               .then(() => {
-                alert("업로드 성공");
+                toastr.success("업로드 성공");
                 loadAndRender("");
               })
               .catch((err) => {
                 console.error(err);
-                alert("업로드실패");
+                toastr.error("업로드 실패");
               });
           });
 

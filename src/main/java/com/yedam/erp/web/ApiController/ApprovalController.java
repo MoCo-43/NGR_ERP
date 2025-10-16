@@ -80,7 +80,7 @@ public class ApprovalController {
         String signPath = (String) body.get("signPath");
 
         Long companyCode = SessionUtil.companyId();
-        String approver  = SessionUtil.empId();
+        String approver  = SessionUtil.empName();
 
         int updated = approvalService.approveWithSign(docType, ids, signPath, companyCode, approver);
         return ResponseEntity.ok(Map.of("updated", updated));

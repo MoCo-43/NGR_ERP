@@ -110,21 +110,21 @@ canvas {
 				<div class="stat-card">
 					<div class="stat-label">
 						<span>근무 중 인원</span><span class="stat-icon">👥</span>
-					<div class="stat-value">10명</div>
+						<div class="stat-value">10명</div>
 					</div>
 				</div>
 
 				<div class="stat-card">
 					<div class="stat-label">
 						<span>이번 날 매출</span><span class="stat-icon">📈</span>
-					<div class="stat-value">₩ 0</div>
+						<div class="stat-value">₩ 0</div>
 					</div>
 				</div>
 
 				<div class="stat-card">
 					<div class="stat-label">
 						<span>재고 현황</span><span class="stat-icon">🛍️</span>
-					<div class="stat-value">0개</div>
+						<div class="stat-value">0개</div>
 					</div>
 				</div>
 
@@ -140,6 +140,7 @@ canvas {
 				<div class="module-card">
 					<div class="module-title">인사 모듈</div>
 					<canvas id="inventoryChart"></canvas>
+					<!-- ⭐️ 이 캔버스 ID에 DB 데이터를 로드합니다. -->
 				</div>
 
 				<div class="module-card">
@@ -158,102 +159,157 @@ canvas {
 
 
 		<script th:inline="javascript">
-			// Chart.js로 차트를 그리는 함수
-			function createChart(canvasId, type, data) {
-				const ctx = document.getElementById(canvasId);
-				if (!ctx)
-					return;
+  // Chart.js 공통 생성 함수
+  function createChart(canvasId, type, data, extraOptions = {}) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
 
-				new Chart(ctx.getContext('2d'), {
-					type : type,
-					data : data,
-					options : {
-						responsive : true,
-						maintainAspectRatio : false, // 캔버스 크기를 부모 컨테이너에 맞춤
-						// ✅ [수정됨] 범례를 표시하도록 변경
-						plugins : {
-							legend : {
-								display : true,
-								position : 'top',
-								labels : {
-									font : {
-										size : 10
-									}
-								}
-							}
-						},
-						scales : {
-							y : {
-								ticks : {
-									font : {
-										size : 10
-									}
-								}
-							},
-							x : {
-								ticks : {
-									font : {
-										size : 10
-									}
-								}
-							}
-						}
-					}
-				});
-			}
+    new Chart(ctx.getContext('2d'), {
+      type: type,
+      data: data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: extraOptions.indexAxis || 'x',
+        plugins: {
+          legend: { display: true, position: 'top', labels: { font: { size: 10 } } },
+          title: extraOptions.title || {}
+        },
+        scales: {
+          y: {
+            ticks: { font: { size: 10 } },
+            beginAtZero: true
+          },
+          x: {
+            ticks: { font: { size: 10 }, callback: v => v.toLocaleString() + '원' },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
 
-			// 데이터 정의
-			const salesData = {
-				labels : [ '1Q', '2Q', '3Q', '4Q' ],
-				datasets : [ {
-					label : '분기 매출',
-					data : [ 12, 19, 3, 5 ],
-					backgroundColor : 'rgba(75, 192, 192, 0.8)',
-					borderWidth : 1
-				} ]
-			};
-			const inventoryData = {
-				labels : [ 'A 상품', 'B 상품', 'C 상품' ],
-				datasets : [ {
-					data : [ 300, 50, 100 ],
-					backgroundColor : [ '#FF6384', '#36A2EB', '#FFCE56' ]
-				} ]
-			};
-			const hrData = {
-				labels : [ '월', '화', '수', '목', '금' ],
-				datasets : [ {
-					label : '휴가 사용률',
-					data : [ 1, 3, 2, 4, 1 ],
-					fill : false,
-					borderColor : 'rgb(255, 99, 132)',
-					tension : 0.1
-				} ]
-			};
+  // --- 1. 영업 모듈 ---
+  const salesData = {
+    labels: ['1Q', '2Q', '3Q', '4Q'],
+    datasets: [{
+      label: '분기 매출',
+      data: [12, 19, 3, 5],
+      backgroundColor: 'rgba(75, 192, 192, 0.8)',
+      borderWidth: 1
+    }]
+  };
 
-			// ✅ [수정됨] 회계 데이터를 2개의 데이터셋을 가진 라인 차트 형식으로 변경
-			const accountingData = {
-				labels : [ '4월', '5월', '6월', '7월', '8월', '9월', '10월' ],
-				datasets : [ {
-					label : '수익',
-					data : [ 120, 190, 150, 210, 180, 200, 240 ], // 임의의 수익 데이터
-					borderColor : 'rgb(54, 162, 235)',
-					backgroundColor : 'rgba(54, 162, 235, 0.5)',
-					tension : 0.1
-				}, {
-					label : '비용',
-					data : [ 80, 110, 90, 100, 120, 115, 130 ], // 임의의 비용 데이터
-					borderColor : 'rgb(255, 99, 132)',
-					backgroundColor : 'rgba(255, 99, 132, 0.5)',
-					tension : 0.1
-				} ]
-			};
+  // --- 2. 인사 모듈 (재고 영역 차용) ---
+  const hrData = {
+    labels: ['월', '화', '수', '목', '금'],
+    datasets: [{
+      label: '휴가 사용률',
+      data: [1, 3, 2, 4, 1],
+      fill: false,
+      borderColor: 'rgb(255, 99, 132)',
+      tension: 0.1
+    }]
+  };
 
-			// 차트 생성
-			createChart('salesChart', 'bar', salesData);
-			createChart('inventoryChart', 'doughnut', inventoryData);
-			createChart('hrChart', 'line', hrData);
-			createChart('accountingChart', 'line', accountingData);
-		</script>
+  // --- 3. 손익 데이터 크롤링 ---
+  async function fetchProfitValue() {
+  try {
+    // 손익계산서 페이지 HTML 가져오기
+    const res = await fetch('/account/profit-statement');
+    const html = await res.text();
+
+    // DOMParser로 HTML 파싱
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+
+    // input 값 추출
+    const profitLabel = doc.querySelector('#profit')?.value || '당기순손익';
+    const curProfit = Number(doc.querySelector('#curProfit')?.value || 0);
+    const prvProfit = Number(doc.querySelector('#prvProfit')?.value || 0);
+
+    console.log("📊 손익 데이터 크롤링 결과:", { profitLabel, curProfit, prvProfit });
+
+    return { profitLabel, curProfit, prvProfit };
+  } catch (err) {
+    console.error('❌ 손익 데이터 크롤링 실패:', err);
+    return { profitLabel: '당기순손익', curProfit: 0, prvProfit: 0 };
+  }
+}
+
+
+  // --- 4. 회계 모듈 (가로 막대 차트) ---
+ async function renderAccountingChart() {
+  const { profitLabel, curProfit, prvProfit } = await fetchProfitValue();
+
+  const accountingData = {
+    labels: ['전월', '당월'],
+    datasets: [{
+      label: profitLabel,
+      data: [prvProfit, curProfit],
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.7)',  // 전월
+        'rgba(54, 162, 235, 0.7)'   // 당월
+      ],
+      borderWidth: 1
+    }]
+  };
+
+  createChart('accountingChart', 'bar', accountingData, {
+    indexAxis: 'y', // 가로 막대
+    title: {
+      display: true,
+      text: '당기순손익 (전월 vs 당월)',
+      font: { size: 13 }
+    }
+  });
+}
+
+  // --- 5. 인사 모듈 데이터 로드 ---
+  async function fetchHrMembersChart() {
+    const canvasId = 'inventoryChart';
+    try {
+      const response = await fetch('/empmembers');
+      if (!response.ok) throw new Error(`HTTP 요청 실패: ${response.status}`);
+      const dataList = await response.json();
+
+      const labels = dataList.map(item => item.deptName);
+      const memberCounts = dataList.map(item => item.memberCount);
+
+      const dynamicHrData = {
+        labels,
+        datasets: [{
+          label: '부서별 재직 인원수',
+          data: memberCounts,
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.8)',
+            'rgba(54, 162, 235, 0.8)',
+            'rgba(255, 206, 86, 0.8)',
+            'rgba(75, 192, 192, 0.8)',
+            'rgba(153, 102, 255, 0.8)',
+            'rgba(255, 159, 64, 0.8)'
+          ],
+          borderWidth: 1
+        }]
+      };
+
+      createChart(canvasId, 'doughnut', dynamicHrData);
+    } catch (error) {
+      console.error("인사 모듈 데이터를 가져오는데 실패했습니다:", error);
+      const errorData = {
+        labels: ['로딩 실패'],
+        datasets: [{ data: [1], backgroundColor: ['#ccc'] }]
+      };
+      createChart(canvasId, 'doughnut', errorData);
+    }
+  }
+
+  // --- 6. 모든 차트 렌더링 ---
+  createChart('salesChart', 'bar', salesData);
+  fetchHrMembersChart();
+  createChart('hrChart', 'line', hrData);
+  renderAccountingChart(); // ✅ 회계 모듈은 비동기 렌더링
+</script>
 
 	</section>
 </body>

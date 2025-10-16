@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.account.JournalMapper;
 import com.yedam.erp.mapper.account.PaymentMapper;
+import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.account.AutoJournalService;
 import com.yedam.erp.service.account.MoneyService;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
@@ -60,6 +61,7 @@ public class MoneyServiceImpl implements MoneyService {
 
         // 5️⃣ 일반전표 등록 (한 줄씩 insert)
         for (JournalVO j : journals) {
+        	j.setCreatedBy(SessionUtil.empName());
             j.setJrnNo(jrnNo);
             j.setLineNo((long) idx++);
             j.setJrnDate(new java.util.Date());

@@ -13,8 +13,7 @@
 						class="table table-hover table-sm align-middle edu-table w-100">
 
 						<thead class="table-light">
-							<tr>
-								<th class="sticky-th">번호</th>
+							<tr>								
 								<th class="sticky-th">교육명</th>
 								<th class="sticky-th">종류</th>
 								<th class="sticky-th">결과</th>
@@ -25,8 +24,7 @@
 							</tr>
 						</thead>
 						<tbody id="eduTbody">
-							<tr th:each="edu, stat : ${eduList}">
-								<td th:text="${stat.count}"></td>
+							<tr th:each="edu, stat : ${eduList}">								
 								<td th:text="${edu.eduName}"></td>
 								<td th:text="${edu.eduType}"></td>
 								<td th:text="${edu.result}"></td>
