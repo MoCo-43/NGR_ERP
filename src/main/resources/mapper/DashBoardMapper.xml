@@ -13,9 +13,11 @@
         ON
             T1.dept_code = T2.dept_code
             AND T2.leave_date IS NULL
+        WHERE
+    		T1.use_yn = 'Y'
         GROUP BY
             T1.dept_name
         ORDER BY
-            memberCount DESC
+            memberCount DESC 
     </select>
 </mapper>
