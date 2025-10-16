@@ -17,8 +17,8 @@ public class EmpEduVO {
     private String result;    // 결과
     private Integer score;    // 점수
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")     // 요청 파싱(폼/쿼리스트링)
-    @JsonFormat(pattern = "yyyy-MM-dd")         // 응답 직렬화(JSON)
+    @DateTimeFormat(pattern = "yyyy-MM-dd")     // 요청 파싱
+    @JsonFormat(pattern = "yyyy-MM-dd")         // 응답 직렬화
     private Date completeAt; // 수료일
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")

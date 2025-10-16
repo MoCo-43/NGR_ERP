@@ -305,7 +305,7 @@
 
       (bootstrap.Modal.getInstance($('empModal'))||new bootstrap.Modal($('empModal'))).hide();
       document.dispatchEvent(new CustomEvent('emp:saved'));
-      alert('저장되었습니다.');
+     toastr.success('저장되었습니다.');
     }
 
     // 저장 버튼 라우팅
@@ -382,7 +382,7 @@
         set('f_leaveReason',row.leaveReason||'');
         set('f_bankCode',row.bankCode||''); set('f_bankName', row.bankName || ''); set('f_accountNo',row.accountNo||''); set('f_accountName',row.accountName||'');
         set('f_zipCode',row.zipCode||''); set('f_address',row.address||'');
-        // 결혼 여부/자녀 수 값 세팅
+        set('f_family_cnt',   row.familyCnt ?? 0);
         set('f_marital_status', row.maritalStatus || 'SINGLE');
         set('f_children_cnt',   row.childrenCnt ?? 0);
         

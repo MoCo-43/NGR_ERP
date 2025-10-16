@@ -17,19 +17,33 @@
       e.account_no       AS accountNo,
       e.name             AS accountHolder,
       ps.net_pay         AS netPay,
-      p.company_code     AS companyCode
+      p.company_code     AS companyCode,
+      d.dept_name        AS deptName,
+      c.code_name        AS bankName    
+
   FROM payroll p
   JOIN payroll_summary ps
     ON ps.payroll_no   = p.payroll_no
    AND ps.company_code = p.company_code
+
   JOIN emp e
     ON e.emp_id        = ps.emp_id
    AND e.company_code  = ps.company_code
+
+  JOIN dept d
+    ON d.dept_code     = e.dept_code
+   AND d.company_code  = e.company_code
+
+  LEFT JOIN commoncode c
+    ON LPAD(c.code_id, 2, '0') = LPAD(e.bank_code, 2, '0')
+   AND c.group_id = 'BK'
+   AND c.use_yn = 'Y'
+
   WHERE p.year_month   = #{payYm}
-    AND p.company_code = #{companyCode}  
+    AND p.company_code = #{companyCode}
     AND p.status       = 'CONFIRMED'
-  ORDER BY e.bank_code, e.name
+
+  ORDER BY c.sort_order, e.name
 </select>
-  
 
 </mapper>

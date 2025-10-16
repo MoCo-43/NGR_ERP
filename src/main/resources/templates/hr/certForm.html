@@ -79,7 +79,7 @@
         // 목록 행 구성: 자격번호/명/등급/발급기관/취득일/유효기간/삭제
         tbody.innerHTML = list.map(r=>`
           <tr data-id="${r.certNo ?? r.CERT_NO}">
-            <td>${r.certNo ?? r.CERT_NO}</td>
+            
             <td class="flex-grow-2">${r.certName ?? r.CERT_NAME ?? ''}</td>
             <td>${r.grade ?? r.GRADE ?? ''}</td>
             <td>${r.orgName ?? r.ORG_NAME ?? ''}</td>
@@ -154,8 +154,8 @@
           state.empId = id || '';
           if ($('certEmpId')) $('certEmpId').value = state.empId;
         },
-        refresh,                 // 목록 새로고침
-        clear(){                 // 폼+목록 초기화
+        refresh,               
+        clear(){                
           clearForm();
           renderCert([]);
         },

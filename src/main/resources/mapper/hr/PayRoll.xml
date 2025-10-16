@@ -3,7 +3,8 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yedam.erp.mapper.hr.PayrollMapper">
-  <!-- 급여대장 목록 (회사/연월) -->
+
+  <!-- 급여대장 목록 -->
   <select id="selectPayrollList"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="com.yedam.erp.vo.hr.PayrollVO">
@@ -18,9 +19,14 @@
       d.dept_name,
       p.jrn_date,
       p.jrn_no,
-      (SELECT COUNT(*) FROM emp e
-         WHERE e.company_code = p.company_code
-           AND e.dept_code    = p.dept_code) AS emp_count
+      (
+        SELECT COUNT(*)
+        FROM emp e
+        WHERE e.company_code = p.company_code
+          AND e.dept_code    = p.dept_code
+          AND e.join_date &lt;= LAST_DAY(TO_DATE(p.year_month, 'YYYYMM'))
+          AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE(p.year_month, 'YYYYMM')))
+      ) AS emp_count
     FROM payroll p
     JOIN dept d
       ON d.company_code = p.company_code
@@ -31,7 +37,8 @@
     </if>
     ORDER BY p.year_month DESC, d.dept_name ASC
   </select>
-  <!-- 급여대장 단건  -->
+
+  <!-- 급여대장 단건 -->
   <select id="selectPayroll"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="com.yedam.erp.vo.hr.PayrollVO">
@@ -44,9 +51,14 @@
       p.title        AS title,
       p.pay_date     AS payDate,
       p.status       AS status,
-      (SELECT COUNT(*) FROM emp e
-         WHERE e.company_code = p.company_code
-           AND e.dept_code    = p.dept_code) AS empCount
+      (
+        SELECT COUNT(*)
+        FROM emp e
+        WHERE e.company_code = p.company_code
+          AND e.dept_code    = p.dept_code
+          AND e.join_date &lt;= LAST_DAY(TO_DATE(p.year_month, 'YYYYMM'))
+          AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE(p.year_month, 'YYYYMM')))
+      ) AS empCount
     FROM payroll p
     JOIN dept d
       ON d.company_code = p.company_code
@@ -54,7 +66,8 @@
     WHERE p.payroll_no   = #{payrollNo}
       AND p.company_code = #{companyCode}
   </select>
-  <!-- 급여대장 등록 -->
+
+  <!-- 급여대장 등록 (해당 연월 기준 재직자가 있는 부서만 생성) -->
   <insert id="insertPayroll" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     INSERT INTO payroll (
       payroll_no, company_code, year_month, dept_code, title, pay_date, status
@@ -66,27 +79,29 @@
       e.dept_code,
       NVL(#{title},
           TO_CHAR(#{yearMonth}) || ' ' ||
-          (SELECT d.dept_name FROM dept d
+          (SELECT d.dept_name
+             FROM dept d
             WHERE d.company_code = #{companyCode}
               AND d.dept_code    = e.dept_code)),
       #{payDate},
       'DRAFT'
     FROM (
-      SELECT DISTINCT dept_code
-      FROM emp
-      WHERE company_code = #{companyCode}
+      SELECT DISTINCT e.dept_code
+        FROM emp e
+       WHERE e.company_code = #{companyCode}
+         AND e.join_date &lt;= LAST_DAY(TO_DATE(#{yearMonth}, 'YYYYMM'))
+         AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE(#{yearMonth}, 'YYYYMM')))
     ) e
     WHERE NOT EXISTS (
       SELECT 1
-      FROM payroll p
-      WHERE p.company_code = #{companyCode}
-        AND p.year_month   = #{yearMonth}
-        AND p.dept_code    = e.dept_code
+        FROM payroll p
+       WHERE p.company_code = #{companyCode}
+         AND p.year_month   = #{yearMonth}
+         AND p.dept_code    = e.dept_code
     )
   </insert>
 
-  <!-- 급여대장 수정  -->
-
+  <!-- 급여대장 수정 -->
   <update id="updatePayroll" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     UPDATE payroll
        SET title    = #{title},
@@ -102,6 +117,7 @@
      WHERE payroll_no   = #{payrollNo}
        AND company_code = #{companyCode}
   </update>
+
   <!-- 조건 조회 (회사/연월/부서/상태) -->
   <select id="selectPayrollListByCond"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
@@ -115,9 +131,14 @@
       p.pay_date,
       p.status,
       d.dept_name,
-      (SELECT COUNT(*) FROM emp e
-         WHERE e.company_code = p.company_code
-           AND e.dept_code    = p.dept_code) AS emp_count
+      (
+        SELECT COUNT(*)
+        FROM emp e
+        WHERE e.company_code = p.company_code
+          AND e.dept_code    = p.dept_code
+          AND e.join_date &lt;= LAST_DAY(TO_DATE(p.year_month, 'YYYYMM'))
+          AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE(p.year_month, 'YYYYMM')))
+      ) AS emp_count
     FROM payroll p
     JOIN dept d
       ON d.company_code = p.company_code
@@ -135,36 +156,46 @@
     ORDER BY p.year_month DESC, d.dept_name ASC
   </select>
 
-  <!-- 수당 PIVOT IN 리스트-->
+  <!-- 수당 PIVOT IN 리스트 -->
   <select id="selectAllowColList"
           parameterType="com.yedam.erp.vo.hr.PayrollVO"
           resultType="string">
     WITH base_emp AS (
       SELECT e.emp_id
-      FROM emp e
-      WHERE e.company_code = #{companyCode}
-        AND e.dept_code = (
-          SELECT p.dept_code
-          FROM payroll p
-          WHERE p.payroll_no   = #{payrollNo}
-            AND p.company_code = #{companyCode}
-        )
+        FROM emp e
+       WHERE e.company_code = #{companyCode}
+         AND e.dept_code = (
+           SELECT p.dept_code
+             FROM payroll p
+            WHERE p.payroll_no   = #{payrollNo}
+              AND p.company_code = #{companyCode}
+         )
+         AND e.join_date &lt;= LAST_DAY(TO_DATE((
+               SELECT p.year_month FROM payroll p
+                WHERE p.payroll_no   = #{payrollNo}
+                  AND p.company_code = #{companyCode}
+             ), 'YYYYMM'))
+         AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE((
+               SELECT p.year_month FROM payroll p
+                WHERE p.payroll_no   = #{payrollNo}
+                  AND p.company_code = #{companyCode}
+             ), 'YYYYMM')))
     ),
     label_union AS (
       SELECT TRIM(a.allow_name) AS label
-      FROM pay_allow_code a
-      WHERE a.company_code = #{companyCode}
-        AND a.use_yn = 'Y'
+        FROM pay_allow_code a
+       WHERE a.company_code = #{companyCode}
+         AND a.use_yn = 'Y'
       UNION
       SELECT DISTINCT TRIM(epf.emp_allow_label) AS label
-      FROM emp_pay_fix epf
-      WHERE epf.company_code = #{companyCode}
-        AND epf.pay_type = 'ALLOW'
-        AND epf.emp_id IN (SELECT emp_id FROM base_emp)
+        FROM emp_pay_fix epf
+       WHERE epf.company_code = #{companyCode}
+         AND epf.pay_type = 'ALLOW'
+         AND epf.emp_id IN (SELECT emp_id FROM base_emp)
     )
     SELECT NVL(
       LISTAGG( '''' || label || ''' AS "AL_' || label || '"', ',' )
-      WITHIN GROUP (ORDER BY label),
+        WITHIN GROUP (ORDER BY label),
       '''__DUMMY__'' AS "AL___DUMMY__"'
     ) AS col_list
     FROM label_union
@@ -176,85 +207,103 @@
           resultType="string">
     WITH base_emp AS (
       SELECT e.emp_id
-      FROM emp e
-      WHERE e.company_code = #{companyCode}
-        AND e.dept_code = (
-          SELECT p.dept_code
-          FROM payroll p
-          WHERE p.payroll_no   = #{payrollNo}
-            AND p.company_code = #{companyCode}
-        )
+        FROM emp e
+       WHERE e.company_code = #{companyCode}
+         AND e.dept_code = (
+           SELECT p.dept_code
+             FROM payroll p
+            WHERE p.payroll_no   = #{payrollNo}
+              AND p.company_code = #{companyCode}
+         )
+         AND e.join_date &lt;= LAST_DAY(TO_DATE((
+               SELECT p.year_month FROM payroll p
+                WHERE p.payroll_no   = #{payrollNo}
+                  AND p.company_code = #{companyCode}
+             ), 'YYYYMM'))
+         AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE((
+               SELECT p.year_month FROM payroll p
+                WHERE p.payroll_no   = #{payrollNo}
+                  AND p.company_code = #{companyCode}
+             ), 'YYYYMM')))
     ),
     label_union AS (
       SELECT TRIM(d.deduct_name) AS label
-      FROM pay_deduct_code d
-      WHERE d.company_code = #{companyCode}
-        AND d.use_yn = 'Y'
+        FROM pay_deduct_code d
+       WHERE d.company_code = #{companyCode}
+         AND d.use_yn = 'Y'
       UNION
       SELECT DISTINCT TRIM(epf.emp_allow_label) AS label
-      FROM emp_pay_fix epf
-      WHERE epf.company_code = #{companyCode}
-        AND epf.pay_type = 'DEDUCT'
-        AND epf.emp_id IN (SELECT emp_id FROM base_emp)
+        FROM emp_pay_fix epf
+       WHERE epf.company_code = #{companyCode}
+         AND epf.pay_type = 'DEDUCT'
+         AND epf.emp_id IN (SELECT emp_id FROM base_emp)
     )
     SELECT NVL(
       LISTAGG( '''' || label || ''' AS "DC_' || label || '"', ',' )
-      WITHIN GROUP (ORDER BY label),
+        WITHIN GROUP (ORDER BY label),
       '''__DUMMY__'' AS "DC___DUMMY__"'
     ) AS col_list
     FROM label_union
   </select>
 
-
-  <!-- 사원별 급여 상세  -->
-
+  <!-- 사원별 급여 상세 -->
   <select id="selectPayrollDetailPivot" parameterType="map" resultType="map">
     WITH BASE_EMP AS (
       SELECT e.emp_id, e.name, e.position
-      FROM emp e
-      WHERE e.company_code = #{companyCode}
-        AND e.dept_code = (
-          SELECT p.dept_code
-          FROM payroll p
-          WHERE p.payroll_no   = #{payrollNo}
-            AND p.company_code = #{companyCode}
-        )
+        FROM emp e
+       WHERE e.company_code = #{companyCode}
+         AND e.dept_code = (
+           SELECT p.dept_code
+             FROM payroll p
+            WHERE p.payroll_no   = #{payrollNo}
+              AND p.company_code = #{companyCode}
+         )
+         AND e.join_date &lt;= LAST_DAY(TO_DATE((
+               SELECT p.year_month FROM payroll p
+                WHERE p.payroll_no   = #{payrollNo}
+                  AND p.company_code = #{companyCode}
+             ), 'YYYYMM'))
+         AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE((
+               SELECT p.year_month FROM payroll p
+                WHERE p.payroll_no   = #{payrollNo}
+                  AND p.company_code = #{companyCode}
+             ), 'YYYYMM')))
     ),
     ALLOW_SRC AS (
       SELECT epf.emp_id, TRIM(epf.emp_allow_label) AS item, epf.emp_allow_pay AS amount
-      FROM emp_pay_fix epf
-      WHERE epf.company_code = #{companyCode}
-        AND epf.pay_type = 'ALLOW'
-        AND epf.emp_id IN (SELECT emp_id FROM BASE_EMP)
+        FROM emp_pay_fix epf
+       WHERE epf.company_code = #{companyCode}
+         AND epf.pay_type = 'ALLOW'
+         AND epf.emp_id IN (SELECT emp_id FROM BASE_EMP)
     ),
     DEDUCT_SRC AS (
       SELECT epf.emp_id, TRIM(epf.emp_allow_label) AS item, epf.emp_allow_pay AS amount
-      FROM emp_pay_fix epf
-      WHERE epf.company_code = #{companyCode}
-        AND epf.pay_type = 'DEDUCT'
-        AND epf.emp_id IN (SELECT emp_id FROM BASE_EMP)
+        FROM emp_pay_fix epf
+       WHERE epf.company_code = #{companyCode}
+         AND epf.pay_type = 'DEDUCT'
+         AND epf.emp_id IN (SELECT emp_id FROM BASE_EMP)
     ),
     ALLOW_P AS (
       SELECT *
-      FROM (
-        SELECT b.emp_id AS emp_id_a, s.item, s.amount
-        FROM BASE_EMP b LEFT JOIN ALLOW_SRC s ON s.emp_id = b.emp_id
-      )
-      PIVOT (
-        SUM(amount)
-        FOR item IN (${allowCols})
-      )
+        FROM (
+          SELECT b.emp_id AS emp_id_a, s.item, s.amount
+            FROM BASE_EMP b LEFT JOIN ALLOW_SRC s ON s.emp_id = b.emp_id
+        )
+        PIVOT (
+          SUM(amount)
+          FOR item IN (${allowCols})
+        )
     ),
     DEDUCT_P AS (
       SELECT *
-      FROM (
-        SELECT b.emp_id AS emp_id_d, s.item, s.amount
-        FROM BASE_EMP b LEFT JOIN DEDUCT_SRC s ON s.emp_id = b.emp_id
-      )
-      PIVOT (
-        SUM(amount)
-        FOR item IN (${deductCols})
-      )
+        FROM (
+          SELECT b.emp_id AS emp_id_d, s.item, s.amount
+            FROM BASE_EMP b LEFT JOIN DEDUCT_SRC s ON s.emp_id = b.emp_id
+        )
+        PIVOT (
+          SUM(amount)
+          FOR item IN (${deductCols})
+        )
     )
     SELECT
       b.emp_id   AS "emp_id",
@@ -267,5 +316,5 @@
     LEFT JOIN DEDUCT_P d ON d.emp_id_d = b.emp_id
     ORDER BY b.emp_id
   </select>
- 
+
 </mapper>

@@ -5,7 +5,6 @@
 <head>
 <title layout:fragment="title">수당 등록</title>
 
-<!-- Spring Security CSRF 메타 (템플릿에 이미 있으면 유지) -->
 <meta name="_csrf" th:content="${_csrf?.token}">
 <meta name="_csrf_header" th:content="${_csrf?.headerName}">
 
@@ -68,7 +67,9 @@
         <h6 class="m-0 font-weight-bold text-primary">수당 등록</h6>
       </div>
       <div class="card-body">
+      <div id="allowGridWrapper" style="position:relative;">
         <div id="allowGrid" class="ag-theme-quartz"></div>
+        </div>
       </div>
     </div>
   </section>
@@ -77,7 +78,7 @@
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 
-    <!-- ===== cuteAlert 함수 (사용자 정의 모달 알림) ===== -->
+    <!-- cuteAlert 함수 (사용자 정의 모달 알림) -->
     <script th:inline="none">
     // 중복 정의 방지
     if (!window.cuteAlert) {
@@ -191,11 +192,25 @@
         return d === 1 || d === '1' || d === true || d?.success === true;
       }
 
-      async function fetchList(){
-        const res = await axios.get('/api/hr/allow-codes', { validateStatus:s=>s>=200&&s<500 });
-        if (!ok(res)) return [];
-        return Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
-      }
+      async function fetchList() {
+    	  showLoader("allowGridWrapper", "수당 데이터를 불러오는 중입니다...");
+    	  try {
+    	    const res = await axios.get('/api/hr/allow-codes');
+    	    const payload = res.data;
+    	    return Array.isArray(payload) ? payload : (payload?.data ?? []);
+    	  } catch (e) {
+    	    console.error('목록 조회 실패', e);
+    	    await cuteAlert({
+    	      type: 'error',
+    	      title: '조회 실패',
+    	      message: '수당 코드 목록 조회 중 오류가 발생했습니다.'
+    	    });
+    	    return [];
+    	  } finally {
+    	    hideLoader("allowGridWrapper");
+    	  }
+    	}
+  
       async function insertRow(r){
         const payload = {
           allowCode: trim(r.allowCode),
@@ -208,6 +223,8 @@
         const res = await axios.post('/api/hr/allow-codes', payload, { validateStatus:s=>s>=200&&s<500 });
         return ok(res);
       }
+      
+     
       async function updateRow(r){
         const payload = {
           allowName: trim(r.allowName),
