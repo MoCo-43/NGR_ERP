@@ -10,24 +10,22 @@ import lombok.Data;
 
 @Data
 public class PoInsertVO{
-    private Long companyCode;
-    private Long poId;
-    private String cusCode;
-    private String cusName;
-    private String creater;
+    private Long companyCode;  // 회사코드
+    private Long poId;  // 주문번호
+    private String poCode;  // 주문코드
+    private String cusCode;  // 거래처코드
+    private String creater;  // 작성일자
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private LocalDate poStart;
+    private LocalDate poStart;  // 작성일자
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private LocalDate exDate;
+    private LocalDate exDate;  // 납기일자
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private LocalDate poDate;
-    
-    private Long totalPrice;
+    private LocalDate poDate;  // 결제예정일
     private String payMethod; // 현금/어음
-    private String notes;
+    private String notes;  // 비고
     private String vatType;   // 부가가치세
-    private String poType;    // 거래유형
+    private String creditActive; //할인적용여부
 
-    private List<PoDetailVO> poDetails = new ArrayList<>();
+    private List<PoDetailVO> poDetails = new ArrayList<>();  // 주문서 상세
 }

@@ -6,7 +6,6 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.data.repository.query.Param;
 
-import com.yedam.erp.vo.Biz.CreditExposureVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -23,8 +22,13 @@ public interface BizMapper {
   List<PurchaseOrderVO> getAllPO(Long companyCode);
   // 주문서 조회
   List<JoinPoVO> selectPO(Long companyCode);
+
   // 주문서 등록
-  int insertPO(PoInsertVO pvo);
+  // ==주문서 헤더==
+  int insertPOHeader(PoInsertVO pvo);
+  // ==주문서 디테일==
+  int insertPODetails(PoInsertVO pvo);
+  
   // 주문서 이력 조회
   List<PurchaseOrderVO> getPOHistory(Long companyCode);
   // 품목 조회
@@ -33,7 +37,7 @@ public interface BizMapper {
   List<CustomerVO> getCustomers(Long companyCode);
   // 출하지시서 조회
   List<DeliveryOrderVO> selectDo(Long companyCode);
-  // 출하지시서 등록
+  // 출하지시서 헤더
   int insertDO(DoInsertVO dovo);
   // 거래처관리 조회
   List<CustomerVO> getCustomerManagement(Long companyCode);

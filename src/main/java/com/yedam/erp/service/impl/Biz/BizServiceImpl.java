@@ -37,14 +37,25 @@ public class BizServiceImpl implements BizService {
 		return bizMapper.selectPO(companyCode);
 	}
 
-	// 주문서 입력
-	@Override
-	public int insertPO(PoInsertVO pvo) {
-		System.out.println(pvo.getCompanyCode() != null ? pvo.getCompanyCode() : "NO COMPANYCODE");  // 회사코드 출력
-		return bizMapper.insertPO(pvo);
-	}
+  // 주문서 등록
+  @Override
+	@Transactional
+	    public Long createPo(PoInsertVO pvo) {
+        // 방어코드: 필수값
+        if (pvo.getPoDetails() == null || pvo.getPoDetails().isEmpty()) {
+            throw new IllegalArgumentException("상세 품목이 1건 이상 필요합니다.");
+        }
 
-	// 주문서 이력 조회
+        // 헤더 insert(여기서 vo.poId 세팅됨)
+        bizMapper.insertPOHeader(pvo);
+
+        // 디테일 insert
+        bizMapper.insertPODetails(pvo);
+
+        return pvo.getPoId();
+    }
+
+	// 주문서 조회
 	@Override
 	public List<PurchaseOrderVO> getPOHistory(Long companyCode) {
 		return bizMapper.getPOHistory(companyCode);
