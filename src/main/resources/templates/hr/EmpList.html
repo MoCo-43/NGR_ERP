@@ -101,7 +101,9 @@
 			</div>
 
 			<div class="card-body pt-3">
+				<div id="empGridWrapper" style="position:relative;">
 				<div id="empGrid" class="ag-theme-quartz"></div>
+			</div>
 			</div>
 
 			<div class="d-flex justify-content-end gap-2 my-2 mr-3">
@@ -224,6 +226,7 @@
 
         // API 초기 로드 
         async function initLoad(){
+        	showLoader("empGridWrapper", "사원 데이터를 불러오는 중입니다...");
           try{
             const {data}=await axios.get('/api/v1/emps');
             rowDataCache = Array.isArray(data) ? data : (data?.data ?? []);
@@ -237,6 +240,7 @@
             });
             setRows([]);
           }
+            hideLoader("empGridWrapper");
           gridApi?.deselectAll?.(); $('btnEditOpen').disabled=true;
         }
         function setRows(rows){

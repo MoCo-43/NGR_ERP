@@ -58,7 +58,9 @@
 					<h6 class="m-0 font-weight-bold text-primary">부서 목록</h6>
 				</div>
 				<div class="card-body">
+					<div id="deptGridWrapper" style="position:relative;">	
 					<div id="deptGrid" class="ag-theme-quartz"></div>
+					</div>
 				</div>
 			</div>
 			<div class="card shadow mb-3">
@@ -107,7 +109,7 @@
 			</div>
 		</div>
 
-		<!-- 부서장 선택 모달 -->
+		<!-- 부서장 모달 -->
 		<th:block th:replace="~{hr/deptModal :: deptManagerLookupModal}"></th:block>
 	</section>
 
@@ -216,6 +218,7 @@
 
     // 부서 목록을 서버에서 가져와 그리드에 표시
     async function fetchList(){
+    	showLoader("deptGridWrapper", "부서 데이터를 불러오는 중입니다...");
       try{
         const { data } = await axios.get(API_BASE);
         const rows = Array.isArray(data) ? data : (data?.data ?? []);
@@ -226,6 +229,7 @@
         if (gridApi?.setGridOption) gridApi.setGridOption('rowData', []);
         else gridApi.setRowData([]);
       }
+      hideLoader("deptGridWrapper");
     }
 
     // 현재 폼의 값으로 신규 생성 또는 수정 저장

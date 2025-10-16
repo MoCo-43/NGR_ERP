@@ -82,7 +82,6 @@
     // 교육 목록
     tbody.innerHTML = list.map(r=>`
       <tr data-id="${r.eduNo ?? r.EDU_NO}">
-        <td>${r.eduNo ?? r.EDU_NO}</td>
         <td>${r.eduName ?? r.EDU_NAME ?? ''}</td>
         <td>${r.eduType ?? r.EDU_TYPE ?? ''}</td>
         <td>${r.result  ?? r.RESULT   ?? ''}</td>
