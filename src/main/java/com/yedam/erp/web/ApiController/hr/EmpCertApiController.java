@@ -8,6 +8,10 @@ import com.yedam.erp.vo.hr.EmpCertVO;
 
 import lombok.RequiredArgsConstructor;
 
+/**
+ * @author 인사팀 김성수 
+ * @since 2025/10/17
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/hr/cert")
@@ -16,6 +20,11 @@ public class EmpCertApiController {
     private final EmpCertService service;
 
     // ===== 목록 조회: empId 기준 =====
+    /**
+     * 
+     * @param empId
+     * @return
+     */
     @GetMapping
     public List<EmpCertVO> list(@RequestParam("empId") String empId) {
         EmpCertVO param = new EmpCertVO();
@@ -59,9 +68,6 @@ public class EmpCertApiController {
         EmpCertVO vo = new EmpCertVO();
         vo.setCertNo(certNo);
         boolean ok = service.deleteEmpCert(vo);
-
-        Map<String, Object> res = new HashMap<>();
-        res.put("success", ok);
-        return res;
+        return  Collections.singletonMap("success", ok);
     }
 }
