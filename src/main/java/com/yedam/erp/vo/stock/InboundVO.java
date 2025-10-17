@@ -2,6 +2,8 @@ package com.yedam.erp.vo.stock;
 
 import java.util.Date;
 
+import org.springframework.format.annotation.NumberFormat;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.Data;
@@ -12,8 +14,10 @@ public class InboundVO {
 	private String  lotCode; // LOT
 	private String productName; // 제품명
 	private String specification; // 규격
+	@NumberFormat(pattern = "#,###")
 	private Long qty; // 입고수량
-	
+	@NumberFormat(pattern = "#,###")
+	private Long remainQty; // 잔여수량
 	// timestamp 타입 시간까지 정상출력
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
 	private Date inboundDate; // 입고일시
@@ -23,9 +27,10 @@ public class InboundVO {
 	private Date dueDate; // 납기일자
 	private String note; // 비고
 	private String businessPartner; // 거래처명
-	private String companyCode; // 회사코드
+	private Long companyCode; // 회사코드
 	private String businessCode; // 거래처코드
 	private String productCode; // 제품코드
+	@NumberFormat(pattern = "#,###")
 	private Long purchasePrice; // 제품 단가
 	private String orderCode; // 발주 코드
 }

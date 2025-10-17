@@ -64,9 +64,9 @@ public class StockImpl implements StockService{
 
 
 	@Override
-	public List<ProductVO> productAll(Long CompCode) {
+	public List<ProductVO> productAll(Long compCode) {
 		
-		return mapper.productAll(CompCode);
+		return mapper.productAll(compCode);
 	}
 
 
@@ -272,6 +272,13 @@ public class StockImpl implements StockService{
 	public String getProductFileNameByProductCodeAndCompCode(Long compCode, String productCode) {
 		// 제품 선택시 이미지 명 불러오기
 		return mapper.getProductFileNameByProductCodeAndCompCode(productCode, compCode);
+	}
+
+
+	@Override
+	public List<InboundVO> getProductDetailRefInbound(Long compCode, String productCode) {
+		// TODO Auto-generated method stub
+		return mapper.getProductDetailRefInbound(compCode , productCode);
 	}
 
 

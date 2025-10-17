@@ -6,6 +6,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.NumberFormat;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import lombok.Data;
 
 @Data
@@ -23,10 +25,10 @@ public class ProductVO {
 	@NumberFormat(pattern = "#,###")
 	private int salesPrice;
 	private String note;
-	@DateTimeFormat(pattern = "yyyy-MM-dd")
+	@JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "yyyy-MM-dd")
 	private Date insertDate;
 	private int leadTime;
-	private String companyCode;
+	private Long companyCode;
 	private String vatType;
 	
 }

@@ -29,10 +29,13 @@ public interface StockMapper {
 	// 제품등록
 	public int insertProduct(ProductVO product);
 	// 제품리스트
-	public List<ProductVO> productAll(Long CompCode);
+	public List<ProductVO> productAll(@Param("companyCode") Long companyCode);
 	
 	// 제품 이미지 불러오기
 	public String getProductFileNameByProductCodeAndCompCode(@Param("productCode")String productCode , @Param("compCode")Long compCode);
+	
+	// 제품코드별 Lot 정보 가져오기
+	public List<InboundVO> getProductDetailRefInbound(@Param("companyCode") Long compCode , @Param("productCode")String productCode);
 	
 	// 거래처 조회
 	public List<PartnerVO> customerAll(Map<String, Object> params);

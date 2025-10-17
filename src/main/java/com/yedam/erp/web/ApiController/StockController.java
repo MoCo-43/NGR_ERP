@@ -255,7 +255,7 @@ public class StockController {
 	 HashMap<String,Object> map = new HashMap<>(); 
 	 map.put("orderCodeParam", orderCode); // 발주코드
 	 //map.put("companyId", SessionUtil.companyId()); // 세션 회사 ID
-	 map.put("brmParam",comp.getBrm()); // 회사 사업자번호
+	 map.put("brnParam",comp.getBrm()); // 회사 사업자번호
 	 map.put("compNameCeoParam", comp.getCompName()+"/"+comp.getCeo()); // 회사명 / 대표명
 	 map.put("compAddrParam",comp.getCompAddr()); // 회사 주소
 	 map.put("compMatParam",comp.getMatName()+"/"+comp.getMatTel()); // 회사담당자 / 담당자회선번호
@@ -297,7 +297,7 @@ public class StockController {
 	 HashMap<String,Object> map = new HashMap<>(); 
 	 map.put("xpCodeParam", xpCode); // 발주계획코드
 	 //map.put("companyId", SessionUtil.companyId()); // 세션 회사 ID
-	 map.put("brmParam",comp.getBrm()); // 회사 사업자번호
+	 map.put("brnParam",comp.getBrm()); // 회사 사업자번호
 	 map.put("compNameCeoParam", comp.getCompName()+"/"+comp.getCeo()); // 회사명 / 대표명
 	 map.put("compAddrParam",comp.getCompAddr()); // 회사 주소
 	 map.put("compMatParam",comp.getMatName()+"/"+comp.getMatTel()); // 회사담당자 / 담당자회선번호
@@ -355,11 +355,24 @@ public class StockController {
 	@GetMapping("/selectProductImg/{compCode}/{productCode}")
 	public ResponseEntity<Resource> getProductImg(@PathVariable Long compCode , @PathVariable String productCode){
 		String fileName = service.getProductFileNameByProductCodeAndCompCode(compCode,productCode);
+		
+		// System.out.println("fileName : "+fileName);
+		
 		File file = new File(uploadDir, fileName);
+		// System.out.println("file route : "+file);
         if (!file.exists()) {
             return ResponseEntity.notFound().build();
         }
 
+        // 2️⃣ 확장자 제거 후 미리보기용 이름 처리
+        String displayName = fileName;
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex != -1) {
+            displayName = fileName.substring(0, dotIndex); // aaasss 형태로 표시
+        }
+        System.out.println("미리보기용 이름: " + displayName);
+        
+        
         Resource resource = new FileSystemResource(file);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"");
@@ -380,6 +393,12 @@ public class StockController {
                 .contentType(mediaType)
                 .body(resource);
 	}
+	
+	@GetMapping("/selectProductDetail/{compCode}/{productCode}")
+	public List<InboundVO> getProductDetailRefInbound(@PathVariable Long compCode , @PathVariable String productCode){
+		return service.getProductDetailRefInbound(compCode , productCode);
+	}
+	
 	
 	 @ResponseBody
 	 @GetMapping("/cusList/{compCode}") // 거래처리스트 모달
@@ -438,7 +457,7 @@ public class StockController {
 	            if (!dir.exists()) dir.mkdirs();
 	            file.transferTo(new File(dir, newFileName));
 	        }
-	        product.setCompanyCode(SessionUtil.empId());
+	        product.setCompanyCode(SessionUtil.companyId());
 	        return service.insertProduct(product);
 	        
 	    }
