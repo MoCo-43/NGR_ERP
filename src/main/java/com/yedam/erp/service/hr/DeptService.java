@@ -10,10 +10,9 @@ public interface DeptService {
 	// 단건
 	DeptVO getDept(String dept_code);
 
-	// 등록/수정/삭제
+	// 등록
 	int addDept(DeptVO vo);
-
+	//수정
 	int editDept(DeptVO vo);
 
-	int removeDept(String dept_code);
 }

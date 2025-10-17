@@ -16,32 +16,27 @@ import lombok.RequiredArgsConstructor;
 public class DeptServiceImpl implements DeptService {
 
     private final DeptMapper deptMapper;
-
+    //부서 조회
     @Override
     public List<DeptVO> getDeptList(Long companyCode) {
         return deptMapper.selectDeptList(companyCode);
     }
-
+    //부서 단건 조회
     @Override
     public DeptVO getDept(String dept_code) {
         return deptMapper.selectDept(dept_code);
     }
-
+    //부서 등록 
     @Override
     @Transactional
     public int addDept(DeptVO vo) {
         return deptMapper.insertDept(vo);
     }
-
+    //부서 수정
     @Override
     @Transactional
     public int editDept(DeptVO vo) {
         return deptMapper.updateDept(vo);
     }
 
-    @Override
-    @Transactional
-    public int removeDept(String dept_code) {
-        return deptMapper.deleteDept(dept_code);
-    }
 }

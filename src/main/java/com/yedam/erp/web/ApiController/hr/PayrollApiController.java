@@ -65,7 +65,7 @@ public class PayrollApiController {
         return payrollService.updatePayrollStatus(vo);
     }
 
-    // 급여 상세 (피벗)
+    // 급여 상세
     @GetMapping("/{payrollNo}/detail")
     public List<Map<String, Object>> detail(@PathVariable Long payrollNo) {
         return payrollService.selectPayrollDetailPivot(payrollNo, companyCode());

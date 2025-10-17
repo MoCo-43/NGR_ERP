@@ -34,7 +34,7 @@ public class DeptApiController {
     // 등록
     @PostMapping
     public Map<String, Object> create(@RequestBody DeptVO vo) {
-        vo.setCompanyCode(SessionUtil.companyId());   // 등록 시 companyCode 저장
+        vo.setCompanyCode(SessionUtil.companyId());  
         int ok = service.addDept(vo);
         return Map.of("success", ok > 0);
     }
@@ -44,15 +44,10 @@ public class DeptApiController {
     public Map<String, Object> update(@PathVariable("dept_code") String deptCode,
                                       @RequestBody DeptVO vo) {
         vo.setDept_code(deptCode);
-        vo.setCompanyCode(SessionUtil.companyId());   // 필요 시 업데이트에도 사용
+        vo.setCompanyCode(SessionUtil.companyId());  
         int ok = service.editDept(vo);
         return Map.of("success", ok > 0);
     }
 
-    // 삭제
-    @DeleteMapping("/{dept_code}")
-    public Map<String, Object> delete(@PathVariable("dept_code") String deptCode) {
-        int ok = service.removeDept(deptCode);
-        return Map.of("success", ok > 0);
-    }
+
 }

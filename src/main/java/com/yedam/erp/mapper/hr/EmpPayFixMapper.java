@@ -20,9 +20,9 @@ public interface EmpPayFixMapper {
         @Param("companyCode") Long companyCode
     );
 
-    // 사원 수당/공제 등록 (INSERT) — payType 으로 ALLOW/DEDUCT 구분
+    // 사원 수당/공제 등록 
     int insertEmpPayFix(EmpPayFixVO vo);
 
-    // 사원 수당/공제 수정 (UPDATE) — WHERE 절에 payType 포함
+    // 사원 수당/공제 수정 
     int updateEmpPayFix(EmpPayFixVO vo);
 }

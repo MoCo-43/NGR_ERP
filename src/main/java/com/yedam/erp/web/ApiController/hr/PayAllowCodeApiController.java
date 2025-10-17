@@ -26,14 +26,14 @@ public class PayAllowCodeApiController {
 
     private final PayAllowCodeService service;
 
-    // ===== 전체 조회 =====
+    // 전체 조회 
     @GetMapping
     public List<PayAllowCodeVO> list() {
         Long companyCode = SessionUtil.companyId();
         return service.getAllowList(companyCode);
     }
 
-    // ===== 단건 조회 =====
+    // 단건 조회
     @GetMapping("/{allowCode}")
     public PayAllowCodeVO detail(@PathVariable("allowCode") String allowCode) {
         PayAllowCodeVO param = new PayAllowCodeVO();
@@ -41,14 +41,14 @@ public class PayAllowCodeApiController {
         return service.getAllow(param);
     }
 
-    // ===== 등록 =====
+    // 등록
     @PostMapping
     public int create(@RequestBody PayAllowCodeVO vo) {
         vo.setCompanyCode(SessionUtil.companyId());
         return service.addAllow(vo);
     }
 
-    // ===== 수정 =====
+    //  수정
     @PutMapping("/{allowCode}")
     public int update(@PathVariable("allowCode") String allowCode,
                       @RequestBody PayAllowCodeVO vo) {

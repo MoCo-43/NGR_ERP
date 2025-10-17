@@ -24,12 +24,12 @@ import lombok.RequiredArgsConstructor;
 public class PayDeductCodeApiController {
 
 	private final PayDeductCodeService service;
-
+	//전체조회
 	@GetMapping
 	public List<PayDeductCodeVO> list() {
 		return service.getDeductList(SessionUtil.companyId());
 	}
-
+	//단건조회
 	@GetMapping("/{deductCode}")
 	public PayDeductCodeVO detail(@PathVariable String deductCode) {
 		PayDeductCodeVO param = new PayDeductCodeVO();
@@ -37,21 +37,20 @@ public class PayDeductCodeApiController {
 		param.setCompanyCode(SessionUtil.companyId());
 		return service.getDeduct(param);
 	}
-
+	//등록
 	@PostMapping
 	public int create(@RequestBody PayDeductCodeVO vo) {
 		vo.setCompanyCode(SessionUtil.companyId());
 		return service.addDeduct(vo);
 	}
-
+	//수정
 	@PutMapping("/{deductCode}")
 	public int update(@PathVariable String deductCode, @RequestBody PayDeductCodeVO vo) {
 		vo.setDeductCode(deductCode);
 		vo.setCompanyCode(SessionUtil.companyId());
 		return service.editDeduct(vo);
 	}
-
-	
+	//사용여부
 	@PatchMapping("/{deductCode}/use-yn")
 	public int changeUseYn(@PathVariable String deductCode, @RequestParam String useYn) {
 		PayDeductCodeVO vo = new PayDeductCodeVO();

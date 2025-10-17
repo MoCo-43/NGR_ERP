@@ -26,16 +26,14 @@ public interface PayrollService {
     // 조건조회
     List<PayrollVO> selectPayrollListByCond(PayrollVO vo);
 
-    // 수당 컬럼 목록 LISTAGG
+    // 수당 컬럼 목록 
     String selectAllowColList(PayrollVO vo);
 
-    // 공제 컬럼 목록 LISTAGG
+    // 공제 컬럼 목록
     String selectDeductColList(PayrollVO vo);
 
-    // 사원별 상세 (PIVOT 결과)
+    // 사원별 상세 
     List<Map<String,Object>> selectPayrollDetailPivot(Long payrollNo, Long companyCode);
-
-  
 
     // 공제 저장
     int upsertDeduct(PayrollSummaryVO vo);

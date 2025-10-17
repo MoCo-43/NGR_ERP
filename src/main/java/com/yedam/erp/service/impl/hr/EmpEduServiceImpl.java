@@ -15,18 +15,17 @@ import lombok.RequiredArgsConstructor;
 public class EmpEduServiceImpl implements EmpEduService {
 
     private final EmpEduMapper empEduMapper;
-
+    //교육 조회
     @Override
     public List<EmpEduVO> selectEmpEduList(EmpEduVO vo) {
-        // Mapper는 empId만 필요하므로 VO에서 꺼내서 전달
         return empEduMapper.selectEmpEduList(vo != null ? vo.getEmpId() : null);
     }
-
+    //교육 등록
     @Override
     public boolean insertEmpEdu(EmpEduVO vo) {
         return empEduMapper.insert(vo) == 1;
     }
-
+    //교육 삭제
     @Override
     public boolean deleteEmpEdu(EmpEduVO vo) {
         return empEduMapper.deleteByPk(vo.getEduNo()) == 1;

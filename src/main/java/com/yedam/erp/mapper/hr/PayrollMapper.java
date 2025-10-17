@@ -29,16 +29,15 @@ public interface PayrollMapper {
     // 조건조회
     List<PayrollVO> selectPayrollListByCond(PayrollVO vo);
 
-    // 수당 컬럼 LIST
+    // 수당 컬럼 
     String selectAllowColList(PayrollVO vo);
 
-    // 공제 컬럼 LIST
+    // 공제 컬럼
     String selectDeductColList(PayrollVO vo);
 
     // 사원별 상세
     List<Map<String,Object>> selectPayrollDetailPivot(Map<String,Object> param);
-
-
+    
     // 공제 저장
     int upsertDeduct(PayrollSummaryVO vo);
 }
