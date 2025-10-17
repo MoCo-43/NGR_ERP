@@ -24,8 +24,8 @@
         FROM emp e
         WHERE e.company_code = p.company_code
           AND e.dept_code    = p.dept_code
-          AND e.join_date &lt;= LAST_DAY(TO_DATE(p.year_month, 'YYYYMM'))
-          AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE(p.year_month, 'YYYYMM')))
+          AND e.join_date <![CDATA[ <= ]]> LAST_DAY(TO_DATE(p.year_month, 'YYYYMM'))
+          AND (e.leave_date IS NULL OR e.leave_date <![CDATA[ > ]]> LAST_DAY(TO_DATE(p.year_month, 'YYYYMM')))
       ) AS emp_count
     FROM payroll p
     JOIN dept d
@@ -56,8 +56,8 @@
         FROM emp e
         WHERE e.company_code = p.company_code
           AND e.dept_code    = p.dept_code
-          AND e.join_date &lt;= LAST_DAY(TO_DATE(p.year_month, 'YYYYMM'))
-          AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE(p.year_month, 'YYYYMM')))
+          AND e.join_date <![CDATA[ <= ]]> LAST_DAY(TO_DATE(p.year_month, 'YYYYMM'))
+          AND (e.leave_date IS NULL OR e.leave_date <![CDATA[ > ]]> LAST_DAY(TO_DATE(p.year_month, 'YYYYMM')))
       ) AS empCount
     FROM payroll p
     JOIN dept d
@@ -89,8 +89,8 @@
       SELECT DISTINCT e.dept_code
         FROM emp e
        WHERE e.company_code = #{companyCode}
-         AND e.join_date &lt;= LAST_DAY(TO_DATE(#{yearMonth}, 'YYYYMM'))
-         AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE(#{yearMonth}, 'YYYYMM')))
+         AND e.join_date<![CDATA[ <= ]]>LAST_DAY(TO_DATE(#{yearMonth}, 'YYYYMM'))
+         AND (e.leave_date IS NULL OR e.leave_date <![CDATA[ > ]]> LAST_DAY(TO_DATE(#{yearMonth}, 'YYYYMM')))
     ) e
     WHERE NOT EXISTS (
       SELECT 1
@@ -136,8 +136,8 @@
         FROM emp e
         WHERE e.company_code = p.company_code
           AND e.dept_code    = p.dept_code
-          AND e.join_date &lt;= LAST_DAY(TO_DATE(p.year_month, 'YYYYMM'))
-          AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE(p.year_month, 'YYYYMM')))
+          AND e.join_date <![CDATA[ <= ]]> LAST_DAY(TO_DATE(p.year_month, 'YYYYMM'))
+          AND (e.leave_date IS NULL OR e.leave_date <![CDATA[ > ]]> LAST_DAY(TO_DATE(p.year_month, 'YYYYMM')))
       ) AS emp_count
     FROM payroll p
     JOIN dept d
@@ -170,12 +170,12 @@
             WHERE p.payroll_no   = #{payrollNo}
               AND p.company_code = #{companyCode}
          )
-         AND e.join_date &lt;= LAST_DAY(TO_DATE((
+         AND e.join_date <![CDATA[ <= ]]> LAST_DAY(TO_DATE((
                SELECT p.year_month FROM payroll p
                 WHERE p.payroll_no   = #{payrollNo}
                   AND p.company_code = #{companyCode}
              ), 'YYYYMM'))
-         AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE((
+         AND (e.leave_date IS NULL OR e.leave_date <![CDATA[ > ]]>LAST_DAY(TO_DATE((
                SELECT p.year_month FROM payroll p
                 WHERE p.payroll_no   = #{payrollNo}
                   AND p.company_code = #{companyCode}
@@ -215,12 +215,12 @@
             WHERE p.payroll_no   = #{payrollNo}
               AND p.company_code = #{companyCode}
          )
-         AND e.join_date &lt;= LAST_DAY(TO_DATE((
+         AND e.join_date <![CDATA[ <= ]]> LAST_DAY(TO_DATE((
                SELECT p.year_month FROM payroll p
                 WHERE p.payroll_no   = #{payrollNo}
                   AND p.company_code = #{companyCode}
              ), 'YYYYMM'))
-         AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE((
+         AND (e.leave_date IS NULL OR e.leave_date <![CDATA[ > ]]> LAST_DAY(TO_DATE((
                SELECT p.year_month FROM payroll p
                 WHERE p.payroll_no   = #{payrollNo}
                   AND p.company_code = #{companyCode}
@@ -258,12 +258,12 @@
             WHERE p.payroll_no   = #{payrollNo}
               AND p.company_code = #{companyCode}
          )
-         AND e.join_date &lt;= LAST_DAY(TO_DATE((
+         AND e.join_date <![CDATA[ <= ]]> LAST_DAY(TO_DATE((
                SELECT p.year_month FROM payroll p
                 WHERE p.payroll_no   = #{payrollNo}
                   AND p.company_code = #{companyCode}
              ), 'YYYYMM'))
-         AND (e.leave_date IS NULL OR e.leave_date &gt; LAST_DAY(TO_DATE((
+         AND (e.leave_date IS NULL OR e.leave_date <![CDATA[ > ]]> LAST_DAY(TO_DATE((
                SELECT p.year_month FROM payroll p
                 WHERE p.payroll_no   = #{payrollNo}
                   AND p.company_code = #{companyCode}
