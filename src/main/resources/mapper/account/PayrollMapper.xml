@@ -19,6 +19,7 @@
     FROM PAYROLL
     WHERE payroll_no   = #{payrollNo}
       AND company_code = #{companyCode}
+      AND STATUS = 'CONFIRMED'
   ),
   SRC AS (
     SELECT 

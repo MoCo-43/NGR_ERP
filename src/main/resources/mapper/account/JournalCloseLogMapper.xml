@@ -29,6 +29,37 @@
         'reverse'   
     )
   </insert>
+ 
+ <!-- 기존 insert 하던거 merge하나로 처리중 -->
+<insert id="upsertJournalCloseLog" parameterType="com.yedam.erp.vo.account.JournalCloseLogVO">
+  MERGE INTO journal_close_log t
+  USING (
+    SELECT #{companyCode} AS company_code, #{jrnRange} AS jrn_range FROM dual
+  ) s
+  ON (
+    t.company_code = s.company_code
+    AND t.jrn_range = s.jrn_range
+  )
+  WHEN MATCHED THEN
+    UPDATE SET
+      t.action_type = #{actionType},
+      t.debit_sum = #{debitSum},
+      t.credit_sum = #{creditSum},
+      t.created_by = #{createdBy},
+      t.remarks = #{remarks},
+      t.status = #{status},
+      t.action_date = SYSDATE
+    WHERE TRUNC(t.action_date) = TRUNC(SYSDATE)
+  WHEN NOT MATCHED THEN
+    INSERT (
+      log_id, company_code, jrn_range, action_type, debit_sum, credit_sum,
+      created_by, remarks, status, action_date
+    )
+    VALUES (
+      seq_journal_close_log.NEXTVAL, #{companyCode}, #{jrnRange}, #{actionType},
+      #{debitSum}, #{creditSum}, #{createdBy}, #{remarks}, #{status}, SYSDATE
+    )
+</insert>
 
   <!-- 선택된 전표들의 합계 -->
   <select id="sumAmountByJrnNos" parameterType="map" resultType="com.yedam.erp.vo.account.JournalAmountSumVO">
@@ -65,5 +96,7 @@
   ]]>
   ORDER BY log_id DESC
   </select>
+
+
 
 </mapper>

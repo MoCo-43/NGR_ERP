@@ -9,7 +9,7 @@ import com.yedam.erp.vo.account.JournalCloseLogVO;
 
 
 public interface JournalCloseLogService {
-	 void insertLog(Long companyCode, List<String> jrnNoList, String actionType, String loginUser, String remarks);
+	 void insertLog(Long companyCode, List<String> jrnNoList, String actionType, String loginUser, String remarks,String status);
 	    List<JournalCloseLogVO> getLogList(Long companyCode);
 	    List<JournalCloseLogVO> getLogByJrn(Long companyCode, String jrnNo);
 }

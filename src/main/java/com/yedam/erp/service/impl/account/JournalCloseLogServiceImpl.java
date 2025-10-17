@@ -22,23 +22,23 @@ public class JournalCloseLogServiceImpl implements JournalCloseLogService {
 
     @Override
     @Transactional
-    public void insertLog(Long companyCode, List<String> jrnNoList, String actionType, String loginUser, String remarks) {
+    public void insertLog(Long companyCode, List<String> jrnNoList, String actionType, String loginUser, String remarks,String status) {
         // ✅ 합계 조회
+    	   // ✅ 합계 조회
         JournalAmountSumVO sum = logMapper.sumAmountByJrnNos(companyCode, jrnNoList);
 
         JournalCloseLogVO vo = new JournalCloseLogVO();
         vo.setCompanyCode(companyCode);
-
-        // ✅ 전표번호 범위를 "001~005" 형식으로 저장
         vo.setJrnRange(getRange(jrnNoList));
-
         vo.setActionType(actionType);
         vo.setDebitSum(sum != null ? sum.getDebit() : 0L);
         vo.setCreditSum(sum != null ? sum.getCredit() : 0L);
         vo.setCreatedBy(loginUser);
         vo.setRemarks(remarks);
+        vo.setStatus(status);
 
-        logMapper.insertJournalCloseLog(vo);
+        // ✅ 기존 insert → MERGE 로 변경
+        logMapper.upsertJournalCloseLog(vo);
     }
 
     @Override
