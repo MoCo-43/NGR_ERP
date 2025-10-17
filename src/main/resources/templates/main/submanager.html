@@ -159,7 +159,7 @@
 								th:text="${subscription} ? ${#dates.format(subscription.endDate, 'yyyy-MM-dd')} : '-'"></div>
 						</div>
 					</div>
-						<button class="btn btn-warning" id="subCancel">구독취소</button>
+					<button class="btn btn-warning" id="subCancel">구독취소</button>
 				</div>
 
 				<!-- 문서 -->
@@ -170,7 +170,8 @@
 						<div class="document-buttons">
 							<button class="btn btn-sm btn-outline-primary"
 								id="btnPreviewContract">미리보기</button>
-							<button class="btn btn-sm btn-outline-danger" id="btnDownloadContractPdf">PDF</button>
+							<button class="btn btn-sm btn-outline-danger"
+								id="btnDownloadContractPdf">PDF</button>
 						</div>
 					</div>
 					<div class="document-item">
@@ -190,18 +191,26 @@
 		th:replace="main/content :: contractFragment" style="display: none;"></div>
 
 	<th:block layout:fragment="body_extra">
+		<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+		<script src="/js/cuteAlert.js"></script>
+		<link rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" />
+		<link rel="stylesheet" href="/style/confirm.css" />
 		<script
 			src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 		<script
 			src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 		<script>
 document.addEventListener('DOMContentLoaded', function() {
-    let contractHtmlContent = null; // 완성된 계약서 HTML 문자열을 저장할 변수
-	const subCancel = document.getElementById('subCancel');
-	const toastEl = document.getElementById('liveToast');
-	if (toastEl) {
-	  const toast = new bootstrap.Toast(toastEl);
-	}    // 1. 페이지 로드 시, 서버에서 완성된 계약서 HTML을 미리 가져옵니다. (원래 로직 복원)
+    let contractHtmlContent = null; 
+    const subCancelBtn = document.getElementById('subCancel'); // 변수명 변경 (subCancel -> subCancelBtn)
+
+    // 1. 페이지 로드 시, 계약서 HTML 가져오기 (기존 로직)
     fetch('/sub/contract-html')
         .then(response => {
             if (!response.ok) {
@@ -210,48 +219,39 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.text();
         })
         .then(html => {
-            contractHtmlContent = html; // 가져온 HTML 문자열을 변수에 저장
+            contractHtmlContent = html;
         })
         .catch(err => {
             console.error('계약서 로드 실패:', err);
-            // 사용자에게도 실패를 알릴 수 있습니다.
             document.getElementById('btnPreviewContract').disabled = true;
             document.getElementById('btnDownloadContractPdf').disabled = true;
         });
 
-    // 2️.새 창 미리보기 
+    // 2️. 새 창 미리보기 (기존 로직)
     document.getElementById('btnPreviewContract').addEventListener('click', function() {
         if (!contractHtmlContent) return alert('계약서 내용을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
-
         const popup = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
-        popup.document.write(contractHtmlContent); // 저장해둔 HTML을 그대로 새 창에 씁니다.
+        popup.document.write(contractHtmlContent);
         popup.document.close();
     });
 
-    // 3️⃣ PDF 다운로드 (개선된 방식 적용)
+    // 3️⃣ PDF 다운로드 (기존 로직)
     document.getElementById('btnDownloadContractPdf').addEventListener('click', function() {
+        // ... (기존 PDF 생성 로직 동일) ...
         if (!contractHtmlContent) return alert('계약서 내용을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
 
         const pdfButton = this;
         pdfButton.textContent = '생성 중...';
         pdfButton.disabled = true;
-
-        // A. PDF 변환을 위한 임시 컨테이너를 만듭니다.
-        const tempContainer = document.createElement('div');
         
-        // B. 화면에 보이지 않도록 스타일을 설정합니다.
+        const tempContainer = document.createElement('div');
         tempContainer.style.position = 'absolute';
         tempContainer.style.left = '-9999px';
         tempContainer.style.top = '0';
-        tempContainer.style.width = '800px'; // A4 용지 비율에 맞게 적절한 너비 지정
-
-        // C. 가져온 계약서 HTML을 임시 컨테이너에 삽입합니다.
+        tempContainer.style.width = '800px'; 
         tempContainer.innerHTML = contractHtmlContent;
-        
-        // D. body에 임시 컨테이너를 추가하여 DOM의 일부로 만듭니다.
         document.body.appendChild(tempContainer);
         
-        // 실제 캡처할 요소를 임시 컨테이너 안에서 찾습니다.
         const elementToCapture = tempContainer.querySelector('#contract-document') || tempContainer;
 
         html2canvas(elementToCapture, {
@@ -283,14 +283,93 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("PDF 생성 오류:", err);
             alert('PDF 생성에 실패했습니다.');
         }).finally(() => {
-            // E. 작업 완료 후 임시 컨테이너를 DOM에서 반드시 제거합니다.
             document.body.removeChild(tempContainer);
             pdfButton.textContent = 'PDF';
             pdfButton.disabled = false;
         });
     });
+
+    // ==========================================================
+    // 4️⃣ (신규) 구독 취소 및 환불 로직
+    // ==========================================================
+    if (subCancelBtn) {
+        subCancelBtn.addEventListener('click', async (e) => {
+            
+            // 1. 사용자 확인 (cuteAlert)
+            const res = await cuteAlert({
+                type: "question",
+                title: "구독 취소 확인",
+                message: "정말 구독을 취소하시겠습니까? 환불 절차가 진행됩니다.",
+                imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000', // 이전 코드에서 사용한 아이콘
+                confirmText: "네, 취소합니다",
+                cancelText: "아니오"
+            });
+
+            if (res !== true) {
+                return; // 사용자가 '아니오' 클릭
+            }
+            
+            // 버튼 비활성화 (중복 클릭 방지)
+            const button = e.currentTarget;
+            button.disabled = true;
+            button.textContent = "취소 처리 중...";
+
+            try {
+                // 2. 데이터 준비 (HTML data- 속성에서 읽어오기)
+                const subscriptionId = button.dataset.subId;
+                const paymentKey = button.dataset.paymentKey;
+                
+                if (!subscriptionId || !paymentKey) {
+                    toastr.error("필수 정보(구독 ID 또는 결제 키)가 없습니다.");
+                    button.disabled = false;
+                    button.textContent = "구독취소";
+                    return;
+                }
+
+                // --- 요청하신 더미 환불 계산 로직 ---
+                const totalAmount = 500000; // (더미) 총 결제액
+                const usedDays = 30;        // (더미) 사용일
+                const dailyRate = 5000;     // (더미) 일할 계산액
+                const usedAmount = usedDays * dailyRate;
+                const refundAmount = totalAmount - usedAmount; // (더미) 최종 환불액
+                // --- 더미 로직 끝 ---
+
+                const payload = {
+                    subscriptionId: subscriptionId,
+                    paymentKey: paymentKey,         // Toss Payments 환불에 필요
+                    cancelReason: "사용자 구독 취소",
+                    amount: refundAmount            // 실제 환불할 금액
+                };
+
+                // 3. API 요청 (백엔드에 환불 처리 요청)
+                //    (백엔드에서는 이 paymentKey로 Toss Payments 환불 API를 호출해야 함)
+                const response = await axios.post("/api/v1/subscription/cancel", payload, {
+                    headers: { 'Content-Type': 'application/json' },
+                    withCredentials: true // 세션 유지를 위해
+                });
+
+                // 4. 결과 피드백 (성공)
+                toastr.success("구독이 취소되었으며, 환불이 정상적으로 요청되었습니다.");
+                
+                // 성공 시 버튼 텍스트 변경 및 비활성화 유지
+                button.textContent = "취소 완료";
+                
+                // (선택) 페이지 새로고침 또는 UI 상태 변경
+                // location.reload(); 
+
+            } catch (err) {
+                // 4. 결과 피드백 (실패)
+                console.error("구독 취소/환불 실패:", err);
+                toastr.error(err.response?.data?.message || "환불 처리 중 오류가 발생했습니다.");
+                
+                // 실패 시 버튼 다시 활성화
+                button.disabled = false;
+                button.textContent = "구독취소";
+            }
+        });
+    }
 });
 </script>
 	</th:block>
-
-	</th:block>
+</body>
+</html>

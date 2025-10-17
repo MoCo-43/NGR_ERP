@@ -107,10 +107,13 @@
         e.DEPT_CODE,
         e.TITLE,
         e.EMAIL,
-        d.DEPT_NAME
+        d.DEPT_NAME,
+        l.COM_NAME
     FROM emp e
     JOIN dept d
         ON e.DEPT_CODE = d.DEPT_CODE
+    JOIN emp_login l
+    	ON e.company_code = l.mat_no
     <where>
         <if test="deptName != null and deptName != ''">
             d.DEPT_NAME = #{deptName}
@@ -138,7 +141,8 @@
             IS_USED,            
             IS_LOCKED,          
             FAILED_LOGIN_ATT,   
-            MUST_CHANGE_PW 
+            MUST_CHANGE_PW,
+            COM_NAME
         ) VALUES (
             #{empIdNo},
             #{empId},
@@ -149,7 +153,8 @@
             'Y',
             'N',
             0,
-            'Y'
+            'Y',
+            #{comName}
         )
     </insert>
     <!-- 초기 비밀번호 업데이트 -->
@@ -182,7 +187,7 @@
 		    e.position
 		FROM emp_login l
 		LEFT JOIN emp e 
-		    ON REPLACE(l.emp_id, 'gen-', '') = e.emp_id
+		    ON REPLACE(l.emp_id, 'NGR-', '') = e.emp_id
 		LEFT JOIN dept d 
 		    ON e.dept_code = d.dept_code
 		WHERE l.emp_id = #{empId}
@@ -201,4 +206,12 @@
     FROM emp_login
     WHERE emp_id = #{empId}
 </select>
+<!-- 권한 변경 : user->manager -->
+<update id="updateEmployeeRole" parameterType="com.yedam.erp.vo.main.EmpLoginVO">
+    UPDATE EMP_LOGIN
+    SET
+        com_name = #{comName}  
+    WHERE
+        EMP_ID = #{empId}
+</update>
 </mapper>
