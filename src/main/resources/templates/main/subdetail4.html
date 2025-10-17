@@ -395,7 +395,7 @@ main {
 </style>
 </head>
 <body>
-	<input type="hidden" id="targetStep" th:value="${targetStep}" />
+    <input type="hidden" id="targetStep" th:value="${targetStep}" />
 	<input type="hidden" id="base-users-hidden"
 		th:value="${subPlan.baseSalary}">
 	<input type="hidden" id="max-users-hidden"
@@ -709,7 +709,7 @@ main {
                     }
                 }
             </script>
-
+			
 			<div id="step-4" class="step-section">
 				<div class="inner-layout">
 					<div class="main-form">
@@ -764,7 +764,7 @@ main {
 								</div>
 							</div>
 						</div>
-
+						
 						<div class="form-navigation">
 							<button type="button" class="nav-btn prev-btn"
 								onclick="goToStep(3)">이전단계</button>
@@ -782,7 +782,7 @@ main {
 					</aside>
 				</div>
 			</div>
-
+			
 			<div id="step-5" class="step-section">
 				<div class="completion-container">
 					<h2>결제가 성공적으로 완료되었습니다!</h2>
@@ -792,45 +792,41 @@ main {
 					<div class="summary-box"
 						style="width: 500px; margin: 0 auto 40px auto; text-align: left;">
 						<div class="summary-item">
-						<!-- >-->
-							<span class="item-label">구독 플랜</span> <span class="item-value" id="planName" > 프리미엄</span>
+							<span class="item-label">구독 플랜</span> <span class="item-value">프리미엄</span>
 						</div>
 						<div class="summary-item">
 							<span class="item-label">구독 기간</span> <span class="item-value">2025-09-29
 								~ 2026-03-28</span>
 						</div>
 					</div>
-					<a href="/login" class="home-btn">서비스 시작하기</a>
+					<a href="/dashboard" class="home-btn">서비스 시작하기</a>
 				</div>
 			</div>
 		</div>
 	</main>
-
-	<div class="modal fade" id="paymentModal" tabindex="-1"
-		aria-labelledby="paymentModalLabel" aria-hidden="true">
-		<div class="modal-dialog modal-lg">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h5 class="modal-title" id="paymentModalLabel">결제 진행</h5>
-					<button type="button" class="btn-close" data-bs-dismiss="modal"
-						aria-label="Close"></button>
-				</div>
-				<div class="modal-body">
-					<div id="payment-method-widget-modal" style="min-height: 400px;"></div>
-					<div id="agreement-widget-modal" style="margin-top: 16px;"></div>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-secondary"
-						data-bs-dismiss="modal">취소</button>
-					<button type="button" class="nav-btn next-btn"
-						id="modal-payment-button">결제하기</button>
-				</div>
-			</div>
-		</div>
+	
+	<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+	    <div class="modal-dialog modal-lg">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <h5 class="modal-title" id="paymentModalLabel">결제 진행</h5>
+	                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	            </div>
+	            <div class="modal-body">
+	                <div id="payment-method-widget-modal" style="min-height: 400px;"></div>
+	                <div id="agreement-widget-modal" style="margin-top: 16px;"></div>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+	                <button type="button" class="nav-btn next-btn" id="modal-payment-button">결제하기</button>
+	            </div>
+	        </div>
+	    </div>
 	</div>
 
 	<div th:replace="~{layout/main_footer :: footerFragment}"></div>
-	<script>
+
+<script>
     // ------------------------------------
     //  1. 전역 변수 설정
     // ------------------------------------
@@ -848,7 +844,7 @@ main {
     // Toss Payments 키를 기능별로 분리하여 정의
     const widgetClientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; // 일반결제(결제위젯)용 클라이언트 키
     const billingClientKey = "test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq"; // 정기결제(API)용 토스 테스트용 키
-    const customerKey = "USER_ERP_1001"; // ★ 실제 로그인한 사용자 고유 ID로 변경
+    const customerKey = "USER_ERP_1001"; // 실제 로그인한 사용자 고유 ID로 변경
 
     // 기능별 TossPayments 인스턴스를 저장할 변수
     let tossWidgetPayments; // 일반결제용
@@ -900,7 +896,7 @@ main {
     }
 
     // ------------------------------------
-    //  3. UI 업데이트 및 페이지 이동 함수 (변경 없음)
+    //  3. UI 업데이트 및 페이지 이동 함수 
     // ------------------------------------
     function updateSummary() {
         const durationElements = document.querySelectorAll('#summary-duration, #summary-duration-final');
@@ -954,13 +950,12 @@ main {
     // ------------------------------------
 
     /**
-     * '일반 결제' 모달을 열고 위젯을 렌더링합니다.
+     * "일반 결제" 모달을 열고 위젯을 렌더링합니다.
      */
     async function openPaymentModal() {
         try {
-            widgets = tossWidgetPayments.widgets({ 
-            	customerKey: customerKey          
-            });
+            // 일반결제용 인스턴스(tossWidgetPayments) 사용
+            widgets = tossWidgetPayments.widgets({ customerKey });
 
             await widgets.setAmount({
                 currency: "KRW",
@@ -988,7 +983,7 @@ main {
     }
 
     /**
-     * 정기 결제(빌링)를 위한 카드 등록창을 요청합니다. 
+     * "정기 결제(빌링)"를 위한 카드 등록창을 요청합니다.
      */
     async function requestBillingAuth() {
         const customerName = document.getElementById('matName').value || "김토스";
@@ -1013,33 +1008,29 @@ main {
     /**
      * 선택된 결제 방식에 따라 적절한 함수를 호출합니다.
      */
-     async function handlePaymentRequest() {
+     async function handlePaymentRequest() { // async 키워드 추가
     	    const selectedOption = document.querySelector('#payment-type-options .payment-option.selected');
     	    const paymentType = selectedOption.getAttribute('data-type');
 
     	    if (paymentType === 'NORMAL') {
-    	        // 1. 일반결제: 결제 위젯 모달 열기
+    	        // 일반결제는 기존과 동일하게 진행
     	        openPaymentModal();
     	    } else if (paymentType === 'RECURRING') {
-    	        // 2. 정기결제: 카드 등록 (첫 결제는 서버가 이어서 처리)
+    	        // --- 정기결제 로직 시작 ---
     	        try {
-    	            // 2-1. 서버에 'PENDING' 구독 정보를 생성합니다.
-                    // (첫 결제에 필요한 모든 정보를 전송)
+    	            // 1. 서버에 보낼 구독 정보 객체를 만듭니다.
     	            const subscriptionData = {
-    	                subPlanNo: 1, //실제 선택한 플랜 번호로 동적수정필요
+    	                subPlanNo: 1, // TODO: 실제 선택한 플랜 번호로 동적으로 변경해야 합니다.
     	                totalUsers: parseInt(selectedUserCount) || 0,
-    	                customerKey: customerKey,
-                        mon: selectedDuration, // 구독 기간
-                        totalPay: finalPayment, // 첫 결제 금액
-                        adjustmentCharge: adjustmentCharge // 조정 금액
+    	                customerKey: customerKey // 전역 변수에 저장된 customerKey 사용
     	            };
 
     	            console.log("서버에 임시 구독 생성을 요청합니다:", subscriptionData);
-    	            
-                    // 2. 서버의 '/sub/create-pending' API를 호출
-                    await axios.post('/sub/create-pending', subscriptionData);
-    	            
-                    console.log("임시 구독 생성 성공. 카드 등록 절차를 시작합니다.");
+
+    	            // 2. 서버의 '/sub/create-pending' API를 호출하여 DB에 구독 정보를 미리 생성합니다.
+    	            await axios.post('/sub/create-pending', subscriptionData);
+
+    	            console.log("임시 구독 생성 성공. 카드 등록 절차를 시작합니다.");
 
     	            // 3. 구독 정보 생성이 성공하면, 그 후에 카드 등록창을 엽니다.
     	            requestBillingAuth();
@@ -1050,7 +1041,6 @@ main {
     	        }
     	    }
     	}
-        
     // ------------------------------------
     //  5. DOMContentLoaded 이벤트 핸들러
     // ------------------------------------
@@ -1060,7 +1050,7 @@ main {
         tossWidgetPayments = TossPayments(widgetClientKey);
         tossBillingPayments = TossPayments(billingClientKey);
 
-        // --- (기본 정보 로드) ---
+        // --- (이하 코드는 이전과 동일) ---
     	const basePriceElement = document.querySelector('.premium-section .price');
     	if (basePriceElement && basePriceElement.textContent) {
     	    const rawValue = basePriceElement.textContent.replace(/[^0-9]/g, '');
@@ -1075,7 +1065,6 @@ main {
 
         document.getElementById(`step-${currentStep}`).classList.add('active');
 
-        // --- (이벤트 리스너 설정) ---
         const durationButtons = document.querySelectorAll('#duration-options .option-button');
         durationButtons.forEach(button => {
             button.addEventListener('click', () => {
@@ -1112,28 +1101,23 @@ main {
 
         calculatePayment();
 
-        // '결제하기' 버튼 (일반/정기 분기 처리)
         document.getElementById('payment-button').addEventListener('click', handlePaymentRequest);
 
-        // '모달에서 결제하기' 버튼 ('일반결제' 전용)
         document.getElementById('modal-payment-button').addEventListener('click', async function () {
             if (!widgets) {
                 alert("결제 위젯이 초기화되지 않았습니다. 잠시 후 다시 시도해 주세요.");
                 return;
             }
 
-            // '일반결제'는 paymentType: 'NORMAL'로 설정
             const requestData = {
-                subPlanNo: 1, // TODO: 실제 플랜 번호
+                subPlanNo: 1,
                 userCount: selectedUserCount,
                 duration: selectedDuration,
                 finalAmount: finalPayment,
-                adjustmentCharge: adjustmentCharge,
-                paymentType: 'NORMAL' // ★ 일반결제(위젯) 플로우임을 명시
+                adjustmentCharge: adjustmentCharge
             };
 
             try {
-                // '일반결제' 준비 API 호출 (이 API는 백엔드에서 paymentType을 캐시합니다)
                 const response = await axios.post('/payment/api/payment/prepare', requestData);
                 const { orderId, orderName } = response.data;
 
@@ -1149,8 +1133,6 @@ main {
                 alert("결제를 진행하는 중 문제가 발생했습니다. 콘솔을 확인해 주세요.");
             }
         });
-        
-        // 페이지 진입 시 targetStep 처리
         const targetStepInput = document.getElementById('targetStep');
         if (targetStepInput) {
             const targetStep = parseInt(targetStepInput.value, 10);

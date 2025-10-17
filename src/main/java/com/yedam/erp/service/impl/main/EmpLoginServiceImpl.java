@@ -37,9 +37,36 @@ public class EmpLoginServiceImpl implements EmpLoginService {
 
     @Override
     @Transactional
-    public void activateCustomLogin(String empId) {
-        String customLoginId = "NGR" + empId;
-        activateLogin(empId, customLoginId);
+    public void activateCustomLogin(String empId) { 
+        // empId가 "EMP-2025-010"과 같은 형식이라고 가정합니다.
+        
+        try {
+            // 1. empId를 "-" 기준으로 분리합니다.
+            //    예: "EMP-2025-010" -> ["EMP", "2025", "010"]
+            String[] parts = empId.split("-");
+            
+            // 2. 두 번째 부분(연도)에서 뒤의 두 자리만 가져옵니다.
+            //    예: "2025" -> "25"
+            String yearLastTwoDigits = parts[1].substring(2);
+            
+            // 3. 세 번째 부분을 가져옵니다.
+            //    예: "010"
+            String numberPart = parts[2];
+            
+            // 4. "NGR"과 조합하여 최종 ID를 만듭니다.
+            //    예: "NGR" + "25" + "010" -> "NGR25010"
+            String customLoginId = "NGR" + yearLastTwoDigits + numberPart;
+            
+            // 5. 생성된 customLoginId로 activateLogin 메소드를 호출합니다.
+            activateLogin(empId, customLoginId);
+
+        } catch (Exception e) {
+            // "EMP-YYYY-NNN" 형식이 아닐 경우 예외가 발생할 수 있습니다.
+            // (예: parts[1]이나 parts[2]가 없는 경우 등)
+            // 실제 운영 코드에서는 이 부분에 대한 예외 처리를 해주시는 것이 좋습니다.
+            System.err.println("empId 형식 오류: " + empId);
+            // e.printStackTrace();
+        }
     }
 
     @Override

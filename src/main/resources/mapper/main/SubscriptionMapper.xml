@@ -90,12 +90,14 @@
     </selectKey>
     INSERT INTO subscription (
         sub_code,
-        start_date,
+        start_date, --panding상태 임시sysdate
         sub_status,
         sub_plan_no,
         total_users,
         mat_no,
-        customer_key
+        customer_key,
+        total_pay,
+        mon
     ) VALUES (
         #{subCode},
         SYSDATE,
@@ -103,8 +105,9 @@
         #{subPlanNo},
         #{totalUsers},
         #{matNo},
-        #{customerKey}
-        -- 기타 값들
+        #{customerKey},
+		#{totalPay},
+        #{mon}
     )
 </insert>
 <select id="findSubscriptionsDueForPaymentToday" resultType="com.yedam.erp.vo.main.SubscriptionVO">
@@ -123,7 +126,42 @@
     AND 
         sub_status = 'ACTIVE'
 </select>
-
+<select id="findPendingSubscriptionByCustomerKey" parameterType="String" resultType="com.yedam.erp.vo.main.SubscriptionVO">
+       SELECT * FROM (
+        SELECT 
+            sub_code,
+            mat_no,
+            sub_plan_no,
+            total_users,
+            total_pay,
+            mon,
+            customer_key,
+            sub_status
+            FROM 
+            subscription
+        WHERE 
+            customer_key = #{customerKey}
+        AND 
+            sub_status = 'PENDING'
+        ORDER BY 
+            start_date DESC
+    )
+    WHERE ROWNUM = 1
+    </select>
+    <update id="activatePendingSubscription" parameterType="com.yedam.erp.vo.main.SubscriptionVO">
+        UPDATE subscription
+        SET
+            sub_status = 'ACTIVE',
+            start_date = SYSDATE,                       
+            end_date = ADD_MONTHS(SYSDATE, #{mon}),     
+            next_pay_date = ADD_MONTHS(SYSDATE, 1), 
+            billing_key = #{billingKey},                
+            com_code = #{comCode}                       
+        WHERE
+            sub_code = #{subCode}
+        AND
+            sub_status = 'PENDING'
+    </update>
 <update id="processPayment" parameterType="com.yedam.erp.vo.main.PayLogVO">
     {CALL process_subscription_payment(
         #{amount, jdbcType=NUMERIC},
