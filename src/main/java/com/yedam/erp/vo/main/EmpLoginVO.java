@@ -26,6 +26,7 @@ public class EmpLoginVO {
 	private String name;
 	private String email;
 	private String mustChangePw;
+	private String comName;
 	private EmpVO empVO; 
     private CompanyVO companyVO; 
 }

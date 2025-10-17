@@ -15,10 +15,10 @@
 
 		INSERT INTO COMPANY (
 		MAT_NO, CEO, COMP_NAME, MAT_NAME, MAT_TEL, MAT_MAIL,
-		COMP_ADDR, SUB_DATE, ZIP_CODE, COM_TEL, COMP_DEL_ADDR, COM_CODE, JIBUN_ADDRESS,brm
+		COMP_ADDR, SUB_DATE, ZIP_CODE, COM_TEL, COMP_DEL_ADDR, COM_CODE, JIBUN_ADDRESS,BRM,BIZ_TYPE,BIZ_CATEGORY,BIZ_ACCOUNT
 		) VALUES (
 		#{matNo}, #{ceo}, #{compName}, #{matName}, #{matTel}, #{matMail},
-		#{compAddr}, SYSDATE, #{zipCode}, #{comTel}, #{compDelAddr}, NULL, #{jibunAddress},#{brm}
+		#{compAddr}, SYSDATE, #{zipCode}, #{comTel}, #{compDelAddr}, NULL, #{jibunAddress},#{brm},#{bizType},#{bizCategory},#{bizAccount}
 		)
 	</insert>
 
@@ -32,10 +32,10 @@
 
 		INSERT INTO EMP_LOGIN (
 		EMP_ID_NO, EMP_ID, EMP_PW, EMP_NO, MAT_NO, DEPT_CODE,
-		CREATE_AT, IS_USED, IS_LOCKED, FAILED_LOGIN_ATT
+		CREATE_AT, IS_USED, IS_LOCKED, FAILED_LOGIN_ATT,com_name
 		) VALUES (
 		#{empIdNo}, #{empId}, #{empPw}, #{empNo}, #{matNo}, #{deptCode},
-		SYSDATE, 'Y', 'N', 0
+		SYSDATE, 'Y', 'N', 0,#{comName}
 		)
 	</insert>
     <select id="findByComCode" parameterType="String" resultType="com.yedam.erp.vo.main.CompanyVO">

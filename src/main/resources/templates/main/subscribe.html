@@ -122,10 +122,10 @@
           card.className = 'plan-card';
           card.innerHTML = `
             <h3>${plan.planName}</h3>
-            <p>최소인원: ${plan.minUsers}</p>
-            <p>최대인원: ${plan.maxUsers}</p>
+            <p>최소인원: ${plan.minUsers}명</p>
+            <p>최대인원: ${plan.maxUsers}명</p>
             <p class="plan-features">${plan.avaiModules}</p>
-            <div class="plan-price">${plan.baseSalary}</div>
+            <div class="plan-price">${Number(plan.baseSalary).toLocaleString('ko-KR')}₩</div>
             <div class="button-wrapper">
               <button class="plan-button" onclick="location.href='/subDetails?planId=${plan.subPlanNo}'">시작</button>
             </div>
