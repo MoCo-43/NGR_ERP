@@ -28,13 +28,14 @@
 
 			<div class="d-flex justify-content-between align-items-center mb-3">
 				<div>
-					<select id="dept-filter" class="form-select d-inline-block w-auto me-2">
+				<!-- class="form-select d-inline-block w-auto"  -->
+					<select id="dept-filter" class="form-control">
 						<option value="">전체 부서</option>
 						<option value="경영팀">경영팀</option>
 						<option value="재고팀">재고팀</option>
 						<option value="인사팀">인사팀</option>
-					</select>
-					<select id="title-filter" class="form-select d-inline-block w-auto">
+					</select> <select id="title-filter"
+						 class="form-control" >
 						<option value="">전체 직급</option>
 						<option value="팀원">팀원</option>
 						<option value="팀장">팀장</option>
@@ -65,8 +66,7 @@
                 { field: 'title', headerName:'직급' },
                 { field: 'deptName', headerName: '부서이름' }, 
                 { field: 'email', headerName: '이메일' },
-                { field: 'comName',headerName:'권한'},
-                { field: 'status',headerName:'상태'}
+                { field: 'comName',headerName:'권한'}
             ];
 
             // AG Grid 옵션 
