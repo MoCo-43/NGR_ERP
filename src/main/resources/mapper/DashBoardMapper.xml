@@ -20,4 +20,16 @@
         ORDER BY
             memberCount DESC 
     </select>
+    
+    <select id="selectProfitDash" resultType="com.yedam.erp.vo.common.DashBoardVO">
+      SELECT YEAR_MONTH, NET_PROFIT_AMT, COMPANY_CODE
+	  FROM monthly_net_profit
+	  WHERE YEAR_MONTH IN (
+	    TO_CHAR(SYSDATE, 'YYYYMM'),
+	    TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'YYYYMM')
+	  )
+	  AND COMPANY_CODE = #{companyCode}
+    </select>
+    
+    
 </mapper>

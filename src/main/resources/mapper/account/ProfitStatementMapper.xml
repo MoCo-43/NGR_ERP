@@ -55,4 +55,21 @@ GROUP BY acctCode, acctName, acctGroup
 ORDER BY acctGroup, acctCode
   </select>
 
+<!--  당기순손익 INSERT, UPDATE -->
+<insert id="insertMonthlyNetProfit" parameterType="map">
+INSERT INTO MONTHLY_NET_PROFIT (
+    NET_NO, COMPANY_CODE, YEAR_MONTH, NET_PROFIT_AMT, UPDATED_AT
+) VALUES (
+    SEQ_NET_NO.NEXTVAL, #{companyCode}, #{yearMonth}, #{netProfitAmt}, SYSDATE
+)
+</insert>
+
+<update id="updateMonthlyNetProfit" parameterType="map">
+UPDATE MONTHLY_NET_PROFIT
+SET NET_PROFIT_AMT = #{netProfitAmt},
+    UPDATED_AT = SYSDATE
+WHERE COMPANY_CODE = #{companyCode}
+  AND YEAR_MONTH = #{yearMonth}
+</update>
+
 </mapper>

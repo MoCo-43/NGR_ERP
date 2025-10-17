@@ -1,142 +1,154 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/base}">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 <head>
 <title layout:fragment="title">재무상태표</title>
+
 <th:block layout:fragment="head_extra">
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
 
-	<!-- AG Grid -->
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+<!-- 📦 jsPDF + AutoTable + CSV -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-	<style scoped="scoped">
-h2 {
-	margin: 0 0 .75rem;
+<style scoped>
+.btn-bar { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem; }
+.ag-theme-quartz {
+  --ag-header-background-color:#f9fafb;
+  --ag-odd-row-background-color:#fafafa;
+  --ag-border-color:#e5e7eb;
 }
-
-.btn-bar {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	margin-bottom: 0.75rem;
-}
-
-.btn-outline {
-	background: #fff;
-	color: #111827;
-}
-
-.note {
-	color: #9ca3af;
-	font-size: .85rem;
-}
-
-#bsGrid.ag-theme-quartz {
-	height: 38rem;
-	width: 100%;
-}
-/* AG Grid row styles */
-.row-header {
-	background: #e5e7eb !important;
-	font-weight: 800;
-}
-
-.row-subtotal {
-	background: #f8fafc !important;
-	font-weight: 700;
-}
-
-.row-total {
-	background: #374151 !important;
-	color: #fff;
-	font-weight: 800;
-	border-top: 2px solid #111827;
-}
-
-.indent-0 {
-	padding-left: 0;
-}
-
-.indent-1 {
-	padding-left: 16px;
-}
-
-.indent-2 {
-	padding-left: 32px;
-}
-
-.code-badge {
-	font-variant-numeric: tabular-nums;
-	background: #eef2ff;
-	color: #3730a3;
-	padding: .05rem .35rem;
-	border-radius: 6px;
-	margin-left: .4rem;
-	font-size: .72rem;
-}
+#bsGrid.ag-theme-quartz { height:38rem; width:100%; }
+.row-header { background:#e5e7eb!important; font-weight:800; }
+.row-subtotal { background:#f8fafc!important; font-weight:700; }
+.row-total { background:#374151!important; color:#fff; font-weight:800; border-top:2px solid #111827; }
+.indent-0 {padding-left:0;}
+.indent-1 {padding-left:20px;}
+.note {color:#9ca3af; font-size:.85rem;}
 </style>
 </th:block>
 </head>
+
 <body>
-	<section layout:fragment="content">
+<section layout:fragment="content">
+  <div class="card shadow mb-3">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">재무상태표</h6>
+    </div>
 
-		<div class="card shadow mb-3">
-			<div
-				class="card-header py-3 d-flex align-items-center justify-content-between">
-				<h6 class="m-0 font-weight-bold text-primary">재무상태표</h6>
-			</div>
+    <div class="card-body">
+      <div class="btn-bar">
+        <label class="form-label">기준월</label>
+        <input type="month" id="srchYear" class="form-control form-control-sm" style="max-width:180px" />
+        <button id="btnRecalc" class="btn btn-dark btn-sm">조회</button>
+        <button id="btnCsv" class="btn btn-outline-success btn-sm">CSV</button>
+        <button id="btnPdf" class="btn btn-outline-danger btn-sm">PDF</button>
+      </div>
+      <div id="bsGridWrapper" style="position:relative;">
+      <div id="bsGrid" class="ag-theme-quartz"></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-			<div class="card-body">
-				<!-- 툴바 -->
-				<div class="btn-bar">
+<th:block layout:fragment="body_extra">
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
+<script th:inline="none">
 
-					<label class="form-label">기준</label> <input type="month"
-						id="srchYear" class="form-control form-control-sm"
-						style="max-width: 180px">
-					<button id="btnRecalc" class="btn btn-dark btn-sm">조회</button>
-					<button id="btnCsv" class="btn btn-outline-success btn-sm">CSV</button>
-					<button id="btnPdf" class="btn btn-outline-danger btn-sm">PDF</button>
+// ======================= 헬퍼 ==========================
+let gridApi;
+const fmt = n => (n ?? n === 0) ? n.toLocaleString('ko-KR') : "";
+const sum = arr => arr.reduce((a,b)=>a+b,0);
 
-				</div>
+// ======================= 데이터 구조 ==========================
+function convertApiToTree(apiData) {
+  const tree = { asset:{cur:{},non:{}}, liab:{cur:{},non:{}}, equity:{} };
+  apiData.forEach(it => {
+    const { acctKwan, acctHang, acctName, amount } = it;
+    const h = Number(acctHang||0);
+    if (acctKwan === 1) (h <= 4 ? tree.asset.cur : tree.asset.non)[acctName] = amount;
+    else if (acctKwan === 2) (h <= 6 ? tree.liab.cur : tree.liab.non)[acctName] = amount;
+    else if (acctKwan === 3) tree.equity[acctName] = amount;
+  });
+  return tree;
+}
 
-				<!-- 재무상태표 Grid -->
-				<div id="bsGrid" class="ag-theme-quartz"></div>
-			</div>
-		</div>
+function buildRows(t) {
+  const curAssetSum = sum(Object.values(t.asset.cur));
+  const nonAssetSum = sum(Object.values(t.asset.non));
+  const assetTotal = curAssetSum + nonAssetSum;
+  const curLiabSum = sum(Object.values(t.liab.cur));
+  const nonLiabSum = sum(Object.values(t.liab.non));
+  const liabTotal = curLiabSum + nonLiabSum;
+  const equitySum = sum(Object.values(t.equity));
 
-	</section>
+  const rows = [];
+  rows.push({rowType:"header", label:"자산"});
+  rows.push({rowType:"subtotal", label:"Ⅰ. 유동자산", amount:curAssetSum});
+  for(const [k,v] of Object.entries(t.asset.cur)) rows.push({label:k, amount:v, level:1});
+  rows.push({rowType:"subtotal", label:"Ⅱ. 비유동자산", amount:nonAssetSum});
+  for(const [k,v] of Object.entries(t.asset.non)) rows.push({label:k, amount:v, level:1});
+  rows.push({rowType:"total", label:"자산총계", amount:assetTotal});
 
-	<th:block layout:fragment="body_extra">
-		<!-- 순서 중요: jsPDF → autotable → 폰트 -->
-		<script
-			src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-		<script
-			src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  rows.push({rowType:"header", label:"부채"});
+  rows.push({rowType:"subtotal", label:"Ⅰ. 유동부채", amount:curLiabSum});
+  for(const [k,v] of Object.entries(t.liab.cur)) rows.push({label:k, amount:v, level:1});
+  rows.push({rowType:"subtotal", label:"Ⅱ. 비유동부채", amount:nonLiabSum});
+  for(const [k,v] of Object.entries(t.liab.non)) rows.push({label:k, amount:v, level:1});
+  rows.push({rowType:"total", label:"부채총계", amount:liabTotal});
 
-		<!-- ================= JS LIBRARIES ================= -->
-		<script th:inline="none"
-			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
+  rows.push({rowType:"header", label:"자본"});
+  for(const [k,v] of Object.entries(t.equity)) rows.push({label:k, amount:v, level:1});
+  rows.push({rowType:"subtotal", label:"자본총계", amount:equitySum});
+  rows.push({rowType:"total", label:"부채와자본총계", amount:liabTotal+equitySum});
+  return { rows };
+}
 
+// ======================= 데이터 로드 ==========================
+async function loadBalanceSheet(yearMonth) {
+  try {
+    const res = await axios.get(`/api/account/balance-sheet`, { params:{ yearMonth }});
+    const tree = convertApiToTree(res.data);
+    const { rows } = buildRows(tree);
+    gridApi.setGridOption('rowData', rows);
+  } catch (err) {
+    console.error('❌ 재무상태표 로드 실패:', err);
+    alert('데이터를 불러오는 중 오류가 발생했습니다.');
+  }
+}
 
-		<!-- <script th:inline="none" src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script> -->
+// ======================= CSV ==========================
+function exportCsv() {
+  const data = [];
+  for(let i=0;i<gridApi.getDisplayedRowCount();i++){
+    const row = gridApi.getDisplayedRowAtIndex(i)?.data;
+    if(row) data.push({계정과목:row.label, 금액:row.amount||0});
+  }
+  const csv = Papa.unparse(data);
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `재무상태표_${document.getElementById('srchYear').value}.csv`;
+  a.click();
+}
 
-		<script th:inline="none">
-// 한 번만 로드/캐시
+// ======================= PDF ==========================
+const KR_FONT_URL = '/fonts/NotoSansKR-Regular.ttf';
 let __krFontBase64 = null;
-const KR_FONT_URL = '/fonts/NotoSansKR-Regular.ttf'; // 정적 경로
 
 async function fetchAsBase64(url) {
   const res = await fetch(url, { cache: 'force-cache' });
   if (!res.ok) throw new Error('Font fetch failed: ' + res.status);
   const buf = await res.arrayBuffer();
-  // ArrayBuffer -> Base64
   let binary = '';
   const bytes = new Uint8Array(buf);
-  const len = bytes.byteLength;
-  for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
   return btoa(binary);
 }
 
@@ -146,172 +158,91 @@ async function ensureKoreanFont() {
   return __krFontBase64;
 }
 
-let gridApi;
-console.log('NotoSansKR_Regular?', typeof window.NotoSansKR_Regular);
-const fmt = n => (n ?? n===0) ? n.toLocaleString() : "";
-const sum = arr => arr.reduce((a,b)=>a+b,0);
+async function exportPdf() {
+  const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+  if (!jsPDFCtor) return alert('jsPDF가 로드되지 않았습니다.');
+  if (!('autoTable' in (jsPDFCtor.API || {}))) return alert('jspdf-autotable이 로드되지 않았습니다.');
 
-// ===== 더미데이터 (2025-12 기준) =====
-const bsData = {
-  asset: {
-    current: {
-      cash:{ code:'101', cur:18000000, label:'(1) 현금및현금성자산' },
-      ar  :{ code:'102', cur:35000000, label:'(2) 외상매출금' },
-      inv :{ code:'103', cur:12000000, label:'(3) 재고자산' },
-      other:{ code:'104', cur:4000000, label:'(4) 기타유동자산' }
-    },
-    noncurrent: {
-      equip:{ code:'201', cur:45000000, label:'(1) 유형자산' },
-      build:{ code:'202', cur:30000000, label:'(2) 건물' },
-      intangible:{ code:'203', cur:6000000, label:'(3) 무형자산' }
-    }
-  },
-  liability: {
-    current: {
-      ap: { code:'301', cur:15000000, label:'(1) 외상매입금' },
-      stloan:{ code:'302', cur:10000000, label:'(2) 단기차입금' },
-      tax:{ code:'303', cur:2000000, label:'(3) 미지급세금' }
-    },
-    noncurrent: {
-      ltloan:{ code:'401', cur:20000000, label:'(1) 장기차입금' },
-      lease:{ code:'402', cur:5000000, label:'(2) 리스부채' }
-    }
-  },
-  equity: {
-    capital:{ code:'501', cur:30000000, label:'(1) 자본금' },
-    retained:{ code:'502', cur:32000000, label:'(2) 이익잉여금' },
-    etc:{ code:'503', cur:2000000, label:'(3) 기타자본항목' }
+  const val = document.getElementById('srchYear').value;
+  const ym = val.replace('-', '');
+  const label = `${val} 말`;
+
+  const rowData = gridApi.getDisplayedRowAtIndex
+    ? Array.from({ length: gridApi.getDisplayedRowCount() }, (_, i) => gridApi.getDisplayedRowAtIndex(i).data)
+    : [];
+  const table = rowData.map(r => [
+    `${'　'.repeat(r.level || 0)}${r.label}`,
+    r.amount ? Number(r.amount).toLocaleString() : ''
+  ]);
+
+  const doc = new jsPDFCtor({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  try {
+    const base64 = await ensureKoreanFont();
+    doc.addFileToVFS('NotoSansKR-Regular.ttf', base64);
+    doc.addFont('NotoSansKR-Regular.ttf', 'NotoSansKR', 'normal');
+    doc.setFont('NotoSansKR');
+
+    // 제목
+    doc.setFontSize(16);
+    doc.text(`재무상태표 (${label})`, 40, 50);
+    
+	// 단위
+    doc.setFontSize(10);
+    doc.text('(단위 : 원)', 500, 85, { align: 'right' });
+    // 표
+    doc.autoTable({
+      startY: 100,
+      head: [['계정과목', '금액']],
+      body: table,
+      theme: 'striped',
+      styles: { font: 'NotoSansKR', fontSize: 9, cellPadding: 4 },
+      headStyles: { font: 'NotoSansKR', fillColor: [55, 65, 81], textColor: 255 },
+      bodyStyles: { font: 'NotoSansKR' },
+      columnStyles: { 0: { cellWidth: 320 }, 1: { halign: 'right' } }
+    });
+
+    doc.save(`재무상태표_${ym}.pdf`);
+  } catch (e) {
+    console.error(e);
+    alert('폰트 로드 오류가 발생했습니다.');
   }
-};
-
-function buildRows(b,label){
-	const curAssetSum = sum(Object.values(b.asset.current).map(x=>x.cur));
-	const nonCurAssetSum = sum(Object.values(b.asset.noncurrent).map(x=>x.cur));
-	const assetTotal = curAssetSum + nonCurAssetSum;
-
-	const curLiabSum = sum(Object.values(b.liability.current).map(x=>x.cur));
-	const nonCurLiabSum = sum(Object.values(b.liability.noncurrent).map(x=>x.cur));
-	const liabTotal = curLiabSum + nonCurLiabSum;
-
-	const equitySum = sum(Object.values(b.equity).map(x=>x.cur));
-
-	const rows = [];
-	rows.push({rowType:'header',label:'자산',level:0});
-	rows.push({code:'100',label:'Ⅰ. 유동자산',amount:curAssetSum,level:0,rowType:'subtotal'});
-	Object.values(b.asset.current).forEach(it=>rows.push({code:it.code,label:it.label,amount:it.cur,level:1}));
-	rows.push({code:'200',label:'Ⅱ. 비유동자산',amount:nonCurAssetSum,level:0,rowType:'subtotal'});
-	Object.values(b.asset.noncurrent).forEach(it=>rows.push({code:it.code,label:it.label,amount:it.cur,level:1}));
-	rows.push({code:'999',label:'자산총계',amount:assetTotal,level:0,rowType:'total'});
-
-	rows.push({rowType:'header',label:'부채',level:0});
-	rows.push({code:'300',label:'Ⅰ. 유동부채',amount:curLiabSum,level:0,rowType:'subtotal'});
-	Object.values(b.liability.current).forEach(it=>rows.push({code:it.code,label:it.label,amount:it.cur,level:1}));
-	rows.push({code:'400',label:'Ⅱ. 비유동부채',amount:nonCurLiabSum,level:0,rowType:'subtotal'});
-	Object.values(b.liability.noncurrent).forEach(it=>rows.push({code:it.code,label:it.label,amount:it.cur,level:1}));
-	rows.push({code:'499',label:'부채총계',amount:liabTotal,level:0,rowType:'subtotal'});
-
-	rows.push({rowType:'header',label:'자본',level:0});
-	Object.values(b.equity).forEach(it=>rows.push({code:it.code,label:it.label,amount:it.cur,level:1}));
-	rows.push({code:'599',label:'자본총계',amount:equitySum,level:0,rowType:'subtotal'});
-	rows.push({code:'9999',label:'부채와자본총계',amount:liabTotal+equitySum,level:0,rowType:'total',note:`기준: ${label}`});
-
-	return rows;
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
-	const columnDefs=[
-		{ headerName:'계정과목', field:'label', flex:2,
-			cellRenderer:p=>{
-				const code=p.data?.code?`<span class="code-badge">${p.data.code}</span>`:"";
-				const note=p.data?.note?` <span class="note">(${p.data.note})</span>`:"";
-				return `<span class="indent-${p.data.level||0}">${p.value}</span>${code}${note}`;
-			}},
-		{ headerName:'금액', field:'amount', flex:1, valueFormatter:p=>fmt(p.value) }
-	];
+// ======================= 초기화 ==========================
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('srchYear').value = new Date().toISOString().slice(0, 7);
+  const columnDefs = [
+    { headerName: '계정과목', field: 'label', flex: 2,
+      cellRenderer: p => `<span class="indent-${p.data.level || 0}">${p.value}</span>` },
+    { headerName: '금액', field: 'amount', flex: 1, valueFormatter: p => fmt(p.value) }
+  ];
+  const gridOptions = {
+    columnDefs,
+    rowData: [],
+    getRowClass: p => {
+      if (p.data?.rowType === "header") return "row-header";
+      if (p.data?.rowType === "subtotal") return "row-subtotal";
+      if (p.data?.rowType === "total") return "row-total";
+    },
+    defaultColDef: { resizable: true }
+  };
+  gridApi = agGrid.createGrid(document.getElementById('bsGrid'), gridOptions);
 
-	const gridOptions={
-		columnDefs,
-		rowData:buildRows(bsData,"2025-12 말"),
-		getRowClass:p=>{
-			if(p.data?.rowType==="header")return"row-header";
-			if(p.data?.rowType==="subtotal")return"row-subtotal";
-			if(p.data?.rowType==="total")return"row-total";
-		},
-		defaultColDef:{resizable:true}
-	};
+  document.getElementById('btnRecalc').addEventListener('click', async () => {
+    const val = document.getElementById('srchYear').value;
+    if (!val) return alert('조회 기준월을 선택하세요.');
+   
+    await loadBalanceSheet(val.replace('-', ''));
+    
+  });
+  document.getElementById('btnCsv').addEventListener('click', exportCsv);
+  document.getElementById('btnPdf').addEventListener('click', exportPdf);
 
-	gridApi=agGrid.createGrid(document.getElementById('bsGrid'),gridOptions);
-
-	// === 조회 버튼 (나중에 axios 연결 가능) ===
-	document.getElementById('btnRecalc').addEventListener('click',()=>{
-		const yy=document.getElementById('yy').value;
-		const mm=document.getElementById('mm').value;
-		gridApi.setGridOption('rowData',buildRows(bsData,`${yy}-${mm} 말`));
-
-		/*
-		// 나중에 실제 API 연결 시
-		axios.get(`/api/account/balance-sheet?yy=${yy}&mm=${mm}`)
-			.then(res => {
-				gridApi.setGridOption('rowData', buildRows(res.data, `${yy}-${mm} 말`));
-			});
-		*/
-	});
-
-	document.getElementById('btnCsv').addEventListener('click',()=>{
-		gridApi.exportDataAsCsv({fileName:`재무상태표_${Date.now()}.csv`});
-	});
-
-	  document.getElementById('btnPdf').addEventListener('click', async () => {
-		    const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-		    if (!jsPDFCtor) { alert('jsPDF가 로드되지 않았습니다.'); return; }
-		    if (!('autoTable' in (jsPDFCtor.API || {}))) { alert('jspdf-autotable이 로드되지 않았습니다.'); return; }
-
-		    // 1) 데이터 준비
-		    const yy = document.getElementById('yy').value;
-		    const mm = document.getElementById('mm').value;
-		    const label = `${yy}-${mm} 말`;
-		    const rows = buildRows(bsData, label);
-		    const table = rows.map(r => [
-		      `${'　'.repeat(r.level || 0)}${r.label}`,
-		      r.amount ? Number(r.amount).toLocaleString() : ''
-		    ]);
-
-		    // 2) 문서 생성
-		    const doc = new jsPDFCtor({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-
-		    try {
-		      // 3) 한글 폰트 로드 & 등록
-		      const base64 = await ensureKoreanFont();     // ← 로컬 TTF를 Base64로 읽음
-		      doc.addFileToVFS('NotoSansKR-Regular.ttf', base64);
-		      doc.addFont('NotoSansKR-Regular.ttf', 'NotoSansKR', 'normal');
-		      doc.setFont('NotoSansKR'); // 반드시 등록 후 지정
-
-		      // 4) 제목
-		      doc.setFontSize(14);
-		      doc.text(`재무상태표 (${label})`, 40, 40);
-
-		      // 5) 표
-		      doc.setFontSize(10);
-		      doc.autoTable({
-		        startY: 60,
-		        head: [['계정과목', '금액']],
-		        body: table,
-		        theme: 'striped',
-		        styles: { font: 'NotoSansKR', fontSize: 9, cellPadding: 4 },
-		        headStyles: { font: 'NotoSansKR', fillColor: [55,65,81], textColor: 255 },
-		        bodyStyles: { font: 'NotoSansKR' },
-		        columnStyles: { 0: { cellWidth: 320 }, 1: { halign: 'right' } }
-		      });
-
-		      // 6) 저장
-		      doc.save(`재무상태표_${yy}${mm}.pdf`);
-		    } catch (e) {
-		      console.error(e);
-		      alert('한글 폰트를 불러오지 못했습니다. 정적 경로(/fonts/...)와 네트워크를 확인하세요.');
-		    }
-		  });
+  showLoader("bsGridWrapper", "재무상태표를 불러오는 중입니다...");
+  loadBalanceSheet(document.getElementById('srchYear').value.replace('-', ''));
+  hideLoader("bsGridWrapper");
 });
 </script>
-	</th:block>
+</th:block>
 </body>
 </html>

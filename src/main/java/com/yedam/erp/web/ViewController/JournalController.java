@@ -20,5 +20,5 @@ public class JournalController {
         // templates/account/profit-statement.html 렌더링
         return "account/profit-statement";
     }
-    
+
 }

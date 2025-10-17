@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.yedam.erp.mapper.account.BalanceSheetMapper">
+
+  <select id="selectBalanceSheet" parameterType="map" resultType="com.yedam.erp.vo.account.BalanceSheetVO">
+    <![CDATA[
+    SELECT *
+      FROM (
+            /* ===== 자산/부채/자본 집계 ===== */
+            SELECT 
+                A.ACCT_KWAN  AS acctKwan,     
+                A.STD_ACCT_NAME AS acctName,  
+                NVL(SUM(
+                  CASE 
+                    WHEN A.ACCT_KWAN IN (1,5,8) AND AMT.DC_TYPE = 'D' THEN  AMT.AMOUNT
+                    WHEN A.ACCT_KWAN IN (1,5,8) AND AMT.DC_TYPE = 'C' THEN -AMT.AMOUNT
+                    WHEN A.ACCT_KWAN IN (2,3,4,9) AND AMT.DC_TYPE = 'D' THEN -AMT.AMOUNT
+                    WHEN A.ACCT_KWAN IN (2,3,4,9) AND AMT.DC_TYPE = 'C' THEN  AMT.AMOUNT
+                  END
+                ), 0) AS amount
+              FROM (
+                    /* ① 일반 전표(마감건만) */
+                    SELECT J.ACCT_CODE, J.DC_TYPE, J.AMOUNT
+                      FROM JOURNAL J
+                     WHERE J.COMPANY_CODE = #{companyCode}
+                       AND J.STATUS = 'closed'
+                       AND TO_CHAR(J.JRN_DATE,'YYYYMM') = #{yearMonth}
+                       AND SUBSTR(J.ACCT_CODE,1,1) IN ('1','2','3')
+                    UNION ALL
+                    /* ② 급여 전표 */
+                    SELECT L.ACCT_CODE, L.DC_TYPE, L.AMOUNT
+                      FROM PAYROLL_HIST H
+                      JOIN PAYROLL_JRN_HIST L ON H.HIST_CODE = L.HIST_CODE
+                     WHERE H.COMPANY_CODE = #{companyCode}
+                       AND TO_CHAR(H.PAY_DATE,'YYYYMM') = #{yearMonth}
+                       AND SUBSTR(L.ACCT_CODE,1,1) IN ('1','2','3')
+                    UNION ALL
+                    /* ③ 재고 결산(재고자산 가산) */
+                    SELECT '103' AS ACCT_CODE, 'D' AS DC_TYPE, NVL(SUM(D.VALUATION_AMOUNT),0) AS AMOUNT
+                      FROM INVENTORY_CLOSING IC
+                      JOIN INVENTORY_CLOSING_DETAIL D 
+                        ON IC.IC_CODE = D.IC_CODE AND IC.COMPANY_CODE = D.COMPANY_CODE
+                     WHERE IC.COMPANY_CODE = #{companyCode}
+                       AND TO_CHAR(IC.IC_DATE,'YYYYMM') = #{yearMonth}
+                       AND IC.IC_STATUS = 'T'
+                   ) AMT
+              JOIN ACCOUNT A ON A.ACCT_CODE = AMT.ACCT_CODE
+             WHERE A.USE_YN = 'Y'
+               AND A.ACCT_KWAN IN (1,2,3)
+             GROUP BY A.ACCT_KWAN, A.STD_ACCT_NAME
+
+            UNION ALL
+
+            /* ④ 이익잉여금 = MONTHLY_NET_PROFIT 누적합(해당 월까지) */
+            SELECT 
+                3 AS acctKwan,
+                '이익잉여금' AS acctName,
+                NVL((
+                    SELECT SUM(NET_PROFIT_AMT)
+                      FROM MONTHLY_NET_PROFIT
+                     WHERE COMPANY_CODE = #{companyCode}
+                       AND TO_NUMBER(YEAR_MONTH) <= TO_NUMBER(#{yearMonth})
+                ), 0) AS amount
+              FROM DUAL
+           )
+     ORDER BY acctKwan, acctName DESC
+    ]]>
+  </select>
+
+</mapper>

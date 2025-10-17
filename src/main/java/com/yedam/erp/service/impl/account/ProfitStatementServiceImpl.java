@@ -21,4 +21,16 @@ public class ProfitStatementServiceImpl implements ProfitStatementService {
     public List<ProfitStatementVO> getMonthlyProfit(Map<String, Object> param) {
         return mapper.selectMonthlyProfit(param);
     }
+    
+    @Override
+    public void upsertMonthlyNetProfit(Map<String, Object> param) {
+        int updated = mapper.updateMonthlyNetProfit(param);
+
+        // ✅ 업데이트된 행이 없다면 새로 insert
+        if (updated == 0) {
+            mapper.insertMonthlyNetProfit(param);
+        }
+    }
+    
+    
 }

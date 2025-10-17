@@ -11,4 +11,8 @@ public class DashBoardVO {
     private int memberCount;     // 활성 인원수 (COUNT(T2.dept_code))	
 	private EmpVO empVO;
 	private DeptVO deptVO;
-}
+	
+	private String yearMonth;
+	private Long netProfitAmt;
+	private Long companyCode;
+}	

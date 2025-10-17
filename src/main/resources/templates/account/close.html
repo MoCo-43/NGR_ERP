@@ -192,7 +192,7 @@
 	<script>
     let voucherApi, detailApi, logApi;
     let selected = null;
-    console.log(auth);
+    document.querySelector('#detailWriter').value = loginName;
     function todayStr() {
       const d = new Date();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -224,7 +224,8 @@
         rowData: [],
         rowSelection: 'multiple',
         defaultColDef: { sortable: true, filter: true, resizable: true },
-        onRowClicked: e =>loadDetail(e.data.jrnNo),  //
+        onRowClicked: e =>
+        loadDetail(e.data.jrnNo),  //
         onGridReady: loadVoucherList // ✅ 초기 로드
       });
 

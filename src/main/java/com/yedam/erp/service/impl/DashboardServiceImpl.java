@@ -18,5 +18,11 @@ public class DashboardServiceImpl implements DashBoardService {
 	public List<DashBoardVO> selectActiveMembersByDepartment() {
 		return dashboardMapper.selectActiveMembersByDepartment();
 	}
-
+	
+	@Override
+	public List<DashBoardVO> selectProfitDash(Long companyCode) {
+		
+		return dashboardMapper.selectProfitDash(companyCode);
+	}
+	
 }
