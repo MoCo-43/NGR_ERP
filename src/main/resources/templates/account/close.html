@@ -390,16 +390,17 @@
 	 	  // 1️⃣ 승인 모드일 때
 	 	  if (signMode === "approve") {
 	 	    const pendingIds = selected.map(r => r.jrnNo); // ✅ 여러 전표
-	 	    try {
-	 	      await axios.put('/api/approval/journal/approve', {
-	 	        ids: pendingIds,
-	 	        signPath: signPath
-	 	      });
-	 	      alert(`${pendingIds.length}건 승인 완료`);
-	 	    } catch (e) {
-	 	      console.error(e);
-	 	      alert('승인 실패');
-	 	    }
+	 	   try {
+	 		    await axios.put('/api/account/journal/status', { 
+	 		      jrnNoList: pendingIds, 
+	 		      status: 'closed', 
+	 		      loginName: loginName 
+	 		    });
+	 		    alert(`${pendingIds.length}건 승인 완료`);
+	 		  } catch (e) {
+	 		    console.error(e);
+	 		    alert('승인 실패');
+	 		  }
 	 	  }
 
 	 	  // 2️⃣ 역분개 모드일 때

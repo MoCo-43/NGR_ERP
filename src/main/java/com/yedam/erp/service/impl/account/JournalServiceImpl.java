@@ -119,7 +119,8 @@ public class JournalServiceImpl implements JournalService {
                     jrnNoList,
                     actionType,
                     createdBy,
-                    remarks
+                    remarks,
+                    status
             );
         return result;
     }
@@ -138,6 +139,7 @@ public class JournalServiceImpl implements JournalService {
                 jrnNoList,
                 "reverse",
                 createdBy,
+                "reverse",
                 "전표 역분개"
             );
         }

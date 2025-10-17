@@ -18,6 +18,8 @@ public interface JournalCloseLogMapper {
 		        @Param("companyCode") Long companyCode,
 		        @Param("jrnNos") List<String> jrnNos
 		    );
+	   // ✅ 새로 추가
+    int upsertJournalCloseLog(JournalCloseLogVO vo);
 
     List<JournalCloseLogVO> selectJournalCloseLogList(Long companyCode);
 

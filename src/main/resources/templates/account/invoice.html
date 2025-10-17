@@ -231,7 +231,7 @@ const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
     
   // === 전표 데이터 불러오기 ===
   async function loadAndRenderVoucher() {
-	  showLoader("invoiceGridWrapper", "입고 데이터를 불러오는 중입니다...");
+	  showLoader("invoiceGridWrapper", "전표를 불러오는 중입니다...");
 	  try {
 		    const fromDate = document.getElementById("fromDate").value;
 		    const toDate   = document.getElementById("toDate").value;

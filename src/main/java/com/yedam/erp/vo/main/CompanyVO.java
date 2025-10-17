@@ -21,4 +21,7 @@ public class CompanyVO {
 	private String jibunAddress;
 
 	private Long brm; // 사업자번호
+	private String bizType; // 업태
+	private String bizCategory; // 종목 ex)냉동식품
+	private String bizAccount; //계좌번호
 }

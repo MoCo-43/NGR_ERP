@@ -231,16 +231,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnRecalc').addEventListener('click', async () => {
     const val = document.getElementById('srchYear').value;
     if (!val) return alert('조회 기준월을 선택하세요.');
-   
+    showLoader("bsGridWrapper", "재무상태표를 불러오는 중입니다...");
     await loadBalanceSheet(val.replace('-', ''));
-    
+    hideLoader("bsGridWrapper");
   });
   document.getElementById('btnCsv').addEventListener('click', exportCsv);
   document.getElementById('btnPdf').addEventListener('click', exportPdf);
 
-  showLoader("bsGridWrapper", "재무상태표를 불러오는 중입니다...");
+  
   loadBalanceSheet(document.getElementById('srchYear').value.replace('-', ''));
-  hideLoader("bsGridWrapper");
+  
 });
 </script>
 </th:block>
