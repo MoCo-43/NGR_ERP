@@ -58,8 +58,8 @@ public class BizServiceImpl implements BizService {
 
 	// 주문서 조회
     @Override
-    public List<PoHistoryVO> getPOHistory(Long companyCode) {
-        return bizMapper.getPOHistory(companyCode);
+    public List<PoHistoryVO> getPoHistory(Long companyCode) {
+        return bizMapper.getPoHistory(companyCode);
     }
 	// 품목 조회
 	@Override

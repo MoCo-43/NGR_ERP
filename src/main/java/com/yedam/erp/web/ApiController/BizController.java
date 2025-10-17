@@ -69,15 +69,11 @@ public class BizController {
 
   }
 
-
-
-
-
   // 주문서 이력 조회
     @GetMapping("/pohistory")
-    public List<PoHistoryVO> getPOHistory() {
+    public List<PoHistoryVO> getPoHistory() {
         Long companyCode = SessionUtil.companyId();
-        return service.getPOHistory(companyCode);
+        return service.getPoHistory(companyCode);
     }
 
   // 품목 조회
