@@ -61,7 +61,7 @@ h2 { margin: 0 0 .75rem; }
       </div>
     </div>
   </div>
-<input id="profit" type="text"><input id="curProfit" type="text"><input id="prvProfit" type="text">
+
 
 </section>
 <th:block layout:fragment="body_extra">
@@ -167,9 +167,6 @@ h2 { margin: 0 0 .75rem; }
     rows.push(makeRow('Ⅶ. 법인세차감전순이익', ordCur, ordPrev, '95', 0, 'subtotal'));
     rows.push(makeRow(cur.tax.corporate.label, cur.tax.corporate.cur, prev.tax.corporate.prev, cur.tax.corporate.code, 1));
     rows.push(makeRow('Ⅷ. 당기순손익', netCur, netPrev, '99', 0, 'total'));
-	document.querySelector("#prvProfit").value = netPrev;
-	document.querySelector("#curProfit").value = netCur;
-	document.querySelector("#profit").value = "당기순손익";
     return rows;
   }
 
@@ -233,6 +230,20 @@ h2 { margin: 0 0 .75rem; }
         });
 
         gridApi.setGridOption('rowData', buildRows(cur, prev));
+        
+     // 조회 후 gridApi에 데이터 세팅 완료된 시점
+        const profitRows = gridApi.getModel().rowsToDisplay.map(n => n.data);
+        const netRow = profitRows.find(r => r.code === '99'); // Ⅷ. 당기순손익
+        if (netRow) {
+          const netProfitAmt = netRow.amountCur;
+          const ym = document.getElementById('srchMonth').value.replace('-', '');
+
+          // ✅ 백엔드로 전송
+          axios.post('/api/account/net-profit', {
+            yearMonth: ym,
+            netProfitAmt
+          }).catch(err => console.error('당기순이익 저장 실패', err));
+        }
       } catch (err) {
         console.error(err);
         alert('손익계산서 데이터 조회 실패');

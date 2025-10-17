@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.account.AccountService;
+import com.yedam.erp.service.account.BalanceSheetService;
 import com.yedam.erp.service.account.InvoiceService;
 import com.yedam.erp.service.account.JournalCloseLogService;
 import com.yedam.erp.service.account.JournalService;
@@ -25,6 +26,7 @@ import com.yedam.erp.service.account.MoneyService;
 import com.yedam.erp.service.account.PayrollAccountService;
 import com.yedam.erp.service.account.ProfitStatementService;
 import com.yedam.erp.service.stock.StockService;
+import com.yedam.erp.vo.account.BalanceSheetVO;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
 import com.yedam.erp.vo.account.InvoiceLineVO;
 import com.yedam.erp.vo.account.JournalCloseLogVO;
@@ -52,7 +54,7 @@ public class AccountController {
 	private final PayrollAccountService payrollService;
 	private final MoneyService moneyService;
 	private final ProfitStatementService profitStatementService;
-	
+	private final BalanceSheetService balanceSheetService;	
 	
 	@GetMapping("/list")
 	public List<accountVO> list(Long companyCode){
@@ -319,11 +321,33 @@ public class AccountController {
 
 	        return profitStatementService.getMonthlyProfit(param);
 	    }
+	    // 당기순손익 update 혹은 insert 
+	    @PostMapping("/net-profit")
+	    public ResponseEntity<Void> saveNetProfit(@RequestBody Map<String, Object> body) {
+	        Long companyCode = SessionUtil.companyId();
+	        String yearMonth = (String) body.get("yearMonth");
+	        Double netProfitAmt = Double.parseDouble(body.get("netProfitAmt").toString());
 
-	    
+	        Map<String, Object> param = Map.of(
+	            "companyCode", companyCode,
+	            "yearMonth", yearMonth,
+	            "netProfitAmt", netProfitAmt
+	        );
 
+	        profitStatementService.upsertMonthlyNetProfit(param);
+	        return ResponseEntity.ok().build();
+	    }
 
-}
+	    // 재무상태표
+	    @GetMapping("/balance-sheet")
+	    public List<BalanceSheetVO> getBalanceSheet(@RequestParam String yearMonth) {
+	        Long companyCode = SessionUtil.companyId();
+	        Map<String, Object> param = new HashMap<>();
+	        param.put("companyCode", companyCode);
+	        param.put("yearMonth", yearMonth);
+	        return balanceSheetService.selectBalanceSheet(param);
+	    }
+}	
 
 	
 

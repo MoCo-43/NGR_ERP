@@ -9,4 +9,6 @@ import com.yedam.erp.vo.common.DashBoardVO;
 @Mapper
 public interface DashBoardMapper {
 	List<DashBoardVO> selectActiveMembersByDepartment();
+	
+	List<DashBoardVO> selectProfitDash(Long companyCode);
 }

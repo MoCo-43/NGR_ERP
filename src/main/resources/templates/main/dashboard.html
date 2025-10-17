@@ -213,26 +213,20 @@ canvas {
   };
 
   // --- 3. 손익 데이터 크롤링 ---
-  async function fetchProfitValue() {
+ async function fetchProfitValue() {
   try {
-    // 손익계산서 페이지 HTML 가져오기
-    const res = await fetch('/account/profit-statement');
-    const html = await res.text();
+    const res = await fetch('/api/dashboard/account');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
 
-    // DOMParser로 HTML 파싱
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    const profitLabel = data.profitLabel || '당기순손익';
+    const curProfit = Number(data.curProfit || 0);
+    const prvProfit = Number(data.prvProfit || 0);
 
-    // input 값 추출
-    const profitLabel = doc.querySelector('#profit')?.value || '당기순손익';
-    const curProfit = Number(doc.querySelector('#curProfit')?.value || 0);
-    const prvProfit = Number(doc.querySelector('#prvProfit')?.value || 0);
-
-    console.log("📊 손익 데이터 크롤링 결과:", { profitLabel, curProfit, prvProfit });
-
+    console.log("📊 손익 데이터:", { profitLabel, curProfit, prvProfit });
     return { profitLabel, curProfit, prvProfit };
   } catch (err) {
-    console.error('❌ 손익 데이터 크롤링 실패:', err);
+    console.error('❌ 손익 데이터 로드 실패:', err);
     return { profitLabel: '당기순손익', curProfit: 0, prvProfit: 0 };
   }
 }
@@ -269,7 +263,7 @@ canvas {
   async function fetchHrMembersChart() {
     const canvasId = 'inventoryChart';
     try {
-      const response = await fetch('/empmembers');
+      const response = await fetch('/api/dashboard/empmembers');
       if (!response.ok) throw new Error(`HTTP 요청 실패: ${response.status}`);
       const dataList = await response.json();
 

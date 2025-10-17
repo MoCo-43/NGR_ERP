@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @RequiredArgsConstructor
 @Controller
-@RequestMapping("/api")
 public class MainController {
 
 private final TestService testService;
@@ -38,4 +37,5 @@ private final TestService testService;
 	  return "index";
   }
   
+ 
 }
