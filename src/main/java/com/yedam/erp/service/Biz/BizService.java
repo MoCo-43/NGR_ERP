@@ -3,20 +3,15 @@ package com.yedam.erp.service.Biz;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.yedam.erp.vo.Biz.CreditExposureVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.DoInsertVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
+import com.yedam.erp.vo.Biz.PoHistoryVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
-
-import lombok.RequiredArgsConstructor;
 
 public interface BizService {
 
@@ -30,7 +25,7 @@ public interface BizService {
   Long createPo(PoInsertVO pvo);
 
   // 주문서 이력 조회
-  List<PurchaseOrderVO> getPOHistory(Long companyCode);
+  List<PoHistoryVO> getPOHistory(Long companyCode);
 
   // 품목 조회
   List<ProductCodeVO> getProducts(Long companyCode);

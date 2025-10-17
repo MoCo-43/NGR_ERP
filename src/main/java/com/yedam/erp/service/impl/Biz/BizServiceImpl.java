@@ -15,6 +15,7 @@ import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.DoInsertVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
+import com.yedam.erp.vo.Biz.PoHistoryVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
@@ -38,13 +39,13 @@ public class BizServiceImpl implements BizService {
 	}
 
   // 주문서 등록
-  @Override
+    @Override
 	@Transactional
-	    public Long createPo(PoInsertVO pvo) {
+	public Long createPo(PoInsertVO pvo) {
         // 방어코드: 필수값
-        if (pvo.getPoDetails() == null || pvo.getPoDetails().isEmpty()) {
-            throw new IllegalArgumentException("상세 품목이 1건 이상 필요합니다.");
-        }
+      if (pvo.getPoDetails() == null || pvo.getPoDetails().isEmpty()) {
+        throw new IllegalArgumentException("상세 품목이 1건 이상 필요합니다.");
+    }
 
         // 헤더 insert(여기서 vo.poId 세팅됨)
         bizMapper.insertPOHeader(pvo);
@@ -56,10 +57,10 @@ public class BizServiceImpl implements BizService {
     }
 
 	// 주문서 조회
-	@Override
-	public List<PurchaseOrderVO> getPOHistory(Long companyCode) {
-		return bizMapper.getPOHistory(companyCode);
-	}
+    @Override
+    public List<PoHistoryVO> getPOHistory(Long companyCode) {
+        return bizMapper.getPOHistory(companyCode);
+    }
 	// 품목 조회
 	@Override
 	public List<ProductCodeVO> getProducts(Long companyCode) {

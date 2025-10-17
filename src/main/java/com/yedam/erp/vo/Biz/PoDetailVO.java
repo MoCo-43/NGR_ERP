@@ -13,5 +13,6 @@ public class PoDetailVO{
   private int unitPrice;  // 단가
   private int dcAmt;  // 할인금액
   private int supAmt;  // 공급가액
-  private int vatAmt;  // 부가세
+  private int vatAmt;  // 부가세액
+  private String vatType;   // 부가세여부
 }

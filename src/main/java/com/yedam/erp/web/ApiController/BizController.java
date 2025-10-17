@@ -21,6 +21,7 @@ import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.DoInsertVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
+import com.yedam.erp.vo.Biz.PoHistoryVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
@@ -73,11 +74,11 @@ public class BizController {
 
 
   // 주문서 이력 조회
-  @GetMapping("/pohistory")
-  public List<PurchaseOrderVO> getPOHistory() {
-    Long companyCode = SessionUtil.companyId();
-      return service.getPOHistory(companyCode);
-  }
+    @GetMapping("/pohistory")
+    public List<PoHistoryVO> getPOHistory() {
+        Long companyCode = SessionUtil.companyId();
+        return service.getPOHistory(companyCode);
+    }
 
   // 품목 조회
   @GetMapping("/productcode")
