@@ -53,7 +53,12 @@ const MENUS = {
         title: "재고결산",
         items: [["재고결산", "/stock/invenclosing/insert"]],
       },
-      { title: "제품관리", items: [["제품등록", "/stock/product/insert"]] },
+      { title: "제품관리", 
+        items: [
+		  ["제품조회","/stock/product/list"],
+		  ["제품등록", "/stock/product/insert"],
+		],
+	  },
     ],
   },
   sales: {

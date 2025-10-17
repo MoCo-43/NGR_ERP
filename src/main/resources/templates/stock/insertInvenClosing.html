@@ -96,7 +96,17 @@
     <h5 class="mb-0">결산 목록</h5>
   </div>
   <div class="card-body">
-  <div id="orderItemsTable" class="ag-theme-quartz" style="width:100%; height:400px;"></div>
+   <!-- 로딩바 -->
+	<div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
+  		<div id="orderItemsTable" class="ag-theme-quartz" style="width:100%; height:400px;"></div>
+  	 	<!-- 로딩 스피너 -->
+		<div id="loader" class="loader-overlay" style="display: none;">
+			<div class="spinner-border text-primary" role="status">
+			    <span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	</div>
+		
   </div>
 </div>
 
@@ -114,10 +124,19 @@
     
   </div>
   <div class="card-body">
+  <!-- 로딩바 -->
+	<div id="gridDetailWrapper" style="position: relative; width: 100%; height: 500px;">
     <div id="orderItemsDetailGrid" class="ag-theme-quartz" style="width:100%; height:400px;"></div>
+     <!-- 로딩 스피너 -->
+		<div id="loader" class="loader-overlay" style="display: none;">
+			<div class="spinner-border text-primary" role="status">
+			    <span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	</div>
+	
   </div>
 </div>
-  
   
   
   
@@ -221,6 +240,14 @@ document.addEventListener("DOMContentLoaded", () => {
  	    return { gridApi: gridOptions.api, gridOptions };
 	}// END OF FUNCTION
 	
+	
+	// 단위마다 "," 공통함수(문자 > 숫자 변환)
+	function numberFormatter(params) {
+		  if (params.value == null || params.value === "") return "";
+		  return Number(params.value).toLocaleString();
+	}
+	
+	
 	async function openIcModal(rowData) {
 	    selectedRow = rowData.icCode;
 	    selectedRowStatus = rowData.icStatus;
@@ -287,21 +314,33 @@ document.addEventListener("DOMContentLoaded", () => {
 	    rowSelection: "single",
 	    paginationPageSize: 10,
 	    onRowClicked: async (event) => {
-	        //console.log("선택된 행 데이터(selectedRow):", event.data); 
-	        selectedRow = event.data.icCode;
-	        selectedRowStatus = event.data.icStatus;
-	        //console.log("selectedRow : "+selectedRow); // 선택 행의 ic_code
-	        //console.log("selectedRowStatus : "+selectedRowStatus); // 선택 행의 ic_status
-	        await loadICDetailData(selectedRow); // 상세 그리드 데이터 로드
+	    	try{
+	    		showLoader("gridDetailWrapper","데이터를 불러오는 중입니다...");
+	    		 //console.log("선택된 행 데이터(selectedRow):", event.data); 
+		        selectedRow = event.data.icCode;
+		        selectedRowStatus = event.data.icStatus;
+		        //console.log("selectedRow : "+selectedRow); // 선택 행의 ic_code
+		        //console.log("selectedRowStatus : "+selectedRowStatus); // 선택 행의 ic_status
+		        await loadICDetailData(selectedRow); // 상세 그리드 데이터 로드
+	    	}catch(error){
+	    		console.error(error);
+	            toastr.error('데이터 로드 실패');
+	    	}finally{
+	    		hideLoader("gridDetailWrapper");
+	    	}
+	       
 	        // 여기서 선택된 결산 상세를 불러오는 로직 추가 가능
 	    },
 	    onGridReady: async (event) => {
 	        try {
+	        	showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
 	            const res = await axios.get('/api/v1/stock/icList', { withCredentials: true });
 	            event.api.setRowData(res.data); // 마스터 그리드에 데이터 뿌리기
 	        } catch (err) {
 	            console.error(err);
 	            toastr.error('마스터 데이터 로드 실패');
+	        } finally{
+	        	hideLoader("gridWrapper");
 	        }
 	    }
 	});
@@ -330,13 +369,9 @@ document.addEventListener("DOMContentLoaded", () => {
 	    },
 	    { headerName: "제품코드", field: "productCode" },
 	    { headerName: "제품명", field: "productName" },
-	    { headerName: "이월재고", field: "openingStock", type: 'numericColumn' },
-	    { headerName: "현재고량", field: "stock", type: 'numericColumn' },
-	    { headerName: "평가액", field: "valuationAmount", valueFormatter: (params) => {
-            if (!params.value) return "";
-            return Number(params.value).toLocaleString(); // 문자열 -> 숫자로 변환 후 천단위 콤마
-        	}
-	    }
+	    { headerName: "이월재고", field: "openingStock", type: 'numericColumn', valueFormatter: numberFormatter },
+	    { headerName: "현재고량", field: "stock", type: 'numericColumn', valueFormatter: numberFormatter },
+	    { headerName: "평가액", field: "valuationAmount", valueFormatter: numberFormatter}
 	];
 	const invenClosingModalColumnDefs = [
 	    { headerName: "No.", headerClass: "highlight-header",valueGetter: "node.rowIndex + 1", field: "no", width: 80 ,
@@ -590,7 +625,9 @@ async function loadICDetailDataInModal(selectedIcCode){
 					finalSign : slicedFinalSignLink,
 					empSign : slicedEmpSignLink
 			  };
-			  if(payload.length != 3){ toastr.error('등록되지 않은 부분이 존재합니다!');  return;}
+			  
+			  console.log("payload is Array? : "+Array.isArray(payload));
+			  if(!payload.icCode || !payload.finalSign || !payload.empSign){ toastr.error('등록되지 않은 부분이 존재합니다!');  return;}
 				  // confirm 먼저
 			        const res = await cuteAlert({
 			        	type: "question",
