@@ -86,7 +86,17 @@
             <h5 class="mb-0">출고 목록</h5>
           </div>
           <div class="card-body p-0">
+           <!-- 로딩바 -->
+			<div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
             <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
+                <!-- 로딩 스피너 -->
+			  <div id="loader" class="loader-overlay" style="display: none;">
+			    <div class="spinner-border text-primary" role="status">
+			      <span class="visually-hidden">Loading...</span>
+			    </div>
+			  </div>
+			</div>
+			
           </div>
         </div>
       </div>
@@ -98,7 +108,17 @@
             <h5 class="mb-0">출고 상세</h5>
           </div>
           <div class="card-body p-0">
+           <!-- 로딩바 -->
+			<div id="gridDetailWrapper" style="position: relative; width: 100%; height: 500px;">
             <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%;"></div>
+               <!-- 로딩 스피너 -->
+			  <div id="loader" class="loader-overlay" style="display: none;">
+			    <div class="spinner-border text-primary" role="status">
+			      <span class="visually-hidden">Loading...</span>
+			    </div>
+			  </div>
+			</div>
+			
           </div>
         </div>
       </div>
@@ -196,6 +216,14 @@ document.addEventListener("DOMContentLoaded", () => {
 	  .then(res => { compCode = res.data; })
 	  .catch(err => console.error(err));
 	
+	//단위마다 "," 공통함수(문자 > 숫자 변환)
+	function numberFormatter(params) {
+		  if (params.value == null || params.value === "") return "";
+		  return Number(params.value).toLocaleString();
+	}
+
+	
+	
 	
 // 출고 리스트 
 const inListGrid = initGrid({
@@ -206,7 +234,7 @@ const inListGrid = initGrid({
         { headerName: "출고코드", field: "outbHeaderCode" },
         { headerName: "지시코드", field: "doCode" },
         { headerName: "제품명", field: "productName" },
-        { headerName: "출고수량", field: "qty" },
+        { headerName: "출고수량", field: "qty", valueFormatter: numberFormatter },
         { headerName: "거래처코드", field: "businessCode" },
         { headerName: "거래처명", field: "businessPartner" },
         { headerName: "유형", field: "type" , valueGetter: ()=>'주문서'},
@@ -245,21 +273,32 @@ const inListGrid = initGrid({
     paginationPageSize: 20,
     domLayout: "normal",
     onRowClicked: async (event) => {
-        console.log("선택된 행 데이터(selectedRow):", event.data);
-        selectedRow = event.data.outbHeaderCode;
-        doCode = event.data.doCode;
-        console.log("selectedRow : "+selectedRow);
-        await loadOutDetailData(selectedRow,doCode); // 상세 그리드 데이터 로드
+    	try{
+    		 showLoader("gridDetailWrapper","데이터를 불러오는 중입니다...");
+    		 console.log("선택된 행 데이터(selectedRow):", event.data);
+    	     selectedRow = event.data.outbHeaderCode;
+    	     doCode = event.data.doCode;
+    	     console.log("selectedRow : "+selectedRow);
+    	     await loadOutDetailData(selectedRow,doCode); // 상세 그리드 데이터 로드
+    	}catch(error){
+    		toastr.error("error"+error);
+    	}finally{
+    		hideLoader("gridDetailWrapper");
+    	}
+       
         // 여기서 선택된 결산 상세를 불러오는 로직 추가 가능
     },
     onGridReady: async (event) => {
         try {
+        	showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
             const res = await axios.get('/api/v1/stock/outboundList', { withCredentials: true });
             console.log(res.data);
             event.api.setRowData(res.data); // 마스터 그리드에 데이터 뿌리기
         } catch (err) {
             console.error(err);
             toastr.error('데이터 로드 실패');
+        }finally{
+        	hideLoader("gridWrapper");
         }
     }
 });// END OF inListGrid
@@ -272,7 +311,7 @@ const inDetailColumnDefs = [
     { headerName: "규격", field: "specification"},
     { headerName: "거래처코드", field: "businessCode"},
     { headerName: "거래처명", field: "businessPartner"},
-    { headerName: "출고수량", field: "qty", type: 'numericColumn' },
+    { headerName: "출고수량", field: "qty", type: 'numericColumn', valueFormatter: numberFormatter },
     { headerName: "납기예상일자", field: "dueDate"}
     
 ]; // END OF COLUMN

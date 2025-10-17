@@ -85,7 +85,15 @@
     <h5 class="mb-0">입고 제품 목록</h5>
   </div>
   <div class="card-body">
+  <div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
       <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
+        <!-- 로딩 스피너 -->
+		<div id="loader" class="loader-overlay" style="display: none;">
+			<div class="spinner-border text-primary" role="status">
+			   <span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+  </div>
   </div>
   </div>
   
@@ -240,9 +248,17 @@ document.addEventListener("DOMContentLoaded", () => {
 	                minWidth: 100
 	            },
 	            onGridReady: async (event) => {
-	                orderListGridApi = event.api;
-	                orderListGridApi.sizeColumnsToFit();
-	                await loadOrderListData();
+	            	try{
+		                orderListGridApi = event.api;
+		                orderListGridApi.sizeColumnsToFit();
+		                // showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
+		                await loadOrderListData();
+	            	}catch(error){
+	            		console.error(err);
+	                    toastr.error('데이터 로드 실패');
+	            	} finally{
+	            		// hideLoader("gridWrapper");
+	            	}
 	            },
 	            onRowDoubleClicked: async (event) => {
 	                console.log("선택된 발주 :", event.data);
@@ -333,7 +349,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	        // confirm 먼저
 	        const res = await cuteAlert({
 	        	type: "question",
-	            title: "발주 확인",
+	            title: "입고 등록",
 	            message: "정말 등록하시겠습니까?",
 	            imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
 	            confirmText: "네",

@@ -30,6 +30,16 @@
 	padding-left: 8px;
   	padding-right: 8px;
 	}
+	.loader-overlay {
+	  position: absolute;
+	  top: 50%;
+	  left: 50%;
+	  transform: translate(-50%, -50%); /* 중앙정렬 핵심 */
+	  display: flex;
+	  align-items: center;
+	  justify-content: center;
+	  z-index: 10; /* 그리드보다 위로 */
+	}
    </style>
   </th:block>
 </head>
@@ -69,7 +79,7 @@
          <input type="date" class="form-control" id="inboundDate" name="inboundDate">
         </div>
         <div class="col-md-3">
-         <label for="dueDate" class="form-label">납기일자</label>
+         <label for="dueDate" class="form-label">입고예정일자</label>
          <input type="date" class="form-control" id="dueDate" name="dueDate">
         </div>
       </form>
@@ -85,8 +95,19 @@
           <div class="card-header bg-secondary text-white">
             <h5 class="mb-0">입고 목록</h5>
           </div>
+
           <div class="card-body p-0">
+            <!-- 로딩바 -->
+			<div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
             <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
+			     <!-- 로딩 스피너 -->
+			  <div id="loader" class="loader-overlay" style="display: none;">
+			    <div class="spinner-border text-primary" role="status">
+			      <span class="visually-hidden">Loading...</span>
+			    </div>
+			  </div>
+			</div>
+			
           </div>
         </div>
       </div>
@@ -105,6 +126,7 @@
     </div>
   </div>
 </div>
+
   
   <!-- 컨테이너 종료 -->
 </div>
@@ -194,6 +216,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	  .then(res => { compCode = res.data; })
 	  .catch(err => console.error(err));
 	
+	// 단위마다 "," 공통함수
+	function numberFormatter(params) {
+		  if (params.value == null || params.value === "") return "";
+		  return Number(params.value).toLocaleString();
+	}
+	
+	
 	
 // 발주 리스트 
 const inListGrid = initGrid({
@@ -203,7 +232,7 @@ const inListGrid = initGrid({
         { headerName: "입고일자", field: "inboundDate" },
         { headerName: "LOT번호", field: "lotCode" },
         { headerName: "공급처", field: "businessPartner" },
-        { headerName: "납기예정일자", field: "dueDate" }
+        { headerName: "입고예정일자", field: "dueDate" }
     ],
     paginationPageSize: 20,
     domLayout: "normal",
@@ -216,12 +245,15 @@ const inListGrid = initGrid({
     },
     onGridReady: async (event) => {
         try {
+        	showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
             const res = await axios.get('/api/v1/stock/inboundList', { withCredentials: true });
             console.log(res.data);
             event.api.setRowData(res.data); // 마스터 그리드에 데이터 뿌리기
         } catch (err) {
             console.error(err);
             toastr.error('데이터 로드 실패');
+        } finally{
+        	hideLoader("gridWrapper");
         }
     }
 });// END OF inListGrid
@@ -233,8 +265,8 @@ const inDetailColumnDefs = [
     { headerName: "규격", field: "specification"},
     { headerName: "거래처코드", field: "businessCode"},
     { headerName: "거래처명", field: "businessPartner"},
-    { headerName: "입고수량", field: "qty", type: 'numericColumn' },
-    { headerName: "납기일자", field: "dueDate"}
+    { headerName: "입고수량", field: "qty", type: 'numericColumn', valueFormatter: numberFormatter },
+    { headerName: "입고예정일자", field: "dueDate"}
 ]; // END OF COLUMN
 
 
@@ -252,7 +284,9 @@ function initInboundGrid() {
 
 async function loadInDetailData(){
 	try {
+		
 	    const res = await axios.get(`/api/v1/stock/inDetailList/${selectedRow}`, { withCredentials: true });
+	    //showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
 	    console.log("loadInDetailData: "+JSON.stringify(res.data, null, 2));
 	    if (inDetailGridOptions) {
 	      // rowData 세팅

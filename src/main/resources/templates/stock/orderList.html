@@ -77,10 +77,17 @@
     <h5 class="mb-0">발주 목록</h5>
   </div>
   <div class="card-body">
-     
+     <!-- 로딩바 -->
+	<div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
       <!-- AG Grid container -->
-    <div id="orderListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
-     
+    	<div id="orderListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
+        <!-- 로딩 스피너 -->
+		  <div id="loader" class="loader-overlay" style="display: none;">
+			 <div class="spinner-border text-primary" role="status">
+			      <span class="visually-hidden">Loading...</span>
+			 </div>
+		 </div>
+	</div>
   </div>
 </div>
   
@@ -173,6 +180,12 @@ document.addEventListener("DOMContentLoaded", () => {
 	  .then(res => { compCode = res.data; })
 	  .catch(err => console.error(err));
 	
+	// 단위마다 "," 공통함수(문자 > 숫자 변환)
+	function numberFormatter(params) {
+		  if (params.value == null || params.value === "") return "";
+		  return Number(params.value).toLocaleString();
+	}
+	
 	
 // 발주 리스트 
 const orderListDiv = document.getElementById('orderListGrid');
@@ -187,7 +200,7 @@ const orderListGrid = initGrid({
         { headerName: "제품명", field: "productName" },
         { headerName: "발주수량", field: "amount" },
         { headerName: "납기예정일자", field: "dueDate" },
-        { headerName: "공급가액", field: "supAmt" },
+        { headerName: "공급가액", field: "supAmt", valueFormatter: numberFormatter },
         {  field: "orderSheetLink",
             cellRenderer: (params) => {
             	const orderCode = params.data.orderCode;
@@ -221,11 +234,14 @@ const orderListGrid = initGrid({
 async function loadOrderList() {
 	
     try {
+    	showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
         const res = await axios.get("/api/v1/stock/orderList");
         orderListGrid.gridOptions.api.setRowData(res.data);
         orderListGrid.gridOptions.api.sizeColumnsToFit();
     } catch (err) {
         console.error(err);
+    } finally{
+    	hideLoader("gridWrapper");
     }
 }
 

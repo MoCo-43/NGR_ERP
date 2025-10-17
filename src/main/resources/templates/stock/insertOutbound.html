@@ -258,7 +258,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	        new agGrid.Grid(eGridDiv, gridOptions);
 	    } else {
 	        orderListGridApi.sizeColumnsToFit();
-	        await loadOrderPlanData();
+	        // await loadOrderPlanData();
+	           await loadOrderListData();
 	    }
 	});
 	

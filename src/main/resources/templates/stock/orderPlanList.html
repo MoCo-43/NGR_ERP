@@ -97,10 +97,17 @@
       </tbody>
     </table>
      -->
-     
+     <!-- 로딩바 -->
+	<div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
       <!-- AG Grid container -->
     <div id="orderPlansGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
-     
+    <!-- 로딩 스피너 -->
+		<div id="loader" class="loader-overlay" style="display: none;">
+		  <div class="spinner-border text-primary" role="status">
+			  <span class="visually-hidden">Loading...</span>
+		  </div>
+		</div>
+	</div>
   </div>
 </div>
   
@@ -216,6 +223,13 @@ axios.get("/api/v1/stock/getCompId", { withCredentials: true })
   .then(res => { compCode = res.data; console.log(compCode);})
   .catch(err => console.error(err));
 
+//단위마다 "," 공통함수(문자 > 숫자 변환)
+function numberFormatter(params) {
+	  if (params.value == null || params.value === "") return "";
+	  return Number(params.value).toLocaleString();
+}
+
+
 
 // 발주 계획 리스트 
 const plansDiv = document.getElementById('orderPlansGrid');
@@ -229,16 +243,8 @@ const orderPlansGrid = initGrid({
         { headerName: "거래처코드", field: "businessCode" },
         { headerName: "담당자", field: "empId" },
         { headerName: "제품명", field: "productName" },
-        { headerName: "수량", field: "amount", valueFormatter: (params) => {
-            if (params.value == null) return '';
-            return params.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-          } },
-        { headerName: "공급가액", field: "supAmt",valueFormatter: (params) => {
-            if (params.value == null) return '';
-            return params.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-          } 
-        },
-        
+        { headerName: "수량", field: "amount", valueFormatter: numberFormatter },
+        { headerName: "공급가액", field: "supAmt", valueFormatter: numberFormatter},
         {  field: "orderSheetLink",
             cellRenderer: (params) => {
             	const businessCode = params.data.businessCode;
@@ -276,11 +282,14 @@ const orderPlansGrid = initGrid({
 // 데이터 로드
 async function loadOrderPlans() {
     try {
+    	showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
         const res = await axios.get("/api/v1/stock/orderPlans");
         orderPlansGrid.gridOptions.api.setRowData(res.data);
         orderPlansGrid.gridOptions.api.sizeColumnsToFit();
     } catch (err) {
         console.error(err);
+    }finally{
+    	hideLoader("gridWrapper");
     }
 }
 
