@@ -13,17 +13,14 @@ public class PoHistoryVO {
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate poStart;
-
+    private String cusCode;
     private String cusName;
     private String creater;
-
     private String productCode;
     private String productName;
-
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate exDate;
-
     private Integer orderQty;
-    private Integer unitPrice;     // int여도 되지만 null 방지면 Integer
-    private BigDecimal supAmt;     // 금액은 BigDecimal 권장
+    private Long unitPrice; 
+    private Long supAmt;
 }

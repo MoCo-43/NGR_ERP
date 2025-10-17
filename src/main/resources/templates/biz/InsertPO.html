@@ -65,24 +65,16 @@
         >
           <h6 class="m-0 font-weight-bold text-primary">주문서입력</h6>
           <div class="d-flex gap-2">
-            <button
-              id="btnReset"
-              type="button"
-              class="btn btn-danger btn-slim btn-wide"
-            >
+            <button id="btnReset" type="button" class="btn btn-danger mr-3">
               초기화
             </button>
-            <button
-              id="btnSubmit"
-              type="button"
-              class="btn btn-primary btn-slim btn-wide"
-            >
+            <button id="btnSubmit" type="button" class="btn btn-primary mr-3">
               등록
             </button>
           </div>
         </div>
 
-        <!-- 품목코드/주문서이력조회 모달 버튼 -->
+        <!-- 제품코드/주문서이력조회 모달 버튼 -->
         <div class="card-body py-2">
           <div class="d-flex justify-content-end">
             <div class="btn-group">
@@ -145,16 +137,7 @@
                 </span>
               </div>
             </div>
-
-            <!-- 5 납기일자 -->
-            <div class="row g-3 align-items-end mb-2">
-              <div class="col-md-6">
-                <label for="exDate" class="form-label">납기일자</label>
-                <input id="exDate" type="date" class="form-control" />
-              </div>
-            </div>
-
-            <!-- 7 지불방식 / 10 결제예정일 -->
+            <!-- 지불방식 -->
             <div class="row g-3 align-items-end mb-2">
               <div class="col-md-6">
                 <label for="payMethod" class="form-label">지불방식</label>
@@ -165,6 +148,17 @@
                   </select>
                 </div>
               </div>
+
+              <!-- 5 납기일자 -->
+              <div class="row g-3 align-items-end mb-2">
+                <div class="col-md-6">
+                  <label for="exDate" class="form-label">납기일자</label>
+                  <input id="exDate" type="date" class="form-control" />
+                </div>
+              </div>
+
+              <!-- 결제예정일 -->
+
               <div class="col-md-6">
                 <label for="poDate" class="form-label">결제예정일</label>
                 <input id="poDate" type="date" class="form-control" />
@@ -190,17 +184,21 @@
                 <label for="crActiveType" class="form-label">여신잔액</label>
                 <input id="leftPrice" class="form-control" disabled />
               </div>
+              <div class="col-md-6">
+                <label for="crActiveType" class="form-label">횟수</label>
+                <input id="monDiscCnt" class="form-control" disabled />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- 품목 목록 (9) -->
+      <!-- 제품 목록 (9) -->
       <div class="card shadow">
         <div
           class="card-header d-flex align-items-center justify-content-between"
         >
-          <h6 class="m-0 font-weight-bold text-primary">품목 목록</h6>
+          <h6 class="m-0 font-weight-bold text-primary">제품 목록</h6>
           <div class="btn-group">
             <button
               id="btnOpenProduct"
@@ -209,7 +207,7 @@
               data-bs-toggle="modal"
               data-bs-target="#productcodeModal"
             >
-              품목코드
+              제품코드
             </button>
             <button
               id="btnAddRow"
@@ -235,7 +233,7 @@
       <!-- 거래처 검색 모달 -->
       <div th:replace="~{biz/modals/PoCustomerModal :: customermodal}"></div>
 
-      <!-- 품목코드 모달 -->
+      <!-- 제품코드 모달 -->
       <div
         th:replace="~{biz/modals/ProductcodeModal :: productcodeModal}"
       ></div>
@@ -366,13 +364,13 @@
           const columnDefs = [
             { headerName: "", checkboxSelection: true, width: 50 },
             {
-              headerName: "품목코드",
+              headerName: "제품코드",
               field: "productCode",
               editable: true,
               width: 120,
             },
             {
-              headerName: "품목명",
+              headerName: "제품명",
               field: "productName",
               editable: true,
               flex: 1,
@@ -399,6 +397,7 @@
               field: "supAmt",
               width: 120,
               type: "rightAligned",
+              valueParser: numberParser,
               // valueGetter: (p) => calcSupply(p.data),
             },
             {
@@ -406,6 +405,7 @@
               field: "vatAmt",
               width: 120,
               type: "rightAligned",
+              valueParser: numberParser,
               //  valueGetter: (p) => calcVat(p.data),
             },
             {
@@ -429,15 +429,7 @@
             columnDefs,
             rowSelection: "multiple",
             rowMultiSelectWithClick: true,
-            rowData: [
-              {
-                productCode: "A01",
-                productName: "맛있는쿠키",
-                unitPrice: 1000,
-                orderQty: 100,
-                dcAmt: 5000,
-              },
-            ],
+            rowData: [{}],
             defaultColDef: { sortable: true, resizable: true, filter: true },
             onGridReady: (p) => {
               gridApi = p.api;
@@ -455,7 +447,7 @@
                 p.node.setDataValue("dcAmt", dcAmt);
 
                 // 합계(고정 하단행)도 다시 합산
-                updatePinned?.();
+                updatePinned();
               }
             },
           };
@@ -490,16 +482,16 @@
           // ===== 등록버튼 =====
           const submit = async () => {
             try {
-              // 1) 품목 상세행 수집
+              // 1) 제품 상세행 수집
               const details = [];
               gridApi.forEachNodeAfterFilterAndSort((n) => {
                 const r = n.data || {};
-                if (!r.productCode) return; // 품목코드 필수
+                if (!r.productCode) return; // 제품코드 필수
 
                 const supAmt = calcSupply(r); // 공급가액(할인 반영)
                 const vatAmt = calcVat(r); // 부가세(과세/면세는 bizType 기준)
 
-                const vatType = details.push({
+                details.push({
                   productCode: r.productCode,
                   orderQty: toNum(r.orderQty),
                   unitPrice: toNum(r.unitPrice),
@@ -512,7 +504,7 @@
               });
 
               if (!details.length) {
-                alert("상세 품목을 1건 이상 입력하세요.");
+                alert("상세 제품을 1건 이상 입력하세요.");
                 return;
               }
 
@@ -522,11 +514,14 @@
                 return;
               }
 
+              // 작성자
+              const creater = document.getElementById("creater").textContent;
+
               const payload = {
                 companyCode: Number(getId("companyCode") || 0),
                 cusName,
                 cusCode: getVal("cusCode"),
-                creater: getVal("creater"), // disabled여도 value 읽힘
+                creater,
                 poStart: getVal("poStart") || undefined,
                 exDate: getVal("exDate") || undefined,
                 poDate: getVal("poDate") || undefined,
@@ -592,7 +587,6 @@
           const poHistoryModalEl = document.getElementById("PoHistoryModal");
           let poHistoryGridApi;
           const poHistoryColumnDefs = [
-            { headerName: "", checkboxSelection: true, width: 50 },
             { headerName: "작성일자", field: "poStart", width: 120 },
             {
               headerName: "거래처명",
@@ -600,17 +594,19 @@
               flex: 1,
               minWidth: 150,
             },
-            { headerName: "제품코드", field: "prdCode", width: 120 },
-            { headerName: "제품명", field: "prdName", width: 150 },
+            { headerName: "제품코드", field: "productCode", width: 120 },
+            { headerName: "제품명", field: "productName", width: 150 },
+            { headerName: "수량", field: "orderQty", width: 150 },
+            { headerName: "단가", field: "unitPrice", width: 150 },
             { headerName: "담당자", field: "creater", width: 100 },
             { headerName: "납기일자", field: "exDate", width: 120 },
             {
-              headerName: "총액",
-              field: "totalPrice",
+              headerName: "공급가액",
+              field: "supAmt",
               width: 150,
               type: "rightAligned",
-              valueFormatter: (p) =>
-                p.value ? p.value.toLocaleString("ko-KR") : "",
+              // valueFormatter: (p) =>
+              //   p.value ? p.value.toLocaleString("ko-KR") : "",
             },
           ];
           const poHistoryGridOptions = {
@@ -659,11 +655,14 @@
                 }
 
                 const newItems = selectedRows.map((row) => ({
-                  prdCode: row.prdCode || "",
-                  productName: row.prdName || "",
-                  unitPrice: row.unitPrice || null,
-
-                  notes: `${row.poStart} 주문 건에서 가져옴`,
+                  poStart: row.poStart, // 작성일자
+                  cusName: row.cusName || "", // 거래처명
+                  productCode: row.productCode || "", // 제품코드
+                  productName: row.productName || "", // 제품명
+                  unitPrice: row.unitPrice || null, // 단가
+                  creater: row.creater || "", // 담당자
+                  exDate: row.exDate, // 납기일자
+                  supAmt: row.supAmt || null, // 공급가액
                 }));
 
                 gridApi.applyTransaction({ add: newItems });
@@ -680,7 +679,7 @@
           }
           /*
 
-          ======================== 품목코드 모달 ========================
+          ======================== 제품코드 모달 ========================
 
 
                   */
@@ -688,9 +687,9 @@
           let productGridApi;
           const productColumnDefs = [
             { headerName: "", checkboxSelection: true, width: 50 },
-            { headerName: "품목코드", field: "productCode", width: 140 },
+            { headerName: "제품코드", field: "productCode", width: 140 },
             {
-              headerName: "품목명",
+              headerName: "제품명",
               field: "productName",
               flex: 1,
               minWidth: 160,
@@ -732,18 +731,18 @@
               const { data } = await axios.get("/api/biz/productcode");
               productGridApi.setRowData(data || []);
             } catch (err) {
-              console.error("품목 데이터 조회 실패:", err);
-              alert("품목 데이터를 불러오는 데 실패했습니다.");
+              console.error("제품 데이터 조회 실패:", err);
+              alert("제품 데이터를 불러오는 데 실패했습니다.");
             }
           }
 
-          // 품목코드 모달의 가져오기 버튼 클릭 이벤트
+          // 제품코드 모달의 가져오기 버튼 클릭 이벤트
           const importProductBtn = document.getElementById("PrcImportBtn");
           if (importProductBtn) {
             importProductBtn.addEventListener("click", () => {
               const selectedRows = productGridApi.getSelectedRows();
               if (!selectedRows || selectedRows.length === 0) {
-                return alert("가져올 품목을 선택하세요.");
+                return alert("가져올 제품을 선택하세요.");
               }
 
               const newItems = selectedRows.map((row) => ({
@@ -786,8 +785,9 @@
               minWidth: 160,
             },
             { headerName: "신용등급", field: "creditGrade", width: 140 },
-            { headerName: "미수금", field: "leftPrice", width: 140 },
+            { headerName: "여신잔액", field: "leftPrice", width: 140 },
             { headerName: "할인율", field: "discountRate", width: 140 },
+            { headerName: "잔여할인(월)", field: "monDiscCnt", width: 140 },
           ];
           async function fetchCustomerCodeData() {
             if (!customerCodeGridApi) return;
@@ -832,10 +832,12 @@
             const cusCodeEl = document.getElementById("cusCode");
             const cusDiscountEl = document.getElementById("discountRate");
             const cusLeftPriceEl = document.getElementById("leftPrice");
+            const monDiscCntEl = document.getElementById("monDiscCnt");
             if (cusNameEl) cusNameEl.value = row.cusName ?? "";
             if (cusCodeEl) cusCodeEl.value = row.cusCode ?? "";
             if (cusDiscountEl) cusDiscountEl.value = row.discountRate ?? "";
             if (cusLeftPriceEl) cusLeftPriceEl.value = row.leftPrice ?? "";
+            if (monDiscCntEl) monDiscCntEl.value = row.monDiscCnt ?? "";
           }
           // 거래처 모달의 선택 버튼 클릭 이벤트
           const importCustomerCodeBtn = document.getElementById("CstImportBtn");

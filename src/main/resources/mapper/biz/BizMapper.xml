@@ -43,36 +43,6 @@ ORDER BY PO_START DESC
 
 
 <!-- 주문서 등록 -->
-<!-- <insert id="insertPO" parameterType="PoInsertVO">
-  INSERT ALL
-    INTO purchase_order (
-      PO_ID, COMPANY_CODE, PO_CODE, CUS_CODE, CREATER, PO_START, EX_DATE, PO_DATE,
-      PO_STATUS, PAY_METHOD, NOTES, VAT_TYPE, CREDIT_ACTIVE
-    )
-    VALUES (
-      PO_ID_SEQ.NEXTVAL, #{companyCode}, fn_generate_code('PO', ''),
-      #{cusCode}, #{creater}, #{poStart}, #{exDate}, #{poDate},
-      '작성완료',
-      #{payMethod}, #{notes}, #{vatType}, #{creditActive}
-    )
-    
-    <foreach collection="poDetails" item="pod">
-      INTO po_detail (
-        POD_ID, PO_ID, COMPANY_CODE, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
-        DC_AMT, SUP_AMT, VAT_AMT, PRODUCT_NAME
-      )
-      VALUES (
-        POD_ID_SEQ.NEXTVAL,
-        PO_ID_SEQ.CURRVAL,
-        #{companyCode},
-        #{pod.productCode}, #{pod.orderQty}, #{pod.unitPrice},
-        #{pod.dcAmt}, #{pod.supAmt}, #{pod.vatAmt}, #{pod.productName}
-      )
-    </foreach>
-  SELECT 1 FROM DUAL
-</insert> -->
-
-<!-- 새로 짠 쿼리 -->
 <!-- 헤더 insert: purchase_order -->
   <!-- 2-1. 헤더 INSERT: 시퀀스로 PO_ID 먼저 생성 -->
   <insert id="insertPOHeader" parameterType="PoInsertVO">
@@ -130,33 +100,34 @@ ORDER BY PO_START DESC
         #{d.vatType}    AS vatType
       FROM DUAL
     </foreach>
-  ) t
+  ) 
 </insert>
 
-
-<!-- 주문서 조회(모달) -->
-<select id="getPOHistory" parameterType="long" resultType="PoHistoryVO">
-  SELECT
-    po.COMPANY_CODE     AS companyCode,
-    po.PO_START         AS poStart,
-    c.CUS_NAME          AS cusName,
-    po.CREATER          AS creater,
-    pd.PRODUCT_CODE     AS productCode,
-    pd.PRODUCT_NAME     AS productName,
-    po.EX_DATE          AS exDate,
-    pd.UNIT_PRICE       AS unitPrice,
-    pd.ORDER_QTY              AS orderQty,
-    (pd.UNIT_PRICE * pd.ORDER_QTY) AS supAmt
-  FROM PURCHASE_ORDER po
-  JOIN PO_DETAIL pd ON pd.PO_ID = po.PO_ID
-  LEFT JOIN CUSTOMER c ON c.CUS_CODE = po.CUS_CODE
-  WHERE po.COMPANY_CODE = #{companyCode}
-  ORDER BY po.PO_START DESC
+<!-- 주문이력서 조회(모달) -->
+<select id="getPoHistory" resultType="PoHistoryVO">
+SELECT po.PO_START, po.CUS_CODE, c.CUS_NAME, pd.PRODUCT_CODE, pd.PRODUCT_NAME, pd.ORDER_QTY, pd.UNIT_PRICE, po.CREATER, po.EX_DATE, pd.SUP_AMT
+FROM PURCHASE_ORDER po
+JOIN PO_DETAIL pd ON po.PO_ID = pd.PO_ID
+JOIN CUSTOMER c ON po.CUS_CODE = c.CUS_CODE
+WHERE po.COMPANY_CODE = #{companyCode}
 </select>
 
-<!-- 거래처 조회 -->
+
+
+<!-- 제품 조회(모달) -->
+<select id="getProducts" parameterType="long" resultType="ProductCodeVO">
+SELECT PRODUCT_CODE, 
+       PRODUCT_NAME, 
+       SALES_PRICE, 
+       VAT_TYPE
+FROM   PRODUCT
+</select>
+
+
+
+<!-- 거래처 조회(모달)-->
 <select id="getCustomers" resultType="CusModalVO">
-  SELECT c.CUS_CODE, c.CUS_NAME, cm.CREDIT_GRADE, cm.LEFT_PRICE, cp.DISCOUNT_RATE
+  SELECT c.CUS_CODE, c.CUS_NAME, cm.CREDIT_GRADE, cm.LEFT_PRICE, cp.DISCOUNT_RATE, cp.MON_DISC_CNT
   FROM CUSTOMER c
   JOIN CREDIT_MASTER cm ON c.CUS_NO = cm.CUS_NO
   JOIN CREDIT_POLICY cp ON cp.COMPANY_CODE = c.COMPANY_CODE 
