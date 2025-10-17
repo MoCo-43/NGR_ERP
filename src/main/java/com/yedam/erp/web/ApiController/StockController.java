@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -367,6 +368,21 @@ public class StockController {
 		 return service.customerAll(params);
 	 }
 	
+	 @PutMapping("/signUpdate") // 전자서명 등록 수정
+	 public ResponseEntity<String> updateSign(@RequestBody InvenVO payload) {
+		 try {
+			 System.out.println(payload.getFinalSign());
+			 System.out.println(payload.getEmpSign());
+			 service.updateSign(payload);
+			 return ResponseEntity.ok("서명 등록 완료!");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("서명 등록 실패: " + e.getMessage());
+		}
+		 
+	 }
+	 
 	
 	 @PostMapping("/productInsert") // 제품등록
 	    public int insertProduct(@ModelAttribute ProductVO product) throws IOException {

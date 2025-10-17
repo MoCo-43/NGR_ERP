@@ -849,7 +849,13 @@ LEFT JOIN INVENTORY_CLOSING_DETAIL prev
  AND TRUNC(prev.ins_date, 'MM') = TRUNC(ADD_MONTHS(SYSDATE, -1), 'MM') 
 </insert>
 
+<!-- 결산 승인 서명 등록 수정 -->
+<update id="updateIcSignDataByIcCode" parameterType="InvenVO">
+UPDATE INVENTORY_CLOSING 
+SET final_sign = #{finalSign} 
+    ,emp_sign = #{empSign}  
+WHERE ic_code = #{icCode}
 
-
+</update>
 
 </mapper>

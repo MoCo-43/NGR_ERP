@@ -63,6 +63,7 @@ public interface StockService {
 	
 	// 결산 등록
 	public void insertInvenClosing(String empId , Long compCode);
+	public int updateSign(InvenVO payload);
 	
 	// 입고조회
 	public List<InboundVO> getInboundList(Long companyCode);

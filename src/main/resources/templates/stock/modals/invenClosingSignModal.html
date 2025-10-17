@@ -15,6 +15,11 @@
       th {
   		text-align: center;
 		}
+	hr.hr-3 {
+		  border: 0;
+		  height: 0;
+		  border-top: 1px solid #8c8c8c;
+		}
     </style>
   </head>
   
@@ -35,19 +40,20 @@
             </div>
           <div class="modal-body">
            <div class="container-fluid">
-           <div><h3>재고 현황 보고서</h3></div>
+           <div class="text-center"><h2>재고 현황 보고서</h2></div>
+           <hr class="hr-3">
            <div class="col-md-4 ml-auto">
            <table class="table" border="1">
-           <tr><th colspan="2" align="center" class="table-primary">결제</th></tr>
-           <tr><th>총괄 담당자</th><th>부서 담당자</th></tr>
+           <tr><th colspan="2" class="table-primary text-center">결제</th></tr>
+           <tr><th class="text-center">총괄 담당자</th><th class="text-center">부서 담당자</th></tr>
            <tr>
            <td>
            <button type="button" id="final" class="button btn-primary">불러오기</button>
-           <img id="finalImage" src="" alt="" class="img-fluid"  style="max-width: 100px; max-height: 100px;">
+           <img id="finalImage" src="" alt="" class="img-fluid rounded mx-auto d-block" style="max-width: 100px; max-height: 100px;">
            </td>
            <td>
            <button type="button" id="dept" class="button btn-primary">불러오기</button>
-           <img id="deptImage" src="" alt="" class="img-fluid"  style="max-width: 100px; max-height: 100px;">
+           <img id="deptImage" src="" alt="" class="img-fluid rounded mx-auto d-block" style="max-width: 100px; max-height: 100px;">
            </td>
            </tr>
            </table>
@@ -57,8 +63,8 @@
 			    <div class="row">
 			      <div class="col-md-4">
 			      <table class="table" border="1">
-			      <tr><th class="table-primary">문서코드</th><td>123123</td></tr>
-			      <tr><th class="table-primary">작성일자</th><td>123123</td></tr>
+			      <tr><th class="table-primary">문서코드</th><td id="icCode" align="center"></td></tr>
+			      <tr><th class="table-primary">작성일자</th><td id="icCodeInDate" align="center"></td></tr>
 			      </table>
 			      </div>
 			      <div class="col-md-4 ml-auto">
@@ -82,8 +88,8 @@
 
             <!-- 모달 푸터 시작-->
             <div class="modal-footer">
-             <button type="button" class="btn btn-success" id="icsSubmitBtn">승인</button>
-             <button type="button" class="btn btn-danger" data-bs-dismiss="modal">취소</button>
+             <button type="button" class="btn btn-success" id="icsSubmitBtnInModal">승인</button>
+             <button type="button" class="btn btn-danger" id="icsCancelBtnInModal" data-bs-dismiss="modal">취소</button>
              <!-- 모달 푸터 종료-->
             </div>
           </div>
