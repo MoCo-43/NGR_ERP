@@ -11,6 +11,7 @@ import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
 import com.yedam.erp.vo.Biz.DoInsertVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
+import com.yedam.erp.vo.Biz.PoHistoryVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
@@ -30,7 +31,7 @@ public interface BizMapper {
   int insertPODetails(PoInsertVO pvo);
   
   // 주문서 이력 조회
-  List<PurchaseOrderVO> getPOHistory(Long companyCode);
+  List<PoHistoryVO> getPOHistory(Long companyCode);
   // 품목 조회
   List<ProductCodeVO> getProducts(Long companyCode);
   // 거래처 조회

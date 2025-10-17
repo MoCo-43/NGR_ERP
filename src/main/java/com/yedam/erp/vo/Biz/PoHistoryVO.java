@@ -1,15 +1,29 @@
 package com.yedam.erp.vo.Biz;
 
-import java.util.Date;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import lombok.Data;
 
 @Data
 public class PoHistoryVO {
-    private Long companyCode;  // 회사코드
-    private Date poStart;       // 주문 시작일
-    private String cusName;     // 거래처명
-    private String creater;     // 작성자/담당자
-    private String productName;     // 품목명
-    private Date exDate;        // 납기일자
-    private int unitPrice;     // 단가
+    private Long companyCode;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate poStart;
+
+    private String cusName;
+    private String creater;
+
+    private String productCode;
+    private String productName;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate exDate;
+
+    private Integer orderQty;
+    private Integer unitPrice;     // int여도 되지만 null 방지면 Integer
+    private BigDecimal supAmt;     // 금액은 BigDecimal 권장
 }

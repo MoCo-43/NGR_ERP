@@ -158,33 +158,11 @@
             <div class="row g-3 align-items-end mb-2">
               <div class="col-md-6">
                 <label for="payMethod" class="form-label">지불방식</label>
-                <div class="row g-2">
-                  <div class="col-auto">
-                    <select id="payMethod" class="form-control">
-                      <option value="CASH">현금</option>
-                      <option value="BILL">어음</option>
-                    </select>
-                  </div>
-                  <div id="billDates" class="col d-none">
-                    <div class="row g-2">
-                      <div class="col">
-                        <input
-                          id="billStart"
-                          type="date"
-                          class="form-control"
-                          placeholder="어음 시작일"
-                        />
-                      </div>
-                      <div class="col">
-                        <input
-                          id="billEnd"
-                          type="date"
-                          class="form-control"
-                          placeholder="어음 만기일"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                <div class="col-md-6">
+                  <select id="payMethod" class="form-control">
+                    <option value="CASH">현금</option>
+                    <option value="BILL">어음</option>
+                  </select>
                 </div>
               </div>
               <div class="col-md-6">
@@ -521,15 +499,15 @@
                 const supAmt = calcSupply(r); // 공급가액(할인 반영)
                 const vatAmt = calcVat(r); // 부가세(과세/면세는 bizType 기준)
 
-                details.push({
+                const vatType = details.push({
                   productCode: r.productCode,
                   orderQty: toNum(r.orderQty),
                   unitPrice: toNum(r.unitPrice),
                   dcAmt: toNum(r.dcAmt ?? 0),
                   supAmt,
                   vatAmt,
-                  vatType: r.vatType,
-                  productName: (r.productName ?? r.dPrdName ?? "").trim(),
+                  vatType: vatAmt > 0 ? "과세" : "면세",
+                  productName: (r.productName ?? "").trim(),
                 });
               });
 
@@ -545,16 +523,15 @@
               }
 
               const payload = {
-                companyCode: Number(getVal("companyCode") || 0),
+                companyCode: Number(getId("companyCode") || 0),
                 cusName,
                 cusCode: getVal("cusCode"),
-                creater: getVal("creater") || "", // disabled여도 value 읽힘
+                creater: getVal("creater"), // disabled여도 value 읽힘
                 poStart: getVal("poStart") || undefined,
                 exDate: getVal("exDate") || undefined,
                 poDate: getVal("poDate") || undefined,
                 payMethod: getVal("payMethod"),
                 notes: getVal("notes") || undefined,
-                vatType,
                 // 여신활성(Y/N) : 상세행 중 할인액>0 이 하나라도 있으면 Y
                 creditActive: details.some((d) => (d.dcAmt || 0) > 0)
                   ? "Y"
@@ -593,7 +570,6 @@
             setVal("payMethod", "현금");
             setVal("poStatus", "주문승인");
             setVal("notes", "");
-            byId("billDates").classList.add("d-none");
             gridApi.setRowData([
               {
                 productCode: "",
@@ -888,14 +864,14 @@
                 */
 
         // body에 강제 표시(z-index 문제 회피)
-        // ["productcodeModal", "customermodal", "PoHistoryModal"].forEach(
-        //   (id) => {
-        //     const el = document.getElementById(id);
-        //     if (el && el.parentElement !== document.body) {
-        //       document.body.appendChild(el);
-        //     }
-        //   }
-        // );
+        ["productcodeModal", "customermodal", "PoHistoryModal"].forEach(
+          (id) => {
+            const el = document.getElementById(id);
+            if (el && el.parentElement !== document.body) {
+              document.body.appendChild(el);
+            }
+          }
+        );
       </script>
     </th:block>
   </body>

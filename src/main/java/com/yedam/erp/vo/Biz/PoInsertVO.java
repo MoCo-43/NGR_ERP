@@ -24,7 +24,6 @@ public class PoInsertVO{
     private LocalDate poDate;  // 결제예정일
     private String payMethod; // 현금/어음
     private String notes;  // 비고
-    private String vatType;   // 부가가치세
     private String creditActive; //할인적용여부
 
     private List<PoDetailVO> poDetails = new ArrayList<>();  // 주문서 상세
