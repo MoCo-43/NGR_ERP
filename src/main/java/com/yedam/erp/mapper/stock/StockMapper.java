@@ -31,6 +31,9 @@ public interface StockMapper {
 	// 제품리스트
 	public List<ProductVO> productAll(Long CompCode);
 	
+	// 제품 이미지 불러오기
+	public String getProductFileNameByProductCodeAndCompCode(@Param("productCode")String productCode , @Param("compCode")Long compCode);
+	
 	// 거래처 조회
 	public List<PartnerVO> customerAll(Map<String, Object> params);
 	// 발주계획 등록

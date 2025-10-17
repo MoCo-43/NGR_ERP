@@ -64,10 +64,18 @@ SELECT PRODUCT_CODE
        ,PRODUCT_NAME
        ,SPECIFICATION
        ,VAT_TYPE 
-FROM PRODUCT
-WHERE COMPANY_CODE = #{companyCode}
-
+       ,INSERT_DATE 
+FROM PRODUCT 
+WHERE COMPANY_CODE = #{companyCode} 
 </select>
+
+<select id="getProductFileNameByProductCodeAndCompCode" resultType="String">
+SELECT PRODUCT_IMAGE  
+FROM PRODUCT 
+WHERE PRODUCT_CODE = #{productCode}
+  AND COMPANY_CODE = #{compCode} 
+</select>
+
 
 <insert id="insertOrderPlan" parameterType="OrderPlanVO">
 <selectKey keyProperty="xpCode" resultType="string" order="BEFORE">
