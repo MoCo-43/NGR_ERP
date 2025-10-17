@@ -352,6 +352,35 @@ public class StockController {
 		return service.productAll(compCode);
 	}
 	
+	@GetMapping("/selectProductImg/{compCode}/{productCode}")
+	public ResponseEntity<Resource> getProductImg(@PathVariable Long compCode , @PathVariable String productCode){
+		String fileName = service.getProductFileNameByProductCodeAndCompCode(compCode,productCode);
+		File file = new File(uploadDir, fileName);
+        if (!file.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Resource resource = new FileSystemResource(file);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"");
+
+        // 확장자에 따른 MediaType 지정
+        String lowerName = fileName.toLowerCase(); // 파일명 소문자 처리
+        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM; // 기본값
+        if (lowerName.endsWith(".png")) mediaType = MediaType.IMAGE_PNG; // png 파일 처리
+        else if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) mediaType = MediaType.IMAGE_JPEG; // jpg처리
+        else if (lowerName.endsWith(".gif")) mediaType = MediaType.IMAGE_GIF; // gif 처리
+        
+        
+        // 미디어 타입은 필요에 따라 변경 가능
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(file.length())
+                //.contentType(MediaType.IMAGE_JPEG)
+                .contentType(mediaType)
+                .body(resource);
+	}
+	
 	 @ResponseBody
 	 @GetMapping("/cusList/{compCode}") // 거래처리스트 모달
 	 public List<PartnerVO> cutList(@PathVariable Long compCode,
