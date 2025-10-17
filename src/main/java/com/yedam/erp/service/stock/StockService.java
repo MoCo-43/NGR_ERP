@@ -23,10 +23,11 @@ public interface StockService {
 	// 제품등록
 	public int insertProduct(ProductVO product); 
 	// 제품리스트
-	public List<ProductVO> productAll(Long CompCode);
+	public List<ProductVO> productAll(Long compCode);
 	
 	// 제품 이미지 조회
 	public String getProductFileNameByProductCodeAndCompCode(Long compCode,String productCode);
+	public List<InboundVO> getProductDetailRefInbound(Long compCode , String productCode);
 	
 	// 거래처 조회
 	//public List<PartnerVO> customerAll(Long CompCode);

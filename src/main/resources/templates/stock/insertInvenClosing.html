@@ -192,6 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	let selectICDate = null; // 작성된일자(ic_code에서 쪼개서 저장)
 	let selectedRow = null; // 전역(이벤트 바깥)으로 선언
 	let selectedRowStatus = null; // 선택한 결산의 결재상태
+	let empId = null;
 	//let realRowCnt = tableBody.rows.length; // 실제 테이블 행 개수
 	//let rowCount = tableBody.rows.length + 1; // 현재 행 개수 + 1
  	let gridApi = null;
@@ -285,7 +286,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	        { headerName: "No.", field: "no",valueGetter: "node.rowIndex + 1", width: 70, cellStyle: { textAlign: "left" } },
 	        { headerName: "결산코드", field: "icCode", width: 150 },
 	        { headerName: "결산일자", field: "icDate", width: 120,},
-	        { headerName: "담당자", field: "empId", width: 150 },
+	        { headerName: "사원코드", field: "empId", width: 150 },
+	        { headerName: "담당자명", field: "name", width: 150 },
 	        { headerName: "진행상태", field: "icStatus", width: 100, cellStyle: { textAlign: "center" },
 	        	cellStyle: (params) => {
 	                if (params.value === "결재대기") {

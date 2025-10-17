@@ -118,6 +118,19 @@
 
   <script th:inline="none">
     document.addEventListener("DOMContentLoaded", () => {
+    	// 변수 초기 지정
+    	const tableBody = document.querySelector('#orderItemsTable tbody');
+        const addRowBtn = document.getElementById('addRowBtn');
+        //const taxSelect = document.getElementById('taxType');
+        const form = document.getElementById('insertOrderPlan');
+        const submitBtn = document.getElementById('submitBtn');
+        const toast = new bootstrap.Toast(document.getElementById('successToast'));
+        const productModalEl = document.getElementById("productModal");
+        const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
+        const businessModalEl = document.getElementById("businessModal");
+        const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
+        
+    	let compCode = null;
     	
     	// 현재 날짜로 초기 입력
     	function initToday(){
@@ -136,16 +149,10 @@
 			})
 		  .catch(err => console.error(err));
     	
-      const tableBody = document.querySelector('#orderItemsTable tbody');
-      const addRowBtn = document.getElementById('addRowBtn');
-      //const taxSelect = document.getElementById('taxType');
-      const form = document.getElementById('insertOrderPlan');
-      const submitBtn = document.getElementById('submitBtn');
-      const toast = new bootstrap.Toast(document.getElementById('successToast'));
-
+    
       // 회사코드 불러오기
       axios.get("/api/v1/stock/getCompId", { withCredentials: true })
-        .then(res => { document.getElementById("compCode").value = res.data; })
+        .then(res => { document.getElementById("compCode").value = res.data; compCode = Number(res.data);})
         .catch(err => console.error(err));
 
       // ---------- 금액 계산 ----------
@@ -186,11 +193,7 @@
       //});
 	 
       // ---------- 모달/그리드 준비 (1회 초기화) ----------
-      const productModalEl = document.getElementById("productModal");
-      const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
-
-      const businessModalEl = document.getElementById("businessModal");
-      const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
+    
 
       async function ensureProductGrid() {
         const gridDiv = document.getElementById('productGrid');
@@ -243,7 +246,7 @@
       }
 
       async function loadProductData(api) {
-        const compCode = Number(document.getElementById('compCode').value) || 0;
+        // console.log(compCode+": dataType > "+typeof(compCode));
         try {
           const { data } = await axios.get(`/api/v1/stock/productList/${compCode}`, { withCredentials: true });
           api?.setRowData(Array.isArray(data) ? data : []);
@@ -255,7 +258,7 @@
       }
 
       async function loadBusinessData(api) {
-        const compCode = Number(document.getElementById('compCode').value) || 0;
+        // console.log(compCode+": dataType > "+typeof(compCode));
         try {
           const { data } = await axios.get(`/api/v1/stock/cusList/${compCode}`, { withCredentials: true });
           api?.setRowData(Array.isArray(data) ? data : []);

@@ -88,9 +88,9 @@
       <!-- 입고 목록 -->
       <div class="col-md-6">
         <div class="card">
-          <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0">제품 목록</h5>
-          </div>
+          <div class="card-header py-3 d-flex align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">제품 목록</h6>
+		  </div>
 
           <div class="card-body p-0">
             <!-- 로딩바 -->
@@ -111,24 +111,25 @@
       <!-- 입고 상세 -->
       <div class="col-md-6">
         <div class="card">
-          <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0">제품 상세</h5>
-          </div>
+          <div class="card-header py-3 d-flex align-items-center justify-content-between">
+				<h6 class="m-0 font-weight-bold text-primary">제품 상세</h6>
+		  </div>
           <div class="card-body p-0">
         <!-- 로딩바 + Grid Start -->
-		<div id="gridDetailWrapper" style="position: relative; width: 100%; height: 500px;">
+		<div id="gridDetailWrapper" style="position: relative; width: 100%; max-height: 500px;">
               <!-- 상세 이미지 카드 (기본 hidden) -->
 				  <div id="imageCard" class="card shadow-sm mb-4" style="display: none;">
-				    <div class="card-header bg-secondary text-white">
+				    <!-- <div class="card-header bg-secondary text-white">
 				      <h6 class="mb-0">이미지 미리보기</h6>
-				    </div>
+				    </div> -->
 				    <div class="card-body text-center">
-				      <img id="previewImage" src="" alt="이미지 미리보기" class="img-fluid"  style="max-width: 300px; max-height: 300px;">
+				      <img id="previewImage" src="" alt="이미지 미리보기" class="img-fluid"  style="max-width: 100px; max-height: 100px;">
 				      <p id="imageName" class="mt-2"></p>
 				    </div>
-				  </div>
+				  </div> 
+				  <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
             <!-- 로딩 스피너 -->
-				<div id="loader" class="loader-overlay" style="display: none;">
+				<div id="loaderDetail" class="loader-overlay" style="display: none;">
 					<div class="spinner-border text-primary" role="status">
 					    <span class="visually-hidden">Loading...</span>
 					</div>
@@ -145,11 +146,8 @@
   
   <!-- 컨테이너 종료 -->
 </div>
-  <!-- 모달 include              경로             ::  div id 부분  -->   
-  <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
-   <!-- 모달 include              경로             ::  div id 부분  -->   
-  <div th:replace="~{stock/modals/productModal :: productModal}"></div>
-  
+
+ 
 </section>
   
 <th:block layout:fragment="body_extra">
@@ -176,6 +174,9 @@ document.addEventListener("DOMContentLoaded", () => {
 	 */
 	const searchPartner = document.getElementById('businessPartner');
 	const searchProduct = document.getElementById('productCode');
+    const imageCard = document.getElementById("imageCard");
+    let prevImg = document.getElementById("previewImage");
+    let imageName = document.getElementById("imageName");
 	let compCode = null; // 회사코드
 	let productGrid = null; // 전역 변수
  	let gridOptions = null;
@@ -228,7 +229,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 	// 회사코드 불러오기
 	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
-	  .then(res => { compCode = res.data; console.log(compCode);})
+	  .then(async (res) => { 
+		  compCode = Number(res.data); 
+		  console.log(compCode);
+			
+		  })
 	  .catch(err => console.error(err));
 	
 	// 단위마다 "," 공통함수
@@ -238,278 +243,129 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 	
 	
+		// 제품 리스트 
+		const inListGrid = initGrid({
+		    el: "inListGrid",
+		    columnDefs: [
+		        { headerName: "No.", valueGetter: "node.rowIndex + 1", width: 70 },
+		        { headerName: "등록일자", field: "insertDate" },
+		        { headerName: "제품코드", field: "productCode" },
+		        { headerName: "제품명", field: "productName" },
+		        { headerName: "규격", field: "specification" },
+		        { headerName: "과세여부", field: "vatType" },
+		        { 
+		            headerName: "썸네일", 
+		            field: "productCode", // 이미지 조회용 key
+		            width: 100,
+		            cellRenderer: (params) => {
+		                if(!params.value) return '';
+		                
+		                // UUID 기준 URL 생성
+		                let imgUrl = `/api/v1/stock/selectProductImg/${compCode}/${params.value}`;
+		                return `<img src="${imgUrl}" style="max-width: 28px; max-height: 30px; object-fit: contain;" alt="이미지">`;
+		            }
+		        }
+		    ],
+		    paginationPageSize: 20,
+		    domLayout: "normal",
+		    onRowClicked: async (event) => {
+		    	try{
+		    		showLoader("gridDetailWrapper","데이터를 불러오고 있습니다...");
+		    		console.log(event.data.productCode, event.data.productName);
+		    		prevImg.src = "";
+			        await loadInDetailData(event.data.productCode, event.data.productName); // 상세 그리드 데이터 로드
+		    	}catch(error){
+		    		console.log(error);
+		    		toastr.error(error);
+		    	} finally{
+		    		hideLoader("gridDetailWrapper");
+		    	}
+		        // 여기서 선택된 결산 상세를 불러오는 로직 추가 가능
+		    },
+		    onGridReady: async (event) => {
+		        try {
+		        	
+		        	showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
+		            const res = await axios.get(`/api/v1/stock/productList/${compCode}`, { withCredentials: true });
+		            console.log(res.data);
+		            event.api.setRowData(res.data); // 마스터 그리드에 데이터 뿌리기
+		        } catch (err) {
+		            console.error(err);
+		            toastr.error('데이터 로드 실패');
+		        } finally{
+		        	hideLoader("gridWrapper");
+		        }
+		    }
+			});// END OF inListGrid
 	
-// 제품 리스트 
-const inListGrid = initGrid({
-    el: "inListGrid",
-    columnDefs: [
-        { headerName: "No.", valueGetter: "node.rowIndex + 1", width: 70 },
-        { headerName: "등록일자", field: "insDate" },
-        { headerName: "제품코드", field: "productCode" },
-        { headerName: "제품명", field: "productName" },
-        { headerName: "규격", field: "specification" },
-        { headerName: "과세여부", field: "vatType" }
-    ],
-    paginationPageSize: 20,
-    domLayout: "normal",
-    onRowClicked: async (event) => {
-    	try{
-    		showLoader("gridDetailWrapper","데이터를 불러오고 있습니다...");
-	        console.log("선택된 행 데이터(selectedRow):", event.data);
-	        selectedRow = event.data.productCode;
-	        productCode = event.data.productCode;
-	        console.log("productCode : "+productCode);
-	        await loadInDetailData(productCode); // 상세 그리드 데이터 로드
-    	}catch(error){
-    		console.log(error);
-    		toastr.error(error);
-    	} finally{
-    		hideLoader("gridDetailWrapper");
-    	}
-        // 여기서 선택된 결산 상세를 불러오는 로직 추가 가능
-    },
-    onGridReady: async (event) => {
-        try {
-        	
-        	showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
-            const res = await axios.get(`/api/v1/stock/productList/${compCode}`, { withCredentials: true });
-            console.log(res.data);
-            event.api.setRowData(res.data); // 마스터 그리드에 데이터 뿌리기
-        } catch (err) {
-            console.error(err);
-            toastr.error('데이터 로드 실패');
-        } finally{
-        	hideLoader("gridWrapper");
-        }
-    }
-});// END OF inListGrid
-
-const inDetailColumnDefs = [
-    { headerName: "No.",valueGetter: "node.rowIndex + 1", field: "no", width: 80},
-    { headerName: "제품코드", field: "productCode" },
-    { headerName: "제품명", field: "productName" },
-    { headerName: "규격", field: "specification"},
-    { headerName: "거래처코드", field: "businessCode"},
-    { headerName: "거래처명", field: "businessPartner"},
-    { headerName: "입고수량", field: "qty", type: 'numericColumn', valueFormatter: numberFormatter },
-    { headerName: "입고예정일자", field: "dueDate"}
-]; // END OF COLUMN
-
-
-//그리드 초기화
-function initInboundGrid() {
-    const { gridOptions } = initGrid({
-        el: "inDetailGrid",
-        columnDefs: inDetailColumnDefs,
-        paginationPageSize: 10,
-        domLayout: "autoHeight"
-    });
-
-    inDetailGridOptions = gridOptions;
-}
-
-async function loadInDetailData(){
-	try {
-		showLoader("gridDetailWrapper","데이터를 불러오는 중입니다...");
-		const res = await axios.get(`/api/v1/stock/selectProductImg/${compCode}/${productCode}`);
-		const reader = new FileReader();
-	    reader.onload = function(e) {
-	      prevImg.src = e.target.result; // 폼에서 선택한 파일 기준
-	      imageName.textContent = file.name;
-	      imageCard.style.display = 'block';
-	    };
-	    reader.readAsDataURL(file);
-	    
-	  } catch (err) {
-	    console.error(err);
-	    toastr.error('데이터 로드 실패');
-	  } finally{
-		  hideLoader("gridDetailWrapper");
-	  }
-}// END OF loadInDetailData
-
-initInboundGrid(); // 그리드 초기화 실행 후 그리드에 그리기
-
-// 제품목록 조회 모달
-async function openProductModal() {
-	 if (!productGrid) {
-	        // 최초 초기화
-	        productGrid = initGrid({
-	            el: "productGrid",
-	            columnDefs: [
-	                { headerName: "제품코드", field: "productCode" },
-	                { headerName: "제품명", field: "productName" },
-	                { headerName: "규격", field: "specification" },
-	            ],
-	            onGridReady: async (event) => {
-	                try {
-	                    const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
-	                    event.api.setRowData(res.data);
-	                } catch (err) {
-	                    console.error("제품리스트 데이터 로드 실패:", err);
-	                }
-	            },
-	            onRowDoubleClicked:  (event) => {
-	                // 모달 안에서 선택한 행의 제품명만 가져오기
-	                document.getElementById("productCode").value = event.data.productCode;
-	                productModal.hide();
-	            }
-	        });
-	  } else {
-	        // 이미 초기화된 Grid이면 기존 Grid를 재사용
-	        try {
-	            const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
-	            productGrid.gridOptions.api.setRowData(res.data);
-	            productGrid.gridOptions.api.sizeColumnsToFit();
-	        } catch (err) {
-	            console.error("제품리스트 데이터 로드 실패:", err);
-	        }
-	    }
-    productModal.show();
-}
- 	
- 	
- 	
+	const inDetailColumnDefs = [
+	    { headerName: "No.",valueGetter: "node.rowIndex + 1", field: "no", width: 80},
+	    { headerName: "LOT", field: "lotCode" },
+	    { headerName: "제품코드", field: "productCode" },
+	    { headerName: "제품명", field: "productName" },
+	    { headerName: "규격", field: "specification"},
+	    { headerName: "거래처코드", field: "businessCode"},
+	    { headerName: "거래처명", field: "businessPartner"},
+	    { headerName: "잔여수량", field: "remainQty", valueFormatter: numberFormatter },
+	    { headerName: "구매단가", field: "purchasePrice", valueFormatter: numberFormatter}
+	]; // END OF COLUMN 
 	
-	// ------------------ 변수 초기화 ------------------
-	let productGridApi = null;
-	let productGridOptions = null;
-	let selectedProductRow = null; // 클릭한 행 저장용
-	const productModalEl = document.getElementById("productModal");
-	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
-	const businessModalEl = document.getElementById("businessModal");
-	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
 	
-    // 거래처명 클릭 시 모달
-	searchPartner.addEventListener('click', () => {
-			businessModal.show(); // 항상 동일한 인스턴스 사용
-	        if (!gridApi) initBusinessGrid();
-	        else loadBusinessData();
- });
-	  // 제품명 클릭 시 모달
-	searchProduct.addEventListener('click', () => {	openProductModal(); });
-	
-	// 거래처 그리드 초기화
-	function initBusinessGrid() {
-	    const eGridDiv = document.getElementById('myGrid');
-	    const columnDefs = [
-	        { headerName: "거래처코드", field: "cusCode" },
-	        { headerName: "거래처명", field: "cusName" },
-	        { headerName: "담당자명", field: "empName" },
-	        { headerName: "사업자번호", field: "bizNo" },
-	        { headerName: "대표명", field: "ceoName" },
-	        { headerName: "업태", field: "bizType" },
-	        { headerName: "종목", field: "bizCategory" },
-	        { headerName: "거래처주소", field: "addr" }
-	    ];
-
-	    const gridOptions = {
-	        columnDefs,
-	        rowSelection: "single",
-	        pagination: true,
-	        domLayout: 'normal',
-	        rowData: [],
+	//그리드 초기화
+	function initInboundGrid() {
+	    const { gridOptions } = initGrid({
+	        el: "inDetailGrid",
+	        columnDefs: inDetailColumnDefs,
+	        paginationPageSize: 10,
+	        domLayout: "autoHeight",
 	        onGridReady: (event) => {
-	            gridApi = event.api;
-	            gridApi.sizeColumnsToFit();
-	            loadBusinessData();
-	        },
-	        defaultColDef: {
-	            resizable: true,   // 컬럼 너비 조절 가능
-	            sortable: true,    // 정렬 가능
-	            minWidth: 100,     // 최소 너비
-	        },
-	        onRowDoubleClicked: (event) => {
-	        	document.getElementById("businessPartner").value = event.data.cusName;
-	            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
+	            inDetailGridOptions = event.api;
 	        }
-	    };
-	    new agGrid.Grid(eGridDiv, gridOptions);
+	    });
 	}
-	// 거래처 데이터 로드
-	async function loadBusinessData() {
-	    try {
-	        const res = await axios.get(`/api/v1/stock/cusList/${compCode}`);
-	        if (gridApi) {
-	            gridApi.setRowData(res.data);
-	            gridApi.sizeColumnsToFit();
-	        }
-	    } catch (err) { console.error(err); }
-	}
+
+	async function loadInDetailData(productCode, productName){
+		showLoader("gridDetailWrapper","데이터를 불러오는 중입니다...");
+	     
+		
+		 try {
+		        // 이미지 요청 (선택적)
+		        try {
+		            const imgRes = await axios.get(`/api/v1/stock/selectProductImg/${compCode}/${productCode}`, 
+		                { responseType: 'blob', withCredentials: true });
 	
-	// ------------------ Grid 데이터 로드 함수 ------------------
-	async function loadProductData() {
-	    if (!productGridApi) return;
-	    try {
-	        const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
-	        productGridApi.setRowData(res.data);
-	    } catch(err) {
-	        console.error(err);
-	    }
-	}
-
-
-
-	const modalEl = document.getElementById("businessModal");
-	const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-  	// CALL MODAL
-	//모달 데이터 로드 함수
-	/* async function loadModalData() {
-
-			const eGridDiv = document.querySelector('#myGrid'); // div 선택
-			if(!eGridDiv)  return console.error("myGrid div가 존재하지 않습니다!");
-			
-			 const columnDefs = [
-				    { headerName: "거래처코드", field: "cusCode" },
-				    { headerName: "거래처명", field: "cusName" },
-			        { headerName: "담당자명", field: "empName" },
-			        { headerName: "사업자번호", field: "bizNo" },
-			        { headerName: "대표명", field: "ceoName" },
-			        { headerName: "업태", field: "bizType" },
-			        { headerName: "종목", field: "bizCategory" },
-			        { headerName: "거래처주소", field: "addr" }
-			        
-			];
-    	if (!gridApi) {
-		    const gridOptions = {
-		        columnDefs: columnDefs,
-		        rowSelection: "single",
-		        rowData: [],
-		        onGridReady: async function(event) {
-		        	gridApi = event.api;
-		            
-		        },
-		        onRowDoubleClicked: function(event) {
-		           
-		            document.getElementById("businessPartner").value = event.data.cusName;
-		            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
-		            
-		          }
-		     
-		    	};
-		    		new agGrid.Grid(eGridDiv, gridOptions);
-    	}
-
-		// axios로 데이터 가져오기	  
-		try {
-				const res = await axios.get(`/api/v1/stock/cusList/${compCode}`);
-				// gridApi가 준비되었는지 확인
-				if (gridApi) {
-					gridApi.setRowData(res.data);
-				} else {
-				    // gridApi가 아직 준비 안된 경우 100ms 후 재시도
-				    setTimeout(() => loadModalData(), 100);
-				}
-			} catch (err) {
-				 console.error(err);
-			}
-	}// end of loadModalData */
+		            const reader = new FileReader();
+		            reader.onload = function(e) {
+		                prevImg.src = e.target.result;
+		                imageName.textContent = productName;
+		                imageCard.style.display = 'block';
+		            };
+		            reader.readAsDataURL(imgRes.data);
 	
+		        } catch(imgErr) {
+		            console.log("이미지 없음:", imgErr);
+		            prevImg.src = ""; // 이미지 없으면 초기화
+		            imageCard.style.display = 'none';
+		        }
+	
+		        // 상세 데이터 요청 (LOT 정보)
+		        const resDetail = await axios.get(`/api/v1/selectProductDetail/${compCode}/${productCode}`, { withCredentials: true });
+		        console.log("LOT별 상세 데이터:", resDetail.data);
+	
+		        if (inDetailGridOptions) {
+		            inDetailGridOptions.api.setRowData(resDetail.data);
+		        }
+	
+		    } catch (err) {
+		        console.error("상세 데이터 조회 실패:", err);
+		        toastr.error("상세 데이터 조회 실패");
+		    } finally {
+		        hideLoader("gridDetailWrapper");
+		    }
+	  
+	}// END OF loadInDetailData
 
-
-  // Axios 등록 + Toast
-	const toastEl = document.getElementById('successToast');
-	const toast = new bootstrap.Toast(toastEl);	
+	initInboundGrid(); // 그리드 초기화 실행 후 그리드에 그리기
 
 });
 </script>

@@ -20,6 +20,10 @@ public class InvenVO {
 	private String empSign;
 	
 	
+	// 조회용 필드
+	private String name;
+	
+	
 	
 	
 	private List<InvenDetailVO> detail;
