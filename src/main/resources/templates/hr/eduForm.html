@@ -17,12 +17,23 @@
 							<input type="text" name="eduName" class="form-control" required>
 						</div>
 						<div class="col-md-6">
-							<label class="form-label">종류</label> <input type="text"
-								name="eduType" class="form-control">
+							<label class="form-label">종류</label>
+							<input type="text" name="eduType" class="form-control" list="eduTypeList">
+							<datalist id="eduTypeList">
+								<option value="공통">
+								<option value="리더십">
+								<option value="안전/법정">
+								<option value="직무">
+								<option value="기타">
+							</datalist>
 						</div>
 						<div class="col-md-6">
-							<label class="form-label">결과</label> <input type="text"
-								name="result" class="form-control">
+							<label class="form-label">결과</label>
+							<input type="text" name="result" class="form-control" list="eduResultList">
+							<datalist id="eduResultList">
+								<option value="수료">수료</option>
+								<option value="미수료">미수료</option>
+							</datalist>
 						</div>
 						<div class="col-md-4">
 							<label class="form-label">점수</label> <input type="number"
@@ -53,7 +64,7 @@
 		</div>
 	</div>
 
-<script>
+	<script>
 (function(){
   const $ = (id)=>document.getElementById(id);  // id로 가져오는 함수
 
@@ -127,6 +138,8 @@
     // 필수값 체크
     if (!payload.empId) return alert('사번이 없습니다.');
     if (!payload.eduName){ form.eduName.focus(); return; }
+    if (!payload.eduType){ $('eduType').focus(); return; }   // 교육타입
+    if (!payload.result){ $('eduResult').focus(); return; }  // 교육결과
 
     const btn = e.currentTarget; 
     btn.disabled=true; // 중복 클릭 방지

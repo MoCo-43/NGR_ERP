@@ -58,8 +58,8 @@
 					<h6 class="m-0 font-weight-bold text-primary">부서 목록</h6>
 				</div>
 				<div class="card-body">
-					<div id="deptGridWrapper" style="position:relative;">	
-					<div id="deptGrid" class="ag-theme-quartz"></div>
+					<div id="deptGridWrapper" style="position: relative;">
+						<div id="deptGrid" class="ag-theme-quartz"></div>
 					</div>
 				</div>
 			</div>
@@ -98,12 +98,16 @@
 									</button>
 								</div>
 							</div>
+							<div class="col-md-6">
+								<label class="form-label" for="manager_name">부서장</label> 
+								<input id="manager_name" type="text" class="form-control">								
+							</div>
 						</div>
 					</form>
 				</div>
 
-				<div class="d-flex justify-content-center gap-3 my-2 mr-2" >
-					<button type="button" class="btn btn-primary mr-2" id="btnSave" >저장</button>
+				<div class="d-flex justify-content-center gap-3 my-2 mr-2">
+					<button type="button" class="btn btn-primary mr-2" id="btnSave">저장</button>
 					<button type="button" class="btn btn-danger" id="btnFormReset">초기화</button>
 				</div>
 			</div>
@@ -120,6 +124,7 @@
 			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 
 		<script th:inline="none">
+		
   document.addEventListener('DOMContentLoaded', () => {
     // 기본 상수/DOM
     const API_BASE = '/api/hr/dept'; // 서버 REST 엔드포인트 기본 경로
@@ -273,6 +278,7 @@
       setVal('use_yn','Y');           // 기본값 Y
       setVal('member_cnt', 0);        // 인원수 0
       setVal('manager_emp_id');       // 부서장 사번
+      setVal('manager_name'); 	      // 부서장 명 
       gridApi?.deselectAll?.();       // 그리드 선택 해제
     }
 
@@ -284,15 +290,22 @@
       setVal('use_yn',         r.use_yn ?? 'Y');
       setVal('member_cnt',     r.member_cnt ?? 0);
       setVal('manager_emp_id', r.manager_emp_id || '');
+      setVal('manager_name',   r.manager_name || '');
     }
 
-    // 이벤트 바인딩
-    btnFormReset.addEventListener('click', openCreate);         // 초기화 클릭 → 신규모드
-    btnSave.addEventListener('click', save);                    // 저장 클릭 → 저장 API 호출
-    btnFindManager.addEventListener('click', () => {            // 부서장 찾기 모달 열기
-      window.DeptManagerLookup?.open?.({ targetId: 'manager_emp_id' });
-    });
-    openCreate();
+// 이벤트 바인딩
+btnFormReset.addEventListener('click', openCreate);   // 초기화 → 신규모드
+btnSave.addEventListener('click', save);              // 저장 → API 호출
+//모달 열기
+btnFindManager.addEventListener('click', () => {
+  window.DeptManagerLookup?.open?.({ targetId: 'manager_emp_id' });
+});
+//부서 선택
+window.addEventListener('deptManager:selected', (e) => {
+  const { emp_id, name } = e.detail || {};
+  if (emp_id) setVal('manager_emp_id', emp_id);
+  if (name)   setVal('manager_name', name);
+});
   });
   </script>
 	</th:block>

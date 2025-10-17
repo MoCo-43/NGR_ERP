@@ -105,14 +105,16 @@
           { headerName:'전화번호', field:'phone', width:160 },
           { headerName:'이메일', field:'email', flex:1, minWidth:220 },
           { headerName:'주소', field:'address', flex:1, minWidth:220 },
-          { headerName:'입사일자', field:'joinDate', width:140, valueFormatter:(p)=>p.value?String(p.value).slice(0,10):'' }
-        ];
+          {colId:'joinDate',  headerName:'입사일자', field:'joinDate',  width:140, valueFormatter:(p)=>p.value?String(p.value).slice(0,10):'', hide:false },
+          { colId:'leaveDate', headerName:'퇴사일자', field:'leaveDate', width:140, valueFormatter:(p)=>p.value?String(p.value).slice(0,10):'', hide:true  }   
+          ];
+        
 
-        let gridApi=null, rowDataCache=[];
+        let gridApi=null, columnApi=null, rowDataCache=[];
         const gridOptions={
           columnDefs, rowData:[], rowSelection:'single', pagination:true, paginationPageSize:10,
           defaultColDef:{ sortable:true, resizable:true, filter:false, suppressMenu:true },
-          onGridReady:(p)=>{ gridApi=p.api;  $('srchStatus').value = 'EMPLOYED';  initLoad(); },
+          onGridReady:(p)=>{  gridApi=p.api; columnApi=p.columnApi;$('srchStatus').value = 'EMPLOYED';initLoad();},                                                         	            	                    
           onSelectionChanged:()=>{ const sel=gridApi?.getSelectedRows?.()||[]; $('btnEditOpen').disabled = sel.length===0; },
           onRowDoubleClicked:(e)=>openEdit(e.data)
         };
@@ -169,7 +171,16 @@
             return mKw&&mDept&&mPos&&mTit&&mStatus;
           });
           setRows(filtered); gridApi?.paginationGoToFirstPage?.();
-        }
+          if (columnApi) {
+        	    if (status==='RESIGNED') {
+        	      columnApi.setColumnVisible('joinDate', false);
+        	      columnApi.setColumnVisible('leaveDate', true);
+        	    } else {
+        	      columnApi.setColumnVisible('joinDate', true);
+        	      columnApi.setColumnVisible('leaveDate', false);
+        	    }
+        	  }
+        	}       
         function doReset(){
           ['keyword','srchDept','srchPosition','srchTitle'].forEach(id=>{$(id).value='';});
           if ($('srchStatus')) $('srchStatus').value='EMPLOYED';
