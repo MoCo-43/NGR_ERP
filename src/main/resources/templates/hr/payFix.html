@@ -1,27 +1,39 @@
 <div th:fragment="payFix">
-  <input type="hidden" id="pf_emp_id">
+	<input type="hidden" id="pf_emp_id">
 
-  <div class="container-fluid mb-4">
-    <h6 class="fw-bold mb-2">수당</h6>
-    <div id="payfix-list"></div>
-  </div>
+	<div class="container-fluid mb-4">
+		<h6 class="fw-bold mb-2">수당</h6>
+		<div id="payfix-list"></div>
+	</div>
 
-  <div class="container-fluid">
-    <h6 class="fw-bold mb-2">공제</h6>
-    <div id="deductfix-list"></div>
-  </div>
-  
-  <style>
-  h6.fw-bold {
-    color: navy;
-    font-weight: bold;
-  }
-  </style>
+	<div class="container-fluid">
+		<h6 class="fw-bold mb-2">공제</h6>
+		<div id="deductfix-list"></div>
+	</div>
 
-  <script>
+	<style>
+h6.fw-bold {
+	color: navy;
+	font-weight: bold;
+}
+</style>
+
+	<script>
   ;(function(){
     // include 방지
     if (window.__payFix) return;  //payFix가 있으면 즉시 종료
+    
+ // 천단위 콤마 붙이기
+    function formatWithComma(value) {
+      const onlyNumber = value.toString().replace(/[^0-9]/g, ''); // 숫자만 남기기
+      if (!onlyNumber) return '';
+      return Number(onlyNumber).toLocaleString(); // 1,000 처럼 콤마 붙이기
+    }
+
+    // 콤마 제거
+    function unformatComma(value) {
+      return value.replace(/,/g, '');
+    }
 
     // 계산용 환경설정 
     const CONFIG = {
@@ -73,7 +85,10 @@
     }
 
     // 유틸: 숫자변환
-    function num(v){ const n = Number(v); return isFinite(n) ? n : 0; } 
+     function num(v){
+    	   const n = Number(unformatComma(v));
+    	   return Number.isFinite(n) ? n : 0;
+    	 }
 
     // 수당/공제 한 섹션 렌더 
     function renderList(box, rows, kind ){
@@ -93,13 +108,13 @@
             <label class="form-label fw-bold">${lbl}</label>
           </div>
           <div class="col-md-6">
-            <input type="number" class="form-control"
+          <input type="text" class="form-control payfix-input"
                    data-kind="${kind}"
                    data-code="${code}"
                    data-name="${lbl}"
                    data-tax="${kind==='ALLOW' ? isTax : ''}"
                    data-has-value="${has}"
-                   value="${item.empAllowPay || 0}">
+                   value="${formatWithComma(item.empAllowPay || 0)}">
           </div>`;                                  // 각 항목의 입력 상자 생성
         box.appendChild(row);                       // 섹션에 추가
       });
@@ -181,8 +196,8 @@
       const $family = findAllowInput([CONFIG.LABEL_FAMILY_ALLOW]); // 라벨로 수당 input 찾음
       const $child  = findAllowInput([CONFIG.LABEL_CHILD_ALLOW]);  // 라벨로 수당 input 찾음
 
-      if ($family) $family.value = familyAmount; // 화면 반영
-      if ($child)  $child.value  = childAmount;  // 화면 반영
+      if ($family) $family.value = formatWithComma(familyAmount);
+      if ($child)  $child.value  = formatWithComma(childAmount);
 
       // 가족/자녀 수당이 과세면 보수월액 변동 
       recalcDeductions();
@@ -215,34 +230,35 @@
       const $ltc = findDeductInput(['장기요양'], ['05']);
       const $ei  = findDeductInput(['고용보험'], ['06']);
 
-      if ($nps) $nps.value = nps; // 국민연금 세팅
-      if ($hi)  $hi.value  = hi;  // 건강보험 세팅
-      if ($ltc) $ltc.value = ltc; // 장기요양 세팅
-      if ($ei)  $ei.value  = ei;  // 고용보험 세팅
+       if ($nps) $nps.value = formatWithComma(nps); //국민연금
+       if ($hi)  $hi.value  = formatWithComma(hi); //건강보험
+       if ($ltc) $ltc.value = formatWithComma(ltc); //장기요양
+       if ($ei)  $ei.value  = formatWithComma(ei); //고용보험
     }
 
-    // 수당/기본급 변경 시 자동계산 바인딩 
     function bindAutoRecalc(){
-      // 수당 입력값이 바뀌면 4대보험 재계산
-      document.querySelectorAll('#payfix-list input[data-kind="ALLOW"]').forEach(inp=>{
-        ['change','blur','keyup'].forEach(ev=>inp.addEventListener(ev, recalcDeductions));
-      });
-      const extBase = document.querySelector('#f_base_pay'); // 외부 기본급 필드가 따로 있을 경우
-      if (extBase){
-        ['change','blur','keyup'].forEach(ev=>extBase.addEventListener(ev, recalcDeductions));
-      }
+    	  //콤마 자동 붙이기
+    	  document.querySelectorAll('#payfix-list input, #deductfix-list input').forEach(inp=>{
+    	    inp.addEventListener('input', (e)=>{
+    	      e.target.value = formatWithComma(e.target.value);
+    	      recalcDeductions();   // 입력 즉시 4대보험 재계산
+    	    });
+    	  });
 
-      //가족/자녀 입력 변경 시 자동 반영
-      ['f_family_cnt','f_children_cnt'].forEach(id=>{
-        const el = document.getElementById(id);
-        if (el){
-          ['change','blur','keyup'].forEach(ev=> el.addEventListener(ev, recalcFamilyAllowances)); // 값 바뀌면 가족/자녀 수당 재계산
-        }
-      });
+    	  //수당 값 변경 시 재계산 
+    	  document.querySelectorAll('#payfix-list input[data-kind="ALLOW"]').forEach(inp=>{
+    	    ['change','blur','keyup'].forEach(ev=>inp.addEventListener(ev, recalcDeductions));
+    	  });
 
-      // 초기 1회 세팅(폼이 떴을 때 현재 값 기준으로 자동 반영)
-      recalcFamilyAllowances();
-    }
+    	  // 외부 기본급 필드 있을 경우
+    	  const extBase = document.querySelector('#f_base_pay');
+    	  if (extBase){
+    	    ['input','change','blur','keyup'].forEach(ev=>extBase.addEventListener(ev, recalcDeductions));
+    	  }
+
+    	  //초기 1회 계산
+    	  recalcDeductions();
+    	}
 
     // 초기화
     async function init(empId){
@@ -276,7 +292,7 @@
       for (const input of inputs){
         const code  = input.getAttribute('data-code'); // 코드
         const kind  = input.getAttribute('data-kind'); // ALLOW/DEDUCT
-        const pay   = Number(input.value) || 0;        // 금액(숫자)
+        const pay = Number(unformatComma(input.value));       
         const label = input.closest('.row').querySelector('label')?.textContent || ''; // 라벨(항목명)
         const body  = {
           empId,

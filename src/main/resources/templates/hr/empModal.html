@@ -14,7 +14,7 @@
 				</div>
 
 				<div class="modal-body">
-			
+
 					<th:block th:replace="~{hr/codeLookup :: codeLookupModal}"></th:block>
 
 					<ul class="nav nav-tabs mb-3" id="empTabs" role="tablist">
@@ -43,29 +43,34 @@
 							<form id="empForm" onsubmit="return false;">
 								<div class="container-fluid">
 									<div class="row g-3">
+
 										<div class="col-md-6">
 											<label for="f_emp_id" class="form-label">사번</label> <input
 												id="f_emp_id" name="emp_id" class="form-control"
 												placeholder="EMP-****-###" readonly>
 										</div>
-											<div class="col-md-6">
+
+										<div class="col-md-6">
 											<label for="f_name" class="form-label">성명 <span
 												class="text-danger">*</span></label> <input id="f_name" name="name"
 												class="form-control" required>
 										</div>
 
+										<!-- ▼ 부서: 표시용 이름 + 숨김 코드 -->
 										<div class="col-md-6">
-											<label for="f_dept_code" class="form-label">부서 <span
+											<label for="f_dept_name" class="form-label">부서 <span
 												class="text-danger">*</span></label>
 											<div class="input-group">
-												<input id="f_dept_code" name="dept_code"
-													class="form-control" placeholder="DEPT-001" required>
+												<input id="f_dept_name" class="form-control"
+													placeholder="부서 선택" readonly required> <input
+													type="hidden" id="f_dept_code" name="dept_code">
 												<button class="btn btn-outline-secondary" type="button"
 													id="btnDeptLookup">
 													<i class="fas fa-search"></i>
 												</button>
 											</div>
 										</div>
+										<!-- ▲ 부서 끝 -->
 
 										<div class="col-md-6">
 											<label for="f_position" class="form-label">직급</label>
@@ -103,6 +108,7 @@
 												id="f_phone" name="phone" class="form-control"
 												placeholder="010-0000-0000">
 										</div>
+
 										<div class="col-md-6">
 											<label for="f_family_cnt" class="form-label">부양가족수</label> <input
 												id="f_family_cnt" name="familyCnt" type="number" min="0"
@@ -164,6 +170,7 @@
 											<label for="f_accountNo" class="form-label">계좌번호</label> <input
 												id="f_accountNo" name="accountNo" class="form-control">
 										</div>
+
 										<div class="col-md-3">
 											<label for="f_accountName" class="form-label">예금주</label> <input
 												id="f_accountName" name="accountName" class="form-control">
@@ -187,10 +194,14 @@
 											<input id="f_address_detail" name="addressDetail"
 												class="form-control mt-2" placeholder="상세주소(동/호)">
 										</div>
+
 									</div>
+									<!-- /.row -->
 								</div>
+								<!-- /.container-fluid -->
 							</form>
 						</div>
+
 
 						<div class="tab-pane fade" id="tab-pay"
 							th:insert="~{hr/payFix :: payFix}" role="tabpanel"></div>
@@ -241,7 +252,7 @@
 	<script
 		src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
-<script>
+	<script>
   (function(){
     const $  = (id)=>document.getElementById(id);
     const qs = (sel,root=document)=>root.querySelector(sel);
@@ -286,10 +297,12 @@
       return p;
     }
     function validate(p){
-    	  if(!p.name)      { toastr.error('성명을 입력하세요.');      return false; }
-    	  if(!p.dept_code) { toastr.error('부서를 입력하세요.');      return false; }	
-    	  if(!p.email)     { toastr.error('이메일을 입력하세요.');    return false; }
-    	  if(!p.joinDate)  { toastr.error('입사일자를 입력하세요.');  return false; }
+    	  const hasDeptCode = (document.getElementById('f_dept_code')?.value || '').trim().length > 0;
+    	  const hasDeptName = (document.getElementById('f_dept_name')?.value || '').trim().length > 0;
+    	  if(!(hasDeptCode && hasDeptName)) { toastr.error('부서를 선택하세요.'); return false; }
+    	  if(!p.name)     { toastr.error('성명을 입력하세요.');     return false; }
+    	  if(!p.email)    { toastr.error('이메일을 입력하세요.');   return false; }
+    	  if(!p.joinDate) { toastr.error('입사일자를 입력하세요.'); return false; }
     	  return true;
     	}
     async function saveBasic(){
@@ -354,7 +367,7 @@
         mode='create';
         $('empModalTitle').textContent='사원 등록 기본사항';
         [
-          'f_emp_id','f_name','f_dept_code','f_position','f_title','f_birth','f_phone','f_email',
+          'f_emp_id','f_name','f_dept_code','f_dept_name','f_position','f_title','f_birth','f_phone','f_email',
           'f_joinDate','f_leaveDate','f_leaveReason','f_bankCode', 'f_bankName','f_accountNo','f_accountName',
           'f_zipCode','f_address','f_family_cnt','f_address_detail','f_marital_status','f_children_cnt'
         ].forEach(id=>{ const el=$(id); if(el) el.value=''; });
@@ -373,7 +386,8 @@
         $('empModalTitle').textContent='사원 수정 기본사항';
         const set=(id,v)=>{ const el=$(id); if(el) el.value=v??''; };
         set('f_emp_id',row.emp_id||''); set('f_name',row.name||'');
-        set('f_dept_code',row.dept_code||''); set('f_position',row.position||'');
+        set('f_dept_code',row.dept_code||'');
+        set('f_dept_name', row.dept_name || '');set('f_position',row.position||'');
         set('f_title',row.title||'');
         set('f_birth', row.birth?String(row.birth).slice(0,10):'');
         set('f_phone',row.phone||''); set('f_email',row.email||'');
@@ -456,7 +470,7 @@
           source: 'dept',
           title: '부서 선택',
           targetId: 'f_dept_code',
-          targetNameId: null
+          targetNameId: 'f_dept_name' 
         });
       });
 
