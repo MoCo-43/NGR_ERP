@@ -37,4 +37,6 @@ public interface EmpLoginMapper {
     Long findMatNoByEmpId(String empId); 
     //중복체크
     int idChecks(String empId);
+    //직원권한 변경(승진/강등 시)
+    void updateEmployeeRole(EmpLoginVO empLoginVO);
 }

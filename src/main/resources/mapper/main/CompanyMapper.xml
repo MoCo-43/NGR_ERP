@@ -35,7 +35,7 @@
 		CREATE_AT, IS_USED, IS_LOCKED, FAILED_LOGIN_ATT,com_name
 		) VALUES (
 		#{empIdNo}, #{empId}, #{empPw}, #{empNo}, #{matNo}, #{deptCode},
-		SYSDATE, 'Y', 'N', 0,#{comName}
+		SYSDATE, 'Y', 'N', 0,'ROLE_ADMIN'
 		)
 	</insert>
     <select id="findByComCode" parameterType="String" resultType="com.yedam.erp.vo.main.CompanyVO">
