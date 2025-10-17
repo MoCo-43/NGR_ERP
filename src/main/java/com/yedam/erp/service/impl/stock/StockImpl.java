@@ -260,6 +260,14 @@ public class StockImpl implements StockService{
 	}
 
 
+	@Override
+	public int updateSign(InvenVO payload) {
+		
+		return mapper.updateIcSignDataByIcCode(payload);
+		
+	}
+
+
 
 
 }

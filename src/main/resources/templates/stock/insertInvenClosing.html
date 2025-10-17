@@ -30,6 +30,13 @@
    <link rel="stylesheet" href="/style/confirm.css" />
    
   </th:block>
+  <style>
+  .highlight-header {
+		  background-color: #93caf9 !important;
+		  
+		  font-weight: bold;
+	}
+  </style>
 </head>
 <body>
 <section layout:fragment="content">
@@ -152,13 +159,20 @@ document.addEventListener("DOMContentLoaded", () => {
 	const toastEl = document.getElementById('successToast');
 	const registerIcBtn = document.getElementById('registerIcBtn');
 	const toast = new bootstrap.Toast(toastEl);
+	// 모달부
+	const finalBtn = document.getElementById('final');// 총괄 담당자
+	const deptBtn = document.getElementById('dept'); // 부서 담당자
+	const fnImg = document.getElementById('finalImage'); // 총괄 서명
+	const dptImg = document.getElementById('deptImage'); // 부서 서명
 	
-	const finalBtn = document.getElementById('final');
-	const deptBtn = document.getElementById('dept');
-	const fnImg = document.getElementById('finalImage');
-	const dptImg = document.getElementById('deptImage');
+	const modalInTdCode = document.getElementById('icCode'); // 문서코드 td
+	const modalInTdDate = document.getElementById('icCodeInDate'); // 작성일자 td
 	
+	const icsSubmitBtnInModal = document.getElementById('icsSubmitBtnInModal');
+	
+	let selectICDate = null; // 작성된일자(ic_code에서 쪼개서 저장)
 	let selectedRow = null; // 전역(이벤트 바깥)으로 선언
+	let selectedRowStatus = null; // 선택한 결산의 결재상태
 	//let realRowCnt = tableBody.rows.length; // 실제 테이블 행 개수
 	//let rowCount = tableBody.rows.length + 1; // 현재 행 개수 + 1
  	let gridApi = null;
@@ -206,6 +220,37 @@ document.addEventListener("DOMContentLoaded", () => {
  	    new agGrid.Grid(eGridDiv, gridOptions);
  	    return { gridApi: gridOptions.api, gridOptions };
 	}// END OF FUNCTION
+	
+	async function openIcModal(rowData) {
+	    selectedRow = rowData.icCode;
+	    selectedRowStatus = rowData.icStatus;
+	    selectICDate = selectedRow.replace(/^IC(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+	    
+	    modalInTdCode.innerHTML = selectedRow;
+	    modalInTdDate.innerHTML = selectICDate;
+	    
+	    // 서명 이미지 세팅
+	    fnImg.src = "/sign/finSign.png";
+	    dptImg.src = "/sign/empSign.png";
+	    
+	    // 버튼 숨기기 (서명 등록용 버튼)
+	    finalBtn.style.display = 'none';
+	    deptBtn.style.display = 'none';
+	    
+	    // 하단 승인/취소 버튼 숨기기
+	    icsSubmitBtnInModal.style.display = 'none';
+	    const cancelBtn = document.getElementById('icsCancelBtnInModal'); // cancel 버튼 id
+	    if(cancelBtn) cancelBtn.style.display = 'none';
+	    
+	    // 모달 show
+	    const icsModalEl = document.getElementById('icsModal');
+	    const icsModal = bootstrap.Modal.getOrCreateInstance(icsModalEl);
+	    icsModal.show();
+	    
+	    // 상세 데이터 로드
+	    await loadICDetailDataInModal(selectedRow);
+	}
+	
  	
 	const icListGrid = initGrid({
 	    el: 'orderItemsTable',
@@ -222,13 +267,31 @@ document.addEventListener("DOMContentLoaded", () => {
 	                return { backgroundColor: "#054cb5", color: "#ffffff" }; // 기본 스타일
 	            }	
 	        },
+	        { headerName: "결산조회", field: "icReport", width: 150,
+	        	
+	        	cellRenderer: (params) => {
+	                const btn = document.createElement("button");
+	                btn.textContent = "조회";
+	                btn.classList.add("btn", "btn-sm", "btn-primary");
+	                // 결재완료 상태면 활성화, 아니면 비활성화
+	                btn.disabled = params.data.icStatus !== "결재완료";
+	                btn.addEventListener("click", async () => {
+	                    await openIcModal(params.data);
+	                });
+	                return btn;
+	            }
+	        
+	        
+	        },
 	    ],
 	    rowSelection: "single",
 	    paginationPageSize: 10,
 	    onRowClicked: async (event) => {
-	        console.log("선택된 행 데이터(selectedRow):", event.data);
+	        //console.log("선택된 행 데이터(selectedRow):", event.data); 
 	        selectedRow = event.data.icCode;
-	        console.log("selectedRow : "+selectedRow);
+	        selectedRowStatus = event.data.icStatus;
+	        //console.log("selectedRow : "+selectedRow); // 선택 행의 ic_code
+	        //console.log("selectedRowStatus : "+selectedRowStatus); // 선택 행의 ic_status
 	        await loadICDetailData(selectedRow); // 상세 그리드 데이터 로드
 	        // 여기서 선택된 결산 상세를 불러오는 로직 추가 가능
 	    },
@@ -275,6 +338,39 @@ document.addEventListener("DOMContentLoaded", () => {
         	}
 	    }
 	];
+	const invenClosingModalColumnDefs = [
+	    { headerName: "No.", headerClass: "highlight-header",valueGetter: "node.rowIndex + 1", field: "no", width: 80 ,
+	    	valueFormatter: (params) => {
+	        if (params.node.rowPinned) return '합계'; // pinned row이면 합계 표시
+	        return params.value;
+	    },
+	    
+        colSpan: (params) => {
+            if (params.node.rowPinned) return 3; // No + 제품코드 + 제품명 합치기
+            return 1;
+        },
+	    cellStyle: (params) => {
+	        if (params.node.rowPinned) {
+	            return {
+	                backgroundColor: '#93caf9', // 원하는 배경색
+	                textAlign: 'center',         // 가운데 정렬
+	                fontWeight: 'bold'           // 굵게
+	            };
+	        }
+	        return null;
+	    }
+	    	
+	    },
+	    { headerName: "제품코드", field: "productCode", headerClass: "highlight-header"},
+	    { headerName: "제품명", field: "productName", headerClass: "highlight-header" },
+	    { headerName: "이월재고", field: "openingStock", type: 'numericColumn', headerClass: "highlight-header" },
+	    { headerName: "현재고량", field: "stock", type: 'numericColumn', headerClass: "highlight-header" },
+	    { headerName: "평가액", field: "valuationAmount", headerClass: "highlight-header", valueFormatter: (params) => {
+            if (!params.value) return "";
+            return Number(params.value).toLocaleString(); // 문자열 -> 숫자로 변환 후 천단위 콤마
+        	}
+	    }
+	];
 	// 그리드 초기화
 	function initInvenGrid() {
 	    const { gridOptions } = initGrid({
@@ -291,7 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	function initICModalGrid() {
 	    const { gridOptions } = initGrid({
 	        el: "detailGrid",
-	        columnDefs: invenClosingColumnDefs,
+	        columnDefs: invenClosingModalColumnDefs,
 	        paginationPageSize: 10,
 	        domLayout: "normal"
 	    });
@@ -322,15 +418,15 @@ document.addEventListener("DOMContentLoaded", () => {
 	}    
 	
 	initInvenGrid();
-	//initICModalGrid();
+	initICModalGrid();
+	
+	// 결산 수동 생성 이벤트
 	document.getElementById('createIcBtn').addEventListener('click', async () => {
 	//	console.log("loadICDetailData > selectedRow : "+selectedRow);
 	  //  await loadICDetailData();
 	  
 	  await createICData();
-	  
-	  
-	  
+
 	});
 	
 	async function createICData(){
@@ -391,32 +487,28 @@ document.addEventListener("DOMContentLoaded", () => {
 	  //   .then(res=>{})
 
 async function loadICDetailDataInModal(selectedIcCode){
-		  try {
-		        const res = await axios.get(`/api/v1/stock/icDetailList/${selectedIcCode}`, { withCredentials: true });
-		        const detailGrid = document.getElementById('detailGrid');
-		        if (!detailGrid.__agGridInstance) {
-		            // 그리드 생성
-		            const gridOptions = {
-		                columnDefs: [
-		                    { headerName: "제품코드", field: "productCode" },
-		                    { headerName: "제품명", field: "productName" },
-		                    { headerName: "이월재고", field: "openingStock", type:'numericColumn' },
-		                    { headerName: "현재고량", field: "stock", type:'numericColumn' },
-		                    { headerName: "평가액", field: "valuationAmount", valueFormatter: (p) => Number(p.value).toLocaleString() }
-		                ],
-		                rowData: res.data,
-		                defaultColDef: { resizable:true, flex:1 },
-		                pagination:true, paginationPageSize:10
-		            };
-		            new agGrid.Grid(detailGrid, gridOptions);
-		            detailGrid.__agGridInstance = gridOptions; // 인스턴스 저장
-		        } else {
-		            detailGrid.__agGridInstance.api.setRowData(res.data);
-		        }
-		    } catch(err) {
-		        console.error(err);
-		        toastr.error('상세 데이터 로드 실패');
-		    }
+	try {
+	    const res = await axios.get(`/api/v1/stock/icDetailList/${selectedIcCode}`, { withCredentials: true });
+	    const detailGrid = document.getElementById('detailGrid');
+	    console.log("loadICDetailData: "+JSON.stringify(res.data, null, 2));
+	    if (initICModalGridOptions) {
+	      // rowData 세팅
+	      initICModalGridOptions.api.setRowData(res.data);
+
+	      // 합계 계산: pinnedBottomRowData 사용
+	      const totalRow = {
+	        no: '합계',
+	        openingStock: res.data.reduce((sum, r) => sum + r.openingStock, 0),
+	        stock: res.data.reduce((sum, r) => sum + r.stock, 0),
+	        valuationAmount: res.data.reduce((sum, r) => sum + Number(r.valuationAmount), 0)
+	      };
+	      	initICModalGridOptions.api.setPinnedBottomRowData([totalRow]);
+	    }
+	  } catch (err) {
+	    console.error(err);
+	    toastr.error('데이터 로드 실패');
+	  }
+		 
 	}// END OF loadICDetailDataInModal
 
 	  
@@ -427,24 +519,30 @@ async function loadICDetailDataInModal(selectedIcCode){
 		    console.log("id : "+e.target.id);
 		    let fileName = e.target.id;
 		    if(fileName == 'final'){
-		    	fnImg.src = "/sign/finalSign.png";
+		    	fnImg.src = "/sign/finSign.png";
 		    	finalBtn.style.display = 'none'
 		    }else if(fileName =='dept'){
 		    	dptImg.src = "/sign/empSign.png";
 		    	deptBtn.style.display = 'none'
 		    }
 		  });
-		});
+		}); // END OF FOREACH
 	   
-  // Axios 등록 + Toast
+  // 재고 현황보고서 모달 호출 + Toast
 	registerIcBtn.addEventListener('click', async (event) => {
 		event.preventDefault(); // 페이지 새로고침 방지
 		console.log("결산 등록 모달 호출시 > selectedRow(IC_CODE) : "+selectedRow);
+		selectICDate = selectedRow.replace(/^IC(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+		modalInTdCode.innerHTML = selectedRow; // 문서코드에 IC_CODE 입력
+		modalInTdDate.innerHTML = selectICDate; // 문서코드에 IC_DATE 입력
 		if(selectedRow == null) { 
 			  toastr.error('행을 선택해주세요');
 			  return;
 		  }
-
+		if(selectedRowStatus == '결재완료'){
+			  toastr.error('결재 완료된 내역입니다');
+			  return;
+		}
 	        // confirm 먼저
 	        const res = await cuteAlert({
 	        	type: "question",
@@ -472,31 +570,58 @@ async function loadICDetailDataInModal(selectedIcCode){
 	        } 
 	    
 		  // console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
-		  
-		/*   try {
-			  	
-			    await axios.post('/api/v1/stock/signUpdate', payload, {
+	
+			  
+	}); // END OF 재고 현황 보고서 모달 호출 이벤트
+		
+		
+    // 재고현황보고서 모달 승인 클릭시 서명부 업데이트
+	icsSubmitBtnInModal.addEventListener('click', async() => {
+		
+		console.log("현재 선택된 IC_CODE 값 : "+selectedRow);
+		  try {
+			  const icCode = selectedRow;
+			  const slicedFinalSignLink = fnImg.src.substr(fnImg.src.lastIndexOf('/')+1);
+			  const slicedEmpSignLink = dptImg.src.substr(fnImg.src.lastIndexOf('/')+1);
+			  console.log('slicedFinalSignLink : '+slicedFinalSignLink);
+			  console.log('slicedEmpSignLink : '+slicedEmpSignLink);
+			  const payload = {
+					icCode : icCode,
+					finalSign : slicedFinalSignLink,
+					empSign : slicedEmpSignLink
+			  };
+			  if(payload.length != 3){ toastr.error('등록되지 않은 부분이 존재합니다!');  return;}
+				  // confirm 먼저
+			        const res = await cuteAlert({
+			        	type: "question",
+			            title: "최종 확인",
+			            message: "정말 진행하시겠습니까?",
+			            imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
+			            confirmText: "네",
+			            cancelText: "아니오"
+			        });
+			        console.log('cuteAlert result:', res);
+			        if(res !== true) {
+			            return; // 취소 시 함수 종료
+			        }
+			  await axios.put("/api/v1/stock/signUpdate", payload, {
 			      headers: { 'Content-Type': 'application/json' }
 			    });
-			    //toast.show();
-			    toastr.success('등록성공');
-			    //form.reset();
-			    resetOrderFields();
-			    // 테이블 초기화
-        		tableBody.innerHTML = '';
-        		rowCount = 1; // 행 번호 초기화
-			  } catch (err) {
-			    //alert('등록 실패: ' + err.message);
-			   
-				toastr.error('등록 실패: ' + err.message,{timeOut: 3000});
-			  } */
+			  toastr.success('등록성공');
+			  const icsModalEl = document.getElementById('icsModal');
+		        const icsModal = bootstrap.Modal.getInstance(icsModalEl);
+		        if (icsModal) icsModal.hide();
+		        
+		      const listRes = await axios.get('/api/v1/stock/icList', { withCredentials: true });
+		      icListGrid.gridOptions.api.setRowData(listRes.data);
 			  
-			  
-			  
-			  
-	});
+		  }catch(err){
+			  alert('등록 실패: ' + err.message);
+			  toastr.error('등록 실패: ' + err.message,{timeOut: 3000});
+		  }
+	}); // END OF 승인 이벤트
 
-});
+}); // END OF DOM CONTENT LOADED
 </script>
 </th:block>
 

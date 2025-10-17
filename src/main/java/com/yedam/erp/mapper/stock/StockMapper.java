@@ -72,6 +72,7 @@ public interface StockMapper {
 	public void insertInvenClosing(InvenVO inven);// 마스터
 	public int insertInvenClosingDetail(InvenDetailVO invenDetail);// 상세
 	public int checkThisMonthSettlement(); // 이번달 결산내역 존재여부 판단
+	public int updateIcSignDataByIcCode(InvenVO payload); // 서명 등록 수정
 	
 	// 입고조회
 	public List<InboundVO> getInboundList(@Param("compCode") Long companyCode);
