@@ -4,92 +4,116 @@
 	layout:decorate="~{layout/base}">
 <head>
 <title>대시보드</title>
-
+<link
+	href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+	rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+	rel="stylesheet">
 <th:block layout:fragment="head_extra">
 	<script
 		src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 	<style>
-/* 1. 기본 레이아웃 재정의 (필요한 경우) */
-html, body {
-	height: 100%;
-	margin: 0;
-}
+/* 1. 기본 레이아웃 재정의 */
+    html, body {
+        height: 100%;
+        margin: 0;
+        background-color: #f4f7f6; /* 배경색 추가 */
+    }
 
-/* 2. 대시보드 전체 컨테이너 설정 */
-.dashboard-container {
-	height: calc(100vh - 120px); /* 뷰포트 전체 높이에서 상단 메뉴바 등을 고려해 120px 제외 */
-	padding: 20px;
-	display: flex;
-	flex-direction: column;
-	gap: 20px;
-	overflow: hidden;
-}
+    /* 2. 대시보드 전체 컨테이너 */
+    .dashboard-container {
+        height: calc(100vh - 120px); /* 헤더 등을 제외한 높이 */
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        overflow: hidden;
+    }
 
-/* 3. 상단 통계 타일 그룹 */
-.stats-group {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 20px;
-	flex-shrink: 0;
-}
+    /* 3. 상단 통계 카드 그룹 */
+    .stat-container {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+    }
 
-.stat-card {
-	background-color: #f7f7f7;
-	padding: 15px 20px;
-	border-radius: 4px;
-	border: 1px solid #ddd;
-	height: 90px;
-}
+    /* 개별 스탯 카드 */
+    .stat-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        padding: 24px;
+        flex: 1; /* 모든 카드가 동일한 너비를 가짐 */
+        min-width: 250px;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        display: flex;
+        align-items: center;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    }
 
-.stat-label {
-	font-size: 0.9em;
-	color: #666;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 5px;
-}
+    /* 라벨과 (아이콘+값) 그룹을 포함하는 헤더 */
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
 
-.stat-value {
-	font-size: 2em;
-	font-weight: bold;
-	color: #333;
-}
+    .stat-label {
+        font-size: 16px;
+        font-weight: 500;
+        color: #555;
+    }
+    
+    /* ⭐ [수정] 아이콘과 값을 묶는 그룹 */
+    .stat-data {
+        display: flex;
+        align-items: center;
+        gap: 8px; /* << 아이콘과 값 사이의 간격을 조절합니다 */
+    }
 
-.stat-icon {
-	font-size: 24px;
-}
+    .material-icons {
+        font-size: 36px;
+        color: #4a69bd;
+    }
+    
+    .stat-value {
+        font-size: 32px; /* 폰트 크기 미세 조정 */
+        font-weight: 700;
+        color: #333;
+    }
 
-/* 4. 하단 모듈 그룹 (2x2 Layout) */
-.modules-group {
-	flex-grow: 1;
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	grid-template-rows: 1fr 1fr;
-	gap: 20px;
-	overflow: hidden;
-}
+    /* 4. 하단 모듈 그룹 */
+    .modules-group {
+        flex-grow: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 24px;
+        overflow: hidden;
+    }
 
-.module-card {
-	background-color: #ffffff;
-	padding: 10px;
-	border-radius: 4px;
-	border: 1px solid #ddd;
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-}
+    .module-card {
+        background-color: #ffffff;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
 
-.module-title {
-	font-size: 1.1em;
-	font-weight: bold;
-	margin-bottom: 10px;
-	padding: 5px;
-	color: #333;
-	background-color: #f0f0f0;
-	flex-shrink: 0;
-}
-
+    .module-title {
+        font-size: 1.1em;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #333;
+        flex-shrink: 0;
+    }
 /* Chart.js 캔버스 스타일 */
 canvas {
 	flex-grow: 1;
@@ -105,29 +129,29 @@ canvas {
 
 		<div class="dashboard-container">
 
-			<div class="stats-group">
-
+			<div class="stat-container">
 				<div class="stat-card">
-					<div class="stat-label">
-						<span>근무 중 인원</span><span class="stat-icon">👥</span>
-						<div class="stat-value">10명</div>
+					<div class="stat-header">
+						<span class="stat-label">근무 중 인원</span> <span
+							class="material-icons">group</span>
+							<div class="stat-value">10명</div>
 					</div>
 				</div>
 
 				<div class="stat-card">
-					<div class="stat-label">
-						<span>이번 날 매출</span><span class="stat-icon">📈</span>
+					<div class="stat-header">
+						<span class="stat-label">이번 날 매출</span> <span
+							class="material-icons">trending_up</span>
 						<div class="stat-value">₩ 0</div>
 					</div>
 				</div>
 
 				<div class="stat-card">
-					<div class="stat-label">
-						<span>재고 현황</span><span class="stat-icon">🛍️</span>
-						<div class="stat-value">0개</div>
+					<div class="stat-header">
+						<span class="stat-label">재고 현황</span> <span class="material-icons">inventory_2</span>
+					<div class="stat-value">0개</div>
 					</div>
 				</div>
-
 			</div>
 
 			<div class="modules-group">

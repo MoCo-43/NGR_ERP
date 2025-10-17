@@ -49,7 +49,7 @@ public class SubscriptionController {
     private Long getLoggedInMatNo() {
         return SessionUtil.companyId();
     }
-
+    //정기결제 빌링키 발급 필요
     @Value("${toss.biling.secretKey}")
     private String tossBilingSecretKey;
     /**
@@ -219,29 +219,62 @@ public class SubscriptionController {
 
         return "main/submanager"; // 화면 이름
     }   
+    
+    /*
+     * 정기결제 카드 등록 성공 시 콜백 -> 첫결제 실행 함
+     * */
     @GetMapping("/billing-success")
-    public String handleBillingSuccess(@RequestParam String customerKey, @RequestParam("authKey") String authKey, Model model) {
+    public ModelAndView handleBillingSuccess(@RequestParam String customerKey, @RequestParam("authKey") String authKey, Model model) { // ★ 반환타입 ModelAndView로 변경
         try {
             // 1. 토스페이먼츠로부터 빌링키 발급
             String billingKey = issueBillingKey(authKey, customerKey);
 
-            // 2. ✨ DB의 'SUBSCRIPTION' 테이블에 빌링키를 저장하는 서비스 로직 호출!
-            subscriptionService.saveBillingKey(customerKey, billingKey);
+            // 2. DB의 'PENDING' 구독 정보를 찾아 '첫 결제'를 실행하고 'ACTIVE'로 전환
+            //    (기존 saveBillingKey 대신 processFirstRecurringPayment 호출)
+            String comCode = subscriptionService.processFirstRecurringPayment(customerKey, billingKey);
 
-            log.info("정기결제 카드 등록 및 DB 저장까지 모두 성공!");
-
-            model.addAttribute("message", "자동결제 카드 등록이 성공적으로 완료되었습니다.");
-            return "main/success"; // 성공 페이지로 이동
+            log.info("정기결제 카드 등록 및 '첫 결제' 성공! comCode: {}", comCode);
+            
+            // 3.  공통 결제 완료 페이지(Step 5)로 리다이렉트
+            //    (기존 "main/success" 뷰 반환 대신 리다이렉트)
+            ModelAndView mav = new ModelAndView("redirect:/payment/complete");
+            mav.addObject("comCode", comCode); 
+            return mav;
 
         } catch (Exception e) {
-            log.error("빌링키 발급 또는 DB 저장 중 오류 발생. customerKey: {}", customerKey, e);
-            model.addAttribute("errorMessage", "카드 등록 처리 중 오류가 발생했습니다: " + e.getMessage());
-            model.addAttribute("errorCode", "BILLING_SETUP_FAILED");
-            return "main/fail"; // 실패 페이지로 이동
+            log.error("빌링키 발급 또는 첫 결제 처리 중 오류 발생. customerKey: {}", customerKey, e);
+            
+            // 4.  공통 실패 페이지로 리다이렉트
+            //    (기존 "main/fail" 뷰 반환 대신 리다이렉트)
+            ModelAndView mav = new ModelAndView("redirect:/payment/fail");
+            mav.addObject("errorCode", "BILLING_SETUP_FAILED");
+            mav.addObject("errorMessage", "카드 등록 및 첫 결제 처리 중 오류가 발생했습니다: " + e.getMessage());
+            return mav;
         }
     }
+//    @GetMapping("/billing-success")
+//    public String handleBillingSuccess(@RequestParam String customerKey, @RequestParam("authKey") String authKey, Model model) {
+//        try {
+//            // 1. 토스페이먼츠로부터 빌링키 발급
+//            String billingKey = issueBillingKey(authKey, customerKey);
+//
+//            // 2. ✨ DB의 'SUBSCRIPTION' 테이블에 빌링키를 저장하는 서비스 로직 호출!
+//            subscriptionService.saveBillingKey(customerKey, billingKey);
+//
+//            log.info("정기결제 카드 등록 및 DB 저장까지 모두 성공!");
+//
+//            model.addAttribute("message", "자동결제 카드 등록이 성공적으로 완료되었습니다.");
+//            return "main/success"; // 성공 페이지로 이동
+//
+//        } catch (Exception e) {
+//            log.error("빌링키 발급 또는 DB 저장 중 오류 발생. customerKey: {}", customerKey, e);
+//            model.addAttribute("errorMessage", "카드 등록 처리 중 오류가 발생했습니다: " + e.getMessage());
+//            model.addAttribute("errorCode", "BILLING_SETUP_FAILED");
+//            return "main/fail"; // 실패 페이지로 이동
+//        }
+//    }
 
-    // ✨ 2. [이 메서드도 추가하세요] 빌링키 발급 API를 호출하는 내부 헬퍼 메서드
+    //  2. [이 메서드도 추가하세요] 빌링키 발급 API를 호출하는 내부 헬퍼 메서드
     private String issueBillingKey(String authKey, String customerKey) throws Exception {
         RestTemplate restTemplate = new RestTemplate();
         String url = "https://api.tosspayments.com/v1/billing/authorizations/" + authKey;

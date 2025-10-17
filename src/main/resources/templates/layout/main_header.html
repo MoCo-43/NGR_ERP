@@ -16,7 +16,11 @@ header {
 .logo {
 	font-size: 1.5rem;
 	font-weight: 700;
-	color: white;
+}
+
+.logo a {
+	color: white; /* 로고 텍스트 색상을 흰색으로 */
+	text-decoration: none; /* 밑줄 제거 */
 }
 
 nav a {
@@ -28,10 +32,8 @@ nav a {
 }
 
 nav a:hover {
-	/* CSS 변수를 사용할 수 없으므로 실제 색상 코드로 대체 */
 	color: #3f51b5;
 }
-
 .settings-icon {
 	margin-left: 15px;
 	cursor: pointer;
@@ -56,7 +58,7 @@ nav a:hover {
 </style>
 
 		<header>
-			<div class="logo">NGR_ERP</div>
+			<div class="logo"><a href="http://localhost/">NGR_ERP</div>
 			<nav>
 				<span sec:authorize="isAnonymous()"> <!--<a href="#" th:href="@{/login}">로그인</a>-->
 					<a href="#" th:href="@{/salLogin}">로그인</a> <a href="#"

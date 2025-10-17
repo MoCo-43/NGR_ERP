@@ -5,7 +5,7 @@
         INSERT INTO sub_log (
             sub_log_no, sub_type, new_sub_plan, change_pay, start_date, end_date, sub_code
         ) VALUES (
-            sub_log_seq.NEXTVAL, #{subType}, #{newSubPlan}, #{changePay}, #{startDate}, #{endDate}, #{subCode}
+            sub_log_seq.NEXTVAL, #{subType}, #{newSubPlan}, #{changePay}, SYSDATE, #{endDate}, #{subCode}
         )
     </insert>
 </mapper>

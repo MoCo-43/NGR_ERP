@@ -27,9 +27,15 @@ public interface SubscriptionMapper {
     List<SubscriptionVO> findSubscriptionsByComCode(String comCode);
     //구독최신내역 
     SubscriptionVO findLatestSubscriptionByMatNo(@Param("matNo") Long matNo);
- // 빌링키 업데이트를 위한 메서드
+    //첫 결제 실행시 pending 구독 정보를 조회
+    SubscriptionVO findPendingSubscriptionByCustomerKey(@Param("customerKey") String customerKey); // ★ 신규 추가
+    // 빌링키만 업데이트 하는 메서드인데 첫 결제 로직 사용 x
     int updateBillingKeyByCustomerKey(@Param("customerKey") String customerKey, @Param("billingKey") String billingKey);
+    //정기결제 pending 상태 구독정보 저장
     int insertBiling(SubscriptionVO subscriptionVO);
+    int activatePendingSubscription(SubscriptionVO subscriptionVO);
+    //next_pay_date 도래한 active 구독 조회
     List<SubscriptionVO> findSubscriptionsDueForPaymentToday();
+    //자동결제 성공 DB 프로시저 호출
     void processPayment(PayLogVO payLogVO);
 }

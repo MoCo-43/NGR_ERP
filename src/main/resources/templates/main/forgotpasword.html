@@ -64,7 +64,7 @@
 
       <div class="input-field verification-group">
           <input type="text" name="smsCode" id="smsCode" placeholder="인증번호 6자리" maxlength="6" required>
-          <button type="button" id="resendBtn" disabled>재전송 (60s)</button>
+          <button type="button" id="resendBtn" disabled>재전송 (180s)</button>
       </div>
 
       <button type="submit" class="btn-primary" id="verifyBtn">인증 확인</button>
@@ -131,7 +131,7 @@
                 hiddenMatMail.value = matMailInput.value;
                 // hiddenUserKey는 sendVerificationCode 성공 시 채워짐
 
-                startTimer(10000); // 타이머 시작
+                startTimer(180); // 타이머 시작,3분 redis 임시저장된 인증번호 데이터가 3분 유지되기에
             } else {
                 step1Form.style.display = 'block';
                 step2Form.style.display = 'none';
@@ -144,8 +144,7 @@
         }
         
         // ==========================================================
-        // ★ 1단계: 인증번호 발송 요청 (AJAX - JSON 전송)
-        // ==========================================================
+        // 1단계: 인증번호 발송 요청 (AJAX - JSON 전송)
         function sendVerificationCode(isResend = false) {
             const button = isResend ? resendBtn : requestVerificationBtn;
             const originalText = button.textContent;
@@ -153,7 +152,7 @@
             button.textContent = '전송 중...';
             messageArea.innerHTML = ''; // 이전 메시지 초기화
 
-            // ★ JSON으로 보낼 데이터 객체 생성
+            //  JSON으로 보낼 데이터 객체 생성
             const dataToSend = {
                 comCode: comCodeInput.value,
                 empId: empIdInput.value,
@@ -174,7 +173,7 @@
                 if (data.success) {
                     showMessage('인증번호가 발송되었습니다. 휴대폰을 확인해주세요.', false);
                     
-                    // ★ 핵심: 서버가 반환한 userKey를 2단계 폼의 hidden input에 저장
+                    // 서버가 반환한 userKey를 2단계 폼의 hidden input에 저장
                     if(data.userKey) {
                         hiddenUserKey.value = data.userKey;
                     }
@@ -182,7 +181,7 @@
                     if (!isResend) {
                         showStep('STEP2'); // 최초 요청 시 STEP2로 전환
                     } else {
-                        startTimer(10000); // 재전송 시 타이머만 재시작
+                        startTimer(180); // 재전송 시 타이머만 재시작
                     }
                 } else {
                     // 서버로부터 success:false 응답을 받았을 경우
@@ -217,9 +216,7 @@
         // '재전송' 버튼 클릭 이벤트
         resendBtn.addEventListener('click', () => sendVerificationCode(true));
 
-        // ==========================================================
-        // ★ 2단계: 인증번호 확인 및 이메일 발송 요청 (AJAX - JSON 전송)
-        // ==========================================================
+        //2단계: 인증번호 확인 및 이메일 발송 요청 (AJAX - JSON 전송)
         step2Form.addEventListener('submit', function(event) {
             event.preventDefault(); // (폼의 기본 제출(새로고침)을 막음)
             

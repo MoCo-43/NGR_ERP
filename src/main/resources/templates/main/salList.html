@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const startDate = sub.startDate ? new Date(sub.startDate).toLocaleDateString('ko-KR') : '';
                     const endDate = sub.endDate ? new Date(sub.endDate).toLocaleDateString('ko-KR') : '';
 
-                    // 올바른 데이터 필드를 사용해 테이블 행을 만듭니다.
+                    // 데이터 필드,테이블 행
                     tr.innerHTML = `
                         <td>${sub.subCode}</td>
                         <td>${sub.planName}</td>
