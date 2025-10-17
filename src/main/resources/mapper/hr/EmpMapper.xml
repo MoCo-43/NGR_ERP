@@ -167,31 +167,30 @@
 	</insert>
 
 	<!-- 수정 -->
-	<update id="updateEmp" parameterType="com.yedam.erp.vo.hr.EmpVO">
-		UPDATE EMP
-		<set>
-			<if test="name != null"> NAME = #{name},</if>
-			<if test="dept_code != null"> DEPT_CODE = #{dept_code},</if>
-			<if test="position != null"> POSITION = #{position},</if>
-			<if test="title != null"> TITLE = #{title},</if>
-			<if test="birth != null"> BIRTH = #{birth},</if>
-			<if test="phone != null"> PHONE = #{phone},</if>
-			<if test="email != null"> EMAIL = #{email},</if>
-			<if test="joinDate != null"> JOIN_DATE = #{joinDate},</if>
-			<if test="leaveDate != null"> LEAVE_DATE = #{leaveDate},</if>
-			<if test="leaveReason != null"> LEAVE_REASON = #{leaveReason},</if>
-			<if test="bankCode != null"> BANK_CODE = #{bankCode},</if>
-			<if test="accountNo != null"> ACCOUNT_NO = #{accountNo},</if>
-			<if test="zipCode != null"> ZIP_CODE = #{zipCode},</if>
-			<if test="address != null"> ADDRESS = #{address},</if>
-			<if test="addressDetail != null"> ADDRESS_DETAIL = #{addressDetail},</if>
-			<if test="accountName != null"> ACCOUNT_NAME = #{accountName},</if>
-			<if test="companyCode != null"> COMPANY_CODE = #{companyCode},</if>
-			<if test="familyCnt != null"> FAMILY_CNT = #{familyCnt},</if>
-			<if test="maritalStatus != null"> MARITAL_STATUS = #{maritalStatus},</if>
-			<if test="childrenCnt != null"> CHILDREN_CNT = #{childrenCnt},</if>
-		</set>
-		WHERE EMP_ID = #{emp_id}
-	</update>
-
+<update id="updateEmp" parameterType="com.yedam.erp.vo.hr.EmpVO">
+  UPDATE EMP
+  <set>
+    <if test="name != null"> NAME = #{name},</if>
+    <if test="dept_code != null"> DEPT_CODE = #{dept_code},</if>
+    <if test="position != null"> POSITION = #{position},</if>
+    <if test="title != null"> TITLE = #{title},</if>
+    <if test="birth != null"> BIRTH = #{birth},</if>
+    <if test="phone != null"> PHONE = #{phone},</if>
+    <if test="email != null"> EMAIL = #{email},</if>
+    <if test="joinDate != null"> JOIN_DATE = #{joinDate},</if>
+    LEAVE_DATE   = #{leaveDate,   jdbcType=DATE},
+    LEAVE_REASON = #{leaveReason, jdbcType=VARCHAR},
+    <if test="bankCode != null"> BANK_CODE = #{bankCode},</if>
+    <if test="accountNo != null"> ACCOUNT_NO = #{accountNo},</if>
+    <if test="zipCode != null"> ZIP_CODE = #{zipCode},</if>
+    <if test="address != null"> ADDRESS = #{address},</if>
+    <if test="addressDetail != null"> ADDRESS_DETAIL = #{addressDetail},</if>
+    <if test="accountName != null"> ACCOUNT_NAME = #{accountName},</if>
+    <if test="companyCode != null"> COMPANY_CODE = #{companyCode},</if>
+    <if test="familyCnt != null"> FAMILY_CNT = #{familyCnt},</if>
+    <if test="maritalStatus != null"> MARITAL_STATUS = #{maritalStatus},</if>
+    <if test="childrenCnt != null"> CHILDREN_CNT = #{childrenCnt},</if>
+  </set>
+  WHERE EMP_ID = #{emp_id}
+</update>
 </mapper>

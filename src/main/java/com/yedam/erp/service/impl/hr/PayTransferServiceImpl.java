@@ -17,7 +17,7 @@ public class PayTransferServiceImpl implements PayTransferService {
     @Autowired
     private PayTransferMapper payTransferMapper;
 
-
+    //확정 건 조회
     @Override
     public List<PayTransferVO> getTransferViewFromConfirmed(Long companyCode, String payYm) {
         Map<String, Object> param = new HashMap<>();

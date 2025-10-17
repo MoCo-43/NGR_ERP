@@ -20,12 +20,12 @@ public class PayTransferApiController {
 
     private final PayTransferService payTransferService;
 
-    // 세션에서 회사코드 획득 (PayrollApiController 스타일)
+    // 세션에서 회사코드
     private long companyCode() {
         return Long.parseLong(SessionUtil.companyId().toString());
     }
 
-    //확정건 실시간 조회
+    //확정건 조회
     @GetMapping("/view")
     public List<PayTransferVO> getTransferViewFromConfirmed(@RequestParam("payYm") String payYm) {
         return payTransferService.getTransferViewFromConfirmed(companyCode(), payYm);

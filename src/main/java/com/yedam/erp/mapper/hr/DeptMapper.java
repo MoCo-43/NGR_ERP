@@ -14,8 +14,8 @@ public interface DeptMapper {
     // 단건
     DeptVO selectDept(String dept_code);
 
-    // 등록/수정/삭제
+    // 등록
     int insertDept(DeptVO vo);
+    //수정
     int updateDept(DeptVO vo);
-    int deleteDept(String dept_code);
 }

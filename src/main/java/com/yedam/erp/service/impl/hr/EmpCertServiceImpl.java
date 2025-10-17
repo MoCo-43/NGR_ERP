@@ -15,17 +15,17 @@ import lombok.RequiredArgsConstructor;
 public class EmpCertServiceImpl implements EmpCertService {
 
 	private final EmpCertMapper mapper;
-
+	//자격증 조회
 	@Override
 	public List<EmpCertVO> selectEmpCertList(EmpCertVO vo) {
 		return mapper.selectEmpCertList(vo);
 	}
-
+	//자격증 등록
 	@Override
 	public boolean insertEmpCert(EmpCertVO vo) {
 		return mapper.insert(vo) == 1;
 	}
-
+	//자격증 삭제
 	@Override
 	public boolean deleteEmpCert(EmpCertVO vo) {
 		return mapper.deleteByPk(vo.getCertNo()) == 1;

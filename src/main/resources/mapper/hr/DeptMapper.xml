@@ -5,7 +5,6 @@
 
 <mapper namespace="com.yedam.erp.mapper.hr.DeptMapper">
 
-	<!-- ===================== ResultMap ===================== -->
 	<resultMap id="DeptMap" type="com.yedam.erp.vo.hr.DeptVO">
 		<id property="dept_code" column="DEPT_CODE" />
 		<result property="dept_name" column="DEPT_NAME" />
@@ -13,12 +12,8 @@
 		<result property="member_cnt" column="MEMBER_CNT" />
 		<result property="manager_emp_id" column="MANAGER_EMP_ID" />
 		<result property="manager_name" column="MANAGER_NAME" />
-		<!-- 필요하면 companyCode도 매핑 <result property="companyCode" column="COMPANY_CODE" 
-			/> -->
 	</resultMap>
 
-	<!-- ===================== 목록 (companyCode 단일파라미터) ===================== -->
-	<!-- 단일 파라미터는 @Param 없이 #{value} 로 바인딩 -->
 	<select id="selectDeptList" resultMap="DeptMap">
 		SELECT
 		d.DEPT_CODE,
@@ -40,8 +35,7 @@
 		ORDER BY d.DEPT_CODE
 	</select>
 
-	<!-- ===================== 단건 ===================== -->
-	<!-- 인터페이스가 String dept_code 이므로 parameterType="string" -->
+	<!-- 단건 -->
 	<select id="selectDept" parameterType="string"
 		resultMap="DeptMap">
 		SELECT
@@ -62,10 +56,7 @@
 		-- AND d.COMPANY_CODE = #{companyCode}
 	</select>
 
-	<!-- ===================== 등록 ===================== -->
-	<!-- 프론트에서 DEPT_CODE를 안 보낼 경우 자동발번을 원하면 selectKey 추가 (Oracle 예시) -->
-	<!-- <selectKey keyProperty="dept_code" order="BEFORE" resultType="string"> 
-		SELECT 'D' || LPAD(SEQ_DEPT_CODE.NEXTVAL, 4, '0') FROM dual </selectKey> -->
+	<!--  등록  -->
 	<insert id="insertDept"
 		parameterType="com.yedam.erp.vo.hr.DeptVO">
 		INSERT INTO DEPT (
@@ -85,8 +76,7 @@
 		)
 	</insert>
 
-	<!-- ===================== 수정 ===================== -->
-	<!-- 멀티회사 안전을 위해 COMPANY_CODE도 WHERE에 포함 -->
+	<!--  수정  -->
 	<update id="updateDept"
 		parameterType="com.yedam.erp.vo.hr.DeptVO">
 		UPDATE DEPT
@@ -99,13 +89,5 @@
 		WHERE DEPT_CODE = #{dept_code}
 		AND COMPANY_CODE = #{companyCode}
 	</update>
-
-	<!-- ===================== 삭제 ===================== -->
-	<!-- 현재 인터페이스가 String dept_code 이므로 회사코드 조건은 없음 -->
-	<!-- 멀티회사 안전이 필요하면 인터페이스를 VO로 바꾸고 WHERE에 COMPANY_CODE 추가 -->
-	<delete id="deleteDept" parameterType="string">
-		DELETE FROM DEPT
-		WHERE DEPT_CODE = #{dept_code}
-	</delete>
 
 </mapper>
