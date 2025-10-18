@@ -124,6 +124,12 @@ public class StockController {
 		return service.getInboundList(companyCode);
 	}
 	
+	@PostMapping("/inboundList") // 입고 필터링 조회
+	public List<InboundVO> getInboundList(@RequestBody Map<String,Object> params) {
+		
+	    return service.findInboundList(params);
+	}
+	
 	
 	@GetMapping("/inDetailList/{selectedRow}")
 	public List<InboundVO> getInDetail(@PathVariable String selectedRow) {

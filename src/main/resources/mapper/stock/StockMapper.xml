@@ -417,6 +417,29 @@ AND IC_CODE = #{icCode}
 
 </select>
 
+<!-- 입고 필터 조회 -->
+<select id="selectselectInboundList" parameterType="map" resultType="InboundVO">
+    SELECT *
+    FROM inbound
+    WHERE 1=1
+      <if test="compCode != null">
+        AND comp_code = #{compCode}
+      </if>
+      <if test="productCode != null and productCode != ''">
+        AND product_code = #{productCode}
+      </if>
+      <if test="businessPartner != null and businessPartner != ''">
+        AND business_partner LIKE CONCAT('%', #{businessPartner}, '%')
+      </if>
+      <if test="inboundDate != null and inboundDate != ''">
+        AND inbound_date = #{inboundDate}
+      </if>
+      <if test="dueDate != null and dueDate != ''">
+        AND due_date = #{dueDate}
+      </if>
+</select>
+
+
 <!-- 입고 조회 -->
 <select id="getInboundList" resultType="InboundVO" parameterType="Long">
 SELECT

@@ -72,6 +72,7 @@ public interface StockService {
 	// 입고조회
 	public List<InboundVO> getInboundList(Long companyCode);
 	public List<InboundVO> getInboundDetail(String selectedRow);
+	public List<InboundVO> findInboundList(Map<String, Object> params); 
 	
 	// 입고 등록
 	public void insertInbound(List<InboundVO> details);

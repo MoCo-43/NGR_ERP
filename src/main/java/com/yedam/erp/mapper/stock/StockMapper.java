@@ -28,14 +28,18 @@ public interface StockMapper {
 
 	// 제품등록
 	public int insertProduct(ProductVO product);
+	
 	// 제품리스트
 	public List<ProductVO> productAll(@Param("companyCode") Long companyCode);
+	
 	
 	// 제품 이미지 불러오기
 	public String getProductFileNameByProductCodeAndCompCode(@Param("productCode")String productCode , @Param("compCode")Long compCode);
 	
+	
 	// 제품코드별 Lot 정보 가져오기
 	public List<InboundVO> getProductDetailRefInbound(@Param("companyCode") Long compCode , @Param("productCode")String productCode);
+	
 	
 	// 거래처 조회
 	public List<PartnerVO> customerAll(Map<String, Object> params);
@@ -43,36 +47,46 @@ public interface StockMapper {
 	public void insertOrderPlan(OrderPlanVO orderPlan); // 마스터
 	public int insertOrderPlanDetail(OrderPlanDetailVO item); // 상세
 	
+	
 	// 발주계획 조회
 	public List<OrderPlanVO> selectOrderPlans();
 	List<OrderPlanDetailVO> selectOrderPlanDetailsByXpCode(String xpCode);
 	
+	
 	// 발주서에 조회될 발주 마스터
 	public OrderVO selectOrderByXpCode(String xpCode);
+	
 	
 	// 발주서에 조회될 발주 디테일
 	List<OrderDetailVO>selectOrderDetailsByXpCode(String xpCode);
 	
+	
 	// 세션 회사 정보 조회
 	public CompanyVO selectComp(Long compId);
 	
+	
 	// 발주서 거래처 정보 조회
 	public CustomerVO selectCutomer(String cusCode);
+	
 	
 	// 발주 조회
 	public List<OrderVO> getOrderList(Long compId);
 	public List<OrderDetailVO> getOrderDetailByOrderCode(String orderCode); 
 	public List<OrderDetailVO> getOrderDetailListByOrderCode(@Param("orderCode") String orderCode); // 입고등록용 발주 상세 조회
 	
+	
 	// 발주 등록
 	public void insertOrderReq(OrderVO order); // 마스터
 	public int insertOrderDetail(OrderDetailVO item); // 상세
 	
+	
 	// 결산 마스터 조회
 	public List<InvenVO> getIcList(Long companyCode);
 	
+	
 	// 결산 디테일 조회
 	public List<InvenDetailVO> getIcDetailList(Long companyCode ,  @Param("icCode")String selectedRow);
+	
 	
 	// 결산 등록
 	public void insertInvenClosing(InvenVO inven);// 마스터
@@ -80,9 +94,12 @@ public interface StockMapper {
 	public int checkThisMonthSettlement(); // 이번달 결산내역 존재여부 판단
 	public int updateIcSignDataByIcCode(InvenVO payload); // 서명 등록 수정
 	
+	
 	// 입고조회
 	public List<InboundVO> getInboundList(@Param("compCode") Long companyCode);
 	public List<InboundVO> getInboundDetail(@Param("lotCode") String selectedRow);
+	List<InboundVO> selectInboundList(Map<String,Object> params);
+	
 	
 	// 입고 등록
 	public void insertInbound(InboundVO inbound);
