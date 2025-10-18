@@ -149,7 +149,7 @@ h6 {
 							</div>
 
 							<div class="mb-2">
-								<label class="form-label">결제금액</label> <input type="number"
+								<label class="form-label">결제금액</label> <input type="text"
 									id="formAmount" class="form-control form-control-sm text-end">
 							</div>
 
@@ -251,7 +251,7 @@ function fillPaymentForm(data) {
 	document.getElementById("formAccount").value  = data.cashAccount || "";
 	document.getElementById("formBank").value  = data.bankName || "";
 	document.getElementById("formMemo").value     = data.memo || "";
-	document.getElementById("formAmount").value   = data.unpaidAmt || 0;
+	document.getElementById("formAmount").value   =  data.unpaidAmt.toLocaleString("ko-KR") || 0;
 }
 
 // === 데이터 로드 ===
@@ -277,13 +277,22 @@ async function savePayment() {
 		  toastr.info("전표를 선택하세요");
 	    return;
 	  }
-
-	  const payAmount = Number(document.getElementById("formAmount").value || 0);
+	
+	  const payAmount = Number( document.getElementById("formAmount").value.replace(/[^0-9]/g, "") || 0);
 	  if (payAmount <= 0) {
 		  toastr.info("결제금액을 선택하세요");
 	    return;
 	  }
-	  
+	  // ✅ 초과 결제 방지
+	  unpaidAmt = selectedInvoice.unpaidAmt;
+	  console.log(payAmount);
+	  console.log(unpaidAmt);
+	  // 커서 밖으로 나가야 막힘
+	  if (payAmount > unpaidAmt) {
+	    toastr.warning(`결제금액은 미결금액(${unpaidAmt.toLocaleString()}원)을 초과할 수 없습니다.`);
+	    document.getElementById("formAmount").value = unpaidAmt; // 자동으로 미결금액으로 맞춰줌 (선택사항)
+	    return;
+	  }
 	  let methodText = document.getElementById("formMethod").value?.trim();
 	  let methodCode = "CASH"; // 기본값
 	  if (methodText === "현금") methodCode = "CASH";
@@ -369,6 +378,34 @@ function resetPaymentForm() {
   toastr.info("초기화되었습니다.");
 }
 
+
+//=== 결제금액 입력 시 원화 단위로 자동 포맷 ===
+const amountInput = document.getElementById("formAmount");
+
+if (amountInput) {
+  amountInput.addEventListener("input", (e) => {
+    let value = e.target.value.replace(/[^0-9]/g, ""); // 숫자만 남기기
+    if (!value) {
+      e.target.value = "";
+      return;
+    }
+
+    // 원화 단위 포맷 적용
+    const formatted = Number(value).toLocaleString("ko-KR");
+    e.target.value = `₩${formatted}`;
+  });
+
+  // 커서 포커스 시 '₩' 제거하고 숫자만 편집 가능하게
+  amountInput.addEventListener("focus", (e) => {
+    e.target.value = e.target.value.replace(/[^0-9]/g, "");
+  });
+
+  // 포커스 아웃 시 다시 포맷 적용
+  amountInput.addEventListener("blur", (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, "");
+    e.target.value = value ? `₩${Number(value).toLocaleString("ko-KR")}` : "";
+  });
+}
 </script>
 	</th:block>
 </body>

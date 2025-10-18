@@ -5,16 +5,18 @@
 <!-- 인터페이스 FQN과 100% 일치 -->
 <mapper namespace="com.yedam.erp.mapper.account.accountMapper">
 	<select id="selectAll" resultType="accountVO">
-		SELECT acct_code,
-		acct_name,
-		std_acct_name,
-		category,
-		use_yn,
-		acct_kwan,
-		acct_hang,
-		acct_mok
+		SELECT 
+				acct_code,
+				acct_name,
+				std_acct_name,
+				category,
+				use_yn,
+				acct_kwan,
+				acct_hang,
+				acct_mok
 		FROM ACCOUNT
 		WHERE COMPANY_CODE = #{companyCode}
+		order by acct_code
 	</select>
 
 	<update id="updateYN">
@@ -33,9 +35,8 @@
 	<insert id="bulkInsert" parameterType="java.util.List">
 		INSERT ALL
 		<foreach collection="list" item="item">
-			INTO account (acct_code, acct_name, std_acct_name, category, use_yn, company_code)
-			VALUES (#{item.acctCode}, #{item.acctName}, #{item.stdAcctName},
-			#{item.category}, #{item.useYn},#{item.compnacyCode})
+			INTO account (acct_code, acct_name, std_acct_name, category, use_yn, acct_kwan, acct_hang, acct_mok, company_code,account_id)
+			VALUES (#{item.acctCode}, #{item.acctName}, #{item.stdAcctName},#{item.category}, #{item.useYn}, SUBSTR(#{item.acctCode},1,1), SUBSTR(#{item.acctCode},2,1), SUBSTR(#{item.acctCode},3,1),#{item.companyCode},SEQ_ACCOUNT_ID.NEXTVAL)
 		</foreach>
 		SELECT 1 FROM dual
 	</insert>

@@ -37,7 +37,7 @@
     AND CUS_NAME LIKE '%' || #{searchCus} || '%'
   </if>
 
-  ORDER BY INVOICE_DATE DESC
+  ORDER BY INVOICE_CODE DESC
 </select>
 
 

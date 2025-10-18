@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class accountVO {
 	
+	private Long accountId;
 	String acctCode;
 	String acctName;	
 	String stdAcctName; 	
@@ -14,5 +15,4 @@ public class accountVO {
 	int acctHang;	
 	int acctMok; 
 	Long companyCode;
-	
 }

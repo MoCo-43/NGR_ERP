@@ -109,6 +109,7 @@
 						style="max-width: 180px" />
 					<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
 					<button class="btn btn-outline-danger btn-sm" id="btnToggleDiff">차액별</button>
+					<button class="btn btn-dark btn-sm" id="btnNext">다음전표</button>
 				</div>
 				<!-- 일반전표 목록 Grid -->
 				<div id="generalGridWrapper" style="position:relative;">
@@ -181,7 +182,7 @@ function newInputRow(){
 
 // 목록 로드 + 차액행 처리
 async function loadList() {
-	showLoader("generalGridWrapper", "데이터를 불러오는 중입니다...");
+	
 	const today = todayStr();
     document.getElementById("fromDate").value = today;
     document.getElementById("toDate").value = today;
@@ -191,7 +192,7 @@ async function loadList() {
 
   // 오늘 날짜만 필터
   rows = rows.filter(r => r.jrnDate.substring(0,10) === today);
-  hideLoader("generalGridWrapper")
+  
   // === 전표별 차변/대변 합계 계산 ===
   const grouped = {};
   rows.forEach(r => {
@@ -416,7 +417,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	onRowValueChanged: (ev) => { saveRow(ev.data); },
 	  onGridReady: async () => {
+		showLoader("generalGridWrapper", "데이터를 불러오는 중입니다...");
 	    await loadList();
+	    hideLoader("generalGridWrapper");
 	  }
 	});
   document.getElementById("btnSearch").addEventListener("click", loadFilteredList);

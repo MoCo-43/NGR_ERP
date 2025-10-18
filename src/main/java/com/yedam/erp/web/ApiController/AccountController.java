@@ -1,9 +1,17 @@
 package com.yedam.erp.web.ApiController;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +34,7 @@ import com.yedam.erp.service.account.MoneyService;
 import com.yedam.erp.service.account.PayrollAccountService;
 import com.yedam.erp.service.account.ProfitStatementService;
 import com.yedam.erp.service.stock.StockService;
+import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.account.BalanceSheetVO;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
 import com.yedam.erp.vo.account.InvoiceLineVO;
@@ -36,11 +45,12 @@ import com.yedam.erp.vo.account.PayrollJournalVO;
 import com.yedam.erp.vo.account.PayrollLineVO;
 import com.yedam.erp.vo.account.ProfitStatementVO;
 import com.yedam.erp.vo.account.accountVO;
+import com.yedam.erp.vo.main.CompanyVO;
 import com.yedam.erp.vo.stock.OrderDetailVO;
 import com.yedam.erp.vo.stock.OrderVO;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/account")
@@ -56,6 +66,39 @@ public class AccountController {
 	private final ProfitStatementService profitStatementService;
 	private final BalanceSheetService balanceSheetService;	
 	
+	@GetMapping("/template")
+	public void downloadAccountTemplate(HttpServletResponse response) throws IOException {
+	    // 파일명 한글 깨짐 방지
+	    String fileName = URLEncoder.encode("계정과목_양식.xlsx", StandardCharsets.UTF_8)
+	                                .replaceAll("\\+", "%20");
+
+	    response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+	    response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + fileName);
+
+	    try (Workbook workbook = new XSSFWorkbook()) {
+	        Sheet sheet = workbook.createSheet("계정과목");
+	        Row header = sheet.createRow(0);
+
+	        String[] headers = {"계정코드", "계정명", "표준계정과목", "카테고리", "사용여부"};
+	        for (int i = 0; i < headers.length; i++) {
+	            Cell cell = header.createCell(i);
+	            cell.setCellValue(headers[i]);
+	            sheet.setColumnWidth(i, 5000);
+	        }
+
+	        // 예시 행 추가 (선택)
+	        Row example = sheet.createRow(1);
+	        example.createCell(0).setCellValue("101");
+	        example.createCell(1).setCellValue("현금");
+	        example.createCell(2).setCellValue("현금및현금성자산");
+	        example.createCell(3).setCellValue("자산");
+	        example.createCell(4).setCellValue("Y");
+
+	        workbook.write(response.getOutputStream());
+	    }
+	}
+	
+	
 	@GetMapping("/list")
 	public List<accountVO> list(Long companyCode){
 		companyCode = SessionUtil.companyId();
@@ -69,7 +112,7 @@ public class AccountController {
 		return accountService.updateYN(acctCode,companyCode);
 	}
 	
-	
+	@Transactional
 	@PostMapping("/upload")
 	public String uploadExcel( MultipartFile file) {
 	    try {
@@ -126,7 +169,6 @@ public class AccountController {
     }
     
 
-
     // 마감용 전표 리스트
     @GetMapping("/journalClose")
     public List<JournalVO> getJournalListClose() {
@@ -152,10 +194,10 @@ public class AccountController {
         if (jrnNoList == null || jrnNoList.isEmpty()) {
             return ResponseEntity.badRequest().body("전표번호가 없습니다.");
         }
-
         int updated = journalService.updateStatusBatch(jrnNoList, status, createdBy);
         return ResponseEntity.ok(updated + "건 상태 변경 완료");
     }
+    
  // ✅ 역분개 전용 엔드포인트
     @PostMapping("/journal/reverse")
     public ResponseEntity<?> reverseJournal(@RequestBody Map<String, Object> body) {
@@ -229,6 +271,18 @@ public class AccountController {
 	    invoiceService.updatePostedFlag(companyCode, invoiceCode, postedFlag);
 	}
 	
+	// 전자 세금계산서 우리회사
+	@GetMapping("/invoice/tax/{companyCode}")
+	public CompanyVO getCompanyInfo(@PathVariable Long companyCode) {
+		return invoiceService.selectCompanyInfo(companyCode);
+	}
+	
+	// 매출전표 출고모달 -> 은행, 계좌
+	@GetMapping("/invoice/outbound/{cusCode}")
+	public CustomerVO getCustomerInfo(@PathVariable String cusCode, Long companyCode) {
+		companyCode = SessionUtil.companyId();
+		return invoiceService.selectCustomerInfo(cusCode, companyCode);
+	}
 	
 	@GetMapping("/orders")
 	public List<OrderVO> getOrders() {

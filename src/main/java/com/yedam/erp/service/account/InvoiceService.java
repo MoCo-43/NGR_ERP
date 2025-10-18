@@ -2,8 +2,10 @@ package com.yedam.erp.service.account;
 
 import java.util.List;
 
+import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
 import com.yedam.erp.vo.account.InvoiceLineVO;
+import com.yedam.erp.vo.main.CompanyVO;
 
 public interface InvoiceService {
 	 // 헤더 목록
@@ -20,4 +22,8 @@ public interface InvoiceService {
     InvoiceHeaderVO getInvoiceWithLines(Long companyCode, Long invoiceCode);
     
     void updatePostedFlag(Long companyCode, Long invoiceCode, String postedFlag);
+    
+    CompanyVO selectCompanyInfo(Long companyCode);
+    
+    CustomerVO selectCustomerInfo(String cusCode, Long companyCode);
 }
