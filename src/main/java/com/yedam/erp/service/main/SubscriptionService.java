@@ -32,5 +32,12 @@ public interface SubscriptionService {
     List<SubscriptionVO> findSubscriptionsDueForPaymentToday();
     //자동결제 1건처리
     void processAutomaticPayment(SubscriptionVO subscription);
-
+    //구독취소 환불 x
+    Map<String, Object> cancelSubscription(Map<String, Object> requestPayload) throws Exception;
+    SubscriptionVO getSubscription(String subCode);
+    // 구독 취소 처리
+   // void cancelSubscription(Long subCode);
+    // 구독 정보 조회
+    //SubscriptionVO getSubscription(Long subCode);
+    
 }

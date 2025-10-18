@@ -1,6 +1,7 @@
 package com.yedam.erp.service.impl.main;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
@@ -411,6 +412,79 @@ public class SubsciptionServiceImpl implements SubscriptionService {
 	        throw new RuntimeException("자동 결제 실패", e);
 	    }		
 	}
+
+	@Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> cancelSubscription(Map<String, Object> requestPayload) throws Exception {
+        
+        // 1. Controller에서 받은 Map에서 값 추출
+        String subCode = (String) requestPayload.get("subCode");
+        String cancelReason = (String) requestPayload.get("cancelReason");
+
+        // 1-1. (안전장치) 취소 사유가 없으면 기본값 설정
+        if (cancelReason == null || cancelReason.isEmpty()) {
+            cancelReason = "사용자 구독 취소";
+        }
+        
+        log.info("구독 취소 처리 시작 (환불 없음): SubCode={}", subCode);
+
+        // 2. (안전장치) 현재 구독 상태 확인
+        SubscriptionVO subscription = subscriptionMapper.getSubscriptionBySubCode(subCode);
+        
+        if (subscription == null) {
+            throw new RuntimeException("구독 정보를 찾을 수 없습니다.");
+        }
+        if (!"ACTIVE".equals(subscription.getSubStatus()) || !"Y".equals(subscription.getStatus())) {
+            throw new RuntimeException("이미 취소되었거나 활성 상태가 아닌 구독입니다.");
+        }
+        
+        // 3. 프로시저에 전달할 파라미터 맵(Map) 생성
+        //    (requestPayload와 별개의 맵)
+        Map<String, Object> procParams = new HashMap<>();
+        procParams.put("p_sub_code", subCode);
+        procParams.put("p_cancel_reason", cancelReason);
+        procParams.put("p_remaining_days", null);
+        
+        // 4. Mapper를 통해 프로시저 호출
+        subscriptionMapper.callCancelSubscriptionProc(procParams);
+        
+        // 5. 프로시저의 OUT 파라미터(p_remaining_days) 결과 꺼내기
+        long remainingDays = 0;
+        Object resultDays = procParams.get("p_remaining_days");
+        
+        if (resultDays instanceof BigDecimal) {
+            remainingDays = ((BigDecimal) resultDays).longValue();
+        } else if (resultDays instanceof Number) {
+            remainingDays = ((Number) resultDays).longValue();
+        }
+        
+        log.info("DB 취소 처리 완료. 남은 사용 가능 일수: {}", remainingDays);
+
+        // 6. 컨트롤러(Front-End)에 전달할 결과 맵 생성
+        Map<String, Object> result = new HashMap<>();
+        result.put("message", "구독이 정상적으로 취소되었습니다.");
+        result.put("remainingDays", remainingDays);
+        
+        return result;
+    }
+
+    /**
+     * 구독 단건 조회
+     */
+    @Override
+    public SubscriptionVO getSubscription(String subCode) {
+        return subscriptionMapper.getSubscriptionBySubCode(subCode);
+    }
+//    @Override
+//    @Transactional
+//    public void cancelSubscription(Long subCode) {
+//        subscriptionMapper.cancelSubscription(subCode);
+//    }
+//
+//    @Override
+//    public SubscriptionVO getSubscription(Long subCode) {
+//        return subscriptionMapper.getSubscriptionBySubCode(subCode);
+//    }
 
 //    /**
 //     * [STEP 4-3 & 4-4] Toss 승인 및 DB 트랜잭션 처리 (핵심)

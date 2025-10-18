@@ -316,6 +316,21 @@ public class SubscriptionController {
         }
     }
     
+    @PostMapping("/cancel")
+    @ResponseBody
+    public ResponseEntity<?> cancelSubscription(@RequestBody Map<String, Object> requestPayload) {
+        try {
+            // Service로 Map을 그대로 전달
+            Map<String, Object> result = subscriptionService.cancelSubscription(requestPayload);
+            
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("구독 취소 처리 실패. Payload: {}", requestPayload, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(Map.of("message", e.getMessage()));
+        }
+    }
     @GetMapping("/contract-html")
     @ResponseBody
     public String getContractHtml() throws IOException {
@@ -323,4 +338,32 @@ public class SubscriptionController {
         ClassPathResource resource = new ClassPathResource("templates/main/content.html");
         return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
+//    // 구독 취소 (환불 없음)
+//    @PostMapping("/cancel")
+//    public ResponseEntity<?> cancelSubscription(@RequestBody CancelRequest req) {
+//        try {
+//            SubscriptionVO subscription = subscriptionService.getSubscription(req.getSubCode());
+//
+//            if (subscription == null) {
+//                return ResponseEntity.badRequest().body(Map.of("message", "구독 정보를 찾을 수 없습니다."));
+//            }
+//
+//            if (!"ACTIVE".equals(subscription.getSubStatus())) {
+//                return ResponseEntity.badRequest().body(Map.of("message", "취소 가능한 상태가 아닙니다."));
+//            }
+//
+//            // 구독 상태만 DB에서 취소 처리
+//            subscriptionService.cancelSubscription(subscription.getSubCode());
+//
+//            return ResponseEntity.ok(Map.of(
+//                "message", "구독이 정상적으로 취소되었습니다.",
+//                "subCode", subscription.getSubCode()
+//            ));
+//
+//        } catch (Exception e) {
+//            log.error("구독 취소 실패", e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                                 .body(Map.of("message", "구독 취소 중 오류가 발생했습니다."));
+//        }
+//    }
    }

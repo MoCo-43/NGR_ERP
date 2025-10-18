@@ -101,19 +101,26 @@
     </resultMap>    
     
 <select id="findEmployeesByDept" resultMap="EmpVOResultMap">
-    SELECT
+    SELECT 
         e.EMP_ID,
         e.NAME,
         e.DEPT_CODE,
         e.TITLE,
         e.EMAIL,
+        e.COMPANY_CODE AS COMPANY_CODE, 
         d.DEPT_NAME,
         l.COM_NAME
     FROM emp e
     JOIN dept d
         ON e.DEPT_CODE = d.DEPT_CODE
-    JOIN emp_login l
-    	ON e.company_code = l.mat_no
+    JOIN (
+        SELECT 
+            mat_no, 
+            MAX(COM_NAME) AS COM_NAME
+        FROM emp_login
+        GROUP BY mat_no
+    ) l
+        ON e.company_code = l.mat_no
     <where>
         <if test="deptName != null and deptName != ''">
             d.DEPT_NAME = #{deptName}
@@ -172,7 +179,8 @@
         EMP_ID,
         NAME,
         DEPT_CODE,
-        EMAIL
+        EMAIL,
+        COMPANY_CODE
     FROM
         EMP
     WHERE
