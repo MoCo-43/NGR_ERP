@@ -123,10 +123,11 @@
 				      <h6 class="mb-0">이미지 미리보기</h6>
 				    </div> -->
 				    <div class="card-body text-center">
-				      <img id="previewImage" src="" alt="이미지 미리보기" class="img-fluid"  style="max-width: 100px; max-height: 100px;">
+				      <img id="previewImage" src="" alt="이미지 미리보기" class="img-fluid"  style="max-width: 300px; max-height: 500px;">
 				      <p id="imageName" class="mt-2"></p>
 				    </div>
 				  </div> 
+				  
 				  <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
             <!-- 로딩 스피너 -->
 				<div id="loaderDetail" class="loader-overlay" style="display: none;">
@@ -151,6 +152,13 @@
 </section>
   
 <th:block layout:fragment="body_extra">
+
+<!-- 세션 정보 저장 -->
+<script th:inline="javascript">
+    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+    const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+</script>
+
  <!-- Axios 등록 -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
  <!-- Bootstrap JS -->
@@ -177,7 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const imageCard = document.getElementById("imageCard");
     let prevImg = document.getElementById("previewImage");
     let imageName = document.getElementById("imageName");
-	let compCode = null; // 회사코드
+	//let compCode = null; // 회사코드
 	let productGrid = null; // 전역 변수
  	let gridOptions = null;
  	let gridCreated = false;
@@ -228,23 +236,20 @@ document.addEventListener("DOMContentLoaded", () => {
 	}// END OF FUNCTION
 
 	// 회사코드 불러오기
-	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+	/* axios.get("/api/v1/stock/getCompId", { withCredentials: true })
 	  .then(async (res) => { 
-		  compCode = Number(res.data); 
+		  compCode = res.data; 
 		  console.log(compCode);
-			
+		  
 		  })
-	  .catch(err => console.error(err));
+	  .catch(err => console.error(err)); */
 	
 	// 단위마다 "," 공통함수
 	function numberFormatter(params) {
 		  if (params.value == null || params.value === "") return "";
 		  return Number(params.value).toLocaleString();
 	}
-	
-	
-		// 제품 리스트 
-		const inListGrid = initGrid({
+	  const inListGrid = initGrid({
 		    el: "inListGrid",
 		    columnDefs: [
 		        { headerName: "No.", valueGetter: "node.rowIndex + 1", width: 70 },
@@ -261,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		                if(!params.value) return '';
 		                
 		                // UUID 기준 URL 생성
-		                let imgUrl = `/api/v1/stock/selectProductImg/${compCode}/${params.value}`;
+		                const imgUrl = `/api/v1/stock/selectProductImg/${compCode}/${params.value}`;
 		                return `<img src="${imgUrl}" style="max-width: 28px; max-height: 30px; object-fit: contain;" alt="이미지">`;
 		            }
 		        }
@@ -269,22 +274,12 @@ document.addEventListener("DOMContentLoaded", () => {
 		    paginationPageSize: 20,
 		    domLayout: "normal",
 		    onRowClicked: async (event) => {
-		    	try{
-		    		showLoader("gridDetailWrapper","데이터를 불러오고 있습니다...");
-		    		console.log(event.data.productCode, event.data.productName);
 		    		prevImg.src = "";
-			        await loadInDetailData(event.data.productCode, event.data.productName); // 상세 그리드 데이터 로드
-		    	}catch(error){
-		    		console.log(error);
-		    		toastr.error(error);
-		    	} finally{
-		    		hideLoader("gridDetailWrapper");
-		    	}
-		        // 여기서 선택된 결산 상세를 불러오는 로직 추가 가능
+		    		const {productCode , productName} = event.data;
+			        await loadInDetailData(productCode, productName); // 상세 그리드 데이터 로드
 		    },
 		    onGridReady: async (event) => {
 		        try {
-		        	
 		        	showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
 		            const res = await axios.get(`/api/v1/stock/productList/${compCode}`, { withCredentials: true });
 		            console.log(res.data);
@@ -296,8 +291,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		        	hideLoader("gridWrapper");
 		        }
 		    }
-			});// END OF inListGrid
+		});// END OF inListGrid
 	
+	
+			
 	const inDetailColumnDefs = [
 	    { headerName: "No.",valueGetter: "node.rowIndex + 1", field: "no", width: 80},
 	    { headerName: "LOT", field: "lotCode" },
@@ -306,8 +303,18 @@ document.addEventListener("DOMContentLoaded", () => {
 	    { headerName: "규격", field: "specification"},
 	    { headerName: "거래처코드", field: "businessCode"},
 	    { headerName: "거래처명", field: "businessPartner"},
-	    { headerName: "잔여수량", field: "remainQty", valueFormatter: numberFormatter },
-	    { headerName: "구매단가", field: "purchasePrice", valueFormatter: numberFormatter}
+	    { headerName: "잔여수량", field: "remainQty",valueFormatter: (params) => {
+	        // 값이 없으면 "-"로 표시, 값이 있으면 천 단위 콤마
+	        return params.value != null && params.value !== "" 
+	            ? Number(params.value).toLocaleString() 
+	            : "-";
+	    }},
+	    { headerName: "구매단가", field: "purchasePrice",valueFormatter: (params) => {
+	        // 값이 없으면 "-"로 표시, 값이 있으면 천 단위 콤마
+	        return params.value != null && params.value !== "" 
+	            ? Number(params.value).toLocaleString() 
+	            : "-";
+	    }}
 	]; // END OF COLUMN 
 	
 	
@@ -317,55 +324,63 @@ document.addEventListener("DOMContentLoaded", () => {
 	        el: "inDetailGrid",
 	        columnDefs: inDetailColumnDefs,
 	        paginationPageSize: 10,
-	        domLayout: "autoHeight",
-	        onGridReady: (event) => {
-	            inDetailGridOptions = event.api;
-	        }
+	        domLayout: "autoHeight"
 	    });
-	}
-
+	    inDetailGridOptions = gridOptions;
+	} // END OF initInboundGrid
+	
+	initInboundGrid(); // 그리드 초기화 실행 후 그리드에 그리기
 	async function loadInDetailData(productCode, productName){
 		showLoader("gridDetailWrapper","데이터를 불러오는 중입니다...");
-	     
+		let rowData = [];
+		  // 1️ 상세 데이터 로딩 (이미지와 관계없이 바로)
+			    try {
+			        const resDetail = await axios.get(`/api/v1/stock/selectProductDetail/${compCode}/${productCode}`, { withCredentials: true });
+			        console.log("LOT별 상세 데이터:", resDetail.data);
+			        if (resDetail.data && resDetail.data.length > 0) {
+			            rowData = resDetail.data;
+			        }else{
+			        	toastr.error('LOT이 존재하지 않는 데이터입니다');
+			        }
+			        if (inDetailGridOptions && inDetailGridOptions.api) {
+			            inDetailGridOptions.api.setRowData(resDetail.data);
+			        	 // 데이터가 없으면 그리드 숨기기, 있으면 보이기
+			            document.getElementById("inDetailGrid").style.display = rowData.length > 0 ? "block" : "none";
+			                
+			        }
+			    } catch(err) {
+			        console.error("상세 데이터 조회 실패:", err);
+			        toastr.error("상세 데이터 조회 실패");
+			    } finally{
+			    	hideLoader("gridDetailWrapper");
+			    }
 		
-		 try {
-		        // 이미지 요청 (선택적)
-		        try {
-		            const imgRes = await axios.get(`/api/v1/stock/selectProductImg/${compCode}/${productCode}`, 
-		                { responseType: 'blob', withCredentials: true });
-	
-		            const reader = new FileReader();
+		  // 2 이미지 요청
+			 axios.get(`/api/v1/stock/selectProductImg/${compCode}/${productCode}`, { responseType: 'blob' })
+		        .then(imgRes => {
+		        	console.log("imgRes.data : "+imgRes.data);
+		           const reader = new FileReader();
 		            reader.onload = function(e) {
-		                prevImg.src = e.target.result;
-		                imageName.textContent = productName;
-		                imageCard.style.display = 'block';
+		                if (e.target.result) {
+		                    prevImg.src = e.target.result;
+		                    imageName.textContent = productName;
+		                    imageCard.style.display = 'block';
+		                }
+		                	
 		            };
 		            reader.readAsDataURL(imgRes.data);
-	
-		        } catch(imgErr) {
-		            console.log("이미지 없음:", imgErr);
-		            prevImg.src = ""; // 이미지 없으면 초기화
+		            //console.log("imgRes.data : "+imgRes.data);
+		        })
+		        .catch(err => {
+		            console.log("이미지 없음:", err);
+		            toastr.error("No image has been uploaded.");
+		            prevImg.src = "";
 		            imageCard.style.display = 'none';
-		        }
-	
-		        // 상세 데이터 요청 (LOT 정보)
-		        const resDetail = await axios.get(`/api/v1/selectProductDetail/${compCode}/${productCode}`, { withCredentials: true });
-		        console.log("LOT별 상세 데이터:", resDetail.data);
-	
-		        if (inDetailGridOptions) {
-		            inDetailGridOptions.api.setRowData(resDetail.data);
-		        }
-	
-		    } catch (err) {
-		        console.error("상세 데이터 조회 실패:", err);
-		        toastr.error("상세 데이터 조회 실패");
-		    } finally {
-		        hideLoader("gridDetailWrapper");
-		    }
-	  
+		        })
+		        .finally(() => hideLoader("gridDetailWrapper")); // 로더는 여기서 종료
+		  
 	}// END OF loadInDetailData
-
-	initInboundGrid(); // 그리드 초기화 실행 후 그리드에 그리기
+	
 
 });
 </script>

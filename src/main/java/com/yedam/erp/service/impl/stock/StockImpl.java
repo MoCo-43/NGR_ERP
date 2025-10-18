@@ -130,14 +130,12 @@ public class StockImpl implements StockService{
 
 	@Override
 	public List<InvenVO> getIcList(Long companyCode) {
-		// TODO Auto-generated method stub
 		return mapper.getIcList(companyCode);
 	}
 
 
 	@Override
 	public List<InvenDetailVO> getIcDetailList(Long companyCode, String selectedRow) {
-		// TODO Auto-generated method stub
 		return mapper.getIcDetailList(companyCode, selectedRow);
 	}
 
@@ -277,8 +275,13 @@ public class StockImpl implements StockService{
 
 	@Override
 	public List<InboundVO> getProductDetailRefInbound(Long compCode, String productCode) {
-		// TODO Auto-generated method stub
 		return mapper.getProductDetailRefInbound(compCode , productCode);
+	}
+
+
+	@Override
+	public List<InboundVO> findInboundList(Map<String, Object> params) {
+		return mapper.selectInboundList(params);
 	}
 
 
