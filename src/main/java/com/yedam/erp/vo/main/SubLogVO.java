@@ -15,4 +15,5 @@ public class SubLogVO {
 	private Date endDate;
 	private Date loggedAt;
 	private String subCode;
+	private String cancelReason;
 }

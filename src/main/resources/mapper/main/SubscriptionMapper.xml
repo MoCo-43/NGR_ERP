@@ -156,7 +156,8 @@
             end_date = ADD_MONTHS(SYSDATE, #{mon}),     
             next_pay_date = ADD_MONTHS(SYSDATE, 1), 
             billing_key = #{billingKey},                
-            com_code = #{comCode}                       
+            com_code = #{comCode},
+            status = 'Y'                      
         WHERE
             sub_code = #{subCode}
         AND
@@ -183,4 +184,34 @@
                        )
                        WHERE ROWNUM = 1)
 </update>
+<!-- 구독 취소
+<update id="cancelSubscription" parameterType="Long">
+    UPDATE subscription
+    SET status = 'N',
+        end_date = CASE
+                     WHEN end_date > SYSDATE THEN end_date
+                     ELSE SYSDATE
+                   END
+    WHERE sub_code = #{subCode}
+      AND sub_status = 'ACTIVE'
+</update>-->
+
+<!-- 구독 조회 --> 
+<select id="getSubscriptionBySubCode" parameterType="String" resultType="SubscriptionVO">
+    SELECT sub_code, sub_status, status, start_date, end_date, mon, billing_key
+    FROM subscription
+    WHERE sub_code = #{subCode}
+</select>
+<update id="cancelSubscriptionBySubCode" parameterType="String">
+        UPDATE subscription_table
+        SET status = 'CANCELLED'
+        WHERE sub_code = #{subCode}
+    </update>
+<select id="callCancelSubscriptionProc" statementType="CALLABLE" parameterType="java.util.Map">
+    {CALL CANCEL_SUBSCRIPTION_PROC(
+      #{p_sub_code, mode=IN, jdbcType=VARCHAR},
+      #{p_cancel_reason, mode=IN, jdbcType=VARCHAR},
+      #{p_remaining_days, mode=OUT, jdbcType=NUMERIC}
+    )}
+  </select>
 </mapper>

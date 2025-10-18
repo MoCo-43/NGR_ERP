@@ -1,15 +1,16 @@
 package com.yedam.erp.security;
 
-import com.yedam.erp.vo.main.EmpLoginVO;
-
-import lombok.Data;
+import java.util.Collection;
+import java.util.Collections;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.StringUtils;
 
-import java.util.Collection;
-import java.util.Collections;
+import com.yedam.erp.vo.main.EmpLoginVO;
+
+import lombok.Data;
 
 /**
  * Spring Security의 UserDetails 인터페이스를 구현한 사용자 정의 클래스입니다.
@@ -53,8 +54,18 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 예시: 단일 권한을 부여하는 경우
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+    	// 1. DB에 저장된 권한명
+    	String roleName = empLoginVO.getComName();
+    	//2.권한명이 비어있거나 공백일 경우
+    	if (!StringUtils.hasText(roleName)) {
+    		//권한이 없는사용자는 아무석도 못하게 하거나,기본권한을 준다.role_user
+    		return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+    	}
+    	//3.정상적인 권한이 있을경우
+    	return Collections.singletonList(new SimpleGrantedAuthority(roleName));
+    	
+    	// 예시: 단일 권한을 부여하는 경우
+       // return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     /**

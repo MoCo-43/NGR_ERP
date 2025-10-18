@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.springframework.data.repository.query.Param;
 
 import com.yedam.erp.vo.main.PayLogVO;
@@ -38,4 +40,10 @@ public interface SubscriptionMapper {
     List<SubscriptionVO> findSubscriptionsDueForPaymentToday();
     //자동결제 성공 DB 프로시저 호출
     void processPayment(PayLogVO payLogVO);
+    // 구독 취소
+    //int cancelSubscription(Long subCode);
+    void callCancelSubscriptionProc(Map<String, Object> params);
+    // 구독 정보 조회 (남은 기간 확인용)
+    //SubscriptionVO getSubscriptionBySubCode(Long subCode);
+    SubscriptionVO getSubscriptionBySubCode(@Param("subCode") String subCode);
 }

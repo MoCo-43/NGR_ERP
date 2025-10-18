@@ -32,4 +32,10 @@ public interface EmpLoginService {
 
 	Long findMatNoByEmpId(String empId);
 	
-	boolean idChecks(String empId);}
+	boolean idChecks(String empId);
+	
+	//관리자가 사원의 시스템 권한을 직접 변경
+	void updateEmployeeRole(String empId, String newRoleName);
+	void activateCustomLoginWithRole(List<String> empIds, String roleName);
+	
+}

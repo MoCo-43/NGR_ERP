@@ -19,5 +19,6 @@ public class SubscriptionVO {
 	private SubPlanVO subPlan; 
 	private String customerKey;
 	private String billingKey;
+	private String status;
 }
 

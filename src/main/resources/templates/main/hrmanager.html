@@ -1,82 +1,77 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/base}">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 <head>
-<title layout:fragment="title">사원계정관리</title>
+    <title layout:fragment="title">사원계정관리</title>
 
-<link rel="stylesheet"
-	href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css" />
-<link rel="stylesheet"
-	href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-quartz.css" />
-<script
-	src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-quartz.css" />
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-<style>
-.container {
-	max-width: 1200px;
-	margin: auto;
-}
-</style>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+    </style>
 </head>
 
 <body>
-	<th:block layout:fragment="content">
-		<div class="container">
-			<h4 class="mb-3">사원 계정 관리</h4>
+<th:block layout:fragment="content">
+    <div class="container">
+        <h4 class="mb-3">사원 계정 관리</h4>
 
-			<div class="d-flex justify-content-between align-items-center mb-3">
-				<div>
-					<select id="dept-filter" class="form-select d-inline-block w-auto me-2">
-						<option value="">전체 부서</option>
-						<option value="경영팀">경영팀</option>
-						<option value="재고팀">재고팀</option>
-						<option value="인사팀">인사팀</option>
-						<option value="회계팀">회계팀</option>
-						<option value="영업팀">영업팀</option>
-					</select>
-					<select id="title-filter" class="form-select d-inline-block w-auto">
-						<option value="">전체 직급</option>
-						<option value="팀원">팀원</option>
-						<option value="팀장">팀장</option>
-					</select>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <select id="dept-filter" class="form-select d-inline-block w-auto me-2">
+                    <option value="">전체 부서</option>
+                    <option value="경영팀">경영팀</option>
+                    <option value="재고팀">재고팀</option>
+                    <option value="인사팀">인사팀</option>
+                    <option value="회계팀">회계팀</option>
+                    <option value="영업팀">영업팀</option>
+                </select>
+                <select id="title-filter" class="form-select d-inline-block w-auto">
+                    <option value="">전체 직급</option>
+                    <option value="팀원">팀원</option>
+                    <option value="팀장">팀장</option>
+                </select>
+            </div>
+            <div>
+                <button id="search-btn" class="btn btn-dark btn-sm">조회</button>
+                <button id="role-update-btn" class="btn btn-outline-danger btn-sm">권한</button>
+                <button id="create-btn" class="btn btn-outline-primary btn-sm">계정생성</button>
+                <button id="activate-default-btn" class="btn btn-outline-success btn-sm">사원번호</button>
+            </div>
+        </div>
 
-				</div>
-				<div>
-					<button id="search-btn" class="btn btn-dark btn-sm">조회</button>
-					<button id="send-btn" class="btn btn-outline-danger btn-sm">권한</button>ㅏ
-					<button id="create-btn" class="btn btn-outline-primary btn-sm">계정생성</button>
-					<button id="send-btn" class="btn btn-outline-success btn-sm">사원번호</button>
-				</div>
-			</div>
+        <div id="employee-grid" class="ag-theme-quartz" style="height: 600px;"></div>
+    </div>
 
-			<div id="employee-grid" class="ag-theme-quartz"
-				style="height: 600px;"></div>
-		</div>
-
-		<script>
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             const gridDiv = document.querySelector('#employee-grid');
 
-            // AG Grid 컬럼 정의 
+            // 컬럼 정의
             const columnDefs = [
                 { headerName: '', checkboxSelection: true, headerCheckboxSelection: true, maxWidth: 50 },
-                { field: 'name', headerName: '사원이름' }, 
+                { field: 'name', headerName: '사원이름' },
                 { field: 'empId', headerName: '사번 (로그인ID)' },
                 { field: 'title', headerName:'직급' },
-                { field: 'deptName', headerName: '부서이름' }, 
+                { field: 'deptName', headerName: '부서이름' },
                 { field: 'email', headerName: '이메일' },
-                { field: 'comName',headerName:'권한'},
-                { field: 'status',headerName:'상태'}
+                { field: 'comName', headerName:'권한'},
+                { field: 'status', headerName:'상태'}
             ];
 
-            // AG Grid 옵션 
+            // AG Grid 옵션
             const gridOptions = {
                 columnDefs: columnDefs,
                 rowData: [],
                 rowSelection: 'multiple',
-                suppressRowClickSelection: true, 
+                suppressRowClickSelection: true,
                 defaultColDef: { sortable: true, filter: true, resizable: true },
                 pagination: true,
                 paginationPageSize: 20,
@@ -84,92 +79,130 @@
                 overlayNoRowsTemplate: '<span class="ag-overlay-no-rows-center">데이터가 없습니다.</span>'
             };
 
-            // AG Grid 생성 (동일)
-            new agGrid.Grid(gridDiv, gridOptions);
+            // AG Grid 생성 
+            const gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
-            /**
-             *  사원 목록을 서버에서 불러와 그리드에 표시하는 함수
-             * @param {string} deptName - 검색할 부서 이름 (deptCode -> deptName)
-             * @param {string} title - 검색할 직급 (신규 추가)
-             */
+            // 사원 목록 로딩 함수
             function loadEmployees(deptName = '', title = '') {
-                gridOptions.api.showLoadingOverlay();
-                
-                //  Controller의 getEmployees 메소드 호출 (deptName, title 파라미터 사용)
-                axios.get(`/hrLists?deptName=${deptName}&title=${title}`)
+                gridApi.showLoadingOverlay();
+                axios.get(`/hrLists?deptName=${encodeURIComponent(deptName)}&title=${encodeURIComponent(title)}`)
                     .then(response => {
-                        if (response.data && response.data.length > 0) {
-                            gridOptions.api.setRowData(response.data);
-                        } else {
-                            gridOptions.api.setRowData([]); 
-                            gridOptions.api.showNoRowsOverlay();
+                        gridApi.updateGridOptions({ rowData: response.data || [] });
+                        if (!response.data || response.data.length === 0) {
+                            gridApi.showNoRowsOverlay();
                         }
                     })
                     .catch(error => {
                         console.error('사원 목록 로딩 오류:', error);
-                        gridOptions.api.showNoRowsOverlay();
+                        gridApi.showNoRowsOverlay();
                         alert('데이터를 불러오는 중 오류가 발생했습니다.');
                     });
             }
 
-            // '검색' 버튼 클릭 이벤트
+            // --- 이벤트 리스너들 ---
             document.getElementById('search-btn').addEventListener('click', () => {
                 const selectedDeptName = document.getElementById('dept-filter').value;
-                const selectedTitle = document.getElementById('title-filter').value; // 직급 값 가져오기
-                
-                loadEmployees(selectedDeptName, selectedTitle); // 두 인자 모두 전달
+                const selectedTitle = document.getElementById('title-filter').value;
+                loadEmployees(selectedDeptName, selectedTitle);
             });
 
-            // '초기 비번 전송' 버튼 클릭 이벤트 (동일)
-            document.getElementById('send-btn').addEventListener('click', () => {
-                const selectedNodes = gridOptions.api.getSelectedNodes();
+            document.getElementById('activate-default-btn').addEventListener('click', () => {
+                const selectedNodes = gridApi.getSelectedNodes();
                 if (selectedNodes.length === 0) {
                     alert('계정을 활성화할 사원을 선택해주세요.');
                     return;
                 }
-
                 const selectedEmpIds = selectedNodes.map(node => node.data.empId);
 
                 if (confirm(`선택된 ${selectedEmpIds.length}명의 사원 계정을 [사번]으로 활성화하고 초기 비밀번호를 전송하시겠습니까?`)) {
                     axios.post('/activate-default', selectedEmpIds)
                         .then(response => {
-                            alert(response.data); 
-                            gridOptions.api.deselectAll(); 
+                            alert(response.data);
+                            gridApi.deselectAll();
                         })
                         .catch(error => {
                             console.error('초기 비밀번호 전송 오류:', error);
-                            alert('오류가 발생했습니다: ' + (error.response?.data || error.message));
+                            alert('오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
                         });
                 }
             });
 
-            // '생성' 버튼 클릭 이벤트 (동일)
             document.getElementById('create-btn').addEventListener('click', () => {
-                const selectedNodes = gridOptions.api.getSelectedNodes();
+                const selectedNodes = gridApi.getSelectedNodes();
                 if (selectedNodes.length === 0) {
                     alert('신규 계정을 생성할 사원을 선택해주세요.');
                     return;
                 }
 
-                const selectedEmpIds = selectedNodes.map(node => node.data.empId);
+                const ROLES = ["ROLE_ADMIN", "ROLE_MANAGER", "ROLE_USER", "ROLE_GUEST"];
+                const roleToAssign = prompt(
+                    `선택된 ${selectedNodes.length}명에게 어떤 권한을 부여하시겠습니까?\n[${ROLES.join(", ")}]`,
+                    "ROLE_USER"
+                );
 
-                if (confirm(`선택된 ${selectedEmpIds.length}명의 사원 계정을 [신규 ID]로 생성하고 초기 비밀번호를 전송하시겠습니까?`)) {
-                    axios.post('/activate-custom', selectedEmpIds)
+                if (roleToAssign === null || !ROLES.includes(roleToAssign.toUpperCase())) {
+                    alert('취소되었거나 잘못된 권한입니다.');
+                    return;
+                }
+
+                const payload = {
+                    empIds: selectedNodes.map(node => node.data.empId),
+                    role: roleToAssign.toUpperCase()
+                };
+
+                if (confirm(`선택된 ${payload.empIds.length}명의 사원 계정을 [신규 ID]로 생성하고 [${payload.role}] 권한을 부여합니다.`)) {
+                    axios.post('/activate-custom-with-role', payload)
                         .then(response => {
-                            alert(response.data); 
-                            gridOptions.api.deselectAll(); 
+                            alert(response.data.message);
+                            gridApi.deselectAll();
                         })
                         .catch(error => {
                             console.error('신규 계정 생성 오류:', error);
-                            alert('오류가 발생했습니다: ' + (error.response?.data || error.message));
+                            alert('오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
                         });
                 }
             });
 
-            // 페이지 최초 로드 시 전체 사원 목록 조회
+            document.getElementById('role-update-btn').addEventListener('click', () => {
+                const selectedNodes = gridApi.getSelectedNodes();
+                if (selectedNodes.length !== 1) {
+                    alert('권한을 변경할 사원 1명만 선택해주세요.');
+                    return;
+                }
+
+                const selectedEmp = selectedNodes[0].data;
+                const empId = selectedEmp.empId;
+                const currentRole = selectedEmp.comName || "N/A";
+
+                const ROLES = ["ROLE_ADMIN", "ROLE_MANAGER", "ROLE_USER", "ROLE_GUEST"];
+                const newRole = prompt(
+                    `[${selectedEmp.name}] 사원의 새 권한을 선택하세요.\n(현재 권한: ${currentRole})\n사용 가능: ${ROLES.join(", ")}`,
+                    "ROLE_MANAGER"
+                );
+
+                if (newRole === null || newRole.trim() === "" || !ROLES.includes(newRole.toUpperCase())) {
+                    alert('잘못된 권한 입력 또는 취소되었습니다.');
+                    return;
+                }
+
+                const payload = { empId, newRole: newRole.toUpperCase() };
+
+                axios.post('/admin/update-role', payload)
+                    .then(response => {
+                        alert(response.data.message);
+                        loadEmployees(document.getElementById('dept-filter').value,
+                                      document.getElementById('title-filter').value);
+                    })
+                    .catch(error => {
+                        console.error('권한 변경 오류:', error);
+                        alert('오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
+                    });
+            });
+
+            // 페이지 최초 로드
             loadEmployees();
         });
     </script>
-	</th:block>
+</th:block>
 </body>
 </html>
