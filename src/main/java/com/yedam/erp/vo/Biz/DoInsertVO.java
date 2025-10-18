@@ -10,7 +10,7 @@ public class DoInsertVO {
 
     private Long doNo;           // 지시서번호
     private String cusCode;      // 거래처코드
-    private Long poId;           // 주문번호
+    private String poCode;           // 주문번호
     private String doCode;       // 지시서코드
     private Integer empNo;       // 사원번호
     private String name;         // 사원명

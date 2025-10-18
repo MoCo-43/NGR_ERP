@@ -32,6 +32,10 @@ public interface BizMapper {
   
   // 주문서 이력 조회
   List<PoHistoryVO> getPoHistory(Long companyCode);
+
+  // 주문서 상태변경
+  int poStatusUpdate(String poCode, String poStatus);
+
   // 품목 조회
   List<ProductCodeVO> getProducts(Long companyCode);
   // 거래처 조회
