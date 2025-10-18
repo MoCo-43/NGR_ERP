@@ -70,8 +70,9 @@
       onRowDoubleClicked: async (e) => {
         selectedDeliveryCode = e.data?.outbHeaderCode;
         if (!selectedDeliveryCode) return;
-
+		
         const res = await axios.get(`/api/v1/stock/outboundList/${selectedDeliveryCode}/${e.data.doCode}`, { withCredentials: true });
+      
         applyDeliveryToInvoiceModal(e.data, res.data);
         document.getElementById('memoInput').value = e.data.businessPartner + " 매출";
 
@@ -130,13 +131,18 @@
   }
 
   // ===== invoiceModal 반영 (매출전표용) =====
-  function applyDeliveryToInvoiceModal(header, detailList) {
+ async function applyDeliveryToInvoiceModal(header, detailList) {
+	  const cusCode = header?.businessCode;
     try {
+    	
+    const { data } = await axios.get(`/api/account/invoice/tax/${compCode.value}`);
       document.getElementById("orderCode").value = header?.outbHeaderCode ?? "";
       document.getElementById("invoiceDate").value = header?.outboundDate ?? "";
       document.getElementById("cusCodeInput").value = header?.businessCode ?? "";
       document.getElementById("cusNameInput").value = header?.businessPartner ?? "";
-
+       document.getElementById("bankNameInput").value = data?.bankName ?? "" ;
+       document.getElementById("accountNoInput").value = data?.bizAccount ?? "";
+      
       if (window.invoiceGridApi && Array.isArray(detailList)) {
         const rows = detailList.map(d => ({
           productCode: d.productCode,

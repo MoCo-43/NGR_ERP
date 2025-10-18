@@ -134,4 +134,19 @@
      WHERE COMPANY_CODE = #{companyCode}
        AND INVOICE_CODE = #{invoiceCode}
 </update>
+
+<!-- 전자세금계산서 로그인회사정보 -->
+	<select id="selectCompanyInfo" resultType="com.yedam.erp.vo.main.CompanyVO">
+	select mat_no, ceo, comp_name, mat_name,mat_mail,comp_addr,biz_type,biz_category,biz_account
+	from company 
+	where mat_no = #{companyCode}
+
+</select>
+
+<select id="selectCustomerInfo" resultType="com.yedam.erp.vo.Biz.CustomerVO">
+	select bank_name, bank_account 
+	from customer
+	where cus_code = #{cusCode}
+	and company_code = #{companyCode}
+</select>
 </mapper>

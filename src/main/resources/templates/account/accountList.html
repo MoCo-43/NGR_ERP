@@ -71,12 +71,14 @@
 						<!-- 파일명 표시 -->
 						<span id="fileName" class="text-muted small align-self-center">선택된
 							파일 없음</span>
-
+						
 						<!-- 파일 선택 버튼 -->
 						<button type="button" class="btn btn-outline-secondary btn-sm"
 							onclick="document.getElementById('fileInput').click();">파일 선택 <i class="fas fa-search mr-1"></i>
 							</button>
-
+						<button type="button" id="btnDownloadTemplate" class="btn btn-info btn-sm">
+ 							양식 다운로드
+							</button>
 						<!-- 업로드 버튼 -->
 						<button type="submit" class="btn btn-success btn-sm">엑셀
 							업로드</button>
@@ -269,7 +271,7 @@
                 headers: { "Content-Type": "multipart/form-data" },
               })
               .then(() => {
-                toastr.success("업로드 성공");
+               
                 loadAndRender("");
               })
               .catch((err) => {
@@ -301,6 +303,31 @@
         document.getElementById("fileInput").addEventListener("change", function () {
         	  const fileName = this.files.length ? this.files[0].name : "선택된 파일 없음";
         	  document.getElementById("fileName").textContent = fileName;
+        	});
+        
+        // 빈 양식 다운로드
+        document.getElementById("btnDownloadTemplate").addEventListener("click", async () => {
+        	alert("계정코드는 3자리 까지만 가능합니다.");
+        	  try {
+        	    const res = await axios.get("/api/account/template", {
+        	      responseType: "blob",
+        	    });
+
+        	    // Blob → 다운로드 처리
+        	    const url = window.URL.createObjectURL(new Blob([res.data]));
+        	    const a = document.createElement("a");
+        	    a.href = url;
+        	    a.download = "계정과목_양식.xlsx";
+        	    document.body.appendChild(a);
+        	    a.click();
+        	    a.remove();
+        	    window.URL.revokeObjectURL(url);
+
+        	    toastr.success("엑셀 양식 다운로드 완료");
+        	  } catch (err) {
+        	    console.error(err);
+        	    toastr.error("엑셀 양식 다운로드 실패");
+        	  }
         	});
       </script>
 	</th:block>

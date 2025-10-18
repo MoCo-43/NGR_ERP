@@ -23,6 +23,7 @@
 
 			</div>
 		</div>
+	
 	</div>
 
 	<style>
@@ -39,6 +40,8 @@
 </style>
 
 	<script th:inline="none">
+	
+	
 //====== orderModal ←→ invoiceModal 연결용 전역 ======
   let orderModal;        // bootstrap modal instance
   let orderGridApi;      // 목록(list) 그리드 API (id: #orderListGrid)
@@ -47,6 +50,7 @@
 
   // ====== 그리드 초기화 (모달 내부) ======
   function initOrderGrid() {
+	
     const listDiv   = document.getElementById("orderListGrid");
     const detailDiv = document.getElementById("orderDetailGrid");
     if (!listDiv || !detailDiv) return;
@@ -69,9 +73,7 @@
       onRowDoubleClicked: async (e) => {
         selectedOrderCode = e.data?.lotCode;
         if (!selectedOrderCode) return;
-
         const res = await axios.get(`/api/v1/stock/inDetailList/${selectedOrderCode}`, { withCredentials: true });
-
         // ✅ invoiceModal로 반영
         console.log(res.data);
         applyOrderToInvoiceModal(e.data, res.data);
@@ -129,14 +131,18 @@
   }
 
   // invoiceModal에 적용 (이름/ID/변수 모두 order 그대로 유지)
-  function applyOrderToInvoiceModal(header, detailList) {
+  async function applyOrderToInvoiceModal(header, detailList) {
     try {
+      // 입고시 로그인 회사 은행, 계좌 불러오기
+     console.log(compCode.value);
+     const { data } = await axios.get(`/api/account/invoice/tax/${compCode.value}`);
       // 헤더 반영
       document.getElementById("orderCode").value   = header?.inboundCode ?? "";
       document.getElementById("invoiceDate").value = header?.inboundDate ?? "";
       document.getElementById("cusCodeInput").value = header?.businessCode ?? "";
       document.getElementById("cusNameInput").value = header?.businessPartner ?? "";
-
+      document.getElementById("bankNameInput").value = data?.bank ?? "";
+      document.getElementById("accountNoInput").value = data?.bizAccount ?? "";
 
       // 라인 반영
       if (window.invoiceGridApi && Array.isArray(detailList)) {

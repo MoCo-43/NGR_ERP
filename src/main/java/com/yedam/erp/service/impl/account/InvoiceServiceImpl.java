@@ -1,7 +1,6 @@
 package com.yedam.erp.service.impl.account;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,8 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.yedam.erp.mapper.account.InvoiceMapper;
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.account.InvoiceService;
+import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
 import com.yedam.erp.vo.account.InvoiceLineVO;
+import com.yedam.erp.vo.main.CompanyVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -73,6 +74,16 @@ public class InvoiceServiceImpl implements InvoiceService {
 	    public void updatePostedFlag(Long companyCode, Long invoiceCode, String postedFlag) {
 	        invoiceMapper.updatePostedFlag(companyCode, invoiceCode, postedFlag);
 	    }
+
+		@Override
+		public CompanyVO selectCompanyInfo(Long companyCode) {
+			return invoiceMapper.selectCompanyInfo(companyCode);
+		}
+
+		@Override
+		public CustomerVO selectCustomerInfo(String cusCode, Long companyCode) {
+			return invoiceMapper.selectCustomerInfo(cusCode, companyCode);
+		}
 	    
 	    
 	    	

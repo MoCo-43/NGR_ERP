@@ -5,8 +5,10 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.account.InvoiceHeaderVO;
 import com.yedam.erp.vo.account.InvoiceLineVO;
+import com.yedam.erp.vo.main.CompanyVO;
 
 @Mapper
 public interface InvoiceMapper {
@@ -28,5 +30,10 @@ public interface InvoiceMapper {
     void updatePostedFlag(@Param("companyCode") Long companyCode,
             @Param("invoiceCode") Long invoiceCode,
             @Param("postedFlag") String postedFlag);
-
+    
+    // 회사정보
+    CompanyVO selectCompanyInfo(Long companyCode);
+    
+    //은행, 계좌정보
+    CustomerVO selectCustomerInfo(String cusCode, Long companyCode);
 }

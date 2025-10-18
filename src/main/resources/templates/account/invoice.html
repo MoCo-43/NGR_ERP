@@ -171,6 +171,11 @@
 </th:block>
 </head>
 <body>
+	<script th:inline="javascript">
+	const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+	const compCode =/*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+	</script>	
+		
 	<section layout:fragment="content">
 		<div class="card shadow mb-3">
 			<div
@@ -209,15 +214,18 @@
 		<div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
 		<div th:replace="~{hr/codeLookup :: codeLookupModal}"></div>
 
-	</section>
 
+</section>
 	<th:block layout:fragment="body_extra">
 		<script
 			src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
 		<script
 			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+		
+		
+
 		<script th:inline="none">
-const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+	
   let voucherApi, detailApi;
   let selectedInvoice = null; // ✅ 현재 선택한 상단 전표행 저장
   
@@ -259,6 +267,7 @@ const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+	  
 	  // ✅ 오늘 날짜 기준으로 이번 달 1일~오늘 날짜 기본 세팅
 	  const today = new Date();
 	  const yyyy = today.getFullYear();
@@ -478,75 +487,105 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 	
 	
-	// 모달 오픈 버튼
-	document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async () => {
+//✅ 모달 오픈 버튼
+document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async () => {
   if (!selectedInvoice) {
     alert("전표를 선택하세요.");
     return;
   }
-//✅ 🔥 모달 열기 전에 초기화 수행
+
   resetTaxInvoiceModal();
+
   const invoiceCode = selectedInvoice.invoiceCode;
-
+  const companyCode = selectedInvoice.companyCode;
   try {
-    const res = await axios.get(`/api/account/invoice/${invoiceCode}`);
-    const { header, lines } = res.data;
-    
-    if (header.type === "P") {
-    	  // ✅ 매입 전자세금계산서 (공급자 = 거래처, 공급받는자 = 우리 회사)
-    	  document.getElementById("tiApprovalNo").textContent = header.bizNo || "-";
-    	  document.getElementById("tiWriteDate").value = header.invoiceDate?.substring(0, 10);
-
-    	  // 공급자 (거래처 정보)
-    	  document.getElementById("tiSuppBizNo").value = header.cusCode || "";
-    	  document.getElementById("tiSuppName").value  = header.cusName || "";
-    	  document.getElementById("tiSuppCeo").value   = header.buyerCeoName || "";
-    	  document.getElementById("tiSuppAddr").value  = header.buyerAddr || "";
-    	  document.getElementById("tiSuppType").value  = header.buyerBizType || "";
-    	  document.getElementById("tiSuppBiz").value   = header.buyerBizCategory || "";
-    	  document.getElementById("tiSuppEmail").value = header.buyerEmail || "";
-
-    	} else if (header.type === "S") {
-    	  // ✅ 매출 전자세금계산서 (공급자 = 우리 회사, 공급받는자 = 거래처)
-    	  document.getElementById("tiApprovalNo").textContent = header.bizNo || "-";
-    	  document.getElementById("tiWriteDate").value = header.invoiceDate?.substring(0, 10);
-
-
-    	  // 공급받는자 (거래처)
-    	  document.getElementById("tiBuyerBizNo").value  = header.cusCode || "";
-    	  document.getElementById("tiBuyerName").value   = header.cusName || "";
-    	  document.getElementById("tiBuyerCeo").value    = header.buyerCeoName || "";
-    	  document.getElementById("tiBuyerAddr").value   = header.buyerAddr || "";
-    	  document.getElementById("tiBuyerType").value   = header.buyerBizType || "";
-    	  document.getElementById("tiBuyerBiz").value    = header.buyerBizCategory || "";
-    	  document.getElementById("tiBuyerEmail").value  = header.buyerEmail || "";
-    	}
-
-    	// ✅ 공통 세팅 (매입/매출 공통)
-    	document.getElementById("tiTotalAmt").value = header.totalAmt || 0;
-    	document.getElementById("tiClaim").value    = header.totalAmt || 0;
-
-    	// ✅ 라인 세팅
-    	const tbody = document.getElementById("tiLines");
-    	tbody.innerHTML = "";
-
-    	(lines || []).forEach(line => {
-    	  const tr = document.createElement("tr");
-    	  tr.innerHTML = `
-    	    <td class="center">${new Date(header.invoiceDate).getMonth() + 1}</td>
-    	    <td class="center">${new Date(header.invoiceDate).getDate()}</td>
-    	    <td>${line.productName || ""}</td>
-    	    <td>${line.specification || ""}</td>
-    	    <td class="right"><input type="number" value="${line.qty || 0}" style="width:100%;border:none;text-align:right"></td>
-    	    <td class="right"><input type="number" value="${line.unitPrice || 0}" style="width:100%;border:none;text-align:right"></td>
-    	    <td class="right ti-sup">${(line.supAmt || 0).toLocaleString()}</td>
-    	    <td class="right ti-vat">${(line.vatAmt || 0).toLocaleString()}</td>
-    	    <td>${line.note || ""}</td>
-    	  `;
-    	  tbody.appendChild(tr);
-    	});
+    // 🔹 전표 데이터 (header + lines)
+    const { data: invoiceData } = await axios.get(`/api/account/invoice/${invoiceCode}`);
+    // 🔹 회사 데이터 (우리 회사 정보)
+    const { data: companyData } = await axios.get(`/api/account/invoice/tax/${companyCode}`);
 	
-    // ✅ 데이터 세팅 끝난 후 모달 열기
+    const { header, lines } = invoiceData;
+    const our = companyData; // 우리 회사 정보
+    const cus = header;      // 거래처 정보는 header 안에 있음
+	console.log(our);
+    // 🧾 작성일자, 승인번호
+    document.getElementById("tiApprovalNo").textContent = header.bizNo || "-";
+    document.getElementById("tiWriteDate").value = header.invoiceDate?.substring(0, 10) || "";
+
+    if (header.type === "S") {
+      // ===============================
+      // ✅ 매출: 우리 회사 → 거래처
+      // ===============================
+
+      // 공급자 (우리 회사)
+      document.getElementById("tiSuppBizNo").value = our.matNo || "";
+      document.getElementById("tiSuppName").value  = our.compName || "";
+      document.getElementById("tiSuppCeo").value   = our.ceo || "";
+      document.getElementById("tiSuppAddr").value  = our.compAddr || "";
+      document.getElementById("tiSuppType").value  = our.bizType || "";
+      document.getElementById("tiSuppBiz").value   = our.bizCategory || "";
+      document.getElementById("tiSuppEmail").value = our.matMail || "";
+
+      // 공급받는자 (거래처)
+      document.getElementById("tiBuyerBizNo").value  = cus.cusBizNo || cus.bizNo || "";
+      document.getElementById("tiBuyerName").value   = cus.cusName || "";
+      document.getElementById("tiBuyerCeo").value    = cus.buyerCeoName || "";
+      document.getElementById("tiBuyerAddr").value   = cus.buyerAddr || "";
+      document.getElementById("tiBuyerType").value   = cus.buyerBizType || "";
+      document.getElementById("tiBuyerBiz").value    = cus.buyerBizCategory || "";
+      document.getElementById("tiBuyerEmail").value  = cus.buyerEmail || "";
+
+    } else if (header.type === "P") {
+      // ===============================
+      // ✅ 매입: 거래처 → 우리 회사
+      // ===============================
+
+      // 공급자 (거래처)
+      document.getElementById("tiSuppBizNo").value = cus.cusBizNo || cus.bizNo || "";
+      document.getElementById("tiSuppName").value  = cus.cusName || "";
+      document.getElementById("tiSuppCeo").value   = cus.buyerCeoName || "";
+      document.getElementById("tiSuppAddr").value  = cus.buyerAddr || "";
+      document.getElementById("tiSuppType").value  = cus.buyerBizType || "";
+      document.getElementById("tiSuppBiz").value   = cus.buyerBizCategory || "";
+      document.getElementById("tiSuppEmail").value = cus.buyerEmail || "";
+
+      // 공급받는자 (우리 회사)
+      document.getElementById("tiBuyerBizNo").value  = our.matNo || "";
+      document.getElementById("tiBuyerName").value   = our.compName || "";
+      document.getElementById("tiBuyerCeo").value    = our.ceo || "";
+      document.getElementById("tiBuyerAddr").value   = our.compAddr || "";
+      document.getElementById("tiBuyerType").value   = our.bizType || "";
+      document.getElementById("tiBuyerBiz").value    = our.bizCategory || "";
+      document.getElementById("tiBuyerEmail").value  = our.matMail || "";
+    }
+
+    // 공통 항목 (금액 합계 등)
+    document.getElementById("tiTotalAmt").value = header.totalAmt?.toLocaleString() || "0";
+    document.getElementById("tiClaim").value    = header.totalAmt?.toLocaleString() || "0";
+
+    // 품목 데이터 세팅
+    const tbody = document.getElementById("tiLines");
+    tbody.innerHTML = "";
+    (lines || []).forEach(line => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="center">${new Date(header.invoiceDate).getMonth() + 1}</td>
+        <td class="center">${new Date(header.invoiceDate).getDate()}</td>
+        <td>${line.productName || ""}</td>
+        <td>${line.specification || ""}</td>
+        <td class="right"><input type="number" value="${line.qty || 0}" style="width:100%;border:none;text-align:right"></td>
+        <td class="right"><input type="number" value="${line.unitPrice || 0}" style="width:100%;border:none;text-align:right"></td>
+        <td class="right ti-sup">${(line.supAmt || 0).toLocaleString()}</td>
+        <td class="right ti-vat">${(line.vatAmt || 0).toLocaleString()}</td>
+        <td>${line.note || ""}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // 합계 계산
+    tiRecalc();
+
+    // ✅ 모달 표시
     bootstrap.Modal.getOrCreateInstance(document.getElementById("taxInvoiceModal")).show();
 
   } catch (err) {
@@ -556,6 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 	
 	
+	// 초기화 버튼
 	function resetTaxInvoiceModal() {
 		  // 모든 input 초기화
 		  document.querySelectorAll('#taxInvoiceModal input').forEach(input => {
