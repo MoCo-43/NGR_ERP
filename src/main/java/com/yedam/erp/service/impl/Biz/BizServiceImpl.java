@@ -61,6 +61,20 @@ public class BizServiceImpl implements BizService {
     public List<PoHistoryVO> getPoHistory(Long companyCode) {
         return bizMapper.getPoHistory(companyCode);
     }
+
+  // 주문서 상태변경
+  public int poStatusUpdate(List<String> poCodes, String poStatus) {
+    int cnt = 0;
+    for(int i=0; i<poCodes.size(); i++) {
+      
+      cnt += bizMapper.poStatusUpdate(poCodes.get(i), poStatus);
+      
+    }
+
+   return cnt;
+}
+
+
 	// 품목 조회
 	@Override
 	public List<ProductCodeVO> getProducts(Long companyCode) {

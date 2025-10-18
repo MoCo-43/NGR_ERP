@@ -62,14 +62,17 @@
             aria-label="status-filters"
           >
             <button class="btn btn-outline-primary" data-status="">전체</button>
-            <button class="btn btn-outline-primary" data-status="주문승인">
-              주문승인
+            <button class="btn btn-outline-primary" data-status="승인대기">
+              승인대기
             </button>
-            <button class="btn btn-outline-primary" data-status="출하준비중">
-              출하준비중
+            <button class="btn btn-outline-primary" data-status="작성완료">
+              작성완료
             </button>
             <button class="btn btn-outline-primary" data-status="출하완료">
               출하완료
+            </button>
+            <button class="btn btn-outline-primary" data-status="입금완료">
+              입금완료
             </button>
           </div>
 
@@ -103,6 +106,8 @@
       <div class="card shadow mb-0">
         <div class="card-header py-3">
           <h6 class="m-0 font-weight-bold text-primary">주문서 리스트</h6>
+          <button id="btnConfirm" class="btn btn-dark mb-2">승인</button>
+          <button id="btnCheck" class="btn btn-dark mb-2">입금완료</button>
         </div>
         <div class="card-body">
           <div id="orderGrid" class="ag-theme-quartz"></div>
@@ -127,6 +132,17 @@
         document.addEventListener("DOMContentLoaded", () => {
           // ===== ag-Grid 컬럼 (설계안 그대로) =====
           const columnDefs = [
+            {
+              headerName: "",
+              width: 70,
+              checkboxSelection: true,
+              headerCheckboxSelection: false,
+              filter: false,
+              suppressMenu: true,
+              pinned: "left",
+              rowSelection: "multiple",
+            },
+            { headerName: "거래처", field: "cusName", width: 140 },
             {
               headerName: "작성일자",
               field: "poStart",
@@ -164,7 +180,7 @@
           const gridOptions = {
             columnDefs,
             rowData: [],
-            rowSelection: "single",
+            rowSelection: "multiRow",
             pagination: true,
             paginationPageSize: 12,
             animateRows: true,
@@ -349,6 +365,13 @@
             );
           }
         });
+
+        // 승인 버튼 처리
+        // document.addEventListener("DOMContentLoaded", () => {
+        //   const btnConfirm = document.getElementById("btnConfirm");
+
+        // });
+        // 입금완료 버튼 처리
       </script>
     </th:block>
   </body>

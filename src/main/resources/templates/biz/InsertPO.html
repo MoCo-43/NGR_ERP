@@ -60,33 +60,35 @@
       <!-- 상단 툴바 -->
       <div class="card shadow mb-3">
         <!-- 헤더: 제목 + 초기화/등록 -->
+      <div class="card shadow">
         <div
           class="card-header d-flex align-items-center justify-content-between"
         >
           <h6 class="m-0 font-weight-bold text-primary">주문서입력</h6>
-          <div class="d-flex gap-2">
-            <button id="btnReset" type="button" class="btn btn-danger mr-3">
-              초기화
-            </button>
-            <button id="btnSubmit" type="button" class="btn btn-primary mr-3">
-              등록
-            </button>
-          </div>
-        </div>
-
-        <!-- 제품코드/주문서이력조회 모달 버튼 -->
-        <div class="card-body py-2">
-          <div class="d-flex justify-content-end">
-            <div class="btn-group">
-              <button
-                id="btnOpenHistory"
-                type="button"
-                class="btn btn-outline-secondary btn-slim"
-                data-bs-toggle="modal"
-                data-bs-target="#PoHistoryModal"
-              >
-                주문서이력조회
-              </button>
+          <!-- 제품코드/주문서이력조회 모달 버튼 -->
+          <div class="card-body py-2">
+            <div class="d-flex justify-content-end">
+              <div class="btn-group">
+                <button
+                  id="btnOpenHistory"
+                  type="button"
+                  class="btn btn-outline-secondary btn-slim"
+                  data-bs-toggle="modal"
+                  data-bs-target="#PoHistoryModal"
+                >
+                  주문서이력조회
+                </button>
+                <button id="btnReset" type="button" class="btn btn-danger mr-3">
+                  초기화
+                </button>
+                <button
+                  id="btnSubmit"
+                  type="button"
+                  class="btn btn-primary mr-3"
+                >
+                  등록
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -96,22 +98,23 @@
       <div class="card shadow mb-4">
         <div class="card-body">
           <div class="rounded-box">
-            <!-- 1 작성일자 / 2 거래처 -->
+            <!-- 1행: 작성일자 | 거래처 -->
             <div class="row g-3 align-items-end mb-2">
               <div class="col-md-6">
                 <label for="poStart" class="form-label">작성일자</label>
                 <input id="poStart" type="date" class="form-control" disabled />
               </div>
+
               <div class="col-md-6">
                 <label for="cusName" class="form-label">거래처</label>
                 <div class="input-group">
-                  <input id="cusName" class="form-control" disabled />
                   <input
-                    type="hidden"
-                    id="cusCode"
+                    id="cusName"
                     class="form-control"
+                    placeholder="거래처 선택"
                     disabled
                   />
+                  <input type="hidden" id="cusCode" />
                   <button
                     id="btnFindCustomer"
                     type="button"
@@ -119,45 +122,39 @@
                     data-bs-toggle="modal"
                     data-bs-target="#customermodal"
                   >
-                    조회
+                    <i class="fa fa-magnifying-glass"></i>
                   </button>
                 </div>
               </div>
             </div>
 
-            <!-- 3 담당자 -->
+            <!-- 2행: 담당자 | 지불방식 -->
             <div class="row g-3 align-items-end mb-2">
               <div class="col-md-6">
                 <label for="creater" class="form-label">담당자</label>
+                <!-- span을 유지해야 기존 JS의 textContent 읽기가 정상 동작합니다 -->
                 <span
                   id="creater"
                   class="form-control"
                   th:text="${#authentication.principal.empLoginVO.name}"
-                >
-                </span>
+                ></span>
               </div>
-            </div>
-            <!-- 지불방식 -->
-            <div class="row g-3 align-items-end mb-2">
+
               <div class="col-md-6">
                 <label for="payMethod" class="form-label">지불방식</label>
-                <div class="col-md-6">
-                  <select id="payMethod" class="form-control">
-                    <option value="CASH">현금</option>
-                    <option value="BILL">어음</option>
-                  </select>
-                </div>
+                <select id="payMethod" class="form-control">
+                  <option value="CASH">현금</option>
+                  <option value="BILL">어음</option>
+                </select>
               </div>
+            </div>
 
-              <!-- 5 납기일자 -->
-              <div class="row g-3 align-items-end mb-2">
-                <div class="col-md-6">
-                  <label for="exDate" class="form-label">납기일자</label>
-                  <input id="exDate" type="date" class="form-control" />
-                </div>
+            <!-- 3행: 납기일자 | 결제예정일 -->
+            <div class="row g-3 align-items-end mb-2">
+              <div class="col-md-6">
+                <label for="exDate" class="form-label">납기일자</label>
+                <input id="exDate" type="date" class="form-control" />
               </div>
-
-              <!-- 결제예정일 -->
 
               <div class="col-md-6">
                 <label for="poDate" class="form-label">결제예정일</label>
@@ -165,28 +162,28 @@
               </div>
             </div>
 
-            <!-- 비고 + 할인적용여부 : 부가세유형과 동일 디자인/레이아웃 -->
+            <!-- 4행: 할인율 | 여신잔액 -->
             <div class="row g-3 align-items-end mb-2">
               <div class="col-md-6">
-                <label for="notes" class="form-label">비고</label>
-                <input
-                  id="notes"
-                  class="form-control"
-                  placeholder="특이사항 메모"
-                />
+                <label for="discountRate" class="form-label">할인율(%)</label>
+                <input id="discountRate" class="form-control" />
               </div>
 
               <div class="col-md-6">
-                <label for="crActiveType" class="form-label">할인율</label>
-                <input id="discountRate" class="form-control" />
-              </div>
-              <div class="col-md-6">
-                <label for="crActiveType" class="form-label">여신잔액</label>
+                <label for="leftPrice" class="form-label">여신잔액</label>
                 <input id="leftPrice" class="form-control" disabled />
               </div>
+            </div>
+
+            <!-- 5행: 비고 (전폭) -->
+            <div class="row g-3 align-items-end mb-2">
               <div class="col-md-6">
-                <label for="crActiveType" class="form-label">횟수</label>
+                <label for="monDiscCnt" class="form-label">할인횟수</label>
                 <input id="monDiscCnt" class="form-control" disabled />
+              </div>
+              <div class="col-6">
+                <label for="notes" class="form-label">비고</label>
+                <input id="notes" class="form-control" />
               </div>
             </div>
           </div>
@@ -362,7 +359,6 @@
           }
 
           const columnDefs = [
-            { headerName: "", checkboxSelection: true, width: 50 },
             {
               headerName: "제품코드",
               field: "productCode",
@@ -412,7 +408,11 @@
               headerName: "과세여부",
               field: "vatType",
               width: 120,
-              type: "rightAligned",
+              editable: true, // 수정 가능하게
+              cellEditor: "agSelectCellEditor", // 셀렉트박스 표시
+              cellEditorParams: {
+                values: ["과세", "면세"], // 드롭다운 옵션
+              },
             },
             {
               headerName: "할인금액",
@@ -420,7 +420,7 @@
               editable: true,
               width: 120,
               type: "rightAligned",
-              valueParser: numberParser,
+              valueParser: (p) => numberParser(calcSupply(p.data.dc)),
             },
             { headerName: "비고", field: "notes", editable: true, width: 160 },
           ];
@@ -518,7 +518,7 @@
               const creater = document.getElementById("creater").textContent;
 
               const payload = {
-                companyCode: Number(getId("companyCode") || 0),
+                companyCode: Number(getVal("companyCode") || 0),
                 cusName,
                 cusCode: getVal("cusCode"),
                 creater,

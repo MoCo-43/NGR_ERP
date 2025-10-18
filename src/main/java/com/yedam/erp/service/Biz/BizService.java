@@ -27,6 +27,10 @@ public interface BizService {
   // 주문서 이력 조회
   List<PoHistoryVO> getPoHistory(Long companyCode);
 
+
+  // 주문서 상태변경
+  int poStatusUpdate(List<String> poCodes, String poStatus);
+
   // 품목 조회
   List<ProductCodeVO> getProducts(Long companyCode);
   

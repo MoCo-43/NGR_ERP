@@ -10,6 +10,7 @@ import lombok.Data;
 @Data
 public class PoHistoryVO {
     private Long companyCode;
+    private String poCode;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate poStart;
@@ -23,4 +24,7 @@ public class PoHistoryVO {
     private Integer orderQty;
     private Long unitPrice; 
     private Long supAmt;
+    private String zipCode;
+    private String addr;
+    private String tel;
 }

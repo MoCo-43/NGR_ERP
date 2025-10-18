@@ -106,9 +106,10 @@
                   <input
                     type="text"
                     class="form-control"
-                    id="customerName"
+                    id="cusName"
                     placeholder="거래처명"
                   />
+                  <input type="text" class="form-control" id="cusCode" />
                   <button
                     type="button"
                     class="btn btn-outline-secondary"
@@ -119,7 +120,6 @@
                     <i class="bi bi-search"></i>
                   </button>
                 </div>
-                <input type="hidden" id="customerCode" />
               </div>
 
               <div class="col-md-3">
@@ -138,7 +138,7 @@
                 <input
                   type="text"
                   class="form-control"
-                  id="phone"
+                  id="tel"
                   placeholder="연락처"
                 />
               </div>
@@ -282,12 +282,14 @@
       ></script>
 
       <script th:inline="none">
+        // 주문서조회 재귀/이벤트 루프 방지
+        let _selectGuard = false;
         // DOM refs
         const writeDateEl = document.getElementById("writeDate");
-        const customerCodeEl = document.getElementById("customerCode");
-        const customerNameEl = document.getElementById("customerName");
+        const customerCodeEl = document.getElementById("cusCode");
+        const customerNameEl = document.getElementById("cusName");
         const managerNameEl = document.getElementById("managerName");
-        const phoneEl = document.getElementById("phone");
+        const telEl = document.getElementById("tel");
         const shipDateEl = document.getElementById("shipDate");
         const addrEL = document.getElementById("sample4_roadAddress");
         const zipCodeEL = document.getElementById("sample4_postcode");
@@ -322,6 +324,12 @@
         const itemGridOptions = {
           columnDefs: [
             { headerName: "", checkboxSelection: true, width: 50 },
+            {
+              headerName: "주문서번호",
+              field: "poCode",
+              editable: true,
+              width: 120,
+            },
             {
               headerName: "품목코드",
               field: "productCode",
@@ -455,7 +463,7 @@
             "customerCode",
             "customerName",
             "managerName",
-            "phone",
+            "tel",
             "shipDate",
           ].forEach((id) => (document.getElementById(id).value = ""));
           itemGridApi.setRowData([]);
@@ -469,13 +477,13 @@
             customerCode: customerCodeEl.value,
             customerName: customerNameEl.value,
             managerName: managerNameEl.value,
-            phone: phoneEl.value,
+            tel: telEl.value,
             shipDate: shipDateEl.value,
             addr: addrEL.value,
             zipCode: zipCodeEL.value,
             notes: document.getElementById("notes")?.value || "",
           };
-          if (!header.writeDate) return toastr.error("작성일자를 입력하세요");
+          //if (!header.writeDate) return toastr.error("작성일자를 입력하세요");
           if (!header.customerName) return toastr.error("거래처를 입력하세요");
           if (!header.shipDate) return toastr.error("출하예정일을 입력하세요");
 
@@ -487,6 +495,7 @@
             return toastr.error("품목을 1개 이상 추가하세요");
 
           const payload = {
+            poCode: header.poCode,
             cusCode: header.customerCode,
             name: header.managerName,
             doCreated: header.writeDate,
@@ -514,19 +523,19 @@
           }
         };
 
-        /*---------- 
-        
-        
-        
-        품목코드 모달 
+        /*----------
+
+
+
+                품목코드 모달
 
 
 
 
 
----------- 
+        ----------
 
-        */
+                */
         const productModalEl = document.getElementById("productcodeModal");
         let productGridApi;
         const productGridOptions = {
@@ -577,6 +586,7 @@
             const rows = productGridApi?.getSelectedRows?.() || [];
             if (!rows.length) return alert("가져올 품목을 선택하세요.");
             const items = rows.map((r) => ({
+              poCode: r.poCode,
               productCode: r.productCode,
               productName: r.productName,
               payMethod: r.payMethod,
@@ -594,16 +604,16 @@
           });
 
         /* ----------
-        
-        
-        
-        
-        거래처 모달 
 
 
 
-----------
-        */
+
+                거래처 모달
+
+
+
+        ----------
+                */
         const customerModalEl = document.getElementById("customermodal");
         let customerGridApi;
         const customerGridOptions = {
@@ -649,23 +659,25 @@
           ensureCustomerGrid();
           await fetchCustomerData();
         });
+
+        // 가져오기 버튼
         document
           .getElementById("CstImportBtn")
           ?.addEventListener("click", () => {
             const sel = customerGridApi?.getSelectedRows?.() || [];
             if (!sel.length) return alert("거래처를 선택하세요.");
-            document.getElementById("customerName").value =
-              sel[0].cusName ?? "";
-            document.getElementById("customerCode").value =
-              sel[0].cusCode ?? "";
+            document.getElementById("cusName").value = sel[0].cusName ?? "";
+            document.getElementById("cusCode").value = sel[0].cusCode ?? "";
           });
 
         // ---------- 주문서조회 모달 ----------
         const poHistoryModalEl = document.getElementById("PoHistoryModal");
         let poHistoryGridApi;
+
         const poHistoryGridOptions = {
           columnDefs: [
             { headerName: "", checkboxSelection: true, width: 50 },
+            { headerName: "주문서번호", field: "poCode", width: 120 },
             { headerName: "작성일자", field: "poStart", width: 120 },
             {
               headerName: "거래처명",
@@ -692,6 +704,35 @@
           defaultColDef: { sortable: true, resizable: true, filter: true },
           onGridReady: (p) => {
             poHistoryGridApi = p.api;
+          },
+
+          // 같은 주문서번호 선택
+          onRowSelected: (event) => {
+            // if (_selectGuard) return;
+            const row = event.data;
+            if (!row || !row.poCode) return;
+
+            _selectGuard = true;
+
+            if (event.node.isSelected()) {
+              // 👉 같은 주문번호만 선택
+              poHistoryGridApi.forEachNode((n) => {
+                if (n.data && n.data.poCode === row.poCode) {
+                  n.setSelected(true);
+                } else {
+                  n.setSelected(false);
+                }
+              });
+            } else {
+              // 해제 시에는 같은 주문번호 전부 해제
+              poHistoryGridApi.forEachNode((n) => {
+                if (n.data && n.data.poCode === row.poCode) {
+                  n.setSelected(false);
+                }
+              });
+            }
+
+            _selectGuard = false;
           },
         };
         function ensurePoHistoryGrid(modalRoot) {
@@ -739,6 +780,7 @@
           fetchPoHistoryData();
         });
 
+        // 주문서 가져오기
         document
           .getElementById("PohImportBtn")
           ?.addEventListener("click", () => {
@@ -747,10 +789,21 @@
             const selectedRows = poHistoryGridApi.getSelectedRows?.() || [];
             if (!selectedRows.length)
               return alert("가져올 주문서의 행을 선택하세요.");
+            // 거래처정보가져오기
+            document.getElementById("cusCode").value = selectedRows[0].cusCode;
+            document.getElementById("cusName").value = selectedRows[0].cusName;
+            document.getElementById("sample4_roadAddress").value =
+              selectedRows[0].addr;
+            document.getElementById("sample4_postcode").value =
+              selectedRows[0].zipCode;
+            document.getElementById("shipDate").value = selectedRows[0].exDate;
 
+            document.getElementById("tel").value = selectedRows[0].tel;
             const newItems = selectedRows.map((row) => ({
+              poCode: row.poCode ?? "",
               productCode: row.productCode ?? "",
               productName: row.productName ?? "",
+              cusCode: row.cusCode ?? "",
               orderQty: row.orderQty ?? 1,
               unitPrice: row.unitPrice ?? 0,
               supAmt: row.supAmt ?? (row.unitPrice || 0) * (row.orderQty || 1),

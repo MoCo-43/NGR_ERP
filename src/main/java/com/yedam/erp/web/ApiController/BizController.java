@@ -2,6 +2,7 @@ package com.yedam.erp.web.ApiController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -75,6 +76,15 @@ public class BizController {
         Long companyCode = SessionUtil.companyId();
         return service.getPoHistory(companyCode);
     }
+
+
+  // 주문서 상태변경
+  @PutMapping("postatus")
+  public int poStatusUpdate(@RequestBody Map<String, Object> poMap) {
+      List<String> poCodes = (List<String>) poMap.get("poCodes");
+      String poStatus = poMap.get("poStatus").toString();
+      return service.poStatusUpdate(poCodes, poStatus);
+  }
 
   // 품목 조회
   @GetMapping("/productcode")
