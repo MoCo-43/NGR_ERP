@@ -395,6 +395,8 @@ main {
 </style>
 </head>
 <body>
+	<input type="hidden" id="sub-plan-no-hidden"
+		th:value="${subPlan.subPlanNo}">
 	<input type="hidden" id="targetStep" th:value="${targetStep}" />
 	<input type="hidden" id="base-users-hidden"
 		th:value="${subPlan.baseSalary}">
@@ -454,7 +456,7 @@ main {
 						</div>
 						<div class="premium-section">
 							<span class="label">프리미엄 12개월 구독 금액</span> <span class="price"
-								th:text="${subPlan.baseSalary}"></span></span>
+								th:text="${subPlan.baseSalary}"></span>
 						</div>
 						<div class="form-navigation">
 							<button type="button" class="nav-btn prev-btn" disabled>이전단계</button>
@@ -787,23 +789,33 @@ main {
 				<div class="completion-container">
 					<h2>결제가 성공적으로 완료되었습니다!</h2>
 					<p>
-						이제 모든 서비스를 정상적으로 이용하실 수 있습니다.<br>관리자 계정으로 로그인하여 서비스를 시작해 보세요.
+						이제 모든 서비스를 정상적으로 이용하실 수 있습니다.<br> 관리자 계정으로 로그인하여 서비스를 시작해
+						보세요.
 					</p>
+
 					<div class="summary-box"
 						style="width: 500px; margin: 0 auto 40px auto; text-align: left;">
 						<div class="summary-item">
-						<!-- >-->
-							<span class="item-label">구독 플랜</span> <span class="item-value" id="planName" > 프리미엄</span>
+							<span class="item-label">회사 코드</span> <span class="item-value"
+								th:text="${comCode} ?: '-'">ABC123</span>
 						</div>
 						<div class="summary-item">
-							<span class="item-label">구독 기간</span> <span class="item-value">2025-09-29
-								~ 2026-03-28</span>
+							<span class="item-label">구독 플랜</span> <span class="item-value"
+								th:text="${subPlan.planName} ?: '프리미엄'"></span>
 						</div>
+						<div class="summary-item">
+							<span class="item-label">구독 기간</span> <span class="item-value"
+								th:if="${subscription != null and subscription.startDate != null and subscription.endDate != null}"
+								th:text="${#dates.format(subscription.startDate, 'yyyy-MM-dd')} + ' ~ ' + ${#dates.format(subscription.endDate, 'yyyy-MM-dd')}">
+							</span> <span class="item-value"
+								th:if="${subscription == null or subscription.startDate == null or subscription.endDate == null}">
+								- </span>
+						</div>
+
+						<a href="/login" class="home-btn">서비스 시작하기</a>
 					</div>
-					<a href="/login" class="home-btn">서비스 시작하기</a>
 				</div>
 			</div>
-		</div>
 	</main>
 
 	<div class="modal fade" id="paymentModal" tabindex="-1"
@@ -1014,6 +1026,13 @@ main {
      * 선택된 결제 방식에 따라 적절한 함수를 호출합니다.
      */
      async function handlePaymentRequest() {
+    	    const subPlanHidden = document.getElementById('sub-plan-no-hidden');
+    	    const subPlanNo = subPlanHidden ? parseInt(subPlanHidden.value, 10) : null;
+
+    	    if (!subPlanNo) {
+    	        alert("플랜 번호(subPlanNo)를 불러올 수 없습니다. 페이지를 새로고침 후 다시 시도해 주세요.");
+    	        return;
+    	    }
     	    const selectedOption = document.querySelector('#payment-type-options .payment-option.selected');
     	    const paymentType = selectedOption.getAttribute('data-type');
 
@@ -1026,7 +1045,7 @@ main {
     	            // 2-1. 서버에 'PENDING' 구독 정보를 생성합니다.
                     // (첫 결제에 필요한 모든 정보를 전송)
     	            const subscriptionData = {
-    	                subPlanNo: 1, //실제 선택한 플랜 번호로 동적수정필요
+    	                subPlanNo: subPlanNo, 
     	                totalUsers: parseInt(selectedUserCount) || 0,
     	                customerKey: customerKey,
                         mon: selectedDuration, // 구독 기간
@@ -1117,14 +1136,21 @@ main {
 
         // '모달에서 결제하기' 버튼 ('일반결제' 전용)
         document.getElementById('modal-payment-button').addEventListener('click', async function () {
-            if (!widgets) {
+        	const subPlanHidden = document.getElementById('sub-plan-no-hidden');
+            const subPlanNo = subPlanHidden ? parseInt(subPlanHidden.value, 10) : null;
+            if (!subPlanNo) {
+                alert("플랜 정보(subPlanNo)를 불러올 수 없습니다. 페이지를 새로고침 후 다시 시도해 주세요.");
+                return;
+            } 
+        	
+        	if (!widgets) {
                 alert("결제 위젯이 초기화되지 않았습니다. 잠시 후 다시 시도해 주세요.");
                 return;
             }
 
             // '일반결제'는 paymentType: 'NORMAL'로 설정
             const requestData = {
-                subPlanNo: 1, // TODO: 실제 플랜 번호
+                subPlanNo: subPlanNo, // TODO: 실제 플랜 번호
                 userCount: selectedUserCount,
                 duration: selectedDuration,
                 finalAmount: finalPayment,

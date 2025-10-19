@@ -1,21 +1,33 @@
 package com.yedam.erp.web.ApiController.main;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.util.StringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.yedam.erp.service.main.EmpLoginService;
 import com.yedam.erp.vo.hr.EmpVO;
+import com.yedam.erp.vo.main.EmpLoginVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,9 +35,70 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmpLoginController {
 
+	 @Value("${file.upload.dir}")
+	    private String uploadDir;
 //	private final EmpService empService; // 사원 정보 조회를 위한 서비스
 	private final EmpLoginService empLoginService; // 로그인 계정 관리를 위한 서비스
+    
+	   /**
+     * 프로필 이미지 업로드
+     */
+    @PostMapping("/uploadProfile")
+    public ResponseEntity<String> uploadProfile(@ModelAttribute EmpLoginVO emp) {
+        try {
+            MultipartFile file = emp.getEmpImgFile();
+            if (file == null || file.isEmpty()) {
+                return ResponseEntity.badRequest().body("파일이 비어 있습니다.");
+            }
+
+            // 저장 디렉토리 생성
+            File dir = new File(uploadDir + "/emp");
+            if (!dir.exists()) dir.mkdirs();
+
+            // 파일명 생성
+            String uuid = UUID.randomUUID().toString();
+            String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            String fileName = uuid + "." + ext;
+
+            // 파일 저장
+            file.transferTo(new File(dir, fileName));
+
+            // DB 업데이트 (Service 사용)
+            empLoginService.updateEmpImage(emp.getEmpIdNo(), fileName);
+
+            return ResponseEntity.ok(fileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("업로드 실패: " + e.getMessage());
+        }
+    }
+
     /**
+     * 프로필 이미지 조회
+     */
+    @GetMapping("/profileImage/{fileName}")
+    public ResponseEntity<Resource> getProfileImage(@PathVariable String fileName) {
+        File file = new File(uploadDir + "/emp", fileName);
+        if (!file.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Resource resource = new FileSystemResource(file);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"");
+
+        String lower = fileName.toLowerCase();
+        MediaType mediaType = MediaType.IMAGE_JPEG;
+        if (lower.endsWith(".png")) mediaType = MediaType.IMAGE_PNG;
+        else if (lower.endsWith(".gif")) mediaType = MediaType.IMAGE_GIF;
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(file.length())
+                .contentType(mediaType)
+                .body(resource);
+    }
+	/**
      * 사원 목록을 조회합니다. (부서별 검색 기능 포함)
      * hrmanager.html의 '검색' 버튼이 이 API를 호출합니다.
      */
@@ -42,14 +115,12 @@ public class EmpLoginController {
         
         // 3. 서비스 호출 시 두 파라미터 모두 전달
         List<EmpVO> empList = empLoginService.findEmployeesByDept(deptName, title);
-
+        List<Map<String, Object>> result = new ArrayList<>();
         // (System.out.println 로그는 문제 없음)
         for (EmpVO emp : empList) {
             System.out.println("emp_id=" + emp.getEmp_id() + ", name=" + emp.getName() +",title="+emp.getTitle() 
                 + ", dept_code=" + emp.getDept_code() + ", email=" + emp.getEmail() + ", dept_name=" + emp.getDept_name());
         }
-
-        List<Map<String, Object>> result = new ArrayList<>();
         for (EmpVO emp : empList) {
             Map<String, Object> map = new HashMap<>();
             map.put("empId", emp.getEmp_id());
@@ -57,13 +128,33 @@ public class EmpLoginController {
             map.put("title", emp.getTitle());
             map.put("deptName", emp.getDept_name()); // deptName이 정상적으로 매핑됨
             map.put("email", emp.getEmail());
+            map.put("comName", emp.getComName());
+            map.put("isUsed", emp.getIsUsed()); 
             result.add(map);
         }
 
         System.out.println(result); // Map 변환 후 확인
         return result;
     }
+    @PostMapping("/admin/update-employee-status")
+    public ResponseEntity<?> updateEmployeeStatus(@RequestBody Map<String, String> payload) {
+        try {
+            String empId = payload.get("empId");
+            String isUsed = payload.get("isUsed");
 
+            if (empId == null || empId.trim().isEmpty() || isUsed == null || isUsed.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "empId와 isUsed는 필수입니다."));
+            }
+
+            empLoginService.updateEmployeeStatus(empId, isUsed);
+            return ResponseEntity.ok(Map.of("message", "사원 상태가 성공적으로 변경되었습니다."));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body(Map.of("message", "서버 오류: " + e.getMessage()));
+        }
+    }
 
     /**
      * 초기 비번 전송' 버튼을 처리합니다.

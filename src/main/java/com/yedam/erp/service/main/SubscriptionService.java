@@ -39,5 +39,8 @@ public interface SubscriptionService {
    // void cancelSubscription(Long subCode);
     // 구독 정보 조회
     //SubscriptionVO getSubscription(Long subCode);
+    //회사구독최신내역조회
+    SubscriptionVO findLatestSubscriptionByComCode(String comCode);
+
     
 }

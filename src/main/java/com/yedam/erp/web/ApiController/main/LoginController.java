@@ -25,6 +25,7 @@ import com.yedam.erp.service.main.LoginService;
 import com.yedam.erp.service.main.NaverCaptchaService;
 import com.yedam.erp.service.main.RecaptchaService;
 import com.yedam.erp.vo.hr.EmpVO;
+import com.yedam.erp.vo.main.EmpLoginVO;
 import com.yedam.erp.vo.main.PasswordResetRequestVO;
 import com.yedam.erp.vo.main.PwResetTokenVO;
 
@@ -64,23 +65,23 @@ public class LoginController {
         
         // 1. 로그인된 사용자 ID를 인증 객체에서 가져옴
         String empId = userDetails.getUsername(); 
-        
+        EmpLoginVO login = empLoginService.mypageInfo(empId);
         log.info("마이페이지 요청 - 로그인된 사용자 ID (empId): {}", empId);
         
         // 2. 서비스 로직은 empId를 사용하여 그대로 진행
-        EmpVO emp = empLoginService.mypageInfo(empId);
-        
+        EmpLoginVO emp = empLoginService.mypageInfo(empId);
+        model.addAttribute("emp", emp);
         // 3. EmpVO가 null일 때 템플릿 오류가 발생하지 않도록 Null 체크
         if (emp == null) {
             log.warn("[경고] 사용자 ID: {} 에 대한 사원 정보(EmpVO)가 DB에서 발견되지 않았습니다.", empId);
             
             // 안전한 템플릿 렌더링을 위해 빈 객체로 초기화
-            emp = new EmpVO(); 
+            emp = new EmpLoginVO(); 
         } else {
             log.info("사용자 ID: {} 에 대한 사원 정보 로드 성공.", empId);
             log.debug("   - 이름: {}", emp.getName());
-            log.debug("   - 사원 번호: {}", emp.getEmp_id());
-            log.debug("   - 직급: {}", emp.getPosition());
+//            log.debug("   - 사원 번호: {}", emp.getEmp_id());
+//            log.debug("   - 직급: {}", emp.getPosition());
         }
 
         model.addAttribute("emp", emp);

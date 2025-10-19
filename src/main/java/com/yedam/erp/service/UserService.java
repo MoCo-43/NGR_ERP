@@ -64,17 +64,24 @@ public class UserService {
         Map<String, Object> response = new HashMap<>();
         String comCode = requestDto.getComCode();
         String empId = requestDto.getEmpId();
+        String inputEmail = requestDto.getMatMail();
 
         try {
-            // 1. 사용자 정보 및 휴대폰 번호 검증
+            // 1. 사용자 정보 및 휴대폰 번호 검증(회사 검증)
             CompanyVO company = companyMapper.findByComCode(comCode)
                     .orElseThrow(() -> new NoSuchElementException("유효하지 않은 회사코드입니다."));
-            
+            //2.사원검증 회사코드 + 아이디
             EmpLoginVO foundUser = empLoginMapper.findByEmpIdAndComCode(empId, company.getComCode());
             if (foundUser == null) {
                 throw new NoSuchElementException("아이디가 존재하지 않거나 회사 정보와 일치하지 않습니다.");
             }
-            
+            // 3. 이메일 일치 여부 검증
+            if (!StringUtils.hasText(foundUser.getEmail())) {
+                throw new IllegalStateException("계정에 이메일이 등록되어 있지 않습니다.");
+            }
+            if (!foundUser.getEmail().trim().equalsIgnoreCase(inputEmail.trim())) {
+                throw new IllegalArgumentException("입력한 이메일이 등록된 이메일과 일치하지 않습니다.");
+            }
             String phoneNum = foundUser.getEmpMobile();
             if (!StringUtils.hasText(phoneNum)) {
                 throw new IllegalStateException("계정에 휴대폰 번호가 등록되어 있지 않습니다.");

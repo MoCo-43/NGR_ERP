@@ -110,6 +110,19 @@
         #{mon}
     )
 </insert>
+<select id="findLatestSubscriptionByComCode"
+        parameterType="String"
+        resultType="com.yedam.erp.vo.main.SubscriptionVO">
+    SELECT *
+    FROM (
+        SELECT *
+        FROM subscription
+        WHERE com_code = #{comCode}
+        ORDER BY start_date DESC
+    )
+    WHERE ROWNUM = 1
+</select>
+
 <select id="findSubscriptionsDueForPaymentToday" resultType="com.yedam.erp.vo.main.SubscriptionVO">
     SELECT 
         sub_code,

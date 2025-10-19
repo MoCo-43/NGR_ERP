@@ -100,7 +100,7 @@ public class SubsciptionServiceImpl implements SubscriptionService {
     @Override
     @Transactional(rollbackFor = Exception.class) 
     public String completePaymentTransaction(String paymentKey, String orderId, Long amount) {
-    	//캐시에서 일반결제 준비 데이터 조회
+        // 캐시에서 일반결제 준비 데이터 조회
         Map<String, Object> preparedData = preparedPaymentsCache.get(orderId);
         if (preparedData == null) {
             log.error("결제 승인 실패: 유효하지 않은 orderId: {}", orderId);
@@ -132,10 +132,17 @@ public class SubsciptionServiceImpl implements SubscriptionService {
             }
         };
 
-        // 회사 코드 생성 및 VO 객체 구성
+        // 회사 코드 생성 / 유지 로직
         Long matNo = toLong.apply(preparedData.get("matNo"));
         Long subPlanNo = toLong.apply(preparedData.get("subPlanNo"));
-        String newComCode = generateComCode();
+
+        // ✅ 기존 회사코드 확인
+        Map<String, Object> existingCompany = subscriptionMapper.selectCompanyInfoByMatNo(matNo);
+        String existingComCode = (existingCompany != null) ? (String) existingCompany.get("COM_CODE") : null;
+        String finalComCode = (existingComCode != null && !existingComCode.isEmpty())
+                ? existingComCode
+                : generateComCode();
+
         String subCode = "SUB-" + UUID.randomUUID().toString().substring(0, 15).toUpperCase();
 
         // SubscriptionVO 구성
@@ -146,7 +153,7 @@ public class SubsciptionServiceImpl implements SubscriptionService {
         subVo.setMon(toLong.apply(preparedData.get("duration")));
         subVo.setTotalPay(amount);
         subVo.setMatNo(matNo);
-        subVo.setComCode(newComCode);
+        subVo.setComCode(finalComCode);
         subVo.setSubStatus("ACTIVE");
 
         // SubPayVO 구성
@@ -180,51 +187,54 @@ public class SubsciptionServiceImpl implements SubscriptionService {
         subPayMapper.insertPayLog(payVo);
         subLogMapper.insertSubLog(subLogVo);
 
-        // Company 테이블 업데이트
-        Map<String, Object> companyUpdateParams = new HashMap<>();
-        companyUpdateParams.put("comCode", newComCode);
-        companyUpdateParams.put("compName", preparedData.get("compName"));
-        companyUpdateParams.put("brm", toLong.apply(preparedData.get("brm")));
-        companyUpdateParams.put("ceo", preparedData.get("ceo"));
-        companyUpdateParams.put("matNo", matNo);
+        // ✅ 신규 회사만 업데이트
+        if (existingComCode == null || existingComCode.isEmpty()) {
+            Map<String, Object> companyUpdateParams = new HashMap<>();
+            companyUpdateParams.put("comCode", finalComCode);
+            companyUpdateParams.put("compName", preparedData.get("compName"));
+            companyUpdateParams.put("brm", toLong.apply(preparedData.get("brm")));
+            companyUpdateParams.put("ceo", preparedData.get("ceo"));
+            companyUpdateParams.put("matNo", matNo);
 
-        subscriptionMapper.updateCompanyComCode(companyUpdateParams);
+            subscriptionMapper.updateCompanyComCode(companyUpdateParams);
+            log.info("신규 회사코드 [{}] 발급 및 업데이트 완료 (MatNo={})", finalComCode, matNo);
+        } else {
+            log.info("기존 회사코드 [{}] 유지 (MatNo={})", finalComCode, matNo);
+        }
 
         // 캐시 정리 및 comCode 반환
         preparedPaymentsCache.remove(orderId);
-        return newComCode;
+        return finalComCode;
     }
+
     
     /** 정기결제용**/
     //pending 구독 생성 첫 결제 정보 포함
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String processFirstRecurringPayment(String customerKey, String billingKey) {
-        
-        // 1. PENDING 상태의 구독 정보 조회 (결제할 금액, 기간, 사용자 수 등)
+
         SubscriptionVO pendingSub = subscriptionMapper.findPendingSubscriptionByCustomerKey(customerKey);
         if (pendingSub == null) {
             throw new RuntimeException("결제할 구독 정보를 찾을 수 없습니다. CustomerKey: " + customerKey);
         }
-        if (!"PENDING".equals(pendingSub.getSubStatus())) { // 중복 처리 방지
-            log.warn("이미 처리되었거나 PENDING 상태가 아닌 구독입니다. CustomerKey: {}", customerKey);
-            // 이미 활성화된 경우 comCode 반환 또는 예외 처리 선택
+        if (!"PENDING".equals(pendingSub.getSubStatus())) {
+            log.warn("이미 처리된 구독입니다. CustomerKey: {}", customerKey);
             return pendingSub.getComCode() != null ? pendingSub.getComCode() : "ALREADY_PROCESSED";
         }
 
-        Long amount = pendingSub.getTotalPay(); // 첫 결제 금액
+        Long amount = pendingSub.getTotalPay();
         String subCode = pendingSub.getSubCode();
         Long subPlanNo = pendingSub.getSubPlanNo();
         Long totalUsers = pendingSub.getTotalUsers();
-        Long duration = pendingSub.getMon(); // 구독 기간 (개월 수)
-        String orderId = "ORD-" + subCode + "-FIRST"; // '첫 결제'를 위한 고유 주문ID 생성
+        Long duration = pendingSub.getMon();
+        String orderId = "ORD-" + subCode + "-FIRST";
 
-        // 2. Toss Payments에 빌링키로 '첫 결제' 승인 요청 (Billing API)
         Map<String, Object> tossResult;
         try {
             log.info("Toss Billing API 호출 시작 - OrderId: {}, Amount: {}", orderId, amount);
             tossResult = tossPaymentsService.approveBillingPayment(billingKey, customerKey, amount, orderId);
-            
+
             if (!"DONE".equals(tossResult.get("status"))) {
                 String errorMsg = (String) tossResult.getOrDefault("message", "토스 첫 결제 승인 실패");
                 log.error("Toss Billing API 실패 - OrderId: {}, Response: {}", orderId, tossResult);
@@ -237,46 +247,33 @@ public class SubsciptionServiceImpl implements SubscriptionService {
             throw new RuntimeException("Toss Payments 통신 오류", e);
         }
 
-        // 3. 결제 성공 후, DB 트랜잭션 처리
-        String newComCode = generateComCode();
+        // ✅ 기존 회사코드 확인
         Long matNo = pendingSub.getMatNo();
+        Map<String, Object> existingCompany = subscriptionMapper.selectCompanyInfoByMatNo(matNo);
+        String existingComCode = (existingCompany != null) ? (String) existingCompany.get("COM_CODE") : null;
+        String finalComCode = (existingComCode != null && !existingComCode.isEmpty())
+                ? existingComCode
+                : generateComCode();
 
-        // 3-1. SubscriptionVO (PENDING -> ACTIVE) 업데이트
-        pendingSub.setComCode(newComCode);
-        pendingSub.setBillingKey(billingKey); // ★ SubscriptionVO에 billingKey 필드 필요
-        // (activatePendingSubscription 쿼리가 status, date, next_pay_date 등 설정)
+        // Subscription 업데이트
+        pendingSub.setComCode(finalComCode);
+        pendingSub.setBillingKey(billingKey);
         int updatedRows = subscriptionMapper.activatePendingSubscription(pendingSub);
         if (updatedRows == 0) {
-             throw new RuntimeException("구독 활성화 실패: 업데이트된 행이 없습니다. SubCode: " + subCode);
+            throw new RuntimeException("구독 활성화 실패. SubCode: " + subCode);
         }
         log.info("Subscription 테이블 업데이트 성공. SubCode: {}", subCode);
 
-
-        // 3-2. SubPayVO (첫 결제 내역) 생성 및 저장
-        // (adjustmentCharge 재계산)
+        // 결제 로그 저장
         Long adjustmentCharge = 0L;
-        // 구독 플랜 정보 조회 (maxUsers, baseSalary 등 필요)
-        SubPlanVO subPlan = subPlanMapper.selectSubPlanById(subPlanNo); // ★ SubPlanMapper 필요
+        SubPlanVO subPlan = subPlanMapper.selectSubPlanById(subPlanNo);
         if (subPlan != null) {
-            long baseUserInputPrice = subPlan.getBaseSalary() * totalUsers * duration; // 기본 금액
-            // 할인 계산 (12개월)
-            long discount = (duration == 12) ? Math.round(baseUserInputPrice * 0.1) : 0L;
-            // 조정 금액 계산 (플랜 기준 초과/미만) - USER_UNIT_PRICE 상수 필요
-            final long USER_UNIT_PRICE = 5000; // ★ 실제 값으로 설정 필요
+            final long USER_UNIT_PRICE = 5000;
             if (totalUsers > subPlan.getMaxUsers()) {
-            	adjustmentCharge = (totalUsers - subPlan.getMaxUsers()) * USER_UNIT_PRICE * duration;
-            } else if (totalUsers < subPlan.getMinUsers()) { // 혹은 maxUsers 기준? 정책 확인 필요
-            	adjustmentCharge = -(subPlan.getMaxUsers() - totalUsers) * USER_UNIT_PRICE * duration; // 예시
+                adjustmentCharge = (totalUsers - subPlan.getMaxUsers()) * USER_UNIT_PRICE * duration;
+            } else if (totalUsers < subPlan.getMinUsers()) {
+                adjustmentCharge = -(subPlan.getMaxUsers() - totalUsers) * USER_UNIT_PRICE * duration;
             }
-            // 검증: 재계산된 금액이 실제 결제 금액과 맞는지 확인 (선택 사항)
-            long calculatedAmount = baseUserInputPrice - discount + adjustmentCharge;
-            if (calculatedAmount != amount) {
-                log.warn("첫 결제 금액 불일치! 계산된 금액: {}, 실제 결제 금액: {}", calculatedAmount, amount);
-                // 필요시 예외 처리 또는 로깅 강화
-            }
-        } else {
-            log.error("구독 플랜 정보를 찾을 수 없습니다. SubPlanNo: {}", subPlanNo);
-            // 플랜 정보 없이 adjustmentCharge = 0 으로 진행하거나 예외 처리
         }
 
         Long excessFee = adjustmentCharge > 0 ? adjustmentCharge : 0L;
@@ -284,44 +281,40 @@ public class SubsciptionServiceImpl implements SubscriptionService {
 
         SubPayVO payVo = new SubPayVO();
         payVo.setAmount(amount);
-        payVo.setPgIsAuto("Y"); // '정기결제'
+        payVo.setPgIsAuto("Y");
         payVo.setTransactionNo((String) tossResult.get("paymentKey"));
         payVo.setPayMethod((String) tossResult.get("method"));
         payVo.setSubCode(subCode);
-        payVo.setBillingKeyNo(billingKey); // ★ 빌링키 저장
+        payVo.setBillingKeyNo(billingKey);
         payVo.setExcessPee(excessFee);
-        payVo.setReductionFee(reductionFee); // (VO 필드명 주의)
+        payVo.setReductionFee(reductionFee);
         subPayMapper.insertPayLog(payVo);
-        log.info("PayLog 테이블 저장 성공. SubCode: {}", subCode);
+        log.info("PayLog 저장 성공. SubCode: {}", subCode);
 
-
-        // 3-3. SubLogVO (NEW) 생성 및 저장
         SubLogVO subLogVo = new SubLogVO();
         subLogVo.setSubType("NEW");
         subLogVo.setNewSubPlan(subPlanNo);
         subLogVo.setChangePay(amount);
         subLogVo.setSubCode(subCode);
         subLogMapper.insertSubLog(subLogVo);
-        log.info("SubLog 테이블 저장 성공. SubCode: {}", subCode);
 
-
-        // 3-4. Company 테이블 업데이트 (comCode 할당)
-        Map<String, Object> companyInfo = subscriptionMapper.selectCompanyInfoByMatNo(matNo);
-        if (companyInfo == null) {
-            throw new RuntimeException("회사 정보를 찾을 수 없습니다. matNo: " + matNo);
+        // ✅ 신규 회사만 업데이트
+        if (existingComCode == null || existingComCode.isEmpty()) {
+            Map<String, Object> companyUpdateParams = new HashMap<>();
+            companyUpdateParams.put("comCode", finalComCode);
+            companyUpdateParams.put("compName", existingCompany.get("COMP_NAME"));
+            companyUpdateParams.put("brm", existingCompany.get("BRM"));
+            companyUpdateParams.put("ceo", existingCompany.get("CEO"));
+            companyUpdateParams.put("matNo", matNo);
+            subscriptionMapper.updateCompanyComCode(companyUpdateParams);
+            log.info("신규 회사코드 [{}] 등록 완료. MatNo: {}", finalComCode, matNo);
+        } else {
+            log.info("기존 회사코드 [{}] 유지. MatNo: {}", finalComCode, matNo);
         }
-        Map<String, Object> companyUpdateParams = new HashMap<>();
-        companyUpdateParams.put("comCode", newComCode);
-        companyUpdateParams.put("compName", companyInfo.get("COMP_NAME"));
-        companyUpdateParams.put("brm", companyInfo.get("BRM")); // 타입 주의
-        companyUpdateParams.put("ceo", companyInfo.get("CEO"));
-        companyUpdateParams.put("matNo", matNo);
-        subscriptionMapper.updateCompanyComCode(companyUpdateParams);
-        log.info("Company 테이블 업데이트 성공. MatNo: {}", matNo);
 
-        // 4. comCode 반환
-        return newComCode;
+        return finalComCode;
     }
+
 
     
     @Override
@@ -475,6 +468,12 @@ public class SubsciptionServiceImpl implements SubscriptionService {
     public SubscriptionVO getSubscription(String subCode) {
         return subscriptionMapper.getSubscriptionBySubCode(subCode);
     }
+    //회사구독내역
+	@Override
+	public SubscriptionVO findLatestSubscriptionByComCode(String comCode) {
+		
+		return subscriptionMapper.findLatestSubscriptionByComCode(comCode);
+	}
 //    @Override
 //    @Transactional
 //    public void cancelSubscription(Long subCode) {

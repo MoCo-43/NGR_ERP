@@ -2,6 +2,7 @@ package com.yedam.erp.security;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -110,11 +111,11 @@ public class CustomUserDetails implements UserDetails {
      * 로그인 실패 횟수 초과 등의 사유로 계정이 잠겼는지 확인하는 데 사용됩니다.
      * @return true: 계정 잠기지 않음
      */
-    @Override
-    public boolean isAccountNonLocked() {
-        // empLoginVO의 isLocked 필드가 'Y'가 아닐 때(잠기지 않았을 때) true를 반환합니다.
-        return !"Y".equals(empLoginVO.getIsLocked());
-    }
+//    @Override
+//    public boolean isAccountNonLocked() {
+//        // empLoginVO의 isLocked 필드가 'Y'가 아닐 때(잠기지 않았을 때) true를 반환합니다.
+//        return !"Y".equals(empLoginVO.getIsLocked());
+//    }
 
     /**
      * 비밀번호가 만료되지 않았는지 여부를 반환합니다.
@@ -140,6 +141,16 @@ public class CustomUserDetails implements UserDetails {
 	public String toString() {
 		return "CustomUserDetails [empLoginVO=" + empLoginVO + "]";
 	}
-    
+    public boolean isAccountNonLocked() {
+        if ("Y".equals(empLoginVO.getIsLocked())) {
+            Date lockUntil = empLoginVO.getLockUntil();
+            if (lockUntil != null && lockUntil.before(new Date())) {
+                // 잠금 해제 시간 지남 → 자동 해제
+                return true;
+            }
+            return false;
+        }
+        return true;
+    } 
     
 }

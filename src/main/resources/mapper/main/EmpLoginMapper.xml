@@ -80,7 +80,8 @@
             T1.two_step_method,
             T1.token,
             T1.emp_mobile,
-            T1.name
+            T1.name,
+            T1.email
         FROM
             emp_login T1
         INNER JOIN
@@ -90,40 +91,35 @@
             T2.com_code = #{comCode}      
     </select>
 <resultMap id="EmpVOResultMap" type="com.yedam.erp.vo.hr.EmpVO">
-    <id property="emp_id" column="EMP_ID"/> 
-	    <result property="name" column="NAME"/> 
-	    <result property="dept_code" column="DEPT_CODE"/>
-	    <result property="email" column="EMAIL"/>
-	    <result property="title" column="TITLE"/>
-	    <result property="companyCode" column="COMPANY_CODE"/> 
-	    <result property="position" column="POSITION"/>
-	    <result property="dept_name" column="DEPT_NAME"/> 
-    </resultMap>    
-    
-<select id="findEmployeesByDept" resultMap="EmpVOResultMap">
+    <id property="emp_id" column="empId"/> 
+    <result property="name" column="NAME"/> 
+    <result property="dept_code" column="DEPT_CODE"/>
+    <result property="email" column="EMAIL"/>
+    <result property="title" column="TITLE"/>
+    <result property="companyCode" column="COMPANY_CODE"/> 
+    <result property="position" column="POSITION"/>
+    <result property="dept_name" column="DEPT_NAME"/> 
+    <result property="comName" column="COM_NAME"/>
+    <result property="isUsed" column="IS_USED"/>
+</resultMap>    
+
+<select id="findEmployeesByDept" parameterType="map" resultMap="EmpVOResultMap">
     SELECT 
-        e.EMP_ID,
+        e.EMP_ID AS empId,
         e.NAME,
         e.DEPT_CODE,
         e.TITLE,
         e.EMAIL,
-        e.COMPANY_CODE AS COMPANY_CODE, 
         d.DEPT_NAME,
-        l.COM_NAME
+        l.COM_NAME,
+        NVL(l.IS_USED, 'N') AS IS_USED
     FROM emp e
-    JOIN dept d
-        ON e.DEPT_CODE = d.DEPT_CODE
-    JOIN (
-        SELECT 
-            mat_no, 
-            MAX(COM_NAME) AS COM_NAME
-        FROM emp_login
-        GROUP BY mat_no
-    ) l
-        ON e.company_code = l.mat_no
+    LEFT JOIN dept d ON e.DEPT_CODE = d.DEPT_CODE
+    LEFT JOIN emp_login l 
+    	ON TO_NUMBER(REGEXP_SUBSTR(e.emp_id, '[0-9]+$')) = l.emp_no
     <where>
         <if test="deptName != null and deptName != ''">
-            d.DEPT_NAME = #{deptName}
+            AND d.DEPT_NAME = #{deptName}
         </if>
         <if test="title != null and title != ''">
             AND e.TITLE = #{title}
@@ -131,6 +127,11 @@
     </where>
     ORDER BY e.NAME
 </select>
+<update id="updateEmployeeStatus">
+    UPDATE emp_login
+    SET is_used = #{isUsed}
+    WHERE emp_id = #{empId}
+</update>
 <!-- 신규 아이디 계정 생성 -->
 <insert id="insertNewEmployeeLogin" parameterType="com.yedam.erp.vo.main.EmpLoginVO">
         
@@ -149,6 +150,7 @@
             IS_LOCKED,          
             FAILED_LOGIN_ATT,   
             MUST_CHANGE_PW,
+            email,
             COM_NAME
         ) VALUES (
             #{empIdNo},
@@ -161,6 +163,7 @@
             'N',
             0,
             'Y',
+            #{email}
             #{comName}
         )
     </insert>
@@ -186,20 +189,51 @@
     WHERE
         EMP_ID = #{empId}
 </select>
-<select id="mypageInfo" resultType="com.yedam.erp.vo.hr.EmpVO">
-		SELECT 
-		    l.emp_id AS login_id,
-		    e.emp_id AS emp_id,
-		    e.name,
-		    d.dept_name,
-		    e.position
-		FROM emp_login l
-		LEFT JOIN emp e 
-		    ON REPLACE(l.emp_id, 'NGR-', '') = e.emp_id
-		LEFT JOIN dept d 
-		    ON e.dept_code = d.dept_code
-		WHERE l.emp_id = #{empId}
+<select id="mypageInfo" resultType="com.yedam.erp.vo.main.EmpLoginVO">
+    SELECT 
+        l.emp_id_no,
+        l.emp_id,
+        l.emp_img,
+        l.emp_mobile,
+        l.name,
+        d.dept_name,
+        e.position,
+        e.email,
+        l.com_name
+    FROM emp_login l
+    LEFT JOIN emp e ON REPLACE(l.emp_id, 'NGR-', '') = e.emp_id
+    LEFT JOIN dept d ON e.dept_code = d.dept_code
+    WHERE l.emp_id = #{empId}
 </select>
+<!-- 로그인 실패 시 실패 횟수 증가 및 잠금 처리 -->
+<update id="updateLoginFail" parameterType="com.yedam.erp.vo.main.EmpLoginVO">
+    UPDATE emp_login
+    SET 
+        failed_login_att = #{failedLoginAtt},
+        is_locked = #{isLocked},
+        lock_until = #{lockUntil}
+    WHERE emp_id = #{empId}
+</update>
+
+<!-- 로그인 성공 시 실패 횟수 초기화 및 잠금 해제 -->
+<update id="resetLoginFail">
+    UPDATE emp_login
+    SET 
+        failed_login_att = 0,
+        is_locked = 'N',
+        lock_until = NULL
+    WHERE emp_id = #{empId}
+</update>
+
+<!-- 잠금 해제 시간 지난 계정 자동 해제 -->
+<update id="unlockAccount">
+    UPDATE emp_login
+    SET 
+        is_locked = 'N',
+        lock_until = NULL,
+        failed_login_att = 0
+    WHERE emp_id = #{empId}
+</update>
 
 <select id="findMatNoByEmpId" parameterType="String" resultType="long">
     SELECT 
@@ -222,4 +256,15 @@
     WHERE
         EMP_ID = #{empId}
 </update>
+<update id="updateEmpImage">
+    UPDATE emp_login
+    SET emp_img = #{empImg}
+    WHERE emp_id_no = #{empIdNo}
+</update>
+
+<select id="findByEmpIdNo" resultType="com.yedam.erp.vo.main.EmpLoginVO">
+    SELECT *
+    FROM emp_login
+    WHERE emp_id_no = #{empIdNo}
+</select>
 </mapper>

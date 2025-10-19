@@ -1,247 +1,224 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/base}">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 
 <th:block layout:fragment="head_extra">
-	<title>마이페이지</title>
+    <title>마이페이지</title>
 
-	<link rel="stylesheet"
-		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-	<link
-		href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/main.min.css"
-		rel="stylesheet" />
-	<link rel="stylesheet"
-		href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-	<link rel="stylesheet"
-		href="https://npmcdn.com/flatpickr/dist/l10n/ko.css">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/main.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/l10n/ko.css">
 
-	<style>
+    <style>
 html, body {
-	height: 100%;
+    height: 100%;
 }
-
-#content-wrapper {
-	min-height: 100vh;
-}
-
-#content {
-	flex: 1 0 auto;
-}
-
-.schedule-container {
-	display: flex;
-	gap: 20px;
-}
-
-.schedule-main {
-	flex: 3;
-}
-
+#content-wrapper { min-height: 100vh; }
+#content { flex: 1 0 auto; }
+.schedule-container { display: flex; gap: 20px; }
+.schedule-main { flex: 3; }
 #calendar {
-	min-height: 700px;
-	max-width: 1100px;
-	margin: 0 auto;
+    min-height: 700px;
+    max-width: 1100px;
+    margin: 0 auto;
 }
 
-/* --- 프로필 이미지 관련 스타일 시작 --- */
+/* --- 프로필 이미지 관련 스타일 --- */
 .profile-image-wrap {
-	position: relative;
-	width: 150px;
-	height: 150px;
-	border-radius: 50%; /* 둥근 모양 */
-	overflow: hidden;
-	border: 3px solid #eee;
-	margin: 0 auto; /* 중앙 정렬 */
-	cursor: pointer;
-	display: block;
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #eee;
+    margin: 0 auto;
+    cursor: pointer;
+    display: block;
 }
-
-/* 이미지 스타일 */
 .profile-image-wrap #profileImage {
-	width: 100%;
-	height: 100%;
-	object-fit: cover; /* 이미지가 꽉 차도록 하면서 비율 유지 */
-	display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
-
-/* 설정 아이콘 스타일 */
 .edit-icon {
-	position: absolute;
-	bottom: 5px;
-	right: 5px;
-	background-color: #007bff;
-	color: white;
-	border-radius: 50%;
-	width: 35px;
-	height: 35px;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	font-size: 16px;
-	cursor: pointer;
-	border: 2px solid white;
-	box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-	z-index: 10;
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    z-index: 10;
 }
-/* --- 프로필 이미지 관련 스타일 끝 --- */
-</style>
+    </style>
 </th:block>
 
 <th:block layout:fragment="content">
-	<div class="container-fluid">
-		<h1 class="h3 mb-4 text-gray-800">마이페이지</h1>
+    <div class="container-fluid">
+        <h1 class="h3 mb-4 text-gray-800">마이페이지</h1>
 
-		<div class="row">
-			<div class="col-lg-5">
-				<div class="card shadow mb-4">
-					<div class="card-header py-3">
-						<h6 class="m-0 font-weight-bold text-primary">사원 정보</h6>
-					</div>
-					<div class="card-body">
-						<div class="text-center mb-4 profile-image-container">
-							<input type="file" id="imgFile" name="productImage"
-								style="display: none;" accept="image/*">
+        <div class="row">
+            <!-- 왼쪽: 프로필 및 사원 정보 -->
+            <div class="col-lg-5">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">사원 정보</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-4 profile-image-container">
+                            <input type="file" id="imgFile" name="empImgFile"
+                                   style="display: none;" accept="image/*">
+                            <div class="profile-image-wrap" id="profileImageWrap">
+                                <img id="profileImage"
+                                     th:src="${emp?.empImg != null} ? @{/profileImage/{fileName}(fileName=${emp.empImg})} : @{/img/neogurume.png}"
+                                     onerror="this.src='/images/default-profile.png'"
+                                     alt="프로필 이미지">
+                                <span class="edit-icon" id="editIcon">
+                                    <i class="fas fa-camera"></i>
+                                </span>
+                            </div>
+                        </div>
 
-							<div class="profile-image-wrap" id="profileImageWrap">
-								<img id="profileImage" src="/images/default-profile.png"
-									alt="프로필 이미지"> <span class="edit-icon" id="editIcon">
-									<i class="fas fa-camera"></i>
-								</span>
-							</div>
-						</div>
+                        <div class="px-3">
+                            <div class="row mb-3 align-items-center">
+                                <div class="col-4 font-weight-bold text-dark">사원 이름:</div>
+                                <div class="col-8 d-flex justify-content-between align-items-center">
+                                    <p th:text="${emp?.name ?: 'Unknown'}">Employee Name</p>
+                                    <button class="btn btn-sm btn-primary">수정</button>
+                                </div>
+                            </div>
 
-						<div class="px-3">
-							<div class="row mb-3 align-items-center">
-								<div class="col-4 font-weight-bold text-dark">사원 이름:</div>
-								<div
-									class="col-8 d-flex justify-content-between align-items-center">
-									<p th:text="${emp?.name ?: 'Unknown'}">Employee Name</p>
-									<button class="btn btn-sm btn-primary">수정</button>
-								</div>
-							</div>
+                            <div class="row mb-3">
+                                <div class="col-4 font-weight-bold text-dark">사원 번호:</div>
+                                <div class="col-8" th:text="${emp?.empId ?: '정보 없음'}">E001</div>
+                            </div>
 
-							<div class="row mb-3">
-								<div class="col-4 font-weight-bold text-dark">사원 번호:</div>
-								<div class="col-8" th:text="${emp?.emp_id ?: '정보 없음'}">E001</div>
-							</div>
+                            <!--  <div class="row mb-3">
+                                <div class="col-4 font-weight-bold text-dark">부서:</div>
+                                <div class="col-8" th:text="${emp?.deptName ?: '-'}">영업팀</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4 font-weight-bold text-dark">직급:</div>
+                                <div class="col-8" th:text="${emp?.position ?: '-'}">사원</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4 font-weight-bold text-dark">이메일:</div>
+                                <div class="col-8" th:text="${emp?.email ?: '-'}">example@email.com</div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-4 font-weight-bold text-dark">주소:</div>
+                                <div class="col-8" th:text="${emp?.address ?: '-'}">서울특별시</div>
+                            </div>-->
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-							<div class="row mb-3">
-								<div class="col-4 font-weight-bold text-dark">부서:</div>
-								<div class="col-8" th:text="${emp.position}">사원</div>
-							</div>
-							<div class="row mb-3">
-								<div class="col-4 font-weight-bold text-dark">직급:</div>
-								<div class="col-8" th:text="${emp.position}">사원</div>
-							</div>
-							<div class="row mb-3">
-								<div class="col-4 font-weight-bold text-dark">이메일:</div>
-								<div class="col-8" th:text="${emp.position}">사원</div>
-							</div>
-							<div class="row mb-3">
-								<div class="col-4 font-weight-bold text-dark">주소:</div>
-								<div class="col-8" th:text="${emp.position}">사원</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+            <!-- 오른쪽: 일정 관리 -->
+            <div class="col-lg-7">
+                <!-- 기존 일정관리 모달 유지 -->
+                <div class="modal fade" id="scheduleModal" tabindex="-1"
+                     aria-labelledby="scheduleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form id="addScheduleForm">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="scheduleModalLabel">일정 추가/수정</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="닫기"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <input type="hidden" id="plan-no">
+                                    <div class="mb-3">
+                                        <label for="schedule-title" class="form-label">제목</label>
+                                        <input type="text" class="form-control" id="schedule-title" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="schedule-type" class="form-label">일정유형</label>
+                                        <select class="form-select" id="schedule-type" required>
+                                            <option value="">선택</option>
+                                            <option value="회의">회의</option>
+                                            <option value="출장">출장</option>
+                                            <option value="프로젝트 마감">프로젝트 마감</option>
+                                            <option value="기타">기타</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3 row g-2">
+                                        <div class="col">
+                                            <label for="schedule-start" class="form-label">시작일</label>
+                                            <input type="text" class="form-control" id="schedule-start" required placeholder="YYYY-MM-DD">
+                                        </div>
+                                        <div class="col">
+                                            <label for="schedule-end" class="form-label">종료일</label>
+                                            <input type="text" class="form-control" id="schedule-end" required placeholder="YYYY-MM-DD">
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="schedule-details" class="form-label">내용</label>
+                                        <textarea class="form-control" id="schedule-details"></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">저장</button>
+                                    <button type="button" class="btn btn-danger" id="delete-btn">삭제</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
-			<div class="col-lg-7">
-				<div class="modal fade" id="scheduleModal" tabindex="-1"
-					aria-labelledby="scheduleModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<form id="addScheduleForm">
-								<div class="modal-header">
-									<h5 class="modal-title" id="scheduleModalLabel">일정 추가/수정</h5>
-									<button type="button" class="btn-close" data-bs-dismiss="modal"
-										aria-label="닫기"></button>
-								</div>
-								<div class="modal-body">
-									<input type="hidden" id="plan-no">
-									<div class="mb-3">
-										<label for="schedule-title" class="form-label">제목</label> <input
-											type="text" class="form-control" id="schedule-title" required>
-									</div>
-									<div class="mb-3">
-										<label for="schedule-type" class="form-label">일정유형</label> <select
-											class="form-select" id="schedule-type" required>
-											<option value="">선택</option>
-											<option value="회의">회의</option>
-											<option value="출장">출장</option>
-											<option value="프로젝트 마감">프로젝트 마감</option>
-											<option value="기타">기타</option>
-										</select>
-									</div>
-									<div class="mb-3 row g-2">
-										<div class="col">
-											<label for="schedule-start" class="form-label">시작일</label> <input
-												type="text" class="form-control" id="schedule-start"
-												required placeholder="YYYY-MM-DD">
-										</div>
-										<div class="col">
-											<label for="schedule-end" class="form-label">종료일</label> <input
-												type="text" class="form-control" id="schedule-end" required
-												placeholder="YYYY-MM-DD">
-										</div>
-									</div>
-									<div class="mb-3">
-										<label for="schedule-details" class="form-label">내용</label>
-										<textarea class="form-control" id="schedule-details"></textarea>
-									</div>
-								</div>
-								<div class="modal-footer">
-									<button type="submit" class="btn btn-primary">저장</button>
-									<button type="button" class="btn btn-danger" id="delete-btn">삭제</button>
-									<button type="button" class="btn btn-secondary"
-										data-bs-dismiss="modal">취소</button>
-								</div>
-							</form>
-						</div>
-					</div>
-				</div>
-
-				<div class="card shadow mb-4">
-					<div class="card-header py-3">
-						<h6 class="m-0 font-weight-bold text-primary">일정 관리</h6>
-					</div>
-					<div class="card-body">
-						<div id="calendar"></div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">일정 관리</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="calendar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </th:block>
 
 <th:block layout:fragment="body_extra">
-	<script
-		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-	<script
-		src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-	<script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
 
-	<script type="module">
+    <script th:inline="javascript">
+        const empIdNo = /*[[${session.emp?.empIdNo}]]*/ 0;
+    </script>
+
+    <script type="module">
     document.addEventListener('DOMContentLoaded', () => {
+        // ✅ ================= 일정관리 기존 로직 =================
         const calendarEl = document.getElementById('calendar');
         const modalEl = document.getElementById('scheduleModal');
         const modal = new bootstrap.Modal(modalEl);
-
         const form = document.getElementById('addScheduleForm');
         const deleteBtn = document.getElementById('delete-btn');
         const planNoInput = document.getElementById('plan-no');
-
         const titleInput = document.getElementById('schedule-title');
         const typeInput = document.getElementById('schedule-type');
         const startInput = document.getElementById('schedule-start');
         const endInput = document.getElementById('schedule-end');
         const detailsInput = document.getElementById('schedule-details');
-
         const colorMap = { "회의": "#ff9f89", "출장": "#4caf50", "프로젝트 마감": "#2196f3", "기타": "#9c27b0" };
-
         flatpickr(startInput, { dateFormat: "Y-m-d", locale: "ko" });
         flatpickr(endInput, { dateFormat: "Y-m-d", locale: "ko" });
 
@@ -305,10 +282,9 @@ html, body {
                 startDate: startInput.value,
                 endDate: endInput.value,
                 description: detailsInput.value,
-                empIdNo: 1001 // TODO: 세션값으로 교체
+                empIdNo: empIdNo
             };
             const planNo = planNoInput.value;
-
             if (planNo) {
                 fetch(`/plan/${planNo}`, {
                     method: 'PUT',
@@ -347,14 +323,12 @@ html, body {
                     }
                 });
             }
-
             modal.hide();
             form.reset();
         });
 
         deleteBtn.addEventListener('click', () => {
             const planNo = planNoInput.value;
-            const empIdNo = 1001;
             if (!planNo) return;
             if (!confirm('정말 삭제하시겠습니까?')) return;
 
@@ -371,44 +345,53 @@ html, body {
                 });
             modal.hide();
         });
-        
-        // 프로필 이미지 관련 로직 
-        const profileImageWrap = document.getElementById('profileImageWrap');
-        const editIcon = document.getElementById('editIcon');
-        const fileInput = document.getElementById('imgFile'); // 숨겨진 파일 input
-        const profileImage = document.getElementById('profileImage');
-        
-        // 1. 설정 아이콘 클릭 시 파일 선택 창 띄우기
-        if (editIcon && fileInput) {
-            editIcon.addEventListener('click', (e) => {
-                e.stopPropagation(); 
-                fileInput.click();
-            });
-        }
-        
-        // 2. 이미지 래퍼 자체를 클릭해도 파일 선택 창 띄우기
-        if (profileImageWrap && fileInput) {
-            profileImageWrap.addEventListener('click', () => {
-                fileInput.click();
-            });
-        }
 
-        // 3. 파일 선택 시 이미지 미리보기
-        if (fileInput && profileImage) {
-            fileInput.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                
-                if (file) {
-                    const reader = new FileReader();
-                    
-                    reader.onload = (e) => {
-                        profileImage.src = e.target.result; 
-                    };
-                    
-                    reader.readAsDataURL(file); 
-                }
+        // ✅ ================= 프로필 이미지 업로드 개선 버전 =================
+        const fileInput = document.getElementById('imgFile');
+        const profileImage = document.getElementById('profileImage');
+        const editIcon = document.getElementById('editIcon');
+        const profileImageWrap = document.getElementById('profileImageWrap');
+
+        [editIcon, profileImageWrap].forEach(el => {
+            el?.addEventListener('click', e => {
+                e.stopPropagation();
+                fileInput.click();
             });
-        }
+        });
+
+        fileInput?.addEventListener('change', async event => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // 미리보기
+            const reader = new FileReader();
+            reader.onload = e => profileImage.src = e.target.result;
+            reader.readAsDataURL(file);
+
+            // 서버 업로드
+            const formData = new FormData();
+            formData.append('empImgFile', file);
+            formData.append('empIdNo', empIdNo);
+
+            try {
+                const response = await fetch('/uploadProfile', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const fileName = await response.text();
+                    profileImage.src = `/profileImage/${fileName}`;
+                    alert('✅ 프로필 이미지가 성공적으로 업로드되었습니다!');
+                } else {
+                    const msg = await response.text();
+                    alert('❌ 업로드 실패: ' + msg);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('⚠️ 서버 통신 오류가 발생했습니다.');
+            }
+        });
     });
     </script>
 </th:block>

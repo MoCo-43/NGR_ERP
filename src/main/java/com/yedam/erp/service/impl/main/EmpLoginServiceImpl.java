@@ -3,8 +3,6 @@ package com.yedam.erp.service.impl.main;
 import java.util.List;
 import java.util.UUID;
 
-// 필요시 StringUtils 임포트
-import org.springframework.util.StringUtils; 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,13 +32,9 @@ public class EmpLoginServiceImpl implements EmpLoginService {
     @Override
     @Transactional
     public void activateDefaultLogin(String empId) {
-        // [수정됨] activateLogin 호출 시 기본 권한 "ROLE_USER" 전달
+        // activateLogin 호출 시 기본 권한 "ROLE_USER" 전달
         activateLogin(empId, empId, "ROLE_USER"); 
     }
-
-    // --- 2. 기존 activateCustomLogin(String empId) 제거 ---
-    // [제거됨] 이 메소드는 activateCustomLoginWithRole로 대체되었습니다.
-
     @Override
     @Transactional
     public void changePassword(String empId, String newPassword) {
@@ -49,7 +43,7 @@ public class EmpLoginServiceImpl implements EmpLoginService {
         empLoginMapper.updatePasswordAndFlag(empId, encodedPassword, "N"); 
     }
 
-    // --- 3. insertNewEmployeeLogin 검토/수정 ---
+    // 3. insertNewEmployeeLogin 검토/수정
     @Override
     @Transactional
     public void insertNewEmployeeLogin(EmpLoginVO empLoginVO) {
@@ -153,7 +147,7 @@ public class EmpLoginServiceImpl implements EmpLoginService {
               throw new RuntimeException("사원 정보에 회사 코드(companyCode)가 없습니다: " + employeeId);
         }
 
-        // [수정됨] 파라미터로 전달받은 roleName 설정
+        // 파라미터로 전달받은 roleName 설정
         loginVO.setComName(roleName); 
 
         // DB에 INSERT
@@ -191,7 +185,7 @@ public class EmpLoginServiceImpl implements EmpLoginService {
 
     // --- 기타 기존 메소드들 ---
     @Override
-    public EmpVO mypageInfo(String empId) {
+    public EmpLoginVO mypageInfo(String empId) {
         return empLoginMapper.mypageInfo(empId);
     }
 
@@ -216,6 +210,7 @@ public class EmpLoginServiceImpl implements EmpLoginService {
     @Override
     @Transactional 
     public void updateEmployeeRole(String empId, String newRoleName) {
+    	empId = toLoginId(empId);
         EmpLoginVO loginVO = new EmpLoginVO();
         loginVO.setEmpId(empId);
         loginVO.setComName(newRoleName); 
@@ -251,10 +246,40 @@ public class EmpLoginServiceImpl implements EmpLoginService {
             activateLogin(empId, customLoginId, roleName);
         }
     }
-
+    private String toLoginId(String empId) {
+        if (empId == null) return null;
+        if (empId.startsWith("EMP-")) {
+            try {
+                String[] parts = empId.split("-");
+                if (parts.length == 3) {
+                    String year = parts[1].substring(2); // 예: 1001 → 01
+                    return "NGR" + year + parts[2];     // → NGR1005
+                }
+            } catch (Exception e) {
+                System.err.println("empId 변환 실패: " + empId);
+            }
+        }
+        return empId; // 변환 불가 시 원본 유지
+    }
 	@Override
 	public void activateCustomLogin(String empId) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public void updateEmployeeStatus(String empId, String isUsed) {
+		empId = toLoginId(empId);
+	    empLoginMapper.updateEmployeeStatus(empId, isUsed);
+	}
+
+	@Override
+	public void updateEmpImage(Long empIdNo, String empImg) {
+        empLoginMapper.updateEmpImage(empIdNo, empImg);
+	}
+
+	@Override
+	public EmpLoginVO findByEmpIdNo(Long empIdNo) {
+        return empLoginMapper.findByEmpIdNo(empIdNo);
 	}
 }

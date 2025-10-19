@@ -165,7 +165,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(dataToSend) // ★ JSON으로 전송
+                body: JSON.stringify(dataToSend) // JSON으로 전송
             })
             .then(response => response.json()) // 응답을 JSON으로 파싱
             .then(data => {

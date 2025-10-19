@@ -13,8 +13,7 @@ public interface EmpLoginMapper {
     EmpLoginVO findByEmpId(@Param("empId") String empId);
 
     // 사원 조회 (부서별)
-    List<EmpVO> findEmployeesByDept(@Param("deptName") String deptName, 
-            @Param("title") String title);
+    List<EmpVO> findEmployeesByDept(@Param("deptName") String deptName, @Param("title") String title);
     // 신규 계정 생성
     void insertNewEmployeeLogin(EmpLoginVO empLoginVO);
 
@@ -32,11 +31,24 @@ public interface EmpLoginMapper {
     int updatePasswordByEmpIdNo(@Param("empIdNo") Long empIdNo, @Param("password") String password);
     //마이페이지 사원조회
   //  List<EmpVO> mypageList(String name); 
-    EmpVO mypageInfo(String empId);
+    EmpLoginVO mypageInfo(String empId);
     
     Long findMatNoByEmpId(String empId); 
     //중복체크
     int idChecks(String empId);
     //직원권한 변경(승진/강등 시)
     void updateEmployeeRole(EmpLoginVO empLoginVO);
+    void updateEmployeeStatus(@Param("empId") String empId, @Param("isUsed") String isUsed);
+    //이미지관련
+    void updateEmpImage(@Param("empIdNo") Long empIdNo, @Param("empImg") String empImg);
+    EmpLoginVO findByEmpIdNo(Long empIdNo);
+ // 로그인 실패 시 실패 횟수 증가 및 잠금 처리
+    void updateLoginFail(EmpLoginVO empLoginVO);
+
+    // 로그인 성공 시 실패 횟수 초기화 및 잠금 해제
+    void resetLoginFail(@Param("empId") String empId);
+
+    // 잠금 해제 (lock_until 시간이 지났을 때)
+    void unlockAccount(@Param("empId") String empId);
+
 }

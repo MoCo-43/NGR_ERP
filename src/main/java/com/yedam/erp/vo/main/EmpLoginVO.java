@@ -2,6 +2,8 @@ package com.yedam.erp.vo.main;
 
 import java.util.Date;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.yedam.erp.vo.hr.EmpVO;
 
 import lombok.Data;
@@ -27,6 +29,8 @@ public class EmpLoginVO {
 	private String email;
 	private String mustChangePw;
 	private String comName;
+	private String empImg;
+	private MultipartFile empImgFile;//업로드용
 	private EmpVO empVO; 
     private CompanyVO companyVO; 
 }

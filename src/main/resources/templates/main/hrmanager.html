@@ -41,7 +41,7 @@
             </div>
             <div>
                 <button id="search-btn" class="btn btn-dark btn-sm">조회</button>
-                <button id="role-update-btn" class="btn btn-outline-danger btn-sm">권한</button>
+                <button id="role-update-btn" class="btn btn-outline-danger btn-sm">권한 변경</button>
                 <button id="create-btn" class="btn btn-outline-primary btn-sm">계정생성</button>
                 <button id="activate-default-btn" class="btn btn-outline-success btn-sm">사원번호</button>
             </div>
@@ -54,6 +54,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             const gridDiv = document.querySelector('#employee-grid');
 
+            const ROLES = ["ROLE_ADMIN", "ROLE_MANAGER", "ROLE_USER", "ROLE_GUEST"];
+            const USE_STATUS = ["Y", "N"]; // ✅ 활성/비활성 상태값
+
             // 컬럼 정의
             const columnDefs = [
                 { headerName: '', checkboxSelection: true, headerCheckboxSelection: true, maxWidth: 50 },
@@ -62,8 +65,26 @@
                 { field: 'title', headerName:'직급' },
                 { field: 'deptName', headerName: '부서이름' },
                 { field: 'email', headerName: '이메일' },
-                { field: 'comName', headerName:'권한'},
-                { field: 'status', headerName:'상태'}
+                {
+                    field: 'comName',
+                    headerName: '권한',
+                    editable: true,
+                    cellEditor: 'agSelectCellEditor',
+                    cellEditorParams: {
+                        values: ROLES
+                    },
+                    valueFormatter: (p) => p.value || ''
+                },
+                {
+                    field: 'isUsed',
+                    headerName: '계정상태',
+                    editable: true,
+                    cellEditor: 'agSelectCellEditor',
+                    cellEditorParams: {
+                        values: USE_STATUS
+                    },
+                    valueFormatter: (p) => p.value === 'Y' ? '활성' : '비활성'
+                }
             ];
 
             // AG Grid 옵션
@@ -76,10 +97,54 @@
                 pagination: true,
                 paginationPageSize: 20,
                 overlayLoadingTemplate: '<span class="ag-overlay-loading-center">불러오는 중...</span>',
-                overlayNoRowsTemplate: '<span class="ag-overlay-no-rows-center">데이터가 없습니다.</span>'
+                overlayNoRowsTemplate: '<span class="ag-overlay-no-rows-center">데이터가 없습니다.</span>',
+
+                onCellValueChanged: (event) => {
+                	  const field = event.colDef.field;
+
+                	  // ✅ 권한 변경 처리
+                	  if (field === 'comName') {
+                	    const { empId, name } = event.data;
+                	    const newRole = event.newValue;
+                	    if (!newRole) return;
+
+                	    axios.post('/admin/update-role', { empId, newRole })
+                	      .then(() => {
+                	        alert(`[${name}]님의 권한이 [${newRole}]로 변경되었습니다.`);
+                	        // ✅ 성공 시 즉시 반영
+                	        event.node.setDataValue('comName', newRole);
+                	      })
+                	      .catch(err => {
+                	        console.error('권한 변경 오류:', err);
+                	        alert('권한 변경 중 오류가 발생했습니다.');
+                	        // 실패 시 이전 값으로 복구
+                	        event.node.setDataValue('comName', event.oldValue);
+                	      });
+                	  }
+
+                	  // ✅ 계정 상태 변경 처리
+                	  if (field === 'isUsed') {
+                	    const { empId, name } = event.data;
+                	    const newStatus = event.newValue;
+
+                	    axios.post('/admin/update-employee-status', { empId, isUsed: newStatus })
+                	      .then(() => {
+                	        alert(`[${name}]님의 계정 상태가 [${newStatus === 'Y' ? '활성' : '비활성'}]으로 변경되었습니다.`);
+                	        // 성공 시 즉시 반영
+                	        event.node.setDataValue('isUsed', newStatus);
+                	        event.api.refreshCells({ rowNodes: [event.node], force: true });
+                	      })
+                	      .catch(err => {
+                	        console.error('상태 변경 오류:', err);
+                	        alert('계정 상태 변경 중 오류가 발생했습니다.');
+                	        // 실패 시 이전 값으로 복구
+                	        event.node.setDataValue('isUsed', event.oldValue);
+                	      });
+                	  }
+                	}
             };
 
-            // AG Grid 생성 
+            // AG Grid 생성
             const gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
             // 사원 목록 로딩 함수
@@ -127,6 +192,20 @@
                 }
             });
 
+            // 🔸 권한 버튼 → 선택된 행의 권한 셀 바로 편집 진입
+            document.getElementById('role-update-btn').addEventListener('click', () => {
+                const selectedNodes = gridApi.getSelectedNodes();
+                if (selectedNodes.length !== 1) {
+                    alert('권한을 변경할 사원 1명만 선택해주세요.');
+                    return;
+                }
+                const node = selectedNodes[0];
+                gridApi.startEditingCell({
+                    rowIndex: node.rowIndex,
+                    colKey: 'comName'
+                });
+            });
+
             document.getElementById('create-btn').addEventListener('click', () => {
                 const selectedNodes = gridApi.getSelectedNodes();
                 if (selectedNodes.length === 0) {
@@ -134,20 +213,9 @@
                     return;
                 }
 
-                const ROLES = ["ROLE_ADMIN", "ROLE_MANAGER", "ROLE_USER", "ROLE_GUEST"];
-                const roleToAssign = prompt(
-                    `선택된 ${selectedNodes.length}명에게 어떤 권한을 부여하시겠습니까?\n[${ROLES.join(", ")}]`,
-                    "ROLE_USER"
-                );
-
-                if (roleToAssign === null || !ROLES.includes(roleToAssign.toUpperCase())) {
-                    alert('취소되었거나 잘못된 권한입니다.');
-                    return;
-                }
-
                 const payload = {
                     empIds: selectedNodes.map(node => node.data.empId),
-                    role: roleToAssign.toUpperCase()
+                    role: 'ROLE_USER'
                 };
 
                 if (confirm(`선택된 ${payload.empIds.length}명의 사원 계정을 [신규 ID]로 생성하고 [${payload.role}] 권한을 부여합니다.`)) {
@@ -161,42 +229,6 @@
                             alert('오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
                         });
                 }
-            });
-
-            document.getElementById('role-update-btn').addEventListener('click', () => {
-                const selectedNodes = gridApi.getSelectedNodes();
-                if (selectedNodes.length !== 1) {
-                    alert('권한을 변경할 사원 1명만 선택해주세요.');
-                    return;
-                }
-
-                const selectedEmp = selectedNodes[0].data;
-                const empId = selectedEmp.empId;
-                const currentRole = selectedEmp.comName || "N/A";
-
-                const ROLES = ["ROLE_ADMIN", "ROLE_MANAGER", "ROLE_USER", "ROLE_GUEST"];
-                const newRole = prompt(
-                    `[${selectedEmp.name}] 사원의 새 권한을 선택하세요.\n(현재 권한: ${currentRole})\n사용 가능: ${ROLES.join(", ")}`,
-                    "ROLE_MANAGER"
-                );
-
-                if (newRole === null || newRole.trim() === "" || !ROLES.includes(newRole.toUpperCase())) {
-                    alert('잘못된 권한 입력 또는 취소되었습니다.');
-                    return;
-                }
-
-                const payload = { empId, newRole: newRole.toUpperCase() };
-
-                axios.post('/admin/update-role', payload)
-                    .then(response => {
-                        alert(response.data.message);
-                        loadEmployees(document.getElementById('dept-filter').value,
-                                      document.getElementById('title-filter').value);
-                    })
-                    .catch(error => {
-                        console.error('권한 변경 오류:', error);
-                        alert('오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
-                    });
             });
 
             // 페이지 최초 로드
