@@ -79,7 +79,7 @@ public class BizController {
 
 
   // 주문서 상태변경
-  @PutMapping("postatus")
+  @PutMapping("/postatus")
   public int poStatusUpdate(@RequestBody Map<String, Object> poMap) {
       List<String> poCodes = (List<String>) poMap.get("poCodes");
       String poStatus = poMap.get("poStatus").toString();

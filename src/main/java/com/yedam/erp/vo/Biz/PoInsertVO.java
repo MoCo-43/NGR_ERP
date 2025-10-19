@@ -12,6 +12,7 @@ import lombok.Data;
 public class PoInsertVO{
     private Long companyCode;  // 회사코드
     private Long poId;  // 주문번호
+    private String productCode;
     private String poCode;  // 주문코드
     private String cusCode;  // 거래처코드
     private String creater;  // 작성일자
@@ -26,5 +27,5 @@ public class PoInsertVO{
     private String notes;  // 비고
     private String creditActive; //할인적용여부
 
-    private List<PoDetailVO> poDetails = new ArrayList<>();  // 주문서 상세
+    private List<PoDetailVO> poDetails;  // 주문서 상세
 }

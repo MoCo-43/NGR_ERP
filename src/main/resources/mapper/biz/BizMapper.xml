@@ -63,7 +63,7 @@ ORDER BY PO_START DESC
       #{poStart},
       #{exDate},
       #{poDate},
-      '작성완료',
+      '승인대기',
       #{payMethod},
       #{notes},
       #{creditActive}
@@ -79,14 +79,14 @@ ORDER BY PO_START DESC
     POD_ID_SEQ.NEXTVAL,
     #{poId},
     #{companyCode},
-    t.productCode,
-    t.orderQty,
-    t.unitPrice,
-    t.dcAmt,
-    t.supAmt,
-    t.vatAmt,
-    t.productName,
-    t.vatType
+    #{productCode},
+    #{orderQty},
+    #{unitPrice},
+    #{dcAmt},
+    #{supAmt},
+    #{vatAmt},
+    #{productName},
+    #{vatType}
   FROM (
     <foreach collection="poDetails" item="d" separator=" UNION ALL ">
       SELECT
@@ -104,7 +104,7 @@ ORDER BY PO_START DESC
 </insert>
 
 
-<!-- 주문서 상태 변경 -->
+<!-- 주문서 상태 변경(승인, 입금완료) -->
 <update id="poStatusUpdate">
 UPDATE PURCHASE_ORDER
 SET PO_STATUS = #{poStatus}
@@ -189,7 +189,7 @@ ORDER BY d.DO_CREATED DESC
 
     <foreach collection="dodetails" item="dod">
       INTO DO_DETAIL
-        (DOD_NO, DO_NO, PRODUCT_CODE, QTY, UNIT_PRICE, SUP_AMT, VAT_AMT, DC_PRICE, COMPANY_CODE)
+        (DOD_NO, DO_NO, PRODUCT_CODE, QTY, UNIT_PRICE, SUP_AMT, VAT_AMT, DC_AMT, COMPANY_CODE)
       VALUES
         (FN_DOD_CODE(), DO_NO_SEQ.CURRVAL, #{dod.productCode}, #{dod.qty},
          #{dod.unitPrice}, #{dod.supAmt}, #{dod.vatAmt}, #{dod.dcPrice}, #{companyCode})
@@ -302,14 +302,14 @@ ORDER BY d.DO_CREATED DESC
         po.company_code,
         po.cus_code,
         COUNT(DISTINCT po.po_id) AS used_cnt,
-        SUM(NVL(pd.dc_price,0))  AS used_amt
+        SUM(NVL(pd.DC_AMT,0))  AS used_amt
       FROM purchase_order po
       JOIN po_detail      pd ON pd.po_id = po.po_id
       WHERE TRUNC(po.po_date,'MM') = TRUNC(
                /* monthBase가 null이면 SYSDATE */
                NVL(#{monthBase, jdbcType=DATE}, SYSDATE), 'MM')
         AND NVL(pd.credit_active,'N') = 'Y'
-        AND NVL(pd.dc_price,0) > 0
+        AND NVL(pd.DC_AMT,0) > 0
       GROUP BY po.company_code, po.cus_code
     )
     SELECT
