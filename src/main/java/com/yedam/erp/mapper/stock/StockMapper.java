@@ -29,8 +29,10 @@ public interface StockMapper {
 	// 제품등록
 	public int insertProduct(ProductVO product);
 	
+	
 	// 제품리스트
 	public List<ProductVO> productAll(@Param("companyCode") Long companyCode);
+	public List<ProductVO> filteredProductList(Map<String, Object> params);
 	
 	
 	// 제품 이미지 불러오기
@@ -42,7 +44,10 @@ public interface StockMapper {
 	
 	
 	// 거래처 조회
-	public List<PartnerVO> customerAll(Map<String, Object> params);
+	public List<PartnerVO> customerAll(Long compCode);
+	public List<PartnerVO> filteredCustomerList(Map<String, Object> params);
+	
+	
 	// 발주계획 등록
 	public void insertOrderPlan(OrderPlanVO orderPlan); // 마스터
 	public int insertOrderPlanDetail(OrderPlanDetailVO item); // 상세
@@ -82,6 +87,7 @@ public interface StockMapper {
 	
 	// 결산 마스터 조회
 	public List<InvenVO> getIcList(Long companyCode);
+	public List<InvenVO> findInvenList(Map<String, Object> params);
 	
 	
 	// 결산 디테일 조회
@@ -109,6 +115,7 @@ public interface StockMapper {
 	public List<OutboundHeaderVO> getDeliveryNote(); // 전체조회
 	public List<OutboundVO> selectOutboundByOutbHeaderCode(@Param("outCode") String outbHeaderCode ,
 			                                               @Param("doCode")String doCode);
+	public List<OutboundVO> filteredOutboundList(Map<String, Object> params);
 	
 	
 	// 출고 등록

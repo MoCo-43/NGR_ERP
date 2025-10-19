@@ -22,68 +22,89 @@ public interface StockService {
 
 	// 제품등록
 	public int insertProduct(ProductVO product); 
+	
 	// 제품리스트
 	public List<ProductVO> productAll(Long compCode);
+	public List<ProductVO> filteredProductList(Map<String, Object> params);
+	
 	
 	// 제품 이미지 조회
 	public String getProductFileNameByProductCodeAndCompCode(Long compCode,String productCode);
 	public List<InboundVO> getProductDetailRefInbound(Long compCode , String productCode);
 	
+	
 	// 거래처 조회
-	//public List<PartnerVO> customerAll(Long CompCode);
-	public List<PartnerVO> customerAll(Map<String, Object> params);
+	public List<PartnerVO> customerAll(Long compCode);
+	public List<PartnerVO> filteredCustomerList(Map<String, Object> params);
+	
 	
 	// 발주계획 등록
 	public void insertOrderPlan(OrderPlanVO orderPlan); // 마스터
 	
+	
 	// 발주계획 조회
 	List<OrderPlanVO> getOrderPlans();
+	
 	
 	// 발주서에 조회될 발주 마스터
 	public OrderVO selectOrderByXpCode(String xpCode);
 	
+	
 	// 발주서에 조회될 발주 디테일
 	List<OrderDetailVO>selectOrderDetailsByXpCode(String xpCode);
+	
 	
 	// 세션 회사 정보 조회
 	public CompanyVO selectComp(Long compId);
 	
+	
 	// 발주서 거래처 정보 조회
 	public CustomerVO selectCutomer(String cusCode);
 		
+	
 	// 발주 조회
 	public List<OrderVO> getOrderList(Long compId);
 	public List<OrderDetailVO> getOrderDetailByOrderCode(String orderCode);
 	public List<OrderDetailVO> getOrderDetailByXpCode(String orderCode);
 	
+	
 	// 발주 등록
 	public void insertOrderReq(OrderVO order); // 마스터
 	
+	
 	// 결산 마스터 조회
 	public List<InvenVO> getIcList(Long companyCode);
+	public List<InvenVO> findInvenList(Map<String, Object> params);
+	
 	
 	// 결산 디테일 조회
 	public List<InvenDetailVO> getIcDetailList(Long companyCode , String seletedRow);
 	
+	
 	// 결산 등록
 	public void insertInvenClosing(String empId , Long compCode);
 	public int updateSign(InvenVO payload);
+	
 	
 	// 입고조회
 	public List<InboundVO> getInboundList(Long companyCode);
 	public List<InboundVO> getInboundDetail(String selectedRow);
 	public List<InboundVO> findInboundList(Map<String, Object> params); 
 	
+	
 	// 입고 등록
 	public void insertInbound(List<InboundVO> details);
+	
 	
 	//출고 조회
 	public List<OutboundHeaderVO> getOutboundList();
 	public List<OutboundVO> selectOutboundByOutbHeaderCode(String outbHeaderCode , String doCode);
+	public List<OutboundVO> filteredOutboundList(Map<String, Object> params);
 	
 	
 	// 출고 등록
 	public void insertOutbound(OutboundHeaderVO payload);
+	
 	
 	// 출하 지시시 조회
 	public List<ComOrderVO> getDeliveryOrderList();

@@ -29,6 +29,6 @@ public class OutboundHeaderVO {
 	// 조회용 추가 필드
 	private String productName;
 	private Long qty;
-	
+	private Long compCode;
 	
 }

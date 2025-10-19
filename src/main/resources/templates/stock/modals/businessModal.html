@@ -24,10 +24,10 @@
             <div class="modal-body">
               <!-- 버튼 영역: 카드 밖, 오른쪽 상단 고정 -->
               <div class="d-flex justify-content-end mb-2 gap-2">
-                <button type="button" form="searchForm" class="btn btn-primary" id="searchBtn">
+                <button type="button" form="searchForm" class="btn btn-primary bsmSearchBtn" id="searchBtn">
                   검색
                 </button>
-                <button type="reset" form="searchForm" class="btn btn-danger">
+                <button type="button" form="searchForm" class="btn btn-danger bsmResetBtn">
                   초기화
                 </button>
               </div>
@@ -64,7 +64,7 @@
 			    </div>
 			      <!-- 업태 -->
 			    <div class="col-md-3">
-			      <label for="note" class="form-label">업태</label>
+			      <label for="bizType" class="form-label">업태</label>
 			      <input
 			        type="text"
 			        id="bizType"
@@ -75,7 +75,7 @@
 			    </div>
 			    <!-- 종목 -->
 			    <div class="col-md-3">
-			      <label for="note" class="form-label">종목</label>
+			      <label for="bizCategory" class="form-label">종목</label>
 			      <input
 			        type="text"
 			        id="bizCategory"
@@ -86,9 +86,16 @@
 			    </div>
 			  </div>
               </form>
+               <div id="gridBsModalWrapper" style="position: relative; width: 100%; max-height: 500px;">
               <!-- 검색 결과 ag-Grid -->
               <div id="myGrid" class="ag-theme-quartz" style="height:400px; width:100%;"></div>
-              
+              <!-- 로딩 스피너 -->
+	            <div id="loaderBsModal" class="loader-overlay" style="display: none;">
+	              <div class="spinner-border text-primary" role="status">
+	                <span class="visually-hidden">Loading...</span>
+	              </div>
+	            </div>
+              </div>
             <!-- 모달 바디 종료 -->
             </div>
 

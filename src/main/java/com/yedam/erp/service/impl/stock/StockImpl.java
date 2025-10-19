@@ -45,8 +45,8 @@ public class StockImpl implements StockService{
 
 
 	@Override
-	public List<PartnerVO> customerAll(Map<String, Object> params) {
-	    return mapper.customerAll(params);
+	public List<PartnerVO> customerAll(Long compCode) {
+	    return mapper.customerAll(compCode);
 	}
 
 	@Transactional
@@ -282,6 +282,30 @@ public class StockImpl implements StockService{
 	@Override
 	public List<InboundVO> findInboundList(Map<String, Object> params) {
 		return mapper.selectInboundList(params);
+	}
+
+
+	@Override
+	public List<InvenVO> findInvenList(Map<String, Object> params) {
+		return mapper.findInvenList(params);
+	}
+
+
+	@Override
+	public List<ProductVO> filteredProductList(Map<String, Object> params) {
+		return mapper.filteredProductList(params);
+	}
+
+
+	@Override
+	public List<PartnerVO> filteredCustomerList(Map<String, Object> params) {
+		return mapper.filteredCustomerList(params);
+	}
+
+
+	@Override
+	public List<OutboundVO> filteredOutboundList(Map<String, Object> params) {
+		return mapper.filteredOutboundList(params);
 	}
 
 

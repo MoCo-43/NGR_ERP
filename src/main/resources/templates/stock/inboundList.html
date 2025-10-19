@@ -25,6 +25,8 @@
    />
    <!-- TOASTR -->
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+   <!-- CSS -->
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
    <style type="text/css">
    .ag-theme-quartz .ag-cell {
 	padding-left: 8px;
@@ -46,7 +48,8 @@
 <body>
 <!-- GPT 페이지 구성 -->
 <section layout:fragment="content">
-  <div class="card shadow mb-3">
+
+  <div class="card shadow mb-3" >
     <div class="card-header py-3 d-flex align-items-center justify-content-between">
 		<h6 class="m-0 font-weight-bold text-primary">입고 조회 페이지</h6>
 	</div>
@@ -60,11 +63,13 @@
 		           placeholder="제품코드" style="max-width: 180px;" />
 		    <input type="text" class="form-control form-control-sm" id="businessPartner" name="businessPartner" 
 		           placeholder="공급처명" style="max-width: 180px;" />
-		    <input type="date" class="form-control form-control-sm" id="inboundDate" name="inboundDate" 
+		    <input type="text" id="inboundDate" name="inboundDate" placeholder="입고일자" class="form-control form-control-sm" style="max-width: 180px;">
+		    <input type="text" id="dueDate" name="dueDate" placeholder="입고예정일자" class="form-control form-control-sm" style="max-width: 180px;">
+		    <!-- <input type="date" class="form-control form-control-sm" id="inboundDate" name="inboundDate" 
 		           style="max-width: 180px;" />
 		    <input type="date" class="form-control form-control-sm" id="dueDate" name="dueDate" 
-		           style="max-width: 180px;" />
-		    <button class="btn btn-dark btn-sm" type="button" id="submitBtn">조회</button>
+		           style="max-width: 180px;" /> -->
+		    <!-- <button class="btn btn-dark btn-sm" type="button" id="submitBtn">조회</button> -->
 		    <button class="btn btn-danger btn-sm" type="button" id="resetBtn">초기화</button>
 		</div>
 	</div>
@@ -236,6 +241,10 @@
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/dist/ag-grid-community.min.noStyle.js"></script>
  <!-- toastr -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<!-- 한국어 locale -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
 
   <!-- 스크립트 -->
 <script th:inline="none">
@@ -249,6 +258,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	 * @param {Function} [config.onGridReady] - grid ready 이벤트 핸들러
 	 * @returns {Object} { gridApi, gridOptions }
 	 */
+	// ------------------ 변수 초기화 ------------------
+	const productModalEl = document.getElementById("productModal");
+	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
+	const businessModalEl = document.getElementById("businessModal");
+	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
 	const searchPartner = document.getElementById('businessPartner');
 	const searchProduct = document.getElementById('productCode');
 	const resetBtn = document.getElementById('resetBtn');
@@ -259,11 +273,79 @@ document.addEventListener("DOMContentLoaded", () => {
  	let gridApi = null;
  	let inDetailGridOptions = null;
  	let selectedRow = null; // 전역(이벤트 바깥)으로 선언
+ 	let productGridApi = null;
+	let productGridOptions = null;
+	let selectedProductRow = null; // 클릭한 행 저장용
  	
  	resetBtn.addEventListener('click' , ()=>{
  		document.querySelectorAll('.form-control').forEach(input => input.value = '');
+ 		loadFilteredData();
+ 		inDetailGridOptions.api.setRowData([]);
+        selectedRow = null;
+ 		
  	});
- 	
+ 	console.log("productkw : "+productkw.value);
+ 	/**
+ 	 * 한국어 flatpickr 공통 초기화 함수
+ 	 * @param {string} selector - input 요소 선택자 (ex: "#inboundDate")
+ 	 * @param {Object} options - flatpickr 옵션 추가 가능
+ 	 */
+ 	 // date picker 초기화
+    function initKoreanDatePicker(selector, options = {}) {
+	    flatpickr(selector, {
+	        locale: "ko",
+	        dateFormat: "Y-m-d",
+	        allowInput: true,
+	        enableTime: false,
+	        onReady: function(selectedDates, dateStr, instance) {
+	        	const btnWrapper = document.createElement("div");
+	            // 공통 스타일
+	            btnWrapper.style.cssText = `
+	            	 display: flex;
+	                justify-content: space-between; /* 좌우 끝 */
+	                width: 100%;                   /* 전체 너비 확보 */
+	                padding: 2px 6px;              /* 달력과 버튼 간 여백 */
+	                box-sizing: border-box;
+	                margin-top: 2px;
+	            `;
+	
+	            // 오늘 버튼
+	            const todayBtn = document.createElement("button");
+	            todayBtn.type = "button";
+	            todayBtn.textContent = "오늘";
+	            todayBtn.className = "btn btn-outline-primary btn-sm"; // 테두리 보이게
+	            todayBtn.style.cssText = "font-size: 0.65rem; padding: 2px 6px;";
+	            todayBtn.addEventListener("click", () => {
+	                instance.setDate(new Date());
+	                loadFilteredData(); 
+	                instance.close();
+	            });
+	
+	            // 초기화 버튼
+	            const clearBtn = document.createElement("button");
+	            clearBtn.type = "button";
+	            clearBtn.textContent = "초기화";
+	            clearBtn.className = "btn btn-outline-secondary btn-sm"; // 테두리 보이게
+	            clearBtn.style.cssText = "font-size: 0.65rem; padding: 2px 6px;";
+	            clearBtn.addEventListener("click", () => {
+	                instance.clear();
+	                loadFilteredData(); 
+	                instance.close();
+	            });
+	
+	            // 버튼 붙이기
+	            btnWrapper.appendChild(clearBtn);
+	            btnWrapper.appendChild(todayBtn);
+	
+	            instance.calendarContainer.appendChild(btnWrapper);
+	        },
+	        ...options
+	    });
+	}
+
+	// flatPicker 사용
+	initKoreanDatePicker("#inboundDate");
+	initKoreanDatePicker("#dueDate");
  	
  	
  	// 공통 모달 호출 함수
@@ -319,6 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		  return Number(params.value).toLocaleString();
 	}
 	  
+	// 강제 딜레이 부여
 	function debounce(func, wait = 300) {
 		    let timeout;
 		    return function(...args) {
@@ -326,15 +409,120 @@ document.addEventListener("DOMContentLoaded", () => {
 		        timeout = setTimeout(() => func.apply(this, args), wait);
 		}
 	}
-	  
+	
+	// modal
+	// 제품 모달 - 필터링
+	 document.querySelector("#resetProdBtn").addEventListener("click", async () =>{
+		 try{
+			 document.querySelectorAll('.fkw').forEach(el => el.value = '');
+			 showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
+			 const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
+			 productGrid.gridOptions.api.setRowData(res.data);
+		 }catch(err){
+			 console.log(err);
+		 }finally{
+			 hideLoader("gridModalWrapper");
+		 }
+	 });
+	
+	 document.querySelector("#searchProdBtn").addEventListener("click", async () => {
+	    try {
+	    	showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
+	         const params = {
+		    	 companyCode : compCode,	  
+		    	 productName: document.getElementById("productkw").value || "",
+		    	 empName: document.getElementById("productEmpId").value || "",
+		    	 note: document.getElementById("note").value || ""
+	      	};
+	       console.log("검색 파라미터:", params);
+	      
+	      
+	      // ✅ 서버로 요청 (axios GET 또는 POST)
+	      const res = await axios.post("/api/v1/stock/product/search", params, { withCredentials: true });
+	      console.log("검색 결과:", res.data);
+	
+	      // ✅ ag-Grid에 데이터 반영
+	      productGrid.gridOptions.api.setRowData(res.data);
+	
+	      if (res.data.length === 0) {
+	        alert("검색 결과가 없습니다.");
+	      }
+	
+	    } catch (err) {
+	      console.error("조회 오류:", err);
+	      alert("데이터 조회 중 오류가 발생했습니다.");
+	    } finally{
+	    	 hideLoader("gridModalWrapper");
+	    }
+	  });
+	
+	  // ✅ 초기화 버튼 클릭 시
+	  document.querySelector("#searchForm").addEventListener("reset", () => {
+		  productGrid.gridOptions.api.setRowData([]); // grid 비우기
+	  });
+
+	// modal
+    // 거래처 모달 - 필터
+    document.querySelector(".bsmSearchBtn").addEventListener("click", async ()=>{
+    	 try {
+    	    	showLoader("gridBsModalWrapper","데이터를 불러오는 중입니다...");
+    	         const params = {
+    	        	 compCode : compCode,
+    		    	 cusKw: document.getElementById("keyword").value || "",
+    		    	 empKw: document.getElementById("empId").value || "",
+    		    	 btKw:  document.getElementById("bizType").value || "",
+    		    	 bcKw:  document.getElementById("bizCategory").value || ""
+    	      	};
+    	       console.log("검색 파라미터:", params);
+    	      
+    	      
+    	      // ✅ 서버로 요청 (axios GET 또는 POST)
+    	      const res = await axios.post(`/api/v1/stock/filteredCustomerList`, params, { withCredentials: true });
+    	      console.log("검색 결과:", res.data);
+
+    	      // ✅ ag-Grid에 데이터 반영
+    	      gridApi.setRowData(res.data);
+
+    	      if (res.data.length === 0) {
+    	        alert("검색 결과가 없습니다.");
+    	      }
+
+    	    } catch (err) {
+    	      console.error("조회 오류:", err);
+    	      alert("데이터 조회 중 오류가 발생했습니다.");
+    	    } finally{
+    	    	 hideLoader("gridBsModalWrapper");
+    	    }
+    });
+    // ✅ 초기화 버튼 클릭 시
+	  document.querySelector(".bsmResetBtn").addEventListener("click", async () => {
+		  try{
+			  showLoader("gridBsModalWrapper","데이터를 불러오는 중입니다...");
+			  // gridApi.setRowData([]); // grid 비우기
+			  document.getElementById("keyword").value = "";
+			  document.getElementById("empId").value = "";
+			  document.getElementById("bizType").value = "";
+			  document.getElementById("bizCategory").value = "";
+			  await loadBusinessData();
+		  }catch(err){
+			  console.log(err);
+			  toastr.error(err);
+		  }finally{
+			  hideLoader("gridBsModalWrapper","데이터를 불러오는 중입니다...");
+		  }
+		 
+	  });
+  
+	
+	// view  
 	document.getElementById("productCode").addEventListener("input", debounce(loadFilteredData,500));
 	document.getElementById("businessPartner").addEventListener("input", loadFilteredData);
 	document.getElementById("inboundDate").addEventListener("change", loadFilteredData);
 	document.getElementById("dueDate").addEventListener("change", loadFilteredData);
   
 	
-	
 	async function loadFilteredData() {
+		// view page filter
 	    try {
 	        showLoader("gridWrapper");
 	        const productCode = document.getElementById("productCode").value;
@@ -343,12 +531,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	        const dueDate = document.getElementById("dueDate").value;
 			
 	        const params = {
-	        		productCode,
-	        		businessPartner,
-	        		inboundDate,
-	        		dueDate,
-	        		compCode
+	        		 compCode: compCode,
+	        		 productCode: document.getElementById("productCode").value,
+	        		 businessPartner: document.getElementById("businessPartner").value,
+	        		 inboundDate: document.getElementById("inboundDate").value,
+	        		 dueDate: document.getElementById("dueDate").value
 	        }
+	        console.log("params:", params); // 👈 params 확인
 	        const res = await axios.post("/api/v1/stock/inboundList", params, {withCredentials: true });
 	        inListGrid.gridOptions.api.setRowData(res.data);
 	    } catch (err) {
@@ -403,11 +592,12 @@ const inListGrid = initGrid({
 
 const inDetailColumnDefs = [
     { headerName: "No.",valueGetter: "node.rowIndex + 1", field: "no", width: 80},
+    { headerName: "LOT번호", field: "lotCode" },
     { headerName: "제품코드", field: "productCode" },
     { headerName: "제품명", field: "productName" },
     { headerName: "규격", field: "specification"},
     { headerName: "거래처코드", field: "businessCode"},
-    { headerName: "거래처명", field: "businessPartner"},
+    { headerName: "공급처명", field: "businessPartner"},
     { headerName: "입고수량", field: "qty", type: 'numericColumn', valueFormatter: numberFormatter },
     { headerName: "입고예정일자", field: "dueDate"}
 ]; // END OF COLUMN
@@ -456,43 +646,39 @@ async function openProductModal() {
 	            ],
 	            onGridReady: async (event) => {
 	                try {
+	                	showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
 	                    const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
 	                    event.api.setRowData(res.data);
 	                } catch (err) {
 	                    console.error("제품리스트 데이터 로드 실패:", err);
+	                } finally{
+	                	hideLoader("gridModalWrapper");
 	                }
 	            },
 	            onRowDoubleClicked:  (event) => {
 	                // 모달 안에서 선택한 행의 제품명만 가져오기
 	                document.getElementById("productCode").value = event.data.productCode;
 	                productModal.hide();
+	                loadFilteredData(); // 여기서 자동 조회
 	            }
 	        });
 	  } else {
 	        // 이미 초기화된 Grid이면 기존 Grid를 재사용
 	        try {
+	        	showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
 	            const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
 	            productGrid.gridOptions.api.setRowData(res.data);
 	            productGrid.gridOptions.api.sizeColumnsToFit();
 	        } catch (err) {
 	            console.error("제품리스트 데이터 로드 실패:", err);
+	        } finally {
+	        	hideLoader("gridModalWrapper");
 	        }
 	    }
     productModal.show();
 }
  	
- 	
- 	
-	
-	// ------------------ 변수 초기화 ------------------
-	let productGridApi = null;
-	let productGridOptions = null;
-	let selectedProductRow = null; // 클릭한 행 저장용
-	const productModalEl = document.getElementById("productModal");
-	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
-	const businessModalEl = document.getElementById("businessModal");
-	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
-	
+
     // 거래처명 클릭 시 모달
 	searchPartner.addEventListener('click', () => {
 			businessModal.show(); // 항상 동일한 인스턴스 사용
@@ -535,6 +721,7 @@ async function openProductModal() {
 	        onRowDoubleClicked: (event) => {
 	        	document.getElementById("businessPartner").value = event.data.cusName;
 	            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
+	            loadFilteredData(); // 여기서 자동 조회
 	        }
 	    };
 	    new agGrid.Grid(eGridDiv, gridOptions);

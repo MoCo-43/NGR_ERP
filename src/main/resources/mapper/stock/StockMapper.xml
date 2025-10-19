@@ -32,7 +32,25 @@ VALUES(CONCAT('P',LPAD(seq_product.nextval,5,'0')),
 
 </insert>
 
+
 <select id="customerAll" resultType="PartnerVO" parameterType="map">
+SELECT 
+       emp_name, 
+       cus_name,
+       cus_code,
+       biz_no,
+       ceo_name, 
+       biz_type ,
+       biz_category,
+       addr 
+FROM customer
+WHERE gbn = '구매처'
+AND company_code = #{compCode} 
+</select>
+
+
+<!-- 거래쳐조회 - 필터 -->
+<select id="filteredCustomerList" parameterType="map" resultType="PartnerVO">
 SELECT 
        emp_name, 
        cus_name,
@@ -59,6 +77,28 @@ AND company_code = #{compCode}
 </if>
 </select>
 
+
+<!-- 제품조회 - 필터 -->
+<select id="filteredProductList" parameterType="map" resultType="ProductVO">
+SELECT PRODUCT_CODE
+       ,PRODUCT_NAME
+       ,SPECIFICATION
+       ,VAT_TYPE 
+       ,INSERT_DATE 
+FROM PRODUCT 
+WHERE COMPANY_CODE = #{companyCode}
+<if test="productName != null and productName.trim() != ''">
+ AND UPPER(PRODUCT_NAME) LIKE '%' || UPPER(#{productName}) || '%'  
+</if>
+<if test="empName != null and empName.trim() != ''">
+ AND EMP_NAME LIKE '%' || #{empName} || '%'  
+</if>
+<if test="note != null and note.trim() != ''">
+ AND NOTE LIKE '%' || #{note} || '%' 
+</if>
+</select>
+
+<!-- 제품조회 - 전체 -->
 <select id="productAll" resultType="ProductVO">
 SELECT PRODUCT_CODE
        ,PRODUCT_NAME
@@ -387,6 +427,29 @@ VALUES (SEQ_ORDER_DETAIL.nextval
 )
 </insert>
 
+<!-- 결산 조회 - 필터링 -->
+<select id="findInvenList" parameterType="map" resultType="InvenVO">
+SELECT ic.IC_CODE,  
+       ic.IC_DATE, 
+       ic.EMP_ID, 
+       emp.NAME, 
+       CASE WHEN ic.IC_STATUS = 'T' THEN '결재대기'
+            ELSE '결재완료' END AS IC_STATUS
+      
+FROM INVENTORY_CLOSING ic 
+LEFT JOIN EMP_LOGIN emp 
+ON ic.emp_id = emp.emp_id 
+WHERE ic.COMPANY_CODE = #{companyCode}
+<if test="icDate != null and icDate != ''">
+  AND ic.IC_DATE BETWEEN 
+        TRUNC(TO_DATE(#{icDate}, 'YYYY-MM-DD'), 'MM')   <!-- 해당월 1일 -->
+        AND LAST_DAY(TO_DATE(#{icDate}, 'YYYY-MM-DD'))  <!-- 해당월 말일 -->
+</if>
+<if test="icStatus != null">
+  AND ic.ic_status = #{icStatus} 
+</if>
+</select>
+
 <!-- 결산 조회 - 마스터 -->
 <select id="getIcList" resultType="InvenVO" parameterType="Long">
 SELECT 
@@ -418,25 +481,28 @@ AND IC_CODE = #{icCode}
 </select>
 
 <!-- 입고 필터 조회 -->
-<select id="selectselectInboundList" parameterType="map" resultType="InboundVO">
+<select id="selectInboundList" parameterType="map" resultType="InboundVO">
     SELECT *
     FROM inbound
     WHERE 1=1
       <if test="compCode != null">
-        AND comp_code = #{compCode}
+        AND company_code = #{compCode}
       </if>
       <if test="productCode != null and productCode != ''">
         AND product_code = #{productCode}
       </if>
       <if test="businessPartner != null and businessPartner != ''">
-        AND business_partner LIKE CONCAT('%', #{businessPartner}, '%')
+        AND business_partner LIKE '%' || #{businessPartner} || '%'
       </if>
       <if test="inboundDate != null and inboundDate != ''">
-        AND inbound_date = #{inboundDate}
-      </if>
-      <if test="dueDate != null and dueDate != ''">
-        AND due_date = #{dueDate}
-      </if>
+      <![CDATA[
+    	AND inbound_date >= TO_DATE(#{inboundDate}, 'YY/MM/DD')
+  		AND inbound_date < TO_DATE(#{inboundDate}, 'YY/MM/DD') + 1
+      ]]>
+	  </if>
+	  <if test="dueDate != null and dueDate != ''">
+    	AND due_date = TO_DATE(#{dueDate}, 'YYYY-MM-DD')
+	  </if>
 </select>
 
 
@@ -454,8 +520,8 @@ WHERE COMPANY_CODE = #{compCode}
 
 <!-- 입고 상세 조회 -->
 <select id="getInboundDetail" resultType="InboundVO" parameterType="String">
-SELECT
-       PRODUCT_CODE
+SELECT  LOT_CODE 
+       ,PRODUCT_CODE
        ,PRODUCT_NAME
        ,SPECIFICATION
        ,BUSINESS_CODE
@@ -758,6 +824,51 @@ WHERE oh.outb_header_code = #{outCode}
 
 </select>
  -->
+ 
+ <!-- 출고조회 - 필터 -->
+ <select id="filteredOutboundList" parameterType="map" resultType="OutboundHeaderVO">
+SELECT 
+    oh.outb_header_code AS outbHeaderCode,
+    oh.outbound_date AS outboundDate,
+    oh.do_code AS doCode,
+    oh.business_code AS businessCode,
+    oh.business_partner AS businessPartner,
+    oh.due_date AS dueDate,
+    CASE
+        WHEN COUNT(o.outbound_no) > 1 
+            THEN MIN(o.product_name) || ' 외 ' || (COUNT(o.outbound_no) - 1) || '건'
+        ELSE MIN(o.product_name)
+    END AS productName,
+    SUM(o.qty) AS qty,
+    CASE 
+        WHEN EXISTS (
+            SELECT 1
+            FROM delivery_order do2
+            JOIN do_detail dod2 ON do2.do_no = dod2.do_no
+            WHERE do2.do_code = oh.do_code
+        ) THEN 'Y'
+        ELSE 'N'
+    END AS hasSheet
+FROM outbound_header oh
+JOIN outbound o ON oh.outb_header_code = o.outb_header_code 
+WHERE oh.company_code = #{compCode} 
+<if test="productName != null and productName != ''">
+ AND o.product_name LIKE '%' || #{productName} || '%' 
+</if>
+<if test="businessPartner != null and businessPartner != ''">
+ AND oh.business_partner LIKE '%' || #{businessPartner} || '%' 
+</if>
+<if test="outboundDate != null and outboundDate != ''">
+ AND oh.outbound_date = TO_DATE(#{outboundDate} , 'YYYY-MM-DD')  
+</if>
+<if test="dueDate != null and dueDate != ''">
+ AND oh.due_date = TO_DATE(#{dueDate} , 'YYYY-MM-DD')  
+</if>
+GROUP BY oh.outb_header_code, oh.outbound_date, oh.business_code,
+         oh.business_partner, oh.due_date, oh.do_code 
+ORDER BY oh.outb_header_code DESC
+</select>
+ 
  <!-- 거래명세서 조회용 쿼리 -->
 <select id="getDeliveryNote" resultType="OutboundHeaderVO">
 SELECT 
