@@ -50,16 +50,16 @@
     <div class="btn-bar">
     	 <!-- 버튼 영역 (폼 전체 최상단 오른쪽) -->
       <div class="d-flex justify-content-end mb-3">
-	    <button type="submit" class="btn btn-dark me-2" id="submitBtn">조회</button>
-	    <button type="reset" class="btn btn-danger" form="searchOrderPlan">초기화</button>
+	    <button type="button" class="btn btn-dark me-2" id="submitBtn">조회</button>
+	    <button type="button" class="btn btn-danger" form="searchOrderPlan" id="obResetBtn">초기화</button>
        </div>
     </div>
     
       <form class="row g-3" id="searchList" enctype="application/x-www-form-urlencoded">
-        <div class="col-md-3">
+        <!-- <div class="col-md-3">
          <label for="productCode" class="form-label">제품코드</label>
          <input type="text" class="form-control" id="productCode" name="productCode">
-        </div>
+        </div> -->
         <div class="col-md-3">
          <label for="productName" class="form-label">제품명</label>
          <input type="text" class="form-control" id="productName" name="productName">
@@ -69,7 +69,11 @@
          <input type="text" class="form-control" id="businessPartner" name="businessPartner">
         </div>
         <div class="col-md-3">
-         <label for="dueDate" class="form-label">출고일자</label>
+         <label for="outboundDate" class="form-label">출고일자</label>
+         <input type="date" class="form-control" id="outboundDate" name="outboundDate">
+        </div>
+        <div class="col-md-3">
+         <label for="dueDate" class="form-label">납기예정일자</label>
          <input type="date" class="form-control" id="dueDate" name="dueDate">
         </div>
       </form>
@@ -112,7 +116,7 @@
 			<div id="gridDetailWrapper" style="position: relative; width: 100%; height: 500px;">
             <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%;"></div>
                <!-- 로딩 스피너 -->
-			  <div id="loader" class="loader-overlay" style="display: none;">
+			  <div id="loaderDetail" class="loader-overlay" style="display: none;">
 			    <div class="spinner-border text-primary" role="status">
 			      <span class="visually-hidden">Loading...</span>
 			    </div>
@@ -137,6 +141,11 @@
 </section>
   
 <th:block layout:fragment="body_extra">
+<!-- 세션 정보 저장 -->
+<script th:inline="javascript">
+    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+    const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+</script>
  <!-- Axios 등록 -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
  <!-- Bootstrap JS -->
@@ -158,9 +167,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	 * @param {Function} [config.onGridReady] - grid ready 이벤트 핸들러
 	 * @returns {Object} { gridApi, gridOptions }
 	 */
+	// ------------------ 변수 초기화 ------------------
+	const productModalEl = document.getElementById("productModal");
+	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
+	const businessModalEl = document.getElementById("businessModal");
+	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
 	const searchPartner = document.getElementById('businessPartner');
-	const searchProduct = document.getElementById('productCode');
-	let compCode = null; // 회사코드
+	const searchProduct = document.getElementById('productName');
 	let productGrid = null; // 전역 변수
  	let gridOptions = null;
  	let gridCreated = false;
@@ -168,7 +181,10 @@ document.addEventListener("DOMContentLoaded", () => {
  	let outDetailGridOptions = null;
  	let selectedRow = null; // 전역(이벤트 바깥)으로 선언
  	let doCode = null;
- 	
+ 	let productGridApi = null;
+	let productGridOptions = null;
+	let selectedProductRow = null; // 클릭한 행 저장용
+	
  	// 공통 모달 호출 함수
  	function initGrid(config) {
  	    const eGridDiv = document.getElementById(config.el);
@@ -212,17 +228,88 @@ document.addEventListener("DOMContentLoaded", () => {
 	}// END OF FUNCTION
 
 	// 회사코드 불러오기
-	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+/* 	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
 	  .then(res => { compCode = res.data; })
-	  .catch(err => console.error(err));
+	  .catch(err => console.error(err)); */
 	
 	//단위마다 "," 공통함수(문자 > 숫자 변환)
 	function numberFormatter(params) {
 		  if (params.value == null || params.value === "") return "";
 		  return Number(params.value).toLocaleString();
 	}
+	  
+	// 강제 딜레이 부여
+	function debounce(func, wait = 300) {
+			let timeout;
+				return function(...args) {
+				clearTimeout(timeout);
+				timeout = setTimeout(() => func.apply(this, args), wait);
+		}
+	}
 
+	// view
+	/* document.getElementById("productCode").addEventListener("input", debounce(loadFilteredData,500));
+	document.getElementById("businessPartner").addEventListener("change", loadFilteredData);
+	document.getElementById("dueDate").addEventListener("change", loadFilteredData); */
 	
+	// 조회버튼 클릭시
+	document.querySelector('#submitBtn').addEventListener('click', async ()=>{
+		loadFilteredData();
+	});
+	// 초기화버튼 클릭시
+	document.querySelector('#obResetBtn').addEventListener('click', async ()=>{
+		try{
+			 showLoader("gridWrapper","데이터를 불러오는 중입니다...");
+			 showLoader("gridDetailWrapper","데이터를 불러오는 중입니다...");
+			 document.getElementById("productName").value = "";
+			 document.getElementById("businessPartner").value = "";
+			 document.getElementById("outboundDate").value = "";
+			 document.getElementById("dueDate").value = "";
+			 
+			 const res = await axios.get("/api/v1/stock/outboundList", {withCredentials: true });
+			 if (inListGrid && inListGrid.gridApi) {
+			        inListGrid.gridApi.setRowData(res.data);
+			    }
+			 
+			 if (outDetailGridOptions && outDetailGridOptions.api) {
+			        outDetailGridOptions.api.setRowData([]);
+			    }
+			 
+		}catch(err){
+			alert(err);
+			toastr.error("초기화 중 오류 발생"+err);
+		} finally{
+			hideLoader("gridWrapper");
+			hideLoader("gridDetailWrapper");
+		}
+	});
+	
+	async function loadFilteredData() {
+		// view page filter
+	    try {
+	        showLoader("gridWrapper");
+	        const productName = document.getElementById("productName").value;
+	        const businessPartner = document.getElementById("businessPartner").value;
+	        const outboundDate = document.getElementById("outboundDate").value;
+	        const dueDate = document.getElementById("dueDate").value;
+			
+	        const params = {
+	        		 compCode: compCode,
+	        		 productName: document.getElementById("productName").value,
+	        		 businessPartner: document.getElementById("businessPartner").value,
+	        		 outboundDate : document.getElementById("outboundDate").value,
+	        		 dueDate: document.getElementById("dueDate").value
+	        }
+	        console.log("params:", params); // 👈 params 확인
+	        const res = await axios.post("/api/v1/stock/outboundList/search", params, {withCredentials: true });
+	        inListGrid.gridOptions.api.setRowData(res.data);
+	    } catch (err) {
+	        console.error(err);
+	        toastr.error("조회 실패");
+	    } finally {
+	        hideLoader("gridWrapper");
+	    }
+	}
 	
 	
 // 출고 리스트 
@@ -366,7 +453,8 @@ async function openProductModal() {
 	            },
 	            onRowDoubleClicked:  (event) => {
 	                // 모달 안에서 선택한 행의 제품명만 가져오기
-	                document.getElementById("productCode").value = event.data.productCode;
+	                //document.getElementById("productCode").value = event.data.productCode;
+	                document.getElementById("productName").value = event.data.productName;
 	                productModal.hide();
 	            }
 	        });
@@ -386,14 +474,7 @@ async function openProductModal() {
  	
  	
 	
-	// ------------------ 변수 초기화 ------------------
-	let productGridApi = null;
-	let productGridOptions = null;
-	let selectedProductRow = null; // 클릭한 행 저장용
-	const productModalEl = document.getElementById("productModal");
-	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
-	const businessModalEl = document.getElementById("businessModal");
-	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
+	
 	
     // 거래처명 클릭 시 모달
 	searchPartner.addEventListener('click', () => {

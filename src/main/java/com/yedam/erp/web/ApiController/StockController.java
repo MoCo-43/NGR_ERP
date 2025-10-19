@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -99,6 +98,16 @@ public class StockController {
 		Long compCode = SessionUtil.companyId();
 		service.insertInvenClosing(empId , compCode);
 		return ResponseEntity.ok("생성완료");
+	}
+	
+	@PostMapping("/icFilteredList")
+	public List<InvenVO> icFilteredList(@RequestBody Map<String,Object> params){
+		// 전체 선택 시 빈 문자열("")이면 null로 변경
+	    Object status = params.get("icStatus");
+	    if (status instanceof String && ((String) status).trim().isEmpty()) {
+	        params.put("icStatus", null);
+	    }
+		return service.findInvenList(params);
 	}
 	
 	
@@ -191,6 +200,13 @@ public class StockController {
 	@GetMapping("/outboundList/{selectedRow}/{doCode}")
 	public List<OutboundVO> getOutboundDetailList(@PathVariable String selectedRow , @PathVariable String doCode){
 		return service.selectOutboundByOutbHeaderCode(selectedRow, doCode);
+	}
+	
+	
+	// 출고조회 - 필터
+	@PostMapping("/outboundList/search")
+	public List<OutboundVO> filteredOutboundList(@RequestBody Map<String , Object> params){
+		return service.filteredOutboundList(params);
 	}
 	
 	
@@ -358,6 +374,15 @@ public class StockController {
 		return service.productAll(compCode);
 	}
 	
+	@PostMapping("/product/search") // 제품리스트 필터조회 - 모달
+	public List<ProductVO> filterdProductList(@RequestBody Map<String,Object> params){
+		System.out.println("params.companyCode : "+params.get("companyCode"));
+		System.out.println("params.productName : "+params.get("productName"));
+		System.out.println("params.empName : "+params.get("empName"));
+		System.out.println("params.note : "+params.get("note"));
+		return service.filteredProductList(params);
+	}
+	
 	@GetMapping("/selectProductImg/{compCode}/{productCode}")
 	public ResponseEntity<Resource> getProductImg(@PathVariable Long compCode , @PathVariable String productCode){
 		String fileName = service.getProductFileNameByProductCodeAndCompCode(compCode,productCode);
@@ -408,18 +433,13 @@ public class StockController {
 	
 	 @ResponseBody
 	 @GetMapping("/cusList/{compCode}") // 거래처리스트 모달
-	 public List<PartnerVO> cutList(@PathVariable Long compCode,
-			 @RequestParam(required = false) String cusKw,
-			    @RequestParam(required = false) String empKw,
-			    @RequestParam(required = false) String btKw,
-			    @RequestParam(required = false) String bcKw){
-		 Map<String, Object> params = new HashMap<>();
-		    params.put("compCode", compCode);
-		    params.put("cusKw", cusKw);
-		    params.put("empKw", empKw);
-		    params.put("btKw", btKw);
-		    params.put("bcKw", bcKw);
-		 return service.customerAll(params);
+	 public List<PartnerVO> cutList(@PathVariable Long compCode){
+		 return service.customerAll(compCode);
+	 }
+	 
+	 @PostMapping("/filteredCustomerList")
+	 public List<PartnerVO> filteredCustomerList(@RequestBody Map<String , Object> params){
+		 return service.filteredCustomerList(params);
 	 }
 	
 	 @PutMapping("/signUpdate") // 전자서명 등록 수정
