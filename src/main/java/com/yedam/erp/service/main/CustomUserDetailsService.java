@@ -16,13 +16,30 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Autowired
     private EmpLoginMapper empLoginMapper;
 
+//    @Override
+//    public UserDetails loadUserByUsername(String empId) throws UsernameNotFoundException {
+//        // DB에서 empId로 사용자 조회
+//        EmpLoginVO emp = empLoginMapper.findByEmpId(empId);
+//        if (emp == null) {
+//            throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + empId);
+//        }
+//        return new CustomUserDetails(emp);
+//    }
     @Override
     public UserDetails loadUserByUsername(String empId) throws UsernameNotFoundException {
-        // DB에서 empId로 사용자 조회
         EmpLoginVO emp = empLoginMapper.findByEmpId(empId);
         if (emp == null) {
             throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + empId);
         }
+
+        // ✅ 자동 잠금 해제 처리
+        if ("Y".equals(emp.getIsLocked()) && emp.getLockUntil() != null && emp.getLockUntil().before(new java.util.Date())) {
+            empLoginMapper.unlockAccount(empId);
+            emp.setIsLocked("N");
+            emp.setFailedLoginAtt(0L);
+            emp.setLockUntil(null);
+        }
+
         return new CustomUserDetails(emp);
     }
 }	

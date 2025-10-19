@@ -27,15 +27,24 @@ public interface EmpLoginService {
     
     //마이페이지 사원조회
     //List<EmpVO> mypageList(String name); 
-    EmpVO mypageInfo(String empId);
+    //사원정보마이페이지
+    EmpLoginVO mypageInfo(String empId);
+    //
     Long findMatNOByEmpId(String empId);
-
+    //
 	Long findMatNoByEmpId(String empId);
-	
+	//아이디중복체크
 	boolean idChecks(String empId);
 	
 	//관리자가 사원의 시스템 권한을 직접 변경
 	void updateEmployeeRole(String empId, String newRoleName);
 	void activateCustomLoginWithRole(List<String> empIds, String roleName);
+	//사원상태변경
+	void updateEmployeeStatus(String empId, String isUsed);
+    // 프로필 이미지 업데이트
+    void updateEmpImage(Long empIdNo, String empImg);
+
+    // emp_id_no로 로그인계정 조회
+    EmpLoginVO findByEmpIdNo(Long empIdNo);
 	
 }

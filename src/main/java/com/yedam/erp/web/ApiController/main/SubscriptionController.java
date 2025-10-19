@@ -112,13 +112,16 @@ public class SubscriptionController {
     public String paymentComplete(@RequestParam(required = false) String comCode, Model model) {
 
         CompanyVO company = null;
+        SubscriptionVO subscription = null;
         if (comCode != null && !comCode.isEmpty()) {
             // comCode를 사용해 DB에서 회사 정보를 조회합니다.
             company = companyService.getCompanyByComCode(comCode);
         }
+        //구독정보 조회
+        subscription = subscriptionService.findLatestSubscriptionByComCode(comCode);
         // 조회한 company 객체를 "company"라는 이름으로 모델에 추가합니다.
         model.addAttribute("company", company);
-
+        model.addAttribute("subscription", subscription);
         model.addAttribute("comCode", comCode);
         model.addAttribute("targetStep", 5);
         model.addAttribute("subPlan", new SubPlanVO());

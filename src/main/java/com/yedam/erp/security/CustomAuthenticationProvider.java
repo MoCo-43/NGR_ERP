@@ -1,5 +1,22 @@
 package com.yedam.erp.security;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
 //import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.context.annotation.Lazy;
 //import org.springframework.security.authentication.AuthenticationProvider;
@@ -82,20 +99,9 @@ package com.yedam.erp.security;
 
 import com.yedam.erp.mapper.main.EmpLoginMapper;
 import com.yedam.erp.vo.main.EmpLoginVO;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 /**
  * CustomAuthenticationProvider
  * - 사용자 인증 처리
@@ -125,7 +131,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         // 2. 요청 URI에 따라 인증 로직 분기
         if (requestURI.startsWith("/salLogin")) {
-            // --- '회사 코드'가 필요 없는 /salLogin 인증 처리 ---
+            //'회사 코드'가 필요 없는 /salLogin 인증 처리 
 
             // 직원 ID로 사용자 정보 조회 (mat_no가 없는 사용자를 찾는 로직)
             userVO = empLoginMapper.findByEmpId(empId);
@@ -140,7 +146,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             // }
 
         } else {
-            // --- '회사 코드'가 필요한 일반 로그인 인증 처리 ---
+            //'회사 코드'가 필요한 일반 로그인 인증 처리
             String comCode = request.getParameter("comCode");
 
             // 회사 코드가 없으면 예외 발생
@@ -165,6 +171,40 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     @Override
     public boolean supports(Class<?> authentication) {
         return authentication.equals(UsernamePasswordAuthenticationToken.class);
+    }
+    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
+                                        AuthenticationException exception) throws java.io.IOException {
+
+        String empId = request.getParameter("username");
+        EmpLoginVO emp = empLoginMapper.findByEmpId(empId);
+
+        if (emp != null) {
+        	long failCount = emp.getFailedLoginAtt() == null ? 1L : emp.getFailedLoginAtt() + 1L;
+        	emp.setFailedLoginAtt(failCount);
+
+            // 5회 이상 실패하면 10분 잠금
+            if (failCount >= 5) {
+                emp.setIsLocked("Y");
+                LocalDateTime unlockTime = LocalDateTime.now().plusMinutes(10);
+                emp.setLockUntil(Date.from(unlockTime.atZone(ZoneId.systemDefault()).toInstant()));
+            }
+
+            empLoginMapper.updateLoginFail(emp);
+        }
+
+        response.sendRedirect("/login?error=true");
+    }
+
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+                                        Authentication authentication) throws java.io.IOException {
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        EmpLoginVO emp = userDetails.getEmpLoginVO();
+
+        // 로그인 성공 시 실패횟수 초기화
+        empLoginMapper.resetLoginFail(emp.getEmpId());
+
+        response.sendRedirect("/main");
     }
 }
 

@@ -34,4 +34,6 @@ public class EmpVO {
     private String accountName; //예금주
     private String addressDetail; //상세주소
     private Long companyCode; // 회사코드
+    private String comName;//권한이름
+    private String isUsed;//상태
 }

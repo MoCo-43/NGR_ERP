@@ -24,4 +24,5 @@ public class CompanyVO {
 	private String bizCategory; // 종목 ex)냉동식품
 	private String bizAccount; //계좌번호
 	private String bank;
+	private SubscriptionVO subscription;
 }

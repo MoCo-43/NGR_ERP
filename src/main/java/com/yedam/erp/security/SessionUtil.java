@@ -23,9 +23,7 @@ public class SessionUtil {
 		// 인증 객체를 얻습니다. 
 		Authentication authentication = context.getAuthentication(); 
 		// 로그인한 사용자정보를 가진 객체를 얻습니다. 
-		
 		CustomUserDetails principal =(CustomUserDetails) authentication.getPrincipal(); 
-		
 		return principal.getUsername();
 	}
 	
@@ -40,6 +38,13 @@ public class SessionUtil {
 		CustomUserDetails principal =(CustomUserDetails) authentication.getPrincipal(); 
 		
 		return principal.getEmpLoginVO().getName();
+	}
+	//사번번호
+	public static Long empIdNo() {
+	    SecurityContext context = SecurityContextHolder.getContext();
+	    Authentication authentication = context.getAuthentication();
+	    CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+	    return principal.getEmpLoginVO().getEmpIdNo(); 
 	}
 
 }

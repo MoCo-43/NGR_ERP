@@ -46,4 +46,6 @@ public interface SubscriptionMapper {
     // 구독 정보 조회 (남은 기간 확인용)
     //SubscriptionVO getSubscriptionBySubCode(Long subCode);
     SubscriptionVO getSubscriptionBySubCode(@Param("subCode") String subCode);
+    //회사코드 기준 최신구독 1건조회
+    SubscriptionVO findLatestSubscriptionByComCode(@Param("comCode") String comCode);
 }

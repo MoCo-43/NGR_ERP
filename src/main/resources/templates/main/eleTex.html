@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>세금계산서</title>
+<style>
+@page {
+  size: A4 portrait;
+  margin: 15mm;
+}
+body {
+  font-family: "Malgun Gothic", sans-serif;
+  font-size: 12px;
+  color: #000;
+  width: 190mm;
+  margin: 0 auto;
+}
+h2 {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 8px;
+}
+th, td {
+  border: 1px solid #000;
+  padding: 5px;
+  text-align: center;
+}
+thead th {
+  background-color: #f1f5f9;
+}
+.section-title {
+  font-weight: bold;
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+.text-right {
+  text-align: right;
+}
+.text-left {
+  text-align: left;
+}
+.footer {
+  text-align: right;
+  margin-top: 20px;
+  font-weight: bold;
+  font-size: 14px;
+}
+.print-btn {
+  display: none;
+}
+@media screen {
+  .print-btn {
+    display: block;
+    text-align: center;
+    margin: 10px 0;
+  }
+}
+</style>
+</head>
+
+<body>
+  <div class="print-btn">
+    <button onclick="window.print()">🖨️ 인쇄하기 / PDF 저장</button>
+  </div>
+
+  <h2>세금계산서</h2>
+
+  <!-- 공급자 / 공급받는자 정보 -->
+  <table>
+    <tr>
+      <th colspan="2">공급자</th>
+      <th colspan="2">공급받는자</th>
+    </tr>
+    <tr>
+      <td>등록번호</td>
+      <td th:text="${company.matNo}"></td>
+      <td>등록번호</td>
+      <td th:text="${invoice.header.bizNo}"></td>
+    </tr>
+    <tr>
+      <td>상호</td>
+      <td th:text="${company.compName}"></td>
+      <td>상호</td>
+      <td th:text="${invoice.header.cusName}"></td>
+    </tr>
+    <tr>
+      <td>대표자</td>
+      <td th:text="${company.ceo}"></td>
+      <td>대표자</td>
+      <td th:text="${invoice.header.buyerCeoName}"></td>
+    </tr>
+    <tr>
+      <td>사업장주소</td>
+      <td th:text="${company.compAddr}"></td>
+      <td>사업장주소</td>
+      <td th:text="${invoice.header.buyerAddr}"></td>
+    </tr>
+    <tr>
+      <td>업태 / 종목</td>
+      <td th:text="${company.bizType + ' / ' + company.bizCategory}"></td>
+      <td>업태 / 종목</td>
+      <td th:text="${invoice.header.buyerBizType + ' / ' + invoice.header.buyerBizCategory}"></td>
+    </tr>
+  </table>
+
+  <!-- 품목 내역 -->
+  <div class="section-title">품목 내역</div>
+  <table>
+    <thead>
+      <tr>
+        <th>일자</th>
+        <th>품명</th>
+        <th>규격</th>
+        <th>수량</th>
+        <th>단가</th>
+        <th>공급가액</th>
+        <th>세액</th>
+        <th>비고</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="line : ${invoice.lines}">
+        <td th:text="${#temporals.format(invoice.header.invoiceDate, 'MM-dd')}"></td>
+        <td th:text="${line.productName}"></td>
+        <td th:text="${line.specification}"></td>
+        <td th:text="${line.qty}"></td>
+        <td class="text-right" th:text="${#numbers.formatInteger(line.unitPrice, 3, 'COMMA')}"></td>
+        <td class="text-right" th:text="${#numbers.formatInteger(line.supAmt, 3, 'COMMA')}"></td>
+        <td class="text-right" th:text="${#numbers.formatInteger(line.vatAmt, 3, 'COMMA')}"></td>
+        <td th:text="${line.note}"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 합계 -->
+  <div class="footer">
+    공급가액 합계: 
+    <span th:text="${#numbers.formatInteger(invoice.header.subtotalAmt, 3, 'COMMA')}"></span> 원 &nbsp; | &nbsp;
+    세액:
+    <span th:text="${#numbers.formatInteger(invoice.header.vatAmt, 3, 'COMMA')}"></span> 원 &nbsp; | &nbsp;
+    합계:
+    <span th:text="${#numbers.formatInteger(invoice.header.totalAmt, 3, 'COMMA')}"></span> 원
+  </div>
+</body>
+</html>
