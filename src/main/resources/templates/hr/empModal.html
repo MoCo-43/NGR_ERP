@@ -299,10 +299,10 @@
     function validate(p){
     	  const hasDeptCode = (document.getElementById('f_dept_code')?.value || '').trim().length > 0;
     	  const hasDeptName = (document.getElementById('f_dept_name')?.value || '').trim().length > 0;
-    	  if(!(hasDeptCode && hasDeptName)) { toastr.error('부서를 선택하세요.'); return false; }
-    	  if(!p.name)     { toastr.error('성명을 입력하세요.');     return false; }
-    	  if(!p.email)    { toastr.error('이메일을 입력하세요.');   return false; }
-    	  if(!p.joinDate) { toastr.error('입사일자를 입력하세요.'); return false; }
+    	  if(!(hasDeptCode && hasDeptName)) { toastr.warning('부서를 선택하세요.'); return false; }
+    	  if(!p.name)     { toastr.warning('성명을 입력하세요.');     return false; }
+    	  if(!p.email)    { toastr.warning('이메일을 입력하세요.');   return false; }
+    	  if(!p.joinDate) { toastr.warning('입사일자를 입력하세요.'); return false; }
     	  return true;
     	}
     async function saveBasic(){
@@ -420,7 +420,7 @@
 
     window.openZipSearch = function({ onSelect } = {}) {
     	  if (!window.daum || !daum.Postcode) {
-    		  toastr.error('주소 검색 스크립트가 로드되지 않았습니다.');
+    		  toastr.warning('주소 검색 스크립트가 로드되지 않았습니다.');
     	    return;
     	  }
     	  new daum.Postcode({
