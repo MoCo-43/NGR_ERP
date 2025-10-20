@@ -25,30 +25,180 @@
    />
    <!-- TOASTR -->
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- CSS -->
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
    <style type="text/css">
    .ag-theme-quartz .ag-cell {
 	padding-left: 8px;
   	padding-right: 8px;
+	}
+	.section-title {
+		margin: .75rem 0;
+		font-weight: 700;
 	}
    </style>
   </th:block>
 </head>
 <body>
 <section layout:fragment="content">
-<!-- 컨테이너 시작 -->
-<div class="card shadow">
-  <!-- 마스터 카드 -->
-  <!-- <div class="card shadow-sm mb-4"> -->
+  <div class="card shadow mb-3">
+    <!-- 상단 제목 -->
     <div class="card-header py-3 d-flex align-items-center justify-content-between">
       <h6 class="mb-0 font-weight-bold text-primary">출고 조회 페이지</h6>
     </div>
-  <!-- </div>  -->
 
-  <!-- 폼 카드 -->
-  <!-- <div class="card shadow-sm">  -->
+    <div class="card-body">
+      <!-- ✅ 검색 영역 (입고 조회 페이지 스타일로 통일) -->
+      <div class="btn-bar d-flex align-items-center gap-2 mb-3 flex-wrap">
+        <input type="text" class="form-control form-control-sm" id="productName" name="productName"
+               placeholder="제품명" style="max-width: 180px;">
+        <input type="text" class="form-control form-control-sm" id="businessPartner" name="businessPartner"
+               placeholder="거래처명" style="max-width: 180px;">
+        <input type="text" id="outboundDate" name="outboundDate" placeholder="출고일자"
+               class="form-control form-control-sm" style="max-width: 180px;">
+        <input type="text" id="dueDate" name="dueDate" placeholder="납기예정일자"
+               class="form-control form-control-sm" style="max-width: 180px;">
+        <button class="btn btn-danger btn-sm" type="button" id="obResetBtn">
+          <i class="bi bi-arrow-counterclockwise"></i> 초기화
+        </button>
+      </div>
+
+      <!-- ✅ 좌우 2단 그리드 -->
+      <div class="row mt-4 g-3">
+        <!-- 출고 목록 -->
+        <div class="col-md-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-header bg-secondary text-white">
+              <h5 class="mb-0">출고 목록</h5>
+            </div>
+            <div class="card-body p-0 position-relative">
+              <div id="gridWrapper" style="width: 100%; height: 500px;">
+                <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
+                <!-- 로딩 스피너 -->
+                <div id="loader" class="loader-overlay" style="display: none;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 출고 상세 -->
+        <div class="col-md-6">
+          <div class="card shadow-sm h-100">
+            <div class="card-header bg-secondary text-white">
+              <h5 class="mb-0">출고 상세</h5>
+            </div>
+            <div class="card-body p-0 position-relative">
+              <div id="gridDetailWrapper" style="width: 100%; height: 500px;">
+                <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
+                <!-- 로딩 스피너 -->
+                <div id="loaderDetail" class="loader-overlay" style="display: none;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 출고 상세 끝 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 컨테이너 시작 -->
+<!--   <div class="card shadow mb-3">
+    상단 제목
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="mb-0 font-weight-bold text-primary">출고 조회 페이지</h6>
+    </div>
+
+    <div class="card-body">
+      버튼 영역
+      <div class="btn-bar d-flex justify-content-end mb-3">
+        <button type="button" class="btn btn-dark me-2" id="submitBtn">조회</button>
+        <button type="button" class="btn btn-danger" id="obResetBtn">초기화</button>
+      </div>
+
+      검색 영역
+      <form class="row g-3" id="searchList" enctype="application/x-www-form-urlencoded">
+        <div class="col-md-3">
+          <label for="productName" class="form-label">제품명</label>
+          <input type="text" class="form-control" id="productName" name="productName">
+        </div>
+        <div class="col-md-3">
+          <label for="businessPartner" class="form-label">거래처명</label>
+          <input type="text" class="form-control" id="businessPartner" name="businessPartner">
+        </div>
+        <div class="col-md-3">
+          <label for="outboundDate" class="form-label">출고일자</label>
+          <input type="date" class="form-control" id="outboundDate" name="outboundDate">
+        </div>
+        <div class="col-md-3">
+          <label for="dueDate" class="form-label">납기예정일자</label>
+          <input type="date" class="form-control" id="dueDate" name="dueDate">
+        </div>
+      </form>
+
+      좌우 2단 그리드
+      <div class="row mt-4">
+        출고 목록
+        <div class="col-md-6">
+          <div
+            style="position: relative; width: 100%; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); border-radius: 0.25rem;">
+            <div class="section-title">출고목록</div>
+            <div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
+              <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
+              로딩 스피너
+              <div id="loader" class="loader-overlay" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        출고 상세
+        <div class="col-md-6">
+          <div
+            style="position: relative; width: 100%; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); border-radius: 0.25rem;">
+            <div class="section-title">출고상세</div>
+            <div id="gridDetailWrapper" style="position: relative; width: 100%; height: 500px;">
+              <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
+              로딩 스피너
+              <div id="loaderDetail" class="loader-overlay" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        출고 상세 끝
+      </div>
+      좌우 2단 끝
+    </div>
+  </div> -->
+  
+  <!--  -->
+<!-- 컨테이너 시작 -->
+<!-- <div class="card shadow">
+  마스터 카드
+  <div class="card shadow-sm mb-4">
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="mb-0 font-weight-bold text-primary">출고 조회 페이지</h6>
+    </div>
+  </div> 
+
+  폼 카드
+  <div class="card shadow-sm"> 
     <div class="card-body">
     <div class="btn-bar">
-    	 <!-- 버튼 영역 (폼 전체 최상단 오른쪽) -->
+    	 버튼 영역 (폼 전체 최상단 오른쪽)
       <div class="d-flex justify-content-end mb-3">
 	    <button type="button" class="btn btn-dark me-2" id="submitBtn">조회</button>
 	    <button type="button" class="btn btn-danger" form="searchOrderPlan" id="obResetBtn">초기화</button>
@@ -56,10 +206,10 @@
     </div>
     
       <form class="row g-3" id="searchList" enctype="application/x-www-form-urlencoded">
-        <!-- <div class="col-md-3">
+        <div class="col-md-3">
          <label for="productCode" class="form-label">제품코드</label>
          <input type="text" class="form-control" id="productCode" name="productCode">
-        </div> -->
+        </div>
         <div class="col-md-3">
          <label for="productName" class="form-label">제품명</label>
          <input type="text" class="form-control" id="productName" name="productName">
@@ -78,22 +228,22 @@
         </div>
       </form>
     </div>
-  <!-- </div>  -->
+  </div> 
   
 <div class="shadow-sm mt-4">
   <div class="card-body">
     <div class="row">
-      <!-- 출고 목록 -->
+      출고 목록
       <div class="col-md-6">
         <div class="card">
           <div class="card-header bg-secondary text-white">
             <h5 class="mb-0">출고 목록</h5>
           </div>
           <div class="card-body p-0">
-           <!-- 로딩바 -->
+           로딩바
 			<div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
             <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
-                <!-- 로딩 스피너 -->
+                로딩 스피너
 			  <div id="loader" class="loader-overlay" style="display: none;">
 			    <div class="spinner-border text-primary" role="status">
 			      <span class="visually-hidden">Loading...</span>
@@ -105,17 +255,17 @@
         </div>
       </div>
 
-      <!-- 출고 상세 -->
+      출고 상세
       <div class="col-md-6">
         <div class="card">
           <div class="card-header bg-secondary text-white">
             <h5 class="mb-0">출고 상세</h5>
           </div>
           <div class="card-body p-0">
-           <!-- 로딩바 -->
+           로딩바
 			<div id="gridDetailWrapper" style="position: relative; width: 100%; height: 500px;">
             <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%;"></div>
-               <!-- 로딩 스피너 -->
+               로딩 스피너
 			  <div id="loaderDetail" class="loader-overlay" style="display: none;">
 			    <div class="spinner-border text-primary" role="status">
 			      <span class="visually-hidden">Loading...</span>
@@ -130,8 +280,8 @@
   </div>
 </div>
   
-  <!-- 컨테이너 종료 -->
-</div>
+  컨테이너 종료
+</div> -->
   <!-- 모달 include              경로             ::  div id 부분  -->   
   <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
   <!-- 모달 include              경로             ::  div id 부분  -->   
@@ -154,7 +304,10 @@
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/dist/ag-grid-community.min.noStyle.js"></script>
  <!-- toastr -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<!-- 한국어 locale -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
   <!-- 스크립트 -->
 <script th:inline="none">
 document.addEventListener("DOMContentLoaded", () => {
@@ -184,6 +337,61 @@ document.addEventListener("DOMContentLoaded", () => {
  	let productGridApi = null;
 	let productGridOptions = null;
 	let selectedProductRow = null; // 클릭한 행 저장용
+	
+	function initKoreanDatePicker(selector, options = {}) {
+	    flatpickr(selector, {
+	        locale: "ko",
+	        dateFormat: "Y-m-d",
+	        allowInput: true,
+	        enableTime: false,
+	        onReady: function(selectedDates, dateStr, instance) {
+	        	const btnWrapper = document.createElement("div");
+	            // 공통 스타일
+	            btnWrapper.style.cssText = `
+	            	 display: flex;
+	                justify-content: space-between; /* 좌우 끝 */
+	                width: 100%;                   /* 전체 너비 확보 */
+	                padding: 2px 6px;              /* 달력과 버튼 간 여백 */
+	                box-sizing: border-box;
+	                margin-top: 2px;
+	            `;
+
+	            // 오늘 버튼
+	            const todayBtn = document.createElement("button");
+	            todayBtn.type = "button";
+	            todayBtn.textContent = "오늘";
+	            todayBtn.className = "btn btn-outline-primary btn-sm"; // 테두리 보이게
+	            todayBtn.style.cssText = "font-size: 0.65rem; padding: 2px 6px;";
+	            todayBtn.addEventListener("click", () => {
+	                instance.setDate(new Date());
+	                loadFilteredData(); 
+	                instance.close();
+	            });
+
+	            // 초기화 버튼
+	            const clearBtn = document.createElement("button");
+	            clearBtn.type = "button";
+	            clearBtn.textContent = "초기화";
+	            clearBtn.className = "btn btn-outline-secondary btn-sm"; // 테두리 보이게
+	            clearBtn.style.cssText = "font-size: 0.65rem; padding: 2px 6px;";
+	            clearBtn.addEventListener("click", () => {
+	                instance.clear();
+	                loadFilteredData(); 
+	                instance.close();
+	            });
+
+	            // 버튼 붙이기
+	            btnWrapper.appendChild(clearBtn);
+	            btnWrapper.appendChild(todayBtn);
+
+	            instance.calendarContainer.appendChild(btnWrapper);
+	        },
+	        ...options
+	    });
+	}
+	
+	initKoreanDatePicker('#outboundDate');
+	initKoreanDatePicker('#dueDate');
 	
  	// 공통 모달 호출 함수
  	function initGrid(config) {
@@ -253,9 +461,9 @@ document.addEventListener("DOMContentLoaded", () => {
 	document.getElementById("dueDate").addEventListener("change", loadFilteredData); */
 	
 	// 조회버튼 클릭시
-	document.querySelector('#submitBtn').addEventListener('click', async ()=>{
+	/* document.querySelector('#submitBtn').addEventListener('click', async ()=>{
 		loadFilteredData();
-	});
+	}); */
 	// 초기화버튼 클릭시
 	document.querySelector('#obResetBtn').addEventListener('click', async ()=>{
 		try{

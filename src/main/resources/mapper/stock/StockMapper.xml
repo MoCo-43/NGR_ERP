@@ -16,7 +16,7 @@ INSERT INTO product(
 		,LEAD_TIME
 		,VAT_TYPE
 )
-VALUES(CONCAT('P',LPAD(seq_product.nextval,5,'0')),
+VALUES(CONCAT('P',LPAD(seq_product.nextval,4,'0')),
        #{productName},
        #{specification},
        #{empName},
@@ -95,6 +95,9 @@ WHERE COMPANY_CODE = #{companyCode}
 </if>
 <if test="note != null and note.trim() != ''">
  AND NOTE LIKE '%' || #{note} || '%' 
+</if>
+<if test="insDate != null and insDate != ''">
+ AND insert_date = TO_DATE(#{insDate}, 'YYYY-MM-DD')  
 </if>
 </select>
 
@@ -179,6 +182,53 @@ VALUES (SEQ_EXPLAIN_DETAIL.nextval ,
 
 
 </insert>
+
+<!-- 발주 계획 조회 - 필터 -->
+<select id="filteredOrderPlans" parameterType="map" resultMap="orderPlanResultMap">
+SELECT 
+    m.xp_code as xp_code,
+    min(d.business_partner) as business_partner,
+    min(d.business_code) as business_code,  
+    m.emp_id as emp_id,
+    m.vat_type as vat_type,
+    m.ins_date as ins_date,
+    case
+        when count(d.xd_no) > 1 
+            then min(d.product_name) || ' 외 ' || (count(d.xd_no) - 1) || '건' 
+        else min(d.product_name) 
+    end as product_name,
+    sum(d.amount) as amount,
+    sum(d.sup_amt) as sup_amt,
+     case 
+        when exists (
+            select 1 from order_req o 
+            where o.xp_code = m.xp_code
+        ) then 'Y'
+        else 'N'
+    end as has_order_sheet
+   
+FROM explain m 
+JOIN explain_detail d 
+    ON m.xp_code = d.xp_code 
+WHERE m.company_code = #{companyCode} 
+<if test="productName != null and productName != ''">   
+ AND d.product_name LIKE '%' || #{productName} || '%'  
+</if>
+<if test="businessPartner != null and businessPartner != ''">
+ AND d.business_partner LIKE '%' || #{businessPartner} || '%'  
+</if>
+<if test="insDate != null and insDate != ''">
+ AND TRUNC(m.ins_date) = TO_DATE(#{insDate},'yyyy-MM-dd') 
+</if>
+GROUP BY 
+    m.xp_code, 
+    m.emp_id, 
+    m.vat_type,
+    m.ins_date
+    
+ORDER BY TO_NUMBER(SUBSTR(m.xp_code, 3)) DESC
+</select>
+
 <!-- 발주 계획 조회 -->
 <select id="selectOrderPlans" resultMap="orderPlanResultMap">
 SELECT 
@@ -533,6 +583,36 @@ FROM INBOUND
 WHERE LOT_CODE = #{lotCode}
 
 </select>
+
+<!-- 월별 입고 추이 -->
+<select id="inboundTrendChart" parameterType="map" resultType="InboundVO">
+ SELECT
+    TO_CHAR(INBOUND_DATE, 'YYYY-MM') AS month,
+    SUM(QTY) AS qty,
+    PRODUCT_NAME AS productName 
+  FROM INBOUND
+  WHERE COMPANY_CODE = #{companyCode}
+    AND LOT_CODE = #{lotCode}
+  GROUP BY TO_CHAR(INBOUND_DATE, 'YYYY-MM'), PRODUCT_NAME
+  ORDER BY TO_CHAR(INBOUND_DATE, 'YYYY-MM') 
+<!-- <![CDATA[
+SELECT 
+    TO_CHAR(ADD_MONTHS(TRUNC(SYSDATE, 'MM'), m.rn - 3), 'YYYY-MM') AS "month",
+    NVL(SUM(i.QTY), 0) AS "qty",
+    product_name AS "productName" 
+FROM 
+    (SELECT LEVEL AS rn FROM DUAL CONNECT BY LEVEL <= 3) m
+LEFT JOIN 
+    INBOUND i
+    ON TO_CHAR(i.INBOUND_DATE, 'YYYY-MM') = TO_CHAR(ADD_MONTHS(TRUNC(SYSDATE, 'MM'), m.rn - 3), 'YYYY-MM')
+    AND i.COMPANY_CODE = #{companyCode}
+    AND i.LOT_CODE = #{lotCode}
+GROUP BY 
+    TO_CHAR(ADD_MONTHS(TRUNC(SYSDATE, 'MM'), m.rn - 3), 'YYYY-MM'), product_name 
+ORDER BY  1 
+]]> -->
+</select>
+
 
 <!-- 입고등록용 발주 상세 조회 -->
 <select id="getOrderDetailListByOrderCode" resultType="OrderDetailVO" parameterType="String">
