@@ -135,18 +135,20 @@
 				<li>회사는 고객의 귀책사유로 인한 서비스 이용의 장애에 대하여는 책임을 지지 않습니다.</li>
 			</ol>
 		</article>
-		<!-- 서명 이미지 영역 -->
-		<div style="margin-top: 40px; text-align: right;">
-			<p style="font-weight: bold;">전자서명</p>
+<!-- 서명 이미지 영역 -->
+<div style="margin-top: 40px; text-align: right;">
+  <p style="font-weight: bold;">전자서명</p>
 
-			<!-- signPath가 존재하면 이미지 표시 -->
-			<img th:if="${signPath != null}"  th:src="@{'/signature/' + #{matNo}}"
-				alt="전자서명"
-				style="width: 200px; border: 1px solid #ccc; padding: 5px;" />
+  <!-- signPath가 존재하고 비어있지 않을 때만 표시 -->
+<img th:if="${signPath != null and #strings.isNotEmpty(signPath)}"
+     th:src="@{'/signature/' + ${matNo}}"
+     alt="전자서명"
+     style="width:200px; border:1px solid #ccc; padding:5px;" />
 
-			<!-- 없을 경우 대체 문구 -->
-			<p th:if="${signPath == null}" style="color: #999;">서명 정보가 없습니다.</p>
-		</div>
+<p th:if="${signPath == null or #strings.isEmpty(signPath)}"
+   style="color:#999;">서명 정보가 없습니다.</p>
+</div>
+
 </body>
 </html>
 

@@ -1,7 +1,9 @@
 package com.yedam.erp.web.ApiController.main;
 
+//import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.log;
+
 import java.io.File;
-import java.nio.file.Paths;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +34,9 @@ import com.yedam.erp.vo.hr.EmpVO;
 import com.yedam.erp.vo.main.DocumentsVO;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 @RestController
 @RequiredArgsConstructor
 public class EmpLoginController {
@@ -127,51 +132,77 @@ public class EmpLoginController {
     }
     //전자서명 이미지 조회
     @GetMapping("/signature/{matNo}")
-    public ResponseEntity<Resource> getSignatureImage(@PathVariable Long matNo) {
-        try {
-            // 1. DB 조회
-            DocumentsVO latestSign = documentService.selectLatestSignature(matNo);
-            if (latestSign == null || latestSign.getSignPath() == null) {
-                System.out.println("❌ No signature found for matNo=" + matNo);
-                return ResponseEntity.notFound().build();
-            }
+    @ResponseBody
+    public ResponseEntity<Resource> getSignature(@PathVariable Long matNo) throws IOException {
+        DocumentsVO latestSign = documentService.selectLatestSignature(matNo);
 
-            // 2. 파일명 추출 및 경로 구성
-            String signPath = latestSign.getSignPath(); // ex) 1760317229734_signature_1760317229726.png
-            String fileName = Paths.get(signPath).getFileName().toString();
-            File file = new File(uploadDir + "/signatures", fileName);
-            // 3. 디버깅 로그
-            System.out.println("✅ signPath from DB: " + signPath);
-            System.out.println("✅ Full file path: " + file.getAbsolutePath());
-            System.out.println("✅ File exists? " + file.exists());
-
-            // 4. 파일 존재 확인
-            if (!file.exists()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            // 5. 리소스 변환 및 MIME 타입 지정
-            Resource resource = new FileSystemResource(file);
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"");
-
-            String lower = fileName.toLowerCase();
-            MediaType mediaType = MediaType.IMAGE_JPEG;
-            if (lower.endsWith(".png")) mediaType = MediaType.IMAGE_PNG;
-            else if (lower.endsWith(".gif")) mediaType = MediaType.IMAGE_GIF;
-
-            // 6. 결과 반환
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .contentLength(file.length())
-                    .contentType(mediaType)
-                    .body(resource);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        if (latestSign == null || latestSign.getSignPath() == null) {
+            return ResponseEntity.notFound().build();
         }
+
+        // DB에는 파일명만 저장되어 있음 → 경로 보정
+        String fileName = latestSign.getSignPath();
+        String fullPath = uploadDir + "/uploads/signatures/" + fileName;
+
+        log.info("✅ signPath (fixed): {}", "/uploads/signatures/" + fileName);
+        log.info("✅ Full file path: {}", fullPath);
+
+        File file = new File(fullPath);
+        if (!file.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Resource resource = new FileSystemResource(file);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .body(resource);
     }
+//    @GetMapping("/signature/{matNo}")
+//    public ResponseEntity<Resource> getSignatureImage(@PathVariable Long matNo) {
+//        try {
+//            // 1. DB 조회
+//            DocumentsVO latestSign = documentService.selectLatestSignature(matNo);
+//            if (latestSign == null || latestSign.getSignPath() == null) {
+//                System.out.println("❌ No signature found for matNo=" + matNo);
+//                return ResponseEntity.notFound().build();
+//            }
+//
+//            // 2. 파일명 추출 및 경로 구성
+//            String signPath = latestSign.getSignPath(); // ex) 1760317229734_signature_1760317229726.png
+//            String fileName = Paths.get(signPath).getFileName().toString();
+//            File file = new File(uploadDir + "/uploads/signatures", fileName);
+//            // 3. 디버깅 로그
+//            System.out.println("✅ signPath from DB: " + signPath);
+//            System.out.println("✅ Full file path: " + file.getAbsolutePath());
+//            System.out.println("✅ File exists? " + file.exists());
+//
+//            // 4. 파일 존재 확인
+//            if (!file.exists()) {
+//                return ResponseEntity.notFound().build();
+//            }
+//
+//            // 5. 리소스 변환 및 MIME 타입 지정
+//            Resource resource = new FileSystemResource(file);
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"");
+//
+//            String lower = fileName.toLowerCase();
+//            MediaType mediaType = MediaType.IMAGE_JPEG;
+//            if (lower.endsWith(".png")) mediaType = MediaType.IMAGE_PNG;
+//            else if (lower.endsWith(".gif")) mediaType = MediaType.IMAGE_GIF;
+//
+//            // 6. 결과 반환
+//            return ResponseEntity.ok()
+//                    .headers(headers)
+//                    .contentLength(file.length())
+//                    .contentType(mediaType)
+//                    .body(resource);
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//    }
     
     
 	/**
