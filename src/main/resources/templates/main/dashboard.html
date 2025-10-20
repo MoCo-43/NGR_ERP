@@ -134,13 +134,13 @@ canvas {
 					<div class="stat-header">
 						<span class="stat-label">근무 중 인원</span> <span
 							class="material-icons">group</span>
-							<div class="stat-value">10명</div>
+							<div class="stat-value">명</div>
 					</div>
 				</div>
 
 				<div class="stat-card">
 					<div class="stat-header">
-						<span class="stat-label">이번 날 매출</span> <span
+						<span class="stat-label">이번 달 매출</span> <span
 							class="material-icons">trending_up</span>
 						<div class="stat-value">₩ 0</div>
 					</div>
@@ -246,7 +246,8 @@ canvas {
     const profitLabel = data.profitLabel || '당기순손익';
     const curProfit = Number(data.curProfit || 0);
     const prvProfit = Number(data.prvProfit || 0);
-
+    document.querySelector('.stat-card:nth-child(2) .stat-value').textContent =
+        '₩ ' + curProfit.toLocaleString();
     console.log("📊 손익 데이터:", { profitLabel, curProfit, prvProfit });
     return { profitLabel, curProfit, prvProfit };
   } catch (err) {
@@ -290,9 +291,15 @@ canvas {
       const response = await fetch('/api/dashboard/empmembers');
       if (!response.ok) throw new Error(`HTTP 요청 실패: ${response.status}`);
       const dataList = await response.json();
-
+	
       const labels = dataList.map(item => item.deptName);
       const memberCounts = dataList.map(item => item.memberCount);
+      // ✅ 총 인원 계산 (reduce로 누적)
+      const totalMembers = memberCounts.reduce((sum, val) => sum + Number(val || 0), 0);
+
+      // ✅ 상단 카드 "근무 중 인원" 업데이트
+      const empCard = document.querySelector('.stat-card:nth-child(1) .stat-value');
+      if (empCard) empCard.textContent = `${totalMembers}명`;
 
       const dynamicHrData = {
         labels,

@@ -448,7 +448,7 @@ document.getElementById('btnReverse').addEventListener('click', async () => {
 	
   const selected = voucherApi.getSelectedRows();
   if (!selected.length) return toastr.warning("역분개할 전표를 선택하세요.");
-  if(auth = "ROLE_USER"){
+  if(auth == "ROLE_USER"){
 		const ok = await cuteAlert({
 		    type: 'warning',
 		    title: `현재권한:${auth}`,
