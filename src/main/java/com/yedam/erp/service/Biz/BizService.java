@@ -41,7 +41,7 @@ public interface BizService {
   List<DeliveryOrderVO> selectDo(Long companyCode);
 
   // 출하지시서 등록
-  int insertDO(DoInsertVO dovo);
+  Long createDo(DoInsertVO dovo);
 
   // 거래처관리 조회
   List<CustomerVO> getCustomerManagement(Long companyCode);

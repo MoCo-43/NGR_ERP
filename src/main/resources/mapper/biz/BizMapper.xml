@@ -14,6 +14,7 @@
 <!-- 주문서 조회 -->
 <select id="selectPO" resultType="JoinPoVO" parameterType="long">
 SELECT
+    p.PO_CODE,
     p.PO_START,
     c.CUS_NAME,
     p.CREATER,
@@ -27,11 +28,11 @@ SELECT
     p.EX_DATE
 FROM
     CUSTOMER c
-LEFT JOIN
+JOIN
     PURCHASE_ORDER p ON c.CUS_CODE = p.CUS_CODE
-LEFT JOIN
+JOIN
     PO_DETAIL pod ON p.PO_ID = pod.PO_ID
-LEFT JOIN
+JOIN
     (SELECT PO_ID, COUNT(*) as cnt 
      FROM PO_DETAIL 
      GROUP BY PO_ID)pd_counts
@@ -57,7 +58,7 @@ ORDER BY PO_START DESC
     VALUES (
       #{poId},
       #{companyCode},
-      fn_generate_code('PO-', ''),
+      fn_generate_code('PO', ''),
       #{cusCode},
       #{creater},
       #{poStart},
@@ -72,35 +73,37 @@ ORDER BY PO_START DESC
 
 <insert id="insertPODetails" parameterType="PoInsertVO">
   INSERT INTO po_detail (
-    POD_ID, PO_ID, COMPANY_CODE, PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
-    DC_AMT, SUP_AMT, VAT_AMT, PRODUCT_NAME, VAT_TYPE
+    POD_ID, PO_ID, COMPANY_CODE,
+    PRODUCT_CODE, ORDER_QTY, UNIT_PRICE,
+    DC_AMT, SUP_AMT, VAT_AMT,
+    PRODUCT_NAME, VAT_TYPE
   )
   SELECT
     POD_ID_SEQ.NEXTVAL,
     #{poId},
     #{companyCode},
-    #{productCode},
-    #{orderQty},
-    #{unitPrice},
-    #{dcAmt},
-    #{supAmt},
-    #{vatAmt},
-    #{productName},
-    #{vatType}
+    t.productCode,
+    t.orderQty,
+    t.unitPrice,
+    t.dcAmt,
+    t.supAmt,
+    t.vatAmt,
+    t.productName,
+    t.vatType
   FROM (
     <foreach collection="poDetails" item="d" separator=" UNION ALL ">
       SELECT
-        #{d.productCode} AS productCode,
-        #{d.orderQty}   AS orderQty,
-        #{d.unitPrice}  AS unitPrice,
-        #{d.dcAmt}      AS dcAmt,
-        #{d.supAmt}     AS supAmt,
-        #{d.vatAmt}     AS vatAmt,
-        #{d.productName}   AS productName,
-        #{d.vatType}    AS vatType
+        #{d.productCode}  AS productCode,
+        #{d.orderQty}     AS orderQty,
+        #{d.unitPrice}    AS unitPrice,
+        #{d.dcAmt}        AS dcAmt,
+        #{d.supAmt}       AS supAmt,
+        #{d.vatAmt}       AS vatAmt,
+        #{d.productName}  AS productName,
+        #{d.vatType}      AS vatType
       FROM DUAL
     </foreach>
-  ) 
+  ) t
 </insert>
 
 
@@ -120,6 +123,7 @@ FROM PURCHASE_ORDER po
 JOIN PO_DETAIL pd ON po.PO_ID = pd.PO_ID
 JOIN CUSTOMER c ON po.CUS_CODE = c.CUS_CODE
 WHERE po.COMPANY_CODE = #{companyCode}
+  AND po.PO_STATUS = '작성완료'
 </select>
 
 
@@ -137,7 +141,9 @@ FROM   PRODUCT
 
 <!-- 거래처 조회(모달)-->
 <select id="getCustomers" resultType="CusModalVO">
-  SELECT c.CUS_CODE, c.CUS_NAME, cm.CREDIT_GRADE, cm.LEFT_PRICE, cp.DISCOUNT_RATE, cp.MON_DISC_CNT
+  SELECT c.CUS_CODE, c.CUS_NAME, c.ADDR, c.ZIP_CODE, c.TEL, c.CEMP_NAME,
+         cm.CREDIT_GRADE, cm.LEFT_PRICE, 
+         cp.DISCOUNT_RATE, cp.MON_DISC_CNT
   FROM CUSTOMER c
   JOIN CREDIT_MASTER cm ON c.CUS_NO = cm.CUS_NO
   JOIN CREDIT_POLICY cp ON cp.COMPANY_CODE = c.COMPANY_CODE 
@@ -150,15 +156,15 @@ FROM   PRODUCT
 SELECT
     d.DO_CODE,
     d.DO_CREATED,
-    c.CUS_NAME AS CUS_CODE,
+    c.CUS_NAME,
     CASE
         WHEN COUNT(p.PRODUCT_NAME) > 1
             THEN MIN(p.PRODUCT_NAME) || ' 외 ' || (COUNT(p.PRODUCT_NAME) - 1) || '건'
         ELSE MIN(p.PRODUCT_NAME)
-    END AS PRODUCT_CODE,
+    END AS PRODUCT_NAME,
+    SUM(dd.QTY) AS TOTAL_QTY,
     d.EX_DATE,
     d.DO_STATUS
-
 FROM DELIVERY_ORDER d
 JOIN CUSTOMER c
   ON d.CUS_CODE = c.CUS_CODE
@@ -166,17 +172,81 @@ JOIN DO_DETAIL dd
   ON d.DO_NO = dd.DO_NO
 JOIN PRODUCT p
   ON dd.PRODUCT_CODE = p.PRODUCT_CODE
-
 WHERE d.COMPANY_CODE = #{companyCode}
-
 GROUP BY
-    d.DO_CODE, d.DO_CREATED, c.CUS_CODE, c.CUS_NAME,
-    d.TOTAL_QTY, d.EX_DATE, d.DO_STATUS
-ORDER BY d.DO_CREATED DESC
+    d.DO_CODE,
+    d.DO_CREATED,
+    c.CUS_NAME,
+    d.EX_DATE,
+    d.DO_STATUS
+ORDER BY
+    d.DO_CREATED DESC
 </select>
 
 <!-- 출하지시서 등록 -->
-<insert id="insertDO" parameterType="DoInsertVO">
+<!-- 출하지시서 헤더 INSERT -->
+<insert id="insertDOHeader" parameterType="DoInsertVO">
+  <selectKey keyProperty="doNo" resultType="long" order="BEFORE">
+    SELECT DO_NO_SEQ.NEXTVAL FROM DUAL
+  </selectKey>
+
+  INSERT INTO DELIVERY_ORDER (
+    DO_NO, CUS_CODE, PO_CODE, DO_CODE,
+    EMP_NO, NAME, DO_CREATED, TOTAL_QTY,
+    DO_STATUS, NOTES, COMPANY_CODE,
+    EX_DATE, ADDR, ZIP_CODE
+  )
+  VALUES (
+    #{doNo},
+    #{cusCode},
+    #{poCode},
+    fn_generate_code('DO', ''),    -- DO_CODE 자동생성
+    #{empNo},
+    #{name},
+    #{doCreated},
+    #{totalQty},
+    #{doStatus},
+    #{notes},
+    #{companyCode},
+    #{exDate},
+    #{addr},
+    #{zipCode}
+  )
+</insert>
+
+<!-- 출하지시서 상세 INSERT (UNION ALL + t 별칭 방식) -->
+<insert id="insertDODetails" parameterType="DoInsertVO">
+  INSERT INTO DO_DETAIL (
+    DOD_NO, DO_NO, PRODUCT_CODE,
+    QTY, UNIT_PRICE, SUP_AMT,
+    VAT_AMT, DC_AMT, COMPANY_CODE
+  )
+  SELECT
+    FN_DOD_CODE(),     -- 상세 PK (FUNCTION)
+    #{doNo},           -- 헤더에서 생성한 DO_NO
+    t.productCode,
+    t.qty,
+    t.unitPrice,
+    t.supAmt,
+    t.vatAmt,
+    t.dcAmt,
+    #{companyCode}
+  FROM (
+    <foreach collection="dodetails" item="d" separator=" UNION ALL ">
+      SELECT
+        #{d.productCode} AS productCode,
+        #{d.qty}         AS qty,
+        #{d.unitPrice}   AS unitPrice,
+        #{d.supAmt}      AS supAmt,
+        #{d.vatAmt}      AS vatAmt,
+        #{d.dcAmt}       AS dcAmt
+      FROM DUAL
+    </foreach>
+  ) t
+</insert>
+
+<!-- 이전코드 -->
+<!-- <insert id="insertDO" parameterType="DoInsertVO">
   INSERT ALL
     INTO DELIVERY_ORDER
       (DO_NO, CUS_CODE, PO_CODE, DO_CODE, EMP_NO, NAME, DO_CREATED,
@@ -195,7 +265,7 @@ ORDER BY d.DO_CREATED DESC
          #{dod.unitPrice}, #{dod.supAmt}, #{dod.vatAmt}, #{dod.dcPrice}, #{companyCode})
     </foreach>
   SELECT 1 FROM DUAL
-</insert>
+</insert> -->
 
 <!-- 거래처 조회-->
 <select id="selectCustomers" resultType="java.util.List" parameterType="String">
@@ -203,6 +273,7 @@ ORDER BY d.DO_CREATED DESC
   FROM CUSTOMER
   WHERE COMPANY_CODE = #{companyCode}
 </select>
+
 
 
 <!-- 거래처 관리 조회 페이지 -->

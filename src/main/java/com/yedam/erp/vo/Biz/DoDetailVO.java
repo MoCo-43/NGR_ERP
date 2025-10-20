@@ -12,6 +12,6 @@ public class DoDetailVO {
     private Integer unitPrice;  // 단가
     private Integer supAmt;     // 공급가액
     private Integer vatAmt;     // 부가세
-    private Integer dcPrice;    // 할인 금액
+    private Integer dcAmt;    // 할인 금액
     private Long companyCode; // 회사 코드
 }

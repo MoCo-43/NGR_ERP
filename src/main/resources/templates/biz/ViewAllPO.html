@@ -89,12 +89,11 @@
               placeholder="거래처 검색"
             />
 
-            <label class="mr-2 mb-2">제품코드</label>
+            <label class="mr-2 mb-2">제품명</label>
             <input
-              id="productCode"
+              id="productName"
               type="text"
               class="form-control mr-3 mb-2"
-              placeholder="제품코드 입력"
             />
 
             <button id="btnSearch" class="btn btn-dark mb-2">조회</button>
@@ -140,11 +139,10 @@
               headerName: "",
               width: 70,
               checkboxSelection: true,
-              headerCheckboxSelection: false,
+              headerCheckboxSelection: true,
               filter: false,
               suppressMenu: true,
               pinned: "left",
-              rowSelection: "multiple",
             },
             { headerName: "거래처", field: "cusName", width: 140 },
             {
@@ -156,7 +154,12 @@
             },
             { headerName: "거래처명", field: "cusName", width: 140 },
             { headerName: "담당자", field: "creater", width: 110 },
-            { headerName: "품목명", field: "prdName", flex: 1, minWidth: 220 },
+            {
+              headerName: "제품명",
+              field: "productName",
+              flex: 1,
+              minWidth: 220,
+            },
             {
               headerName: "납기일자",
               field: "exDate",
@@ -166,7 +169,7 @@
             },
             {
               headerName: "주문금액",
-              field: "totalPrice",
+              field: "supAmt",
               width: 140,
               type: "rightAligned",
               valueFormatter: (p) =>
@@ -183,7 +186,8 @@
           const gridOptions = {
             columnDefs,
             rowData: [],
-            rowSelection: "multiRow",
+            rowSelection: "multiple",
+            rowMultiSelectWithClick: true,
             pagination: true,
             paginationPageSize: 12,
             animateRows: true,
@@ -220,11 +224,11 @@
               count = 0;
             gridApi.forEachNodeAfterFilterAndSort((n) => {
               count++;
-              const v = Number(n.data?.totalPrice || 0);
+              const v = Number(n.data?.supAmt || 0);
               if (!Number.isNaN(v)) sum += v;
             });
             setPinnedBottom([
-              { cusName: `건수 ${count}건`, prdName: "합계", totalPrice: sum },
+              { cusName: `건수 ${count}건`, productName: "합계", supAmt: sum },
             ]);
           }
 
@@ -236,19 +240,14 @@
               });
 
               const rows = (Array.isArray(data) ? data : []).map((r) => ({
-                poCode: r.poCode ?? r.PO_CODE ?? r.po_code ?? null, // ★ 추가: 식별자
-                poStart:
-                  r.poStart ??
-                  r.createdDate ??
-                  r.orderDate ??
-                  r.PO_START ??
-                  null,
-                cusName: r.cusName ?? r.customerName ?? r.CUS_NAME ?? "",
-                creater: r.creater ?? r.manager ?? r.CREATER ?? "",
-                prdName: r.prdName ?? r.productName ?? r.PRD_NAME ?? "",
-                exDate: r.exDate || null,
-                totalPrice: r.totalPrice ?? r.orderAmount ?? r.TOTAL_PRICE ?? 0,
-                poStatus: r.poStatus ?? r.status ?? r.PO_STATUS ?? "",
+                poCode: r.poCode, // ★ 추가: 식별자
+                poStart: r.poStart,
+                cusName: r.cusName,
+                creater: r.creater,
+                productName: r.productName,
+                exDate: r.exDate,
+                supAmt: r.supAmt,
+                poStatus: r.poStatus,
               }));
 
               console.log("EX_DATE 결과는 => :", rows);
@@ -257,7 +256,7 @@
             } catch (err) {
               console.error(err);
               setRows([]);
-              setPinnedBottom([{ prdName: "에러", totalPrice: 0 }]);
+              setPinnedBottom([{ productName: "에러", supAmt: 0 }]);
             }
           }
 
@@ -370,26 +369,13 @@
           }
         });
 
-        /*
-        // 승인 버튼 처리
-          document.addEventListener("DOMContentLoaded", () => {
-            const btnConfirm = document.getElementById("btnPoConfirm");
-            
-        });
-        // 입금완료 버튼 처리
-          document.addEventListener("DOMContentLoaded", () => {
-        	 const btnCofirm = document.getElementById("btnPaymentConfirm");
-        	 
-        	 
-        	 
-          });
-*/
+        // 승인, 입금완료 버튼 처리
         // === 공통 유틸 ===
         // 선택된 poCode 배열
         function getSelectedPoCodes() {
           if (!gridApi) return [];
           const sel = gridApi.getSelectedRows?.() || [];
-          return sel.map((r) => r.poCode).filter(Boolean);
+          return sel.map((r) => r.poCode);
         }
         // 버튼 로딩/해제
         function setBusy(btn, busy, busyLabel) {
@@ -404,8 +390,8 @@
           }
         }
         // 단건 업데이트 호출 (Mapper 단건)
-        async function putPoStatusSingle(poCode, poStatus) {
-          return axios.put("/api/biz/postatus", { poCode, poStatus });
+        async function putPoStatusSingle(poCodes, poStatus) {
+          return await axios.put("/api/biz/postatus", { poCodes, poStatus });
         }
 
         // ================= 승인 버튼 처리 =================
@@ -437,15 +423,8 @@
 
             setBusy(btnConfirm, true, "승인 처리중...");
             try {
-              // 병렬 처리
-              const results = await Promise.allSettled(
-                poCodes.map((code) => putPoStatusSingle(code, "작성완료"))
-              );
-              const ok = results.filter((r) => r.status === "fulfilled").length;
-              const fail = results.length - ok;
-              alert(
-                `승인 처리 결과\n- 성공: ${ok} / 실패: ${fail} / 총 ${results.length}`
-              );
+              const results = await putPoStatusSingle(poCodes, "작성완료");
+              alert(`${results}건 처리완료`);
               // 재조회 (search 함수가 이미 위에 정의되어 있음)
               if (typeof search === "function") await search();
             } catch (e) {
@@ -472,13 +451,13 @@
             const invalid = selected.filter(
               (r) => r.poStatus && r.poStatus !== "출하완료"
             );
-            if (
-              invalid.length &&
-              !confirm(
-                `'출하완료'가 아닌 ${invalid.length}건 포함. 그래도 진행할까요?`
-              )
-            )
+
+            if (invalid.length) {
+              alert(
+                `'출하완료'가 아닌 ${invalid.length}건 포함. 진행할수 없습니다.`
+              );
               return;
+            }
 
             if (
               !confirm(`선택된 ${poCodes.length}건을 '입금완료'로 변경할까요?`)
@@ -487,14 +466,9 @@
 
             setBusy(btnConfirm, true, "처리중...");
             try {
-              const results = await Promise.allSettled(
-                poCodes.map((code) => putPoStatusSingle(code, "입금완료"))
-              );
-              const ok = results.filter((r) => r.status === "fulfilled").length;
-              const fail = results.length - ok;
-              alert(
-                `입금완료 처리 결과\n- 성공: ${ok} / 실패: ${fail} / 총 ${results.length}`
-              );
+              const results = await putPoStatusSingle(poCodes, "입금완료");
+              alert(`${results}건 처리완료`);
+
               if (typeof search === "function") await search();
             } catch (e) {
               console.error(e);
