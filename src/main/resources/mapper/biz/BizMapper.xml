@@ -200,7 +200,7 @@ ORDER BY
     #{doNo},
     #{cusCode},
     #{poCode},
-    fn_generate_code('DO', ''),    -- DO_CODE 자동생성
+    fn_generate_code('DO', ''),
     #{empNo},
     #{name},
     #{doCreated},
@@ -222,8 +222,8 @@ ORDER BY
     VAT_AMT, DC_AMT, COMPANY_CODE
   )
   SELECT
-    FN_DOD_CODE(),     -- 상세 PK (FUNCTION)
-    #{doNo},           -- 헤더에서 생성한 DO_NO
+    fn_generate_code('DOD', ''),
+    #{doNo},
     t.productCode,
     t.qty,
     t.unitPrice,
@@ -278,7 +278,7 @@ ORDER BY
 
 <!-- 거래처 관리 조회 페이지 -->
 <select id="getCustomerManagement" resultType="CustomerVO" parameterType="Long">
-  SELECT CUS_CODE, CUS_NAME, CEO_NAME, TEL, ADDR, ACTIVE_STATUS, GBN
+  SELECT *
   FROM CUSTOMER
   WHERE COMPANY_CODE = #{companyCode}
 </select>
@@ -293,20 +293,21 @@ ORDER BY
   <update id="updateCustomerByCode" parameterType="CustomerVO">
     UPDATE CUSTOMER
     <set>
-      <if test="cusName != null">        CUS_NAME = #{cusName},</if>
       <if test="ceoName != null">        CEO_NAME = #{ceoName},</if>
-      <if test="tel != null">            TEL = #{tel},</if>
-      <if test="addr != null">           ADDR = #{addr},</if>
-      <if test="zipCode != null">        ZIP_CODE = #{zipCode},</if>
-
+      <if test="empName != null">       EMP_NAME = #{empName},</if>
+      <if test="cempName != null">       CEMP_NAME = #{cempName},</if>
+      <if test="cusName != null">        CUS_NAME = #{cusName},</if>
       <if test="bizNo != null">          BIZ_NO = #{bizNo},</if>
       <if test="bizType != null">        BIZ_TYPE = #{bizType},</if>
       <if test="bizCategory != null">    BIZ_CATEGORY = #{bizCategory},</if>
-
+      <if test="tel != null">            TEL = #{tel},</if>
       <if test="email != null">          EMAIL = #{email},</if>
-      <if test="cempName != null">       CEMP_NAME = #{cempName},</if>
-
+      <if test="addr != null">           ADDR = #{addr},</if>
+      <if test="zipCode != null">        ZIP_CODE = #{zipCode},</if>
       <if test="activeStatus != null">   ACTIVE_STATUS = #{activeStatus},</if>
+      <if test="gbn != null">           GBN = #{gbn},</if>
+      <if test="bankName != null">           BANK_NAME = #{bankName},</if>
+      <if test="bankAccount != null">           BANK_ACCOUNT = #{bankAccount},</if>
     </set>
     WHERE CUS_CODE = #{cusCode}
   </update>
