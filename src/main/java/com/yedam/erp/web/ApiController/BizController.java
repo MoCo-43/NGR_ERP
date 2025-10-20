@@ -109,15 +109,26 @@ public class BizController {
 
   // 출하지시서 등록 처리
   @PostMapping(value = "/doinsert", consumes = "application/json")
-  public ResponseEntity<Integer> insertDO(@RequestBody DoInsertVO dovo) {
+  public ResponseEntity<?> createDO(@RequestBody DoInsertVO dovo) {
 
     // 세션에서 회사코드 꺼내오기
     Long companyCode = SessionUtil.companyId();
+    Long doNo = service.createDo(dovo);
+
+    // 회사코드적용
     dovo.setCompanyCode(companyCode);
-  
-    int result = service.insertDO(dovo);
-    return ResponseEntity.ok(result);
+    // 디테일 poId전달
+    dovo.setDoNo(doNo);
+
+    return ResponseEntity.ok().body(dovo);
+
   }
+
+
+
+
+
+
 
   // 거래처 조회
   @GetMapping("/mngcustomer")

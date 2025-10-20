@@ -27,6 +27,7 @@
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
    <!-- CSS -->
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  
    <style type="text/css">
    .ag-theme-quartz .ag-cell {
 	padding-left: 8px;
@@ -42,6 +43,11 @@
 	  justify-content: center;
 	  z-index: 10; /* 그리드보다 위로 */
 	}
+	.section-title {
+		margin: .75rem 0;
+		font-weight: 700;
+	}
+
    </style>
   </th:block>
 </head>
@@ -49,15 +55,103 @@
 <!-- GPT 페이지 구성 -->
 <section layout:fragment="content">
 
-  <div class="card shadow mb-3" >
+  <div class="card shadow mb-3">
+    <!-- 상단 헤더 -->
+    <div class="card-header py-3 d-flex align-items-center justify-content-between">
+      <h6 class="m-0 font-weight-bold text-primary">입고 조회 페이지</h6>
+    </div>
+
+    <div class="card-body">
+      <!-- 검색 조건 영역 -->
+      <div class="btn-bar d-flex align-items-center gap-2 mb-3">
+        <input type="text" class="form-control form-control-sm" id="productCode" name="productCode"
+               placeholder="제품코드" style="max-width: 180px;">
+        <input type="text" class="form-control form-control-sm" id="businessPartner" name="businessPartner"
+               placeholder="공급처명" style="max-width: 180px;">
+        <input type="text" id="inboundDate" name="inboundDate"
+               placeholder="입고일자" class="form-control form-control-sm" style="max-width: 180px;">
+        <input type="text" id="dueDate" name="dueDate"
+               placeholder="입고예정일자" class="form-control form-control-sm" style="max-width: 180px;">
+        <button class="btn btn-danger btn-sm" type="button" id="resetBtn">
+          <i class="bi bi-arrow-counterclockwise"></i> 초기화
+        </button>
+      </div>
+
+      <!-- 좌우 2단 그리드 -->
+      <div class="row mt-4 g-3">
+        <!-- ✅ 입고 목록 카드 -->
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white d-flex align-items-center justify-content-between">
+              <h5 class="mb-0">입고 목록</h5>
+            </div>
+            <div class="card-body p-0 position-relative">
+              <div id="gridWrapper" style="width: 100%; height: 500px;">
+                <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
+                <!-- 로딩 스피너 -->
+                <div id="loader" class="loader-overlay" style="display: none;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ✅ 입고 상세 카드 -->
+        <div class="col-md-6">
+          <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white d-flex align-items-center justify-content-between">
+              <h5 class="mb-0">입고 상세</h5>
+            </div>
+            <div class="card-body p-0 position-relative">
+              <div id="gridDetailWrapper" style="width: 100%; max-height: 500px;">
+                <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
+                <!-- 로딩 스피너 -->
+                <div id="loaderDetail" class="loader-overlay" style="display: none;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- ✅ 입고 추이 카드 -->
+          <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white d-flex align-items-center justify-content-between">
+              <h5 class="mb-0">입고 추이</h5>
+            </div>
+            <div class="card-body p-0 position-relative">
+              <div id="gridTrendWrapper" style="width: 100%; height: 200px;">
+                <div id="inTrendtGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
+                <!-- 로딩 스피너 -->
+                <div id="loaderTrend" class="loader-overlay" style="display: none;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+
+      </div><!-- /row -->
+    </div><!-- /card-body -->
+  </div><!-- /card -->
+
+
+ <!--  <div class="card shadow mb-3" >
     <div class="card-header py-3 d-flex align-items-center justify-content-between">
 		<h6 class="m-0 font-weight-bold text-primary">입고 조회 페이지</h6>
 	</div>
 
     <div class="card-body">
-      <!-- 버튼 영역 -->
+      버튼 영역
       <div class="btn-bar">
-      <!-- 검색 조건 + 버튼 영역 GPT 수정 코드 -->
+      검색 조건 + 버튼 영역 GPT 수정 코드
 		<div class="btn-bar d-flex align-items-center gap-2 mb-3">
 		    <input type="text" class="form-control form-control-sm" id="productCode" name="productCode" 
 		           placeholder="제품코드" style="max-width: 180px;" />
@@ -65,25 +159,26 @@
 		           placeholder="공급처명" style="max-width: 180px;" />
 		    <input type="text" id="inboundDate" name="inboundDate" placeholder="입고일자" class="form-control form-control-sm" style="max-width: 180px;">
 		    <input type="text" id="dueDate" name="dueDate" placeholder="입고예정일자" class="form-control form-control-sm" style="max-width: 180px;">
-		    <!-- <input type="date" class="form-control form-control-sm" id="inboundDate" name="inboundDate" 
+		    <input type="date" class="form-control form-control-sm" id="inboundDate" name="inboundDate" 
 		           style="max-width: 180px;" />
 		    <input type="date" class="form-control form-control-sm" id="dueDate" name="dueDate" 
-		           style="max-width: 180px;" /> -->
-		    <!-- <button class="btn btn-dark btn-sm" type="button" id="submitBtn">조회</button> -->
+		           style="max-width: 180px;" />
+		    <button class="btn btn-dark btn-sm" type="button" id="submitBtn">조회</button>
 		    <button class="btn btn-danger btn-sm" type="button" id="resetBtn">초기화</button>
 		</div>
 	</div>
-	<!-- 버튼 영역 끝-->
+	버튼 영역 끝
 	
-      <!-- 좌우 2단 그리드 -->
+      좌우 2단 그리드
       <div class="row mt-4">
-        <!-- 입고 목록 -->
+        입고 목록
         <div class="col-md-6">
-          <div style="position: relative; width: 100%; height: 500px; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); border-radius: 0.25rem;">
-           <!-- 로딩바 -->
+          <div style="position: relative; width: 100%; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); border-radius: 0.25rem;">
+           로딩바
+			<div class="section-title">입고목록</div>
 			<div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
             <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
-            <!-- 로딩 스피너 -->
+            로딩 스피너
             <div id="loader" class="loader-overlay" style="display: none;">
               <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -92,14 +187,15 @@
             </div>
           </div>
         </div>
-		<!-- 입고 목록 끝-->
+		입고 목록 끝
 		
-        <!-- 입고 상세 -->
+        입고 상세
       <div class="col-md-6">
           <div style="position: relative; width: 100%; max-height: 500px; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); border-radius: 0.25rem;">
+          <div class="section-title">입고상세</div>
           <div id="gridDetailWrapper" style="position: relative; width: 100%; max-height: 500px;">
             <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
-            <!-- 로딩 스피너 -->
+            로딩 스피너
             <div id="loaderDetail" class="loader-overlay" style="display: none;">
               <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -108,11 +204,11 @@
             </div>
           </div>
         </div>
-        <!-- 입고 상세 끝-->
+        입고 상세 끝
       </div>
-      <!-- 좌우 2단 그리드 끝-->
+      좌우 2단 그리드 끝
     </div>
-  </div>
+  </div> -->
 
   <!-- 모달 include -->
   <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
@@ -223,8 +319,6 @@
 
 
 
-
-  
 <th:block layout:fragment="body_extra">
 
 <!-- 세션 정보 저장 -->
@@ -245,7 +339,8 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <!-- 한국어 locale -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
-
+<!-- ✅ AG Charts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/ag-charts-community@12.2.0/dist/umd/ag-charts-community.min.js"></script>
   <!-- 스크립트 -->
 <script th:inline="none">
 document.addEventListener("DOMContentLoaded", () => {
@@ -266,6 +361,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	const searchPartner = document.getElementById('businessPartner');
 	const searchProduct = document.getElementById('productCode');
 	const resetBtn = document.getElementById('resetBtn');
+	const container = document.getElementById('inTrendtGrid');
+	let options = {};
 	//let compCode = null; // 회사코드
 	let productGrid = null; // 전역 변수
  	let gridOptions = null;
@@ -276,6 +373,159 @@ document.addEventListener("DOMContentLoaded", () => {
  	let productGridApi = null;
 	let productGridOptions = null;
 	let selectedProductRow = null; // 클릭한 행 저장용
+	
+	
+	/**
+	 * 📊 AG Charts 공통 차트 생성 함수
+	 * @param {string} containerId - 차트를 표시할 div의 ID
+	 * @param {Array} data - 차트에 표시할 데이터 배열
+	 * @param {string} xKey - X축 기준 key (예: 'month')
+	 * @param {string} yKey - Y축 값 key (예: 'iceCreamSales')
+	 * @param {string} [chartType='bar'] - 차트 유형 ('bar', 'line', 'area' 등)
+	 * @param {string} [title=''] - 차트 제목 (옵션)
+	 * @returns {Object} chart - 생성된 차트 객체
+	 */
+	function createChart({
+	  containerId,
+	  data,
+	  xKey,
+	  yKey,
+	  chartType = "bar",
+	  title = "",
+	}) {
+	  // 컨테이너 유효성 검사
+	  const container = document.getElementById(containerId);
+	  if (!container) {
+	    console.error(`❌ createChart(): '${containerId}' ID를 가진 요소를 찾을 수 없습니다.`);
+	    return null;
+	  }
+
+	  // 기존 차트 제거 (중복 렌더 방지)
+	  container.innerHTML = "";
+
+	  // 차트 옵션
+	  const options = {
+	    container,
+	    title: title ? { text: title, fontSize: 16 } : undefined,
+	    data,
+	    series: [
+	      {
+	        type: chartType,
+	        xKey,
+	        yKey,
+	        yName: title || yKey,
+	      },
+	    ],
+	    legend: { position: "bottom" },
+	  };
+
+	  // 차트 생성
+	  const chart = agCharts.AgCharts.create(options);
+	  return chart;
+	}
+	 
+     async function drawInboundTrendChart(lotCode) {
+         try {
+           // ✅ 서버로 데이터 요청
+           const payload = { companyCode: compCode, lotCode: lotCode };
+           const res = await axios.post("/api/v1/stock/inboundTrend", payload, {
+             withCredentials: true,
+           });
+
+           // ✅ 서버 데이터 정제
+           /* const data = res.data.map((d) => ({
+             month: String(d.month || d.MONTH),
+             qty: Number(d.qty || d.QTY || 0),
+             product: String(d.productName || d.PRODUCTNAME || "미확인"),
+           })); */
+
+          // ✅ 데이터 변환
+          const data = res.data.map((d) => {
+            const rawMonth = String(d.month || d.MONTH);
+            return {
+              month: rawMonth, // 문자열 보장
+              qty: Number(d.qty || d.QTY || 0),
+              product: String(d.productName || d.PRODUCTNAME || "미확인 제품"),
+            };
+          });
+
+           console.log("📦 차트 데이터:", data);
+
+           // ✅ 차트 옵션 설정
+           const options = {
+             container: document.getElementById("inTrendtGrid"),
+             title: {
+               text: "월별 입고량 추이",
+               fontSize: 18,
+             },
+             data: data,
+             series: [
+               {
+                 type: "bar",
+                 xKey: "month", // ✅ X축: 월
+                 yKey: "qty", // ✅ Y축: 수량
+                 yName: data[0].product ,
+                 tooltip: {
+                   renderer: (params) => ({
+                     title: params.datum.product,
+                     content: `${params.datum.month}: ${params.datum.qty.toLocaleString()} EA`,
+                   }),
+                 },
+               },
+             ],
+             axes: [
+               {
+                 type: "category",
+                 position: "bottom",
+                 title: { text: "월" },
+               },
+               {
+                 type: "number",
+                 position: "left",
+                 title: { text: "입고 수량" },
+               },
+             ],
+             legend: { position: "bottom" },
+           };
+           // 기존 차트 제거 (중복 렌더 방지)
+     	  	container.innerHTML = "";
+           // ✅ 차트 생성
+           agCharts.AgCharts.create(options);
+         } catch (err) {
+           console.error("🚨 데이터 로딩 실패:", err);
+         }
+       }
+
+	 
+/* 	 async function drawInboundTrendChart(lotCode) {
+		  try {
+			 
+			  const payload = {
+					  companyCode : compCode,
+					  lotCode : lotCode
+			  }
+			  console.log("payload : "+payload);
+		    const res = await axios.post(`/api/v1/stock/inboundTrend`,payload, { withCredentials: true });
+		    const data = res.data.map(d => ({
+		        month: String(d.month || d.MONTH),
+		        qty: Number(d.qty || d.QTY || 0),
+		        name: String(d.productName || d.PRODUCTNAME || "제품명없음")
+		      }));
+		    console.log("📊 data:", JSON.stringify(data, null, 2));
+		    console.log("data.name"+data[0]?.name);
+		    createChart({
+		    	  containerId: "inTrendtGrid",
+		    	  data,
+		    	  xKey: "month",
+		    	  yKey: "qty",
+		    	  xName: data[0]?.name, // ✅ Y축 라벨은 고정 텍스트
+		    	  chartType: "bar"
+		    	});
+		  } catch (err) {
+		    console.error("차트 데이터 로드 실패:", err);
+		    toastr.error("데이터 로드 실패: " + (err.response?.data?.message || err.message));
+		  }
+		} */
  	
  	resetBtn.addEventListener('click' , ()=>{
  		document.querySelectorAll('.form-control').forEach(input => input.value = '');
@@ -567,6 +817,7 @@ const inListGrid = initGrid({
 	        selectedRow = event.data.lotCode;
 	        console.log("selectedRow : "+selectedRow);
 	        await loadInDetailData(selectedRow); // 상세 그리드 데이터 로드
+	        await drawInboundTrendChart(selectedRow); // 입고 추이 데이터 로드
     	}catch(err){
     		console.log(err);
     		toastr.error(err+"오류 발생");

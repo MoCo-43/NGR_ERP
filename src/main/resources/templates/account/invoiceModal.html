@@ -12,7 +12,6 @@
 	href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" />
 <base>
 <style>
-
 </style>
 </head>
 
@@ -84,14 +83,14 @@
 
 						<div class="row mb-2">
 							<!-- 부가세 유형 -->
-							<div class="col-md-4">
-								<label class="form-label">부가세 유형</label> <select
-									class="form-select-invoice"
-									th:value="${invoiceHeader?.vatType}">
-									<option value="과세">세금계산서</option>
-									<option value="영세">영세율</option>
-									<option value="면세">면세</option>
-								</select>
+							<div class="col-md-4 d-flex flex-column">
+								<label class="form-label">부가세 유형</label> <input type="text"
+									class="form-control" id="vatTypeInput" list="vatTypeList"
+									th:value="${invoiceHeader?.vatType}" placeholder="유형 선택">
+								<datalist id="vatTypeList">
+									<option value="과세"></option>
+									<option value="면세"></option>
+								</datalist>
 							</div>
 
 							<!-- 거래처 -->
@@ -132,9 +131,14 @@
 						<div class="row mb-2">
 							<div class="col-md-6">
 								<label class="form-label">결제방식</label> <input type="text"
-									class="form-control" th:value="${invoiceHeader?.payMethod}"
-									id="payMethodInput" />
+									class="form-control" id="payMethodSelect" list="payMethodList"
+									th:value="${invoiceHeader?.payMethod}" placeholder="결제방식 선택">
+								<datalist id="payMethodList">
+									<option value="현금"></option>
+									<option value="어음"></option>
+								</datalist>
 							</div>
+
 							<div class="col-md-6">
 								<label class="form-label">적요</label> <input type="text"
 									class="form-control" th:value="${invoiceHeader?.note}"
@@ -166,7 +170,7 @@
 						</div>
 						<div class="modal-footer">
 							<button class="btn btn-danger" type="button" id="resetInvoiceBtn">초기화</button>
-							<button class="btn btn-success" type="button"
+							<button class="btn btn-primary" type="button"
 								id="insertInvoiceBtn">저장</button>
 
 						</div>
@@ -392,10 +396,9 @@ function initProductGrid() {
 
 // === 상품 데이터 로드 ===
 async function loadProductData() {
-  const compCode = Number(document.getElementById('compCode').value);
   if (!productGridApi) return;
   try {
-    const res = await axios.get(`/api/v1/stock/productList/${compCode}`, { withCredentials: true });
+    const res = await axios.get(`/api/v1/stock/productList/${compaCode}`, { withCredentials: true });
     productGridApi.setRowData(res.data);
   } catch (err) {
     console.error("상품 조회 실패", err);
@@ -476,7 +479,7 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	    header.lines = lines;
 
 	    if (lines.length === 0) {
-	      alert("저장할 품목이 없습니다.");
+	      toastr.warning("저장할 품목이 없습니다.");
 	      return;
 	    }
 
@@ -485,15 +488,15 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	    const res = await axios.post(url, header, { withCredentials: true });
 
 	    if (res.data.success) {
-	      alert(`저장 완료! 전표번호: ${res.data.invoiceNo || res.data.salesNo}`);
+	      toastr.success(`저장 완료! 전표번호: ${res.data.invoiceNo || res.data.salesNo}`);
 	      bootstrap.Modal.getOrCreateInstance(document.getElementById("invoiceModal")).hide();
 	      if (typeof loadAndRenderVoucher === "function") loadAndRenderVoucher();
 	    } else {
-	      alert("저장 실패: " + res.data.message);
+	      toastr.error("저장 실패: " + res.data.message);
 	    }
 	  } catch (err) {
 	    console.error(err);
-	    alert("저장 중 오류 발생");
+	    toastr.error("저장 중 오류 발생");
 	  }
 	});
 	
@@ -548,14 +551,13 @@ let businessGridApi = null;
 
 
 async function loadBusinessData() {
-	  const compCode = Number(document.getElementById('compCode').value);
 	  const type = document.getElementById("voucherTypeSwitch").checked ? "S" : "P";
 
 	  let url;
 	  if (type === "S") {
-	    url = `/api/v1/stock/cusList/${compCode}`;  // 고객 목록 API
+	    url = `/api/v1/stock/cusList/${compaCode}`;  // 고객 목록 API
 	  } else {
-	    url = `/api/v1/stock/cusList/${compCode}`;  // 공급자 목록 API
+	    url = `/api/v1/stock/cusList/${compaCode}`;  // 공급자 목록 API
 	  }
 
 	  try {

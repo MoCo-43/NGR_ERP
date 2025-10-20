@@ -56,6 +56,7 @@ public interface StockMapper {
 	// 발주계획 조회
 	public List<OrderPlanVO> selectOrderPlans();
 	List<OrderPlanDetailVO> selectOrderPlanDetailsByXpCode(String xpCode);
+	List<OrderPlanVO> filteredOrderPlans(Map<String , Object> params);
 	
 	
 	// 발주서에 조회될 발주 마스터
@@ -128,4 +129,8 @@ public interface StockMapper {
 	// 출하 지시시 조회
 	public List<ComOrderVO> getDeliveryOrderList();
 	public List<ComOrderDetailVO> getComOrderDetailList(@Param("doCode") String doCode);
+	
+	
+	// 월별 입고 추이
+	public List<InboundVO> inboundTrendChart(Map<String, Object> payload);
 }

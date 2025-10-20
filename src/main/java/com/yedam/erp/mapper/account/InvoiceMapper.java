@@ -13,7 +13,7 @@ import com.yedam.erp.vo.main.CompanyVO;
 @Mapper
 public interface InvoiceMapper {
 
-	List<InvoiceHeaderVO> selectInvoiceHeaders(Long companyCode);
+	List<InvoiceHeaderVO> selectInvoiceHeaders(Long companyCode, @Param("fromDate") String fromDate,@Param("toDate") String toDate);
 
 	List<InvoiceLineVO> selectInvoiceLinesByHeader(@Param("invoiceCode") Long invoiceCode, @Param("companyCode") Long companyCode);
 	
@@ -36,4 +36,9 @@ public interface InvoiceMapper {
     
     //은행, 계좌정보
     CustomerVO selectCustomerInfo(String cusCode, Long companyCode);
+    
+    //입, 출고 전표 발행 상태값
+    void updateInboundP(Long companyCode, String lotCode);
+    
+    void updateOutboundP(Long compnayCode, String outbHeaderCode);
 }

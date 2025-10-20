@@ -246,7 +246,7 @@ h2 { margin: 0 0 .75rem; }
         }
       } catch (err) {
         console.error(err);
-        alert('손익계산서 데이터 조회 실패');
+        toastr.error('손익계산서 데이터 조회 실패');
       }
       hideLoader("profitGridWrapper")
     });
@@ -259,8 +259,9 @@ h2 { margin: 0 0 .75rem; }
     // PDF Export
     document.getElementById('btnPdf').addEventListener('click', async ()=>{
       const jsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
-      if (!jsPDFCtor) return alert('jsPDF가 로드되지 않았습니다.');
-      if (!('autoTable' in (jsPDFCtor.API || {}))) return alert('jspdf-autotable이 로드되지 않았습니다.');
+      if (!jsPDFCtor) return toastr.error('jsPDF가 로드되지 않았습니다.');
+      
+      if (!('autoTable' in (jsPDFCtor.API || {}))) return toastr.error('jspdf-autotable이 로드되지 않았습니다.');
 
       const ym = document.getElementById('srchMonth').value || '2025-10';
       const rows = gridApi.getModel().rowsToDisplay.map(n=>n.data);

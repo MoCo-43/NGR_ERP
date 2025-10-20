@@ -363,10 +363,20 @@ public class StockController {
         return service.getOrderPlans();
     }
 	
+	@PostMapping("/orderPlans")
+	public List<OrderPlanVO> filteredOrderPlans(@RequestBody Map<String , Object> params){
+		return service.filteredOrderPlans(params);
+	}
+	
 	@PostMapping("/orderPlanInsert") // 발주 계획 등록
 	public ResponseEntity<String> insertOrderPlan(@RequestBody OrderPlanVO plan) {
 		 service.insertOrderPlan(plan);
 		 return ResponseEntity.ok("등록 성공");
+	}
+	
+	@PostMapping("/filteredProductList")
+	public List<ProductVO> filteredProductList(@RequestBody Map<String, Object> params){
+		return service.filteredProductList(params);
 	}
 	
 	@GetMapping("/productList/{compCode}") // 제품리스트 모달
@@ -455,6 +465,12 @@ public class StockController {
                     .body("서명 등록 실패: " + e.getMessage());
 		}
 		 
+	 }
+	 
+	 
+	 @PostMapping("/inboundTrend")
+	 public List<InboundVO> inboundTrendChart(@RequestBody Map<String , Object> payload){
+		 return service.inboundTrendChart(payload);
 	 }
 	 
 	

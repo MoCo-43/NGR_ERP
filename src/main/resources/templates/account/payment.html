@@ -22,6 +22,7 @@
 	.section-title {
 		margin: .75rem 0;
 		font-weight: 700;
+		color: black;
 	}
 	
 	.grid-sm {
@@ -69,7 +70,7 @@
 					<!-- 상단 3단 Grid -->
 					<div class="row">
 						<div class="col-md-4">
-							<div class="section-title">기본정보</div>
+							<div class="section-title">급여 대장</div>
 							<div id="paymentGridWrapper" style="position:relative;">
 							<div id="baseGrid" class="ag-theme-quartz grid-sm"></div>
 							</div>
@@ -143,7 +144,7 @@
 	            
 	            const { period, deptCode } = event.data;
 	            if (!period || !deptCode) {
-	              alert("yearMonth 또는 deptCode가 없습니다.");
+	              toastr.warning("yearMonth 또는 deptCode가 없습니다.");
 	              return;
 	            }
 	
@@ -325,15 +326,15 @@
 	    
 // 등록 버튼
 document.getElementById("btnRegister").addEventListener("click", async () => {
-  if (!selectedRowData) return alert("급여대장을 먼저 선택하세요.");
+  if (!selectedRowData) return toastr.warning("급여대장을 먼저 선택하세요.");
 
   if (selectedRowData.jrnNo && selectedRowData.jrnNo.trim() !== "") {
-    alert(`⚠️ 이미 전표가 등록된 급여대장입니다.\n전표번호: ${selectedRowData.jrnNo}`);
+    toastr.warning(`⚠️ 이미 전표가 등록된 급여대장입니다.\n전표번호: ${selectedRowData.jrnNo}`);
     return;
   }
 
   if (!Array.isArray(journalCache) || journalCache.length === 0) {
-    return alert("전표결과가 없습니다. 급여대장을 선택해 지급/공제 항목을 먼저 불러오세요.");
+    return toastr.warning("전표결과가 없습니다. 급여대장을 선택해 지급/공제 항목을 먼저 불러오세요.");
   }
   // ✅ 차변 / 대변 합계
   const totalDebit = journalCache
@@ -368,10 +369,10 @@ document.getElementById("btnRegister").addEventListener("click", async () => {
   try {
     const res = await axios.post("/api/account/payrollHist/save", payload);
     await initBaseGrid(ym);
-    alert(`✅ 급여전표 등록 완료\n전표번호: ${res.data}`);
+    toastr.success(`✅ 급여전표 등록 완료\n전표번호: ${res.data}`);
   } catch (err) {
     console.error("전표 등록 오류:", err);
-    alert("전표 등록 중 오류 발생\n" + (err.response?.data?.message || ""));
+    toastr.errror("전표 등록 중 오류 발생\n" + (err.response?.data?.message || ""));
   }
 });
 	  </script>

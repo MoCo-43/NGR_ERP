@@ -16,6 +16,7 @@
       e.bank_code        AS bankCode,
       e.account_no       AS accountNo,
       e.name             AS accountHolder,
+      e.name 			 AS emp_name,
       ps.net_pay         AS netPay,
       p.company_code     AS companyCode,
       d.dept_name        AS deptName,

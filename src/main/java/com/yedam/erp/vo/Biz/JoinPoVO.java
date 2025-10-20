@@ -7,6 +7,7 @@ import lombok.Data;
 
 @Data
 public class JoinPoVO {
+    private String poCode;       // 주문번호
     private Date poStart;        // 주문 시작일자
     private String cusName;      // 거래처명
     private String creater;      // 작성자

@@ -108,6 +108,7 @@
       { headerName:'실지급액', field:'netPay', flex:1,
         valueFormatter:(p)=> p.value ? Number(p.value).toLocaleString() + ' 원' : '' }, // 실지급액
       { headerName:'사원번호', field:'empId', flex:1 }, // 사원번호
+      { headerName:'사원이름', field:'empName', flex:1 },
       { headerName:'급여연월', field:'payYm', flex:1 }, // 급여연월
     ];
 
@@ -215,6 +216,7 @@
         r.accountHolder ?? '',
         r.deptName ?? r.DEPT_NAME ?? '',
         r.netPay ? Number(r.netPay).toLocaleString() : '',
+        r.empName ?? '',
         r.empId ?? '',
         r.payYm ?? ''
       ]));
@@ -238,19 +240,20 @@
         doc.setFontSize(10); // 표 기본 폰트 크기
         doc.autoTable({
           startY: 60, 
-          head: [['은행명', '계좌번호', '예금주', '부서명', '실지급액', '사원번호', '급여연월']], // 헤더
+          head: [['은행명', '계좌번호', '예금주', '부서명', '실지급액', '사원번호','사원이름', '급여연월']], // 헤더
           body, // 본문 
           theme: 'striped', // 스트라이프 테마
-          styles: { font: 'NotoSansKR', fontSize: 9, cellPadding: 4 }, // 표 스타일(폰트/크기/패딩)
+          styles: { font: 'NotoSansKR', fontSize: 8, cellPadding: 4 }, // 표 스타일(폰트/크기/패딩)
           headStyles: { font: 'NotoSansKR', fillColor: [55, 65, 81], textColor: 255 }, // 헤더 스타일(배경/글자색)
           columnStyles: {
             0: { cellWidth: 90 },   // 은행명
-            1: { cellWidth: 180 },  // 계좌번호
-            2: { cellWidth: 120 },  // 예금주
-            3: { cellWidth: 120 },  // 부서명
+            1: { cellWidth: 120 },  // 계좌번호
+            2: { cellWidth: 90 },  // 예금주
+            3: { cellWidth: 90 },  // 부서명
             4: { halign: 'left', cellWidth: 110 }, // 실지급액
-            5: { cellWidth: 120 },  // 사원번호
-            6: { cellWidth: 90 }    // 급여연월
+            5: { cellWidth: 90 },  
+            6: { cellWidth: 90 },  // 사원번호
+            7: { cellWidth: 90 }    // 급여연월
           },
           didDrawPage: () => { // 각 페이지가 그려질 때마다 실행되는 콜백
             const y = doc.internal.pageSize.getHeight() - 20; // 페이지 하단 여백 위치 계산

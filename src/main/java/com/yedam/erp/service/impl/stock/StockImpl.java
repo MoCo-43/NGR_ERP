@@ -309,6 +309,18 @@ public class StockImpl implements StockService{
 	}
 
 
+	@Override
+	public List<OrderPlanVO> filteredOrderPlans(Map<String, Object> params) {
+		return mapper.filteredOrderPlans(params);
+	}
+
+
+	@Override
+	public List<InboundVO> inboundTrendChart(Map<String, Object> payload) {
+		return mapper.inboundTrendChart(payload);
+	}
+
+
 
 
 }

@@ -228,7 +228,7 @@ function initUnpaidGrid() {
 		{ headerName: "결제방식", field: "payMethod", flex: 1 },
 		{ headerName: "계좌번호", field: "cashAccount", flex: 1 },
 		{ headerName: "비고", field: "memo", flex: 1 },
-		{ headerName: "전표일자", field: "invoiceDate", valueFormatter: v => v.value?.substring(0,10), flex: 1 }
+		{ headerName: "전표일자", field: "createdAt", valueFormatter: v => v.value?.substring(0,10), flex: 1 }
 	];
 
 	unpaidApi = agGrid.createGrid(document.getElementById("unpaidGrid"), {
@@ -263,12 +263,14 @@ async function loadUnpaidList() {
 
 	try {
 		const { data } = await axios.get("/api/account/unpaidList", { params: { type, fromDate, toDate, searchCus } });
+		console.log(data);
 		unpaidApi.setGridOption("rowData", data || []);
 		selectedInvoice = null;
 		document.getElementById("paymentForm").reset(); // 이전 폼 초기화
+		
 	} catch (err) {
 		console.error(err);
-		alert("미결전표 조회 실패");
+		toastr.error("미결전표 조회 실패");
 	}
 }
 

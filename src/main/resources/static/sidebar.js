@@ -1,3 +1,6 @@
+const auth = window.APP_CONTEXT?.auth || "";
+console.log("권한:", auth);
+
 /** 모듈별 메뉴 데이터 */
 const MENUS = {
   hr: {
@@ -7,9 +10,9 @@ const MENUS = {
       {
         title: "사원관리",
         items: [
-          ["사원 목록", "/emps"],
-          ["수당등록", "/allowcode"],
-          ["공제등록", "/deductcode"],
+          ["사원 관리", "/emps"],
+          ["수당 관리", "/allowcode"],
+          ["공제 관리", "/deductcode"],
         ],
       },
       { title: "부서관리", items: [["부서관리", "/dept"]] },
@@ -132,6 +135,7 @@ const MENUS = {
   },
 };
 
+
 /** DOM 참조 */
 const $ = (id) => document.getElementById(id);
 const sidebarTitle = () => $("sidebarTitle");
@@ -163,31 +167,41 @@ function renderSidebar(key) {
     let hasActiveItem = false;
 
     grp.items.forEach(([label, href]) => {
-      const li = document.createElement("li");
-      const a = document.createElement("a");
-      a.href = href;
-      a.textContent = label;
+       // 🔒 특정 권한에서 세부 항목만 숨기기
+  if (auth === "ROLE_USER") {
+    const restrictedItems = [
+		"/accountList",
+      // "/income"        // <- 다른 것도 추가 가능
+    ];
 
-      if (a.pathname === currentPath) {
-        a.classList.add("active");
-        hasActiveItem = true;
-      }
-
-      li.appendChild(a);
-      ul.appendChild(li);
-    });
-
-    if (hasActiveItem) {
-      ul.classList.add("open");
+    if (restrictedItems.includes(href)) {
+      return; // 이 세부 항목은 스킵
+    }
     }
 
-    gtitle.addEventListener("click", () => {
-      ul.classList.toggle("open");
+       const li = document.createElement("li");
+  const a = document.createElement("a");
+  a.href = href;
+  a.textContent = label;
+
+  if (a.pathname === currentPath) {
+    a.classList.add("active");
+    hasActiveItem = true;
+  }
+
+  li.appendChild(a);
+  ul.appendChild(li);
     });
 
-    wrap.appendChild(gtitle);
-    wrap.appendChild(ul);
-    root.appendChild(wrap);
+    if (hasActiveItem) ul.classList.add("open");
+    gtitle.addEventListener("click", () => ul.classList.toggle("open"));
+
+    // 그룹에 유효한 메뉴가 있으면 추가 (다 숨겨지면 skip)
+    if (ul.children.length > 0) {
+      wrap.appendChild(gtitle);
+      wrap.appendChild(ul);
+      root.appendChild(wrap);
+    }
   });
 }
 

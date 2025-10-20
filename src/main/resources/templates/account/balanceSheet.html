@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/base}">
 <head>
 <title layout:fragment="title">재무상태표</title>
 
@@ -113,6 +113,7 @@ function buildRows(t) {
 // ======================= 데이터 로드 ==========================
 async function loadBalanceSheet(yearMonth) {
   try {
+	showLoader("bsGridWrapper", "재무상태표를 불러오는 중입니다...");
     const res = await axios.get(`/api/account/balance-sheet`, { params:{ yearMonth }});
     const tree = convertApiToTree(res.data);
     const { rows } = buildRows(tree);
@@ -120,6 +121,8 @@ async function loadBalanceSheet(yearMonth) {
   } catch (err) {
     console.error('❌ 재무상태표 로드 실패:', err);
     alert('데이터를 불러오는 중 오류가 발생했습니다.');
+  } finally {
+	 hideLoader("bsGridWrapper");
   }
 }
 
@@ -231,9 +234,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnRecalc').addEventListener('click', async () => {
     const val = document.getElementById('srchYear').value;
     if (!val) return alert('조회 기준월을 선택하세요.');
-    showLoader("bsGridWrapper", "재무상태표를 불러오는 중입니다...");
+  
     await loadBalanceSheet(val.replace('-', ''));
-    hideLoader("bsGridWrapper");
+    
   });
   document.getElementById('btnCsv').addEventListener('click', exportCsv);
   document.getElementById('btnPdf').addEventListener('click', exportPdf);
