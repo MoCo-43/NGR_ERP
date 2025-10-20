@@ -217,10 +217,10 @@ public class AccountController {
 	}
 
 	// 헤더 목록 조회
-	@GetMapping("/headers")
-	public List<InvoiceHeaderVO> getHeaders(Long companyCode) {
+	@GetMapping("/headers/{fromDate}/{toDate}")
+	public List<InvoiceHeaderVO> getHeaders(Long companyCode, @PathVariable String fromDate, @PathVariable String toDate) {
 		companyCode = SessionUtil.companyId();
-	    return invoiceService.getInvoiceHeaders(companyCode);
+	    return invoiceService.getInvoiceHeaders(companyCode, fromDate, toDate);
 	}
 	
 	// 특정 전표 라인 조회
@@ -240,6 +240,7 @@ public class AccountController {
 	        result.put("success", true);
 	        result.put("message", "저장 성공");
 	        result.put("invoiceNo", header.getInvoiceNo()); // 서비스에서 세팅된 번호
+	        
 	    } catch (Exception e) {
 	        result.put("success", false);
 	        result.put("message", e.getMessage());

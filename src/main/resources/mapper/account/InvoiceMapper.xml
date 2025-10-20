@@ -9,13 +9,19 @@
  <!-- 헤더 목록 조회 -->
   <select id="selectInvoiceHeaders" resultType="InvoiceHeaderVO">
     SELECT
-      INVOICE_CODE, INVOICE_NO, TYPE, INVOICE_DATE,
+      INVOICE_CODE, INVOICE_NO, TYPE, TRUNC(INVOICE_DATE) AS INVOICE_DATE,
       ORDER_CODE, DEPT_NAME, CUS_CODE, BIZ_NO, CUS_NAME,
       VAT_TYPE, DUE_DATE, SUBTOTAL_AMT, VAT_AMT, TOTAL_AMT,
       PAY_METHOD, MEMO, AR_AP_ACCT, CASH_ACCOUNT, STATUS,
       CREATED_AT, UPDATED_AT, COMPANY_CODE, POSTED_FLAG
     FROM INVOICE_HEADER
     WHERE COMPANY_CODE = #{companyCode}
+    <if test="fromDate != null and toDate != null">
+    <![CDATA[
+    AND TRUNC(CREATED_AT) BETWEEN TO_DATE(#{fromDate}, 'YYYY-MM-DD')
+                               AND TO_DATE(#{toDate}, 'YYYY-MM-DD')
+    ]]>
+  </if>
     ORDER BY CREATED_AT DESC
   </select>
 
@@ -137,16 +143,23 @@
 
 <!-- 전자세금계산서 로그인회사정보 -->
 	<select id="selectCompanyInfo" resultType="com.yedam.erp.vo.main.CompanyVO">
-	select mat_no, ceo, comp_name, mat_name,mat_mail,comp_addr,biz_type,biz_category,biz_account
+	select mat_no, ceo, comp_name, mat_name,mat_mail,comp_addr,biz_type,biz_category,biz_account,bank
 	from company 
 	where mat_no = #{companyCode}
 
 </select>
+	
+<update id="updateInboundP">
+	UPDATE INBOUND
+	SET POSTED_FLAG = '발행'
+	WHERE COMPANY_CODE = #{companyCode}
+	AND LOT_CODE = #{lotCode}
+</update>
 
-<select id="selectCustomerInfo" resultType="com.yedam.erp.vo.Biz.CustomerVO">
-	select bank_name, bank_account 
-	from customer
-	where cus_code = #{cusCode}
-	and company_code = #{companyCode}
-</select>
+<update id="updateOutboundP">
+	UPDATE OUTBOUND_HEADER	
+	SET POSTED_FLAG = '발행'
+	WHERE COMPANY_CODE = #{companyCode}
+	AND LOT_CODE = #{outbHedaerCode}
+	</update>
 </mapper>

@@ -11,6 +11,7 @@
 	<link rel="stylesheet"
 		href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
 	<style>
+
 /* 차액행 전체 배경 (연한 빨강) */
 .ag-theme-quartz .ag-row.row-diff {
 	background-color: #feecec !important;
@@ -109,7 +110,7 @@
 						style="max-width: 180px" />
 					<button class="btn btn-dark btn-sm" id="btnSearch">조회</button>
 					<button class="btn btn-outline-danger btn-sm" id="btnToggleDiff">차액별</button>
-					<button class="btn btn-dark btn-sm" id="btnNext">다음전표</button>
+					<button class="btn btn-outline-primary btn-sm" id="btnNext">다음전표</button>
 				</div>
 				<!-- 일반전표 목록 Grid -->
 				<div id="generalGridWrapper" style="position:relative;">
@@ -340,8 +341,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     	      return `<span style="color:#b91c1c;font-weight:700">${p.value}</span>`;
     	    }
     	    const v = (p.value || "").toUpperCase();
-    	    if (v === "C") return `<span class="badge-debit">차변</span>`;
-    	    if (v === "D") return `<span class="badge-credit">대변</span>`;
+    	    if (v === "D") return `<span class="badge-debit">차변</span>`;
+    	    if (v === "C") return `<span class="badge-credit">대변</span>`;
     	    return "";
     	  },
     	  cellClass: params => params.data?._isDiffRow ? "diff-row" : ""
@@ -359,7 +360,7 @@ document.addEventListener("DOMContentLoaded", async () => {
  	    if (status === "closed" || status === "reverse") {
  	      toastr.info("마감(CLOSED/REVERSE) 전표는 수정할 수 없습니다.");
  	      return;
- 	    }selectedRowNode = params.node; 
+ 	    } selectedRowNode = params.node; 
     bootstrap.Modal.getOrCreateInstance(document.getElementById("accountModal")).show(); }},
     { 
     	  headerName: "거래처코드", field: "cusCode", editable: true, flex: 1,
@@ -406,12 +407,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 	  columnDefs,
 	  rowData: [],
 	  pagination: false,
-	
+	  animateRows: true,
 	  defaultColDef: { resizable: true, filter: true },
 	  editType: 'fullRow',
 	  singleClickEdit: true,
 	  stopEditingWhenCellsLoseFocus: true,
-
+	  
 	  // ✅ 차액행 전체 색상 처리
 	  getRowClass: (params) => params.data?._isDiffRow ? "row-diff" : null,
 
@@ -517,7 +518,20 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// 다음 전표 버튼
+document.getElementById("btnNext").addEventListener("click", async () => {
+	  try {
+	    const { data: nextNo } = await axios.get("/api/account/nextJrnNo");
+	    currentJrnNo = nextNo;
 
+	    // 입력행만 초기화 (기존 데이터는 그대로 유지)
+	    gvApi.applyTransaction({ add: [newInputRow()] });
+	    toastr.info(`새 전표번호 [${nextNo}] 시작`);
+	  } catch (err) {
+	    console.error(err);
+	    toastr.error("다음 전표 불러오기 실패");
+	  }
+	});
 </script>
 	</th:block>
 </body>

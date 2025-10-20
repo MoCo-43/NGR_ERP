@@ -8,8 +8,8 @@
 				<!-- Header -->
 				<div class="modal-header">
 					<h5 class="modal-title">계정과목 조회</h5>
-					<button type="button" class="btn-close" data-bs-dismiss="modal"
-						aria-label="닫기"></button>
+					<button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal"
+						aria-label="닫기"><i class="fas fa-times"></i></button>
 
 				</div>
 
@@ -84,10 +84,17 @@ function initAccountGrid() {
       loadAccountData();
     },
     onRowDoubleClicked: (e) => {
-      if (selectedRowNode) { // ✅ 일반전표 grid에서 클릭한 row에 값 반영
-        selectedRowNode.setDataValue("acctCode", e.data.acctCode);
-        selectedRowNode.setDataValue("acctName", e.data.acctName);
-      }
+    	  if (selectedRowNode) {
+    	        const newData = {
+    	          ...selectedRowNode.data,
+    	          acctCode: e.data.acctCode,
+    	          acctName: e.data.acctName
+    	        };
+    	        gvApi.applyTransaction({ update: [newData] });
+
+    	        // ✅ 계정 선택 즉시 저장
+    	        saveRow(newData);
+    	      }
       bootstrap.Modal.getOrCreateInstance(document.getElementById("accountModal")).hide();
     }
   };

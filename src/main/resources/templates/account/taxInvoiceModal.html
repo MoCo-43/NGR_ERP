@@ -84,7 +84,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title fw-bold">전자세금계산서</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+          <button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal" aria-label="닫기"><i class="fas fa-times"></i></button>
         </div>
 
         <div class="modal-body">
@@ -223,7 +223,7 @@
     // 데모용 송신
     document.addEventListener('click', (e)=>{
       if(e.target && e.target.id === 'tiSendBtn'){
-        alert('송신 요청이 완료되었습니다. (데모)');
+        toastr.success('송신 요청이 완료되었습니다. (데모)');
       }
     });
     function tiRecalc(){

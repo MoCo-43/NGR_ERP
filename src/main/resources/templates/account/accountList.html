@@ -36,6 +36,7 @@
 	font-weight: 700;
 	background: #fafafa;
 }
+
 </style>
 </th:block>
 </head>
@@ -307,7 +308,14 @@
         
         // 빈 양식 다운로드
         document.getElementById("btnDownloadTemplate").addEventListener("click", async () => {
-        	alert("계정코드는 3자리 까지만 가능합니다.");
+        	const ok = await cuteAlert({
+        	    type: 'question',
+        	    title: '양식 다운로드',
+        	    message: '계정코드는 3자리까지만 가능합니다.\n다운로드할까요?',
+        	    confirmText: '다운로드',
+        	    cancelText: '취소'
+        	  });
+        	  if (!ok) return;
         	  try {
         	    const res = await axios.get("/api/account/template", {
         	      responseType: "blob",

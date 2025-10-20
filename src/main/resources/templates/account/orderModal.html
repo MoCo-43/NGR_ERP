@@ -23,7 +23,6 @@
 
 			</div>
 		</div>
-	
 	</div>
 
 	<style>
@@ -61,7 +60,8 @@
           { headerName: "입고일자", field: "inboundDate" },
           { headerName: "LOT번호", field: "lotCode" },
           { headerName: "공급처", field: "businessPartner" },
-          { headerName: "납기예정일자", field: "dueDate" }
+          { headerName: "납기예정일자", field: "dueDate" },
+          { headerName: "전표여부", field:"postedFlag",flex:1}
       ],
       rowSelection: "single",
       pagination: true,
@@ -69,6 +69,7 @@
       onRowClicked: async (e) => {
         selectedOrderCode = e.data?.lotCode;
         if (selectedOrderCode) await loadOrderDetail(selectedOrderCode);
+      
       },
       onRowDoubleClicked: async (e) => {
         selectedOrderCode = e.data?.lotCode;
@@ -76,6 +77,10 @@
         const res = await axios.get(`/api/v1/stock/inDetailList/${selectedOrderCode}`, { withCredentials: true });
         // ✅ invoiceModal로 반영
         console.log(res.data);
+        if(e.data.postedFlag == "발행"){
+  		  toastr.warning("이미 등록된 입고건입니다.")
+  		  return;
+  	  }
         applyOrderToInvoiceModal(e.data, res.data);
         document.getElementById('memoInput').value = e.data.businessPartner + " 매입";
         // 닫기
@@ -134,10 +139,10 @@
   async function applyOrderToInvoiceModal(header, detailList) {
     try {
       // 입고시 로그인 회사 은행, 계좌 불러오기
-     console.log(compCode.value);
-     const { data } = await axios.get(`/api/account/invoice/tax/${compCode.value}`);
+     const { data } = await axios.get(`/api/account/invoice/tax/${compaCode}`);
+     console.log(data);
       // 헤더 반영
-      document.getElementById("orderCode").value   = header?.inboundCode ?? "";
+      document.getElementById("orderCode").value   = header?.lotCode ?? "";
       document.getElementById("invoiceDate").value = header?.inboundDate ?? "";
       document.getElementById("cusCodeInput").value = header?.businessCode ?? "";
       document.getElementById("cusNameInput").value = header?.businessPartner ?? "";

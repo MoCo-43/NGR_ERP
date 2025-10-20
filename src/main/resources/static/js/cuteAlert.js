@@ -1,3 +1,69 @@
+// ===== cuteAlert 전역 스타일 자동 삽입 =====
+if (!document.getElementById("cuteAlertStyles")) {
+  const style = document.createElement("style");
+  style.id = "cuteAlertStyles";
+  style.textContent = `
+  .cute-alert-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity .25s ease;
+    z-index: 9999;
+  }
+  .cute-alert-overlay.active { opacity: 1; }
+
+  .cute-alert-box {
+    background: #fff;
+    padding: 1.25rem 1.5rem;
+    border-radius: 10px;
+    width: 300px;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+    transform: translateY(-20px);
+    transition: transform .3s ease;
+  }
+  .cute-alert-overlay.active .cute-alert-box { transform: translateY(0); }
+
+  .cute-alert-icon {
+    font-size: 2.2rem;
+    margin-bottom: .5rem;
+  }
+  .cute-alert-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: .4rem;
+    color: black;
+  }
+  .cute-alert-message {
+    font-size: .9rem;
+    margin-bottom: 1rem;
+    color: #333;
+    line-height: 1.4;
+  }
+  .cute-alert-buttons {
+    display: flex;
+    justify-content: center;
+    gap: .5rem;
+  }
+  .confirm-btn, .cancel-btn {
+    min-width: 70px;
+    padding: .35rem .7rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .confirm-btn { background: #2563eb; color: white; }
+  .cancel-btn { background: #e5e7eb; }
+  `;
+  document.head.appendChild(style);
+}
+
 function cuteAlert({ type='question', title='알림', message='', imgUrl=null, confirmText='확인', cancelText='취소' }) {
  	    return new Promise((resolve) => {
  	        // 모달 오버레이 생성
@@ -34,7 +100,7 @@ function cuteAlert({ type='question', title='알림', message='', imgUrl=null, c
  	        // 메시지
  	        const m = document.createElement('div');
  	        m.className = 'cute-alert-message';
- 	        m.innerText = message;
+ 	        m.innerHTML = message.replace(/\n/g, '<br>');
  	        box.appendChild(m);
 
  	        // 버튼

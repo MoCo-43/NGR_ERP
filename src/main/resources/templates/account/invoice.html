@@ -171,10 +171,7 @@
 </th:block>
 </head>
 <body>
-	<script th:inline="javascript">
-	const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
-	const compCode =/*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
-	</script>	
+
 		
 	<section layout:fragment="content">
 		<div class="card shadow mb-3">
@@ -222,21 +219,14 @@
 		<script
 			src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 		
-		
-
-		<script th:inline="none">
+<script th:inline="javascript">
 	
   let voucherApi, detailApi;
   let selectedInvoice = null; // ✅ 현재 선택한 상단 전표행 저장
-  
-  
-  // compCode받아놓기
-  axios.get("/api/v1/stock/getCompId", { withCredentials: true })
-  .then(res => {
-  		document.getElementById("compCode").value = res.data;
-  	})
-    .catch(err => console.error(err));
-    
+	const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+	const compaCode =/*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+	console.log(compaCode);
+
   // === 전표 데이터 불러오기 ===
   async function loadAndRenderVoucher() {
 	  showLoader("invoiceGridWrapper", "전표를 불러오는 중입니다...");
@@ -244,29 +234,21 @@
 		    const fromDate = document.getElementById("fromDate").value;
 		    const toDate   = document.getElementById("toDate").value;
 
-		    const { data } = await axios.get("/api/account/headers");
+		    const { data } = await axios.get(`/api/account/headers/${fromDate}/${toDate}`);
 		    let rows = Array.isArray(data) ? data : [];
-
+			console.log(rows);
 		    // ✅ 기간 필터 적용
-		    if (fromDate) {
-		      const from = new Date(fromDate);
-		      rows = rows.filter(r => new Date(r.invoiceDate) >= from);
-		    }
-		    if (toDate) {
-		      const to = new Date(toDate);
-		      rows = rows.filter(r => new Date(r.invoiceDate) <= to);
-		    }
-
+		   
 		    voucherApi.setGridOption("rowData", rows);
-		    voucherApi.refreshClientSideRowModel('sort');
+		    
 		  } catch (err) {
 		    console.error(err);
-		    alert("전표 데이터를 불러오지 못했습니다.");
+		    toastr("전표 데이터를 불러오지 못했습니다.");
 		  } 
 		  hideLoader("invoiceGridWrapper");
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
 	  
 	  // ✅ 오늘 날짜 기준으로 이번 달 1일~오늘 날짜 기본 세팅
 	  const today = new Date();
@@ -280,12 +262,11 @@
 	  document.getElementById("fromDate").value = firstDay;
 	  document.getElementById("toDate").value = todayStr;
 
-	  // ✅ 페이지 로드시 자동조회 실행
-	  loadAndRenderVoucher();
+	
     // === voucherGrid 정의 ===
     const voucherColumnDefs = [
-      { headerName: "월", valueGetter: p => p.data?.invoiceDate ? new Date(p.data.createdAt).getMonth() + 1 : "", flex: .5 },
-      { headerName: "일", valueGetter: p => p.data?.invoiceDate ? new Date(p.data.createdAt).getDate() : "", flex: .5 },
+      { headerName: "월", valueGetter: p => p.data?.createdAt ? new Date(p.data.createdAt).getMonth() + 1 : "", flex: .5 },
+      { headerName: "일", valueGetter: p => p.data?.createdAt ? new Date(p.data.createdAt).getDate() : "", flex: .5 },
       { headerName: "전표번호", field: "invoiceNo", flex: 1 },
 
       // ✅ 유형 컬럼만 배지로 렌더링
@@ -366,7 +347,8 @@
       return details;
     }
     document.getElementById("btnSearch").addEventListener("click", loadAndRenderVoucher);
-
+    // ✅ 페이지 로드시 자동조회 실행
+	  await loadAndRenderVoucher();
   });
   
 
@@ -382,9 +364,9 @@ const todayStr = () => {
 // 디테일 그리드 등록 버튼 -> 일반 전표
 document.getElementById("btnRegisterDetail").addEventListener("click", async (data) => {
 	 if (selectedInvoice?.postedFlag === 'Y') {
-		    alert("이미 등록된 전표입니다.");
+		    toastr.warning("이미 등록된 전표입니다.");
 		    return;
-		  }
+		  } 
   // detailGrid 데이터 수집
   const details = [];
   detailApi.forEachNode(node => {
@@ -392,7 +374,7 @@ document.getElementById("btnRegisterDetail").addEventListener("click", async (da
   });
 
   if (details.length === 0) {
-    alert("분개 데이터가 없습니다.");
+    toastr.warning("분개 데이터가 없습니다.");
     return;
   }
   
@@ -423,12 +405,12 @@ document.getElementById("btnRegisterDetail").addEventListener("click", async (da
 	      postedFlag: "Y"
 	    });
 
-	    alert("저장 완료!");
+	    toastr.success("저장 완료!");
 	    // 화면도 리프레시
 	    loadAndRenderVoucher();
 	  } catch (err) {
 	    console.error(err);
-	    alert("저장 실패");
+	    toastr.error("저장 실패");
 	  }
 
 });
@@ -490,7 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
 //✅ 모달 오픈 버튼
 document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async () => {
   if (!selectedInvoice) {
-    alert("전표를 선택하세요.");
+    toastr.warning("전표를 선택하세요.");
     return;
   }
 
@@ -590,7 +572,8 @@ document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async ()
 
   } catch (err) {
     console.error("세금계산서 데이터 조회 실패", err);
-    alert("세금계산서 조회 실패");
+    toastr.error("세금계산서 조회 실패");
+    
   }
 });
 	

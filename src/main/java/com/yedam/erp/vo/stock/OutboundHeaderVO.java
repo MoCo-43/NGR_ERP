@@ -31,4 +31,5 @@ public class OutboundHeaderVO {
 	private Long qty;
 	private Long compCode;
 	
+	private String postedFlag; // 전표 처리 상태
 }
