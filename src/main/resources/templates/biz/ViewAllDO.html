@@ -210,22 +210,35 @@
           // === Grid 설정 ===
           const columnDefs = [
             {
-              headerName: "지시서코드",
+              headerName: "지시서번호",
               field: "orderCode",
               width: 120,
-              cellRenderer: (p) =>
-                `<a href="/biz/ship/dispatch/${p.value}" class="link-primary">${p.value}</a>`,
+              // cellRenderer: (p) =>
+              //  `<a href="/biz/ship/dispatch/${p.value}" class="link-primary">${p.value}</a>`,
             },
-            { headerName: "작성일자", field: "insertDate", width: 120 },
+            {
+              headerName: "작성일자",
+              field: "insertDate",
+              width: 120,
+              valueFormatter: (p) =>
+                p.value ? new Date(p.value).toLocaleDateString("ko-KR") : "",
+            },
             { headerName: "거래처명", field: "customerName", minWidth: 140 },
             { headerName: "품목명", field: "productName", minWidth: 180 },
             {
               headerName: "수량합계",
               field: "totalQty",
               width: 110,
-              valueFormatter: (p) => p.value?.toLocaleString() ?? "",
+              valueFormatter: (p) =>
+                p.value ? new Date(p.value).toLocaleDateString("ko-KR") : "",
             },
-            { headerName: "납기일자", field: "exDate", width: 120 },
+            {
+              headerName: "납기일자",
+              field: "exDate",
+              width: 120,
+              valueFormatter: (p) =>
+                p.value ? new Date(p.value).toLocaleDateString("ko-KR") : "",
+            },
             { headerName: "진행상태", field: "status", width: 110 },
           ];
 
@@ -235,10 +248,10 @@
             rowSelection: "single",
             animateRows: true,
             defaultColDef: { sortable: true, resizable: true },
-            onRowDoubleClicked: (e) => {
-              if (!e.data?.orderCode) return;
-              location.href = `/biz/ship/dispatch/${e.data.orderCode}`;
-            },
+            //onRowDoubleClicked: (e) => {
+            // if (!e.data?.orderCode) return;
+            //  location.href = `/biz/ship/dispatch/${e.data.orderCode}`;
+            //},
           };
 
           new agGrid.Grid(document.getElementById("grid"), gridOptions);
@@ -285,8 +298,8 @@
                 // 컬럼명 : 실 db 컬럼명
                 orderCode: d.doCode,
                 insertDate: d.doCreated,
-                customerName: d.cusCode,
-                productName: d.productCode,
+                customerName: d.cusName,
+                productName: d.productName,
                 totalQty: d.totalQty,
                 exDate: d.exDate,
                 status: d.doStatus,
