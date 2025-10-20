@@ -7,9 +7,9 @@ const MENUS = {
       {
         title: "사원관리",
         items: [
-          ["사원 목록", "/emps"],
-          ["수당등록", "/allowcode"],
-          ["공제등록", "/deductcode"],
+          ["사원 관리", "/emps"],
+          ["수당 관리", "/allowcode"],
+          ["공제 관리", "/deductcode"],
         ],
       },
       { title: "부서관리", items: [["부서관리", "/dept"]] },

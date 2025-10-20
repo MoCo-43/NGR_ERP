@@ -15,4 +15,5 @@ public class PayTransferVO {
     private Long companyCode;      // 회사코드
     private String deptName;       // 부서명
     private String bankName;       // 은행명
+    private String empName;		   // 사원명
 }
