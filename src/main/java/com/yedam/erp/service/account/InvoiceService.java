@@ -9,7 +9,7 @@ import com.yedam.erp.vo.main.CompanyVO;
 
 public interface InvoiceService {
 	 // 헤더 목록
-    List<InvoiceHeaderVO> getInvoiceHeaders(Long companyCode);
+    List<InvoiceHeaderVO> getInvoiceHeaders(Long companyCode,String fromDate, String toDate);
 
     // 특정 전표의 라인들
     List<InvoiceLineVO> getInvoiceLines(Long invoiceCode, Long companyCode);
@@ -26,4 +26,8 @@ public interface InvoiceService {
     CompanyVO selectCompanyInfo(Long companyCode);
     
     CustomerVO selectCustomerInfo(String cusCode, Long companyCode);
+    
+    void updateInboundP(Long companyCode, String lotCode);
+    
+    void updateOutboundP(Long compnayCode, String outbHeaderCode);
 }

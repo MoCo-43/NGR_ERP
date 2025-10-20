@@ -50,11 +50,11 @@
 
     const listOptions = {
       columnDefs: [
-        { headerName: "No.", valueGetter: "node.rowIndex + 1", flex: 1 },
-        { headerName: "출고일자", field: "outboundDate", flex: 1 },
         { headerName: "출고번호", field: "outbHeaderCode", flex: 1 },
+        { headerName: "출고일자", field: "outboundDate", flex: 1 },
         { headerName: "지시코드", field: "doCode", flex: 1 },
         { headerName: "거래처명", field: "businessPartner", flex: 1 },
+        { headerName: "전표여부", field:"postedFlag",flex:1},
       ],
       rowSelection: "single",
       pagination: true,
@@ -64,13 +64,18 @@
       onRowClicked: async (e) => {
         selectedDeliveryCode = e.data?.outbHeaderCode;
         if (selectedDeliveryCode) await loadDeliveryDetail(selectedDeliveryCode);
+      
       },
 
       // 더블클릭 시 invoiceModal로 반영
       onRowDoubleClicked: async (e) => {
         selectedDeliveryCode = e.data?.outbHeaderCode;
         if (!selectedDeliveryCode) return;
-		
+        if(e.data.postedFlag == "발행"){
+        	toastr.warning("이미 전표처리된 출고건입니다.");
+        	return;
+        }
+        
         const res = await axios.get(`/api/v1/stock/outboundList/${selectedDeliveryCode}/${e.data.doCode}`, { withCredentials: true });
       
         applyDeliveryToInvoiceModal(e.data, res.data);
@@ -135,12 +140,12 @@
 	  const cusCode = header?.businessCode;
     try {
     	
-    const { data } = await axios.get(`/api/account/invoice/tax/${compCode.value}`);
+    const { data } = await axios.get(`/api/account/invoice/tax/${compaCode}`);
       document.getElementById("orderCode").value = header?.outbHeaderCode ?? "";
       document.getElementById("invoiceDate").value = header?.outboundDate ?? "";
       document.getElementById("cusCodeInput").value = header?.businessCode ?? "";
       document.getElementById("cusNameInput").value = header?.businessPartner ?? "";
-       document.getElementById("bankNameInput").value = data?.bankName ?? "" ;
+       document.getElementById("bankNameInput").value = data?.bank ?? "" ;
        document.getElementById("accountNoInput").value = data?.bizAccount ?? "";
       
       if (window.invoiceGridApi && Array.isArray(detailList)) {

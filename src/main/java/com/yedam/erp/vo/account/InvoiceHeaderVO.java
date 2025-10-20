@@ -3,6 +3,7 @@ package com.yedam.erp.vo.account;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.yedam.erp.vo.Biz.CustomerVO;
 
 import lombok.Data;
@@ -12,6 +13,7 @@ public class InvoiceHeaderVO {
     private Long invoiceCode;   // 전표코드
     private String invoiceNo;     // 전표번호
     private String type;          // 매출/매입 구분
+    @JsonFormat(pattern = "YYYYMMDD")
     private Date invoiceDate;     // 전표일자
     private String orderCode;     // 주문서 코드
     private String deptName;      // 부서코드

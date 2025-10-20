@@ -8,7 +8,7 @@
   SELECT
     INVOICE_NO,
     TYPE,
-    INVOICE_DATE,
+    CREATED_AT,
     CUS_CODE,
     CUS_NAME,
     TOTAL_AMT,
@@ -21,14 +21,13 @@
   FROM INVOICE_HEADER
   WHERE UNPAID_AMT > 0
     AND COMPANY_CODE = #{companyCode}
-  
   <if test="type != null and type != ''">
     AND TYPE = #{type}
   </if>
 
   <if test="fromDate != null and toDate != null">
     <![CDATA[
-    AND TRUNC(INVOICE_DATE) BETWEEN TO_DATE(#{fromDate}, 'YYYY-MM-DD')
+    AND TRUNC(CREATED_AT) BETWEEN TO_DATE(#{fromDate}, 'YYYY-MM-DD')
                                AND TO_DATE(#{toDate}, 'YYYY-MM-DD')
     ]]>
   </if>
