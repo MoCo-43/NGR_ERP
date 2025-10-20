@@ -88,10 +88,13 @@ SELECT PRODUCT_CODE
 FROM PRODUCT 
 WHERE COMPANY_CODE = #{companyCode}
 <if test="productName != null and productName.trim() != ''">
- AND UPPER(PRODUCT_NAME) LIKE '%' || UPPER(#{productName}) || '%'  
+ AND PRODUCT_NAME LIKE '%' || #{productName} || '%'  
 </if>
 <if test="empName != null and empName.trim() != ''">
  AND EMP_NAME LIKE '%' || #{empName} || '%'  
+</if>
+<if test="vatType != null and vatType != ''">
+ AND VAT_TYPE = #{vatType}  
 </if>
 <if test="note != null and note.trim() != ''">
  AND NOTE LIKE '%' || #{note} || '%' 
@@ -587,7 +590,14 @@ WHERE LOT_CODE = #{lotCode}
 
 <!-- 월별 입고 추이 -->
 <select id="inboundTrendChart" parameterType="map" resultType="InboundVO">
- SELECT
+SELECT 
+      INS_MONTH AS month ,
+      qty AS qty ,
+      PRODUCT_NAME AS productName 
+FROM LOT_INBOUND_SUMMARY 
+WHERE company_code = #{companyCode} 
+AND lot_code = #{lotCode} 
+<!--  SELECT
     TO_CHAR(INBOUND_DATE, 'YYYY-MM') AS month,
     SUM(QTY) AS qty,
     PRODUCT_NAME AS productName 
@@ -595,7 +605,7 @@ WHERE LOT_CODE = #{lotCode}
   WHERE COMPANY_CODE = #{companyCode}
     AND LOT_CODE = #{lotCode}
   GROUP BY TO_CHAR(INBOUND_DATE, 'YYYY-MM'), PRODUCT_NAME
-  ORDER BY TO_CHAR(INBOUND_DATE, 'YYYY-MM') 
+  ORDER BY TO_CHAR(INBOUND_DATE, 'YYYY-MM')  -->
 <!-- <![CDATA[
 SELECT 
     TO_CHAR(ADD_MONTHS(TRUNC(SYSDATE, 'MM'), m.rn - 3), 'YYYY-MM') AS "month",
@@ -654,6 +664,8 @@ GROUP BY
 ORDER BY d.product_code
 
 </select>
+
+<!-- 입고 등록 - LOT 재사용 -->
 <update id="insertInbound" parameterType="InboundVO">
 <!-- 
  MERGE INTO INBOUND t
@@ -675,8 +687,8 @@ ORDER BY d.product_code
 
         -- MERGE 구문: 존재하면 qty 업데이트, 없으면 INSERT
         MERGE INTO INBOUND t
-        USING (SELECT  #{businessCode} AS businessCode, #{productCode} AS productCode , TRUNC(SYSDATE) AS inboundDate FROM dual) src
-        ON (t.product_code = src.productCode AND t.business_code = src.businessCode AND TRUNC(t.inbound_date) = src.inboundDate)
+        USING (SELECT  #{businessCode} AS businessCode, #{productCode} AS productCode , TRUNC(SYSDATE) AS inboundDate , #{companyCode} AS companyCode FROM dual) src
+        ON (t.product_code = src.productCode AND t.business_code = src.businessCode AND TRUNC(t.inbound_date) = src.inboundDate AND t.company_code = src.companyCode)
         WHEN MATCHED THEN
             UPDATE SET t.qty = t.qty + #{qty} , t.remain_qty = t.remain_qty + #{qty} 
         WHEN NOT MATCHED THEN
@@ -749,7 +761,8 @@ WHERE deo.do_code = #{doCode}
 <insert id="insertOutbound" parameterType="OutboundHeaderVO">
  <!-- BEFORE: insert 전에 outbHeaderCode 생성 -->
 <selectKey keyProperty="outbHeaderCode" resultType="string" order="BEFORE">
-        SELECT 'OBH' || TO_CHAR(SYSDATE,'YYMMDD') || '-' || SEQ_OUTBOUND_HEADER.nextval FROM dual
+        <!-- SELECT 'OBH' || TO_CHAR(SYSDATE,'YYMMDD') || '-' || SEQ_OUTBOUND_HEADER.nextval FROM dual -->
+        SELECT fn_generate_code('OBH',NULL) FROM dual 
 </selectKey>
 INSERT INTO OUTBOUND_HEADER 
 (
