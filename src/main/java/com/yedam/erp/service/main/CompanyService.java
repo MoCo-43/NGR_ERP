@@ -13,7 +13,8 @@ public interface CompanyService {
     CompanyVO getCompanyByMatNo(Long matNo);
 
     List<CompanyVO> getAllCompanies();
-	
+    CompanyVO selectCompanyByNo(Long matNo);
+
 //    @Autowired
 //    private CompanyMapper companyMapper;
 //    

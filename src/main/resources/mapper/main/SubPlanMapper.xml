@@ -11,15 +11,20 @@
 </select>
 <!-- 전체회사 구독내역 조회 -->
 <select id="sallerList" resultType="SubPlanVO">
-	  SELECT s.sub_code,
-           s.mat_no,
-           c.comp_name,
-           s.start_date,
-           s.end_date,
-           s.sub_status
-      FROM subscription s
-      LEFT JOIN company c ON s.mat_no = c.mat_no
-     ORDER BY s.start_date DESC
+ SELECT 
+    s.sub_code,
+    s.mat_no,
+    c.comp_name,
+    s.start_date,
+    s.end_date,
+    s.sub_status,
+	p.plan_name AS planName
+FROM subscription s
+LEFT JOIN company c 
+    ON s.mat_no = c.mat_no
+LEFT JOIN sub_plan p
+    ON s.sub_plan_no = p.sub_plan_no
+ORDER BY s.start_date DESC
 </select>
 
 

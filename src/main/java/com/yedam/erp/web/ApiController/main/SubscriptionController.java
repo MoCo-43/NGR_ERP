@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,10 +28,14 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.yedam.erp.security.SessionUtil;
+import com.yedam.erp.service.DocumentService;
 import com.yedam.erp.service.main.CompanyService;
 import com.yedam.erp.service.main.EmpLoginService;
+import com.yedam.erp.service.main.SallerService;
 import com.yedam.erp.service.main.SubscriptionService;
 import com.yedam.erp.vo.main.CompanyVO;
+import com.yedam.erp.vo.main.DocumentsVO;
+import com.yedam.erp.vo.main.SallerVO;
 import com.yedam.erp.vo.main.SubPlanVO;
 import com.yedam.erp.vo.main.SubscriptionVO;
 
@@ -46,9 +51,14 @@ public class SubscriptionController {
     private final SubscriptionService subscriptionService;
     private final CompanyService companyService;
     private final EmpLoginService empLoginService;
+    private final SallerService sallerService;
+    private final DocumentService documentService;
     private Long getLoggedInMatNo() {
         return SessionUtil.companyId();
     }
+//    @Value("${upload.path}")
+//    private String uploadPath;
+
     //정기결제 빌링키 발급 필요
     @Value("${toss.biling.secretKey}")
     private String tossBilingSecretKey;
@@ -277,7 +287,7 @@ public class SubscriptionController {
 //        }
 //    }
 
-    //  2. [이 메서드도 추가하세요] 빌링키 발급 API를 호출하는 내부 헬퍼 메서드
+    //  2.빌링키 발급 API를 호출하는 내부 헬퍼 메서드
     private String issueBillingKey(String authKey, String customerKey) throws Exception {
         RestTemplate restTemplate = new RestTemplate();
         String url = "https://api.tosspayments.com/v1/billing/authorizations/" + authKey;
@@ -341,6 +351,74 @@ public class SubscriptionController {
         ClassPathResource resource = new ClassPathResource("templates/main/content.html");
         return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
     }
+    @GetMapping("/contract-view/{matNo}")
+    public String viewContract(@PathVariable Long matNo, Model model) {
+        DocumentsVO latestSign = documentService.selectLatestSignature(matNo);
+        model.addAttribute("matNo", matNo);
+        model.addAttribute("signPath", latestSign != null ? latestSign.getSignPath() : null);
+        return "main/content"; 
+    }
+    
+    @GetMapping("/taxInvoice-html")
+    public String getTaxInvoiceHtml(
+            @RequestParam(required = false, defaultValue = "1") Long sallerNo,
+            Model model) {
+
+        log.info("세금계산서 요청 - sallerNo: {}, session companyId: {}", 
+                 sallerNo, SessionUtil.companyId());
+
+        // ① 공급자 (매출자)
+        SallerVO saller = sallerService.selectSallerByNo(sallerNo);
+        if (saller == null) {
+            saller = new SallerVO();
+            saller.setSalCompany("공급자 정보 없음");
+            saller.setSalName("관리자");
+        }
+        model.addAttribute("saller", saller);
+
+        // ② 공급받는자 (매입자) — 세션에서 companyId 사용
+        Long companyId = SessionUtil.companyId();
+        CompanyVO customer = companyService.selectCompanyByNo(companyId);
+        if (customer == null) {
+            customer = new CompanyVO();
+            customer.setCompName("매입자 정보 없음");
+        }
+        model.addAttribute("customer", customer);
+
+        // ③ 구독(거래) 정보 — 회사 번호로 조회
+        SubscriptionVO subscription = subscriptionService.findLatestSubscriptionByMatNo(companyId);
+        model.addAttribute("sub", subscription != null ? subscription : new SubscriptionVO());
+
+        // ④ 세금계산서 품목 리스트(Map)
+        List<Map<String, Object>> items = subscriptionService.findInvoiceItemsByMatNo(companyId);
+        model.addAttribute("items", items != null ? items : List.of());
+
+        return "main/taxInvoiceFragment";
+    }
+
+    
+    
+//    @GetMapping("/taxInvoice-html")
+//    public String getTaxInvoiceHtml(
+//            @RequestParam(required = false) String comCode,
+//            Model model) {
+//
+//        // 로그인된 판매자 아이디 가져오기
+//        String salId = SessionUtil.userId(); // 세션에 로그인된 판매자 ID (예: "sa1001")
+//        SallerVO saller = sallerService.selectSallerByNo(salId);
+//
+//        // 공급받는자 정보
+//        CompanyVO customer = companyService.getCompanyByComCode(comCode);
+//
+//        //구독 정보
+//        SubscriptionVO sub = subscriptionService.findLatestSubscriptionByComCode(comCode);
+//
+//        model.addAttribute("saller", saller);
+//        model.addAttribute("customer", customer);
+//        model.addAttribute("sub", sub);
+//
+//        return "main/taxInvoiceFragment";
+//    }
 //    // 구독 취소 (환불 없음)
 //    @PostMapping("/cancel")
 //    public ResponseEntity<?> cancelSubscription(@RequestBody CancelRequest req) {

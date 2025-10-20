@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>구독 전자세금계산서</title>
+<style>
+table {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 14px;
+}
+th, td {
+	border: 1px solid #ccc;
+	padding: 6px;
+}
+th {
+	background-color: #f3f3f3;
+}
+.section-title {
+	background-color: #f8f9fa;
+	font-weight: bold;
+}
+.supplier {
+	background-color: #ffecec;
+}
+.customer {
+	background-color: #e8f0ff;
+}
+tfoot th {
+	background-color: #f1f1f1;
+}
+h2 {
+	text-align: center;
+	margin-bottom: 12px;
+}
+</style>
+</head>
+<body>
+	<h2>구독 전자세금계산서</h2>
+
+	<!-- 공급자 / 공급받는자 정보 -->
+	<table>
+		<tr>
+			<th class="supplier" colspan="2">공급자 (플랫폼)</th>
+			<th class="customer" colspan="2">공급받는자 (구독자)</th>
+		</tr>
+		<tr>
+			<td>상호(회사명)</td>
+			<td th:text="${saller.salCompany}">NGR_ERP</td>
+			<td>상호(회사명)</td>
+			<td th:text="${customer.compName}">(주)가나다상사</td>
+		</tr>
+		<tr>
+			<td>대표자</td>
+			<td th:text="${saller.salName}">김길동</td>
+			<td>대표자</td>
+			<td th:text="${customer.ceo}">홍길동</td>
+		</tr>
+		<tr>
+			<td>사업자등록번호</td>
+			<td th:text="${saller.salBiz}">123-45-67890</td>
+			<td>사업자등록번호</td>
+			<td th:text="${customer.brm}">111-22-33333</td>
+		</tr>
+		<tr>
+			<td>주소</td>
+			<td th:text="${saller.salAddress}">서울특별시 성동구 상원1길 25</td>
+			<td>주소</td>
+			<td>
+				<span th:text="${customer.compAddr}">서울특별시 강남구 테헤란로 123</span>
+				<span th:if="${customer.compDelAddr != null}" th:text="' ' + ${customer.compDelAddr}"></span>
+			</td>
+		</tr>
+		<tr>
+			<td>이메일</td>
+			<td th:text="${saller.salEmail}">support@ngrmes.com</td>
+			<td>이메일</td>
+			<td th:text="${customer.matMail}">customer@abc.com</td>
+		</tr>
+		<tr>
+			<td>대표전화</td>
+			<td th:text="${saller.salTel}">010-111-1111</td>
+			<td>대표전화</td>
+			<td th:text="${customer.comTel}">02-1234-5678</td>
+		</tr>
+	</table>
+
+	<br />
+
+	<!-- 구독 요약 정보 -->
+	<table>
+		<tr>
+			<th class="section-title" colspan="4">구독 정보</th>
+		</tr>
+		<tr>
+			<td>구독코드</td>
+			<td th:text="${sub.subCode}">SUB20251020-001</td>
+			<td>플랜명</td>
+			<!-- <td th:text="${plan.planName}">Standard Plan</td> -->
+			<td>플랜 정보 없음</td>
+		</tr>
+		<tr>
+			<td>구독기간</td>
+			<td th:text="${#dates.format(sub.startDate, 'yyyy-MM-dd')} + ' ~ ' + ${#dates.format(sub.endDate, 'yyyy-MM-dd')}">
+				2025-10-01 ~ 2025-10-31
+			</td>
+			<td>사용자 수</td>
+			<td th:text="${sub.totalUsers}">15</td>
+		</tr>
+		<tr>
+			<td>구독상태</td>
+			<td th:text="${sub.subStatus}">활성</td>
+			<td>결제방법</td>
+			<td th:text="${sub.mon}">카드자동결제</td>
+		</tr>
+	</table>
+
+	<br />
+
+	<!-- 금액 계산 테이블 (세액 제거됨) -->
+	<table>
+		<thead>
+			<tr>
+				<th>항목</th>
+				<th>단가</th>
+				<th>사용자 수</th>
+				<th>공급가액</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Standard</td>
+				<td>100,000</td>
+				<td th:text="${sub.totalUsers}">10</td>
+				<td th:text="${#numbers.formatInteger(sub.totalPay != null ? sub.totalPay : 0, 0, 'COMMA')}">1,000,000</td>
+			</tr>
+		</tbody>
+		<tfoot>
+			<tr>
+				<th colspan="3">합계</th>
+				<td th:text="${#numbers.formatInteger(sub.totalPay != null ? sub.totalPay : 0, 0, 'COMMA')}">1,000,000</td>
+			</tr>
+		</tfoot>
+	</table>
+
+	<br />
+
+	<!-- 결제 정보 -->
+	<table>
+		<tr>
+			<th class="section-title" colspan="4">결제 정보</th>
+		</tr>
+		<tr>
+			<td>청구금액(공급가액 기준)</td>
+			<td colspan="3" th:text="${#numbers.formatInteger(sub.totalPay != null ? sub.totalPay : 0, 0, 'COMMA')}">
+				1,000,000
+			</td>
+		</tr>
+		<tr>
+			<td>청구일자</td>
+			<td th:text="${#dates.format(sub.startDate, 'yyyy-MM-dd')}">2025-10-01</td>
+			<td>비고</td>
+			<td>정기 구독 자동 청구</td>
+		</tr>
+	</table>
+
+</body>
+</html>

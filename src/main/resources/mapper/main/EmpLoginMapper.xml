@@ -166,7 +166,7 @@
             'N',
             0,
             'Y',
-            #{email}
+            #{email},
             #{comName}
         )
     </insert>

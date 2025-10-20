@@ -48,4 +48,5 @@ public interface SubscriptionMapper {
     SubscriptionVO getSubscriptionBySubCode(@Param("subCode") String subCode);
     //회사코드 기준 최신구독 1건조회
     SubscriptionVO findLatestSubscriptionByComCode(@Param("comCode") String comCode);
+    List<Map<String, Object>> selectInvoiceItemsByMatNo(Long matNo);
 }

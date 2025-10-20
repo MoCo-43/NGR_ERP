@@ -1,6 +1,7 @@
 package com.yedam.erp.web.ApiController.main;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,10 +15,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.util.StringUtils;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,9 +25,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.yedam.erp.service.DocumentService;
 import com.yedam.erp.service.main.EmpLoginService;
 import com.yedam.erp.vo.hr.EmpVO;
-import com.yedam.erp.vo.main.EmpLoginVO;
+import com.yedam.erp.vo.main.DocumentsVO;
 
 import lombok.RequiredArgsConstructor;
 
@@ -36,43 +37,69 @@ import lombok.RequiredArgsConstructor;
 public class EmpLoginController {
 
 	 @Value("${file.upload.dir}")
-	    private String uploadDir;
+	   private String uploadDir;
 //	private final EmpService empService; // 사원 정보 조회를 위한 서비스
 	private final EmpLoginService empLoginService; // 로그인 계정 관리를 위한 서비스
+	private final DocumentService documentService;
     
 	   /**
      * 프로필 이미지 업로드
      */
-    @PostMapping("/uploadProfile")
-    public ResponseEntity<String> uploadProfile(@ModelAttribute EmpLoginVO emp) {
-        try {
-            MultipartFile file = emp.getEmpImgFile();
-            if (file == null || file.isEmpty()) {
-                return ResponseEntity.badRequest().body("파일이 비어 있습니다.");
-            }
+//    @PostMapping("/uploadProfile")
+//    public ResponseEntity<String> uploadProfile(@ModelAttribute EmpLoginVO emp) {
+//        try {
+//            MultipartFile file = emp.getEmpImgFile();
+//            if (file == null || file.isEmpty()) {
+//                return ResponseEntity.badRequest().body("파일이 비어 있습니다.");
+//            }
+//
+//            // 저장 디렉토리 생성
+//            File dir = new File(uploadDir + "/emp");
+//            if (!dir.exists()) dir.mkdirs();
+//
+//            // 파일명 생성
+//            String uuid = UUID.randomUUID().toString();
+//            String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
+//            String fileName = uuid + "." + ext;
+//
+//            // 파일 저장
+//            file.transferTo(new File(dir, fileName));
+//
+//            // DB 업데이트 (Service 사용)
+//            empLoginService.updateEmpImage(emp.getEmpIdNo(), fileName);
+//
+//            return ResponseEntity.ok(fileName);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(500).body("업로드 실패: " + e.getMessage());
+//        }
+//    }
+	@PostMapping("/uploadProfile")
+	public ResponseEntity<String> uploadProfile(
+	        @RequestParam("empImgFile") MultipartFile empImgFile,
+	        @RequestParam("empIdNo") Long empIdNo) {
+	    try {
+	        if (empImgFile == null || empImgFile.isEmpty()) {
+	            return ResponseEntity.badRequest().body("파일이 비어 있습니다.");
+	        }
 
-            // 저장 디렉토리 생성
-            File dir = new File(uploadDir + "/emp");
-            if (!dir.exists()) dir.mkdirs();
+	        File dir = new File(uploadDir + "/emp");
+	        if (!dir.exists()) dir.mkdirs();
 
-            // 파일명 생성
-            String uuid = UUID.randomUUID().toString();
-            String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
-            String fileName = uuid + "." + ext;
+	        String uuid = UUID.randomUUID().toString();
+	        String ext = StringUtils.getFilenameExtension(empImgFile.getOriginalFilename());
+	        String fileName = uuid + "." + ext;
 
-            // 파일 저장
-            file.transferTo(new File(dir, fileName));
+	        empImgFile.transferTo(new File(dir, fileName));
+	        empLoginService.updateEmpImage(empIdNo, fileName);
 
-            // DB 업데이트 (Service 사용)
-            empLoginService.updateEmpImage(emp.getEmpIdNo(), fileName);
-
-            return ResponseEntity.ok(fileName);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("업로드 실패: " + e.getMessage());
-        }
-    }
-
+	        return ResponseEntity.ok(fileName);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                             .body("업로드 실패: " + e.getMessage());
+	    }
+	}
     /**
      * 프로필 이미지 조회
      */
@@ -98,6 +125,55 @@ public class EmpLoginController {
                 .contentType(mediaType)
                 .body(resource);
     }
+    //전자서명 이미지 조회
+    @GetMapping("/signature/{matNo}")
+    public ResponseEntity<Resource> getSignatureImage(@PathVariable Long matNo) {
+        try {
+            // 1. DB 조회
+            DocumentsVO latestSign = documentService.selectLatestSignature(matNo);
+            if (latestSign == null || latestSign.getSignPath() == null) {
+                System.out.println("❌ No signature found for matNo=" + matNo);
+                return ResponseEntity.notFound().build();
+            }
+
+            // 2. 파일명 추출 및 경로 구성
+            String signPath = latestSign.getSignPath(); // ex) 1760317229734_signature_1760317229726.png
+            String fileName = Paths.get(signPath).getFileName().toString();
+            File file = new File(uploadDir + "/signatures", fileName);
+            // 3. 디버깅 로그
+            System.out.println("✅ signPath from DB: " + signPath);
+            System.out.println("✅ Full file path: " + file.getAbsolutePath());
+            System.out.println("✅ File exists? " + file.exists());
+
+            // 4. 파일 존재 확인
+            if (!file.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // 5. 리소스 변환 및 MIME 타입 지정
+            Resource resource = new FileSystemResource(file);
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"");
+
+            String lower = fileName.toLowerCase();
+            MediaType mediaType = MediaType.IMAGE_JPEG;
+            if (lower.endsWith(".png")) mediaType = MediaType.IMAGE_PNG;
+            else if (lower.endsWith(".gif")) mediaType = MediaType.IMAGE_GIF;
+
+            // 6. 결과 반환
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentLength(file.length())
+                    .contentType(mediaType)
+                    .body(resource);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    
 	/**
      * 사원 목록을 조회합니다. (부서별 검색 기능 포함)
      * hrmanager.html의 '검색' 버튼이 이 API를 호출합니다.

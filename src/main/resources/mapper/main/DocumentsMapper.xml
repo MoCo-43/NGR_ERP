@@ -23,4 +23,32 @@
         #{status}   
     )
 </insert>
+<update id="updateDocumentSign">
+    UPDATE documents
+       SET sign_path = #{signPath},
+           sign_date = SYSDATE,
+           status = #{status}
+     WHERE doc_no IN
+       <foreach collection="ids" item="id" open="(" separator="," close=")">
+           #{id}
+       </foreach>
+</update>
+<!-- 전자서명 최신버전 -->
+<select id="selectLatestSignature" resultType="DocumentsVO">
+  SELECT DOC_NO,
+         DOC_NAME,
+         SIGN_PATH,
+         SIGN_DATE
+  FROM (
+      SELECT DOC_NO,
+             DOC_NAME,
+             SIGN_PATH,
+             SIGN_DATE
+      FROM DOCUMENTS
+      WHERE MAT_NO = #{matNo}
+        AND SIGN_PATH IS NOT NULL
+      ORDER BY SIGN_DATE DESC
+  )
+  WHERE ROWNUM = 1
+</select>
 </mapper>

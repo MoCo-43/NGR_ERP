@@ -136,7 +136,7 @@ public class SubsciptionServiceImpl implements SubscriptionService {
         Long matNo = toLong.apply(preparedData.get("matNo"));
         Long subPlanNo = toLong.apply(preparedData.get("subPlanNo"));
 
-        // ✅ 기존 회사코드 확인
+        // 기존 회사코드 확인
         Map<String, Object> existingCompany = subscriptionMapper.selectCompanyInfoByMatNo(matNo);
         String existingComCode = (existingCompany != null) ? (String) existingCompany.get("COM_CODE") : null;
         String finalComCode = (existingComCode != null && !existingComCode.isEmpty())
@@ -187,7 +187,7 @@ public class SubsciptionServiceImpl implements SubscriptionService {
         subPayMapper.insertPayLog(payVo);
         subLogMapper.insertSubLog(subLogVo);
 
-        // ✅ 신규 회사만 업데이트
+        // 신규 회사만 업데이트
         if (existingComCode == null || existingComCode.isEmpty()) {
             Map<String, Object> companyUpdateParams = new HashMap<>();
             companyUpdateParams.put("comCode", finalComCode);
@@ -247,7 +247,7 @@ public class SubsciptionServiceImpl implements SubscriptionService {
             throw new RuntimeException("Toss Payments 통신 오류", e);
         }
 
-        // ✅ 기존 회사코드 확인
+        // 기존 회사코드 확인
         Long matNo = pendingSub.getMatNo();
         Map<String, Object> existingCompany = subscriptionMapper.selectCompanyInfoByMatNo(matNo);
         String existingComCode = (existingCompany != null) ? (String) existingCompany.get("COM_CODE") : null;
@@ -298,7 +298,7 @@ public class SubsciptionServiceImpl implements SubscriptionService {
         subLogVo.setSubCode(subCode);
         subLogMapper.insertSubLog(subLogVo);
 
-        // ✅ 신규 회사만 업데이트
+        // 신규 회사만 업데이트
         if (existingComCode == null || existingComCode.isEmpty()) {
             Map<String, Object> companyUpdateParams = new HashMap<>();
             companyUpdateParams.put("comCode", finalComCode);
@@ -474,6 +474,12 @@ public class SubsciptionServiceImpl implements SubscriptionService {
 		
 		return subscriptionMapper.findLatestSubscriptionByComCode(comCode);
 	}
+
+	@Override
+	public List<Map<String, Object>> findInvoiceItemsByMatNo(Long matNo) {
+	    return subscriptionMapper.selectInvoiceItemsByMatNo(matNo);
+	}
+
 //    @Override
 //    @Transactional
 //    public void cancelSubscription(Long subCode) {

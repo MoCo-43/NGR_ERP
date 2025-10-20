@@ -385,8 +385,8 @@ html, body {
                     alert('✅ 프로필 이미지가 성공적으로 업로드되었습니다!');
                 } else {
                     const msg = await response.text();
-					console.error('❌ 업로드 실패:', msg);             
-			   }
+                    alert('❌ 업로드 실패: ' + msg);
+                }
             } catch (err) {
                 console.error(err);
                 alert('⚠️ 서버 통신 오류가 발생했습니다.');

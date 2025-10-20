@@ -17,5 +17,9 @@ public class SallerServiceImpl implements SallerService{
 	public List<SallerVO> sallerList() {
 		return mapper.sallerList();
 	}
-
+	@Override
+	public SallerVO selectSallerByNo(Long sallerNo) {
+        if (sallerNo == null) sallerNo = 1L;
+        return mapper.selectSallerByNo(sallerNo);
+    }
 }

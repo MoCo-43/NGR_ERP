@@ -19,4 +19,9 @@ public class DocumentServiceImpl implements DocumentService {
 		return mapper.insertSign(vo);
 	}
 
+	@Override
+	public DocumentsVO selectLatestSignature(Long matNo) {
+		return mapper.selectLatestSignature(matNo);
+	}
+
 }

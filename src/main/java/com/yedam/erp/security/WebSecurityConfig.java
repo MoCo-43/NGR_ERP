@@ -42,10 +42,10 @@ public class WebSecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(requests -> requests
-						.requestMatchers("/", "/api/**", "/*.css", "/*.js", "/img/**", "/prodimg/**", "/sign/**","/findpw","/sendSms","/pwngremail","/reset-password","/captcha","/naver-captcha","/validate","/refreshCaptcha")
+						.requestMatchers("/", "/api/**", "/*.css", "/*.js", "/img/**", "/prodimg/**", "/sign/**","/findpw")
 						.permitAll()
+						.requestMatchers("/admin/**","/sub/admin/**").hasRole("ADMIN")
 		                // 관리자 전용 페이지
-				        //.requestMatchers("/admin/**").hasRole("ADMIN")
 						//.requestMatchers("/salLogin/**").denyAll()
 						.anyRequest().authenticated()
 			            // 일반 사용자 접근 가능
