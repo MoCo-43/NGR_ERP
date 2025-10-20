@@ -697,8 +697,8 @@ main {
                 async function saveSign(signPath) {
                     if (signMode === "main") {
                         const dataToSend = {
-                            filePath: signPath,
-                            docName: "전자 서명"
+                        	signPath: signPath,
+                            //docName: "전자 서명"
                         };
                         try {
                             await axios.post('/api/main/sign', dataToSend);
