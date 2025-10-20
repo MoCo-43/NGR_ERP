@@ -3,15 +3,17 @@ package com.yedam.erp.web.ApiController.main;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 //--- [수정] 필요한 클래스 임포트 ---
 import com.yedam.erp.security.SessionUtil;
+import com.yedam.erp.service.DocumentService;
 import com.yedam.erp.service.main.CompanyService;
+import com.yedam.erp.service.main.SubPlanService;
 import com.yedam.erp.vo.main.CompanyVO;
 //------------------------------------
-
-import com.yedam.erp.service.main.SubPlanService;
+import com.yedam.erp.vo.main.DocumentsVO;
 import com.yedam.erp.vo.main.SubPlanVO;
 
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,7 @@ public class SubPageController {
 
     private final SubPlanService subPlanService;
     private final CompanyService companyService; // CompanyService 의존성 주입
-
+    private final DocumentService documentService;
     @GetMapping("/subDetails")
     public String getSubscriptionDetail(
             @RequestParam(name = "planId", required = false) Long planId,
@@ -52,4 +54,17 @@ public class SubPageController {
 
         return "main/subDetail"; 
     }
+//    @GetMapping("/contract/{matNo}")
+//    public String viewContract(@PathVariable Long matNo, Model model) {
+//        // DB에서 최신 서명 데이터 조회
+//        DocumentsVO latestSign = documentService.selectLatestSignature(matNo);
+//
+//        // matNo, signPath 모델에 담기
+//        model.addAttribute("matNo", matNo);
+//        model.addAttribute("signPath", 
+//            latestSign != null ? latestSign.getSignPath() : null);
+//
+//        // subManager.html 렌더링
+//        return "main/subManager";
+//    }
 }

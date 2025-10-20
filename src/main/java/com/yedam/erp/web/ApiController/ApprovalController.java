@@ -55,6 +55,7 @@ public class ApprovalController {
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "path", publicPath
+                //"path",filename
             ));
         } catch (Exception e) {
             e.printStackTrace();
