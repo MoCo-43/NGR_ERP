@@ -39,7 +39,7 @@ public class BizServiceImpl implements BizService {
 	}
 
   // 주문서 등록
-    @Override
+  @Override
 	@Transactional
 	public Long createPo(PoInsertVO pvo) {
         // 방어코드: 필수값
@@ -92,11 +92,27 @@ public class BizServiceImpl implements BizService {
 		return bizMapper.selectDo(companyCode);
 	}
 
-	// 출하지시서 등록
-	@Override
-	public int insertDO(DoInsertVO dovo) {
-		return bizMapper.insertDO(dovo);
-	}	
+  // 출하지시서 등록
+  @Override
+	@Transactional
+  public Long createDo(DoInsertVO dovo) {
+
+        // 방어코드: 필수값
+      if (dovo.getDodetails() == null || dovo.getDodetails().isEmpty()) {
+        throw new IllegalArgumentException("상세 목이 1건 이상 필요합니다.");
+    }
+
+        // 헤더 insert(여기서 vo.poId 세팅됨)
+        bizMapper.insertDOHeader(dovo);
+
+        // 디테일 insert
+        bizMapper.insertDODetails(dovo);
+
+        return dovo.getDoNo();
+  }
+  
+
+
 	
 	// 거래처관리 조회
 	@Override

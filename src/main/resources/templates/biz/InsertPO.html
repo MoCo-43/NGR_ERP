@@ -49,14 +49,9 @@
     </th:block>
   </head>
   <body>
-    <!-- 회사코드 -->
-    <input type="hidden" id="companyCode" th:value="${session.companyCode}" />
-    <form
-      th:action="@{/sales/order/new}"
-      th:object="${form}"
-      method="post"
-    ></form>
     <section layout:fragment="content">
+    <!-- 회사코드  -->
+    <input type="hidden" id="companyCode" th:value="${#authentication.principal.empLoginVO.matNo}" />
       <!-- 상단 툴바 -->
       <div class="card shadow mb-3">
         <!-- 헤더: 제목 + 초기화/등록 -->
@@ -429,7 +424,7 @@
             columnDefs,
             rowSelection: "multiple",
             rowMultiSelectWithClick: true,
-            rowData: [{}],
+            rowData: [],
             defaultColDef: { sortable: true, resizable: true, filter: true },
             onGridReady: (p) => {
               gridApi = p.api;

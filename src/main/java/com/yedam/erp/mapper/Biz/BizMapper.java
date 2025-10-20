@@ -42,8 +42,13 @@ public interface BizMapper {
   List<CustomerVO> getCustomers(Long companyCode);
   // 출하지시서 조회
   List<DeliveryOrderVO> selectDo(Long companyCode);
-  // 출하지시서 헤더
-  int insertDO(DoInsertVO dovo);
+
+  // 출하지시서 등록
+  // ==출하지시서 헤더==
+  int insertDOHeader(DoInsertVO dovo);
+  // ==출하지시서 디테일==
+  int insertDODetails(DoInsertVO dovo);
+
   // 거래처관리 조회
   List<CustomerVO> getCustomerManagement(Long companyCode);
   // 거래처관리 등록
