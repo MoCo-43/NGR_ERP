@@ -34,5 +34,10 @@ public class InboundVO {
 	private Long purchasePrice; // 제품 단가
 	private String orderCode; // 발주 코드
 	
+
+	
+	// 조회용 필드
+	private String month;
+
 	private String postedFlag; // 전표 처리 상태
 }
