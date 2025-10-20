@@ -476,9 +476,9 @@ document.addEventListener("DOMContentLoaded", () => {
 	    },
 	    { headerName: "제품코드", field: "productCode" },
 	    { headerName: "제품명", field: "productName" },
-	    { headerName: "이월재고", field: "openingStock", type: 'numericColumn', valueFormatter: numberFormatter },
-	    { headerName: "현재고량", field: "stock", type: 'numericColumn', valueFormatter: numberFormatter },
-	    { headerName: "평가액", field: "valuationAmount", valueFormatter: numberFormatter}
+	    { headerName: "이월재고", field: "openingStock", type: 'numericColumn', valueFormatter: numberFormatter, cellStyle: { textAlign: "right" }, },
+	    { headerName: "현재고량", field: "stock", type: 'numericColumn', valueFormatter: numberFormatter, cellStyle: { textAlign: "right" }, },
+	    { headerName: "평가액", field: "valuationAmount", valueFormatter: numberFormatter, cellStyle: { textAlign: "right" },}
 	];
 	const invenClosingModalColumnDefs = [
 	    { headerName: "No.", headerClass: "highlight-header",valueGetter: "node.rowIndex + 1", field: "no", width: 80 ,
@@ -505,12 +505,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	    },
 	    { headerName: "제품코드", field: "productCode", headerClass: "highlight-header"},
 	    { headerName: "제품명", field: "productName", headerClass: "highlight-header" },
-	    { headerName: "이월재고", field: "openingStock", type: 'numericColumn', headerClass: "highlight-header" },
-	    { headerName: "현재고량", field: "stock", type: 'numericColumn', headerClass: "highlight-header" },
+	    { headerName: "이월재고", field: "openingStock", type: 'numericColumn', headerClass: "highlight-header", cellStyle: { textAlign: "right" }, },
+	    { headerName: "현재고량", field: "stock", type: 'numericColumn', headerClass: "highlight-header", cellStyle: { textAlign: "right" }, },
 	    { headerName: "평가액", field: "valuationAmount", headerClass: "highlight-header", valueFormatter: (params) => {
             if (!params.value) return "";
             return Number(params.value).toLocaleString(); // 문자열 -> 숫자로 변환 후 천단위 콤마
-        	}
+        	},
+        	cellStyle: { textAlign: "right" },
 	    }
 	];
 	// 그리드 초기화

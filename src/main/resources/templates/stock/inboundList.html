@@ -124,8 +124,8 @@
               <h5 class="mb-0">입고 추이</h5>
             </div>
             <div class="card-body p-0 position-relative">
-              <div id="gridTrendWrapper" style="width: 100%; height: 200px;">
-                <div id="inTrendtGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
+              <div id="gridTrendWrapper" style="width: 100%; height: 230px;">
+                <div id="inTrendtGrid" class="ag-theme-quartz" style="width: 100%; max-height: 100%;"></div>
                 <!-- 로딩 스피너 -->
                 <div id="loaderTrend" class="loader-overlay" style="display: none;">
                   <div class="spinner-border text-primary" role="status">
@@ -374,7 +374,6 @@ document.addEventListener("DOMContentLoaded", () => {
 	let productGridOptions = null;
 	let selectedProductRow = null; // 클릭한 행 저장용
 	
-	
 	/**
 	 * 📊 AG Charts 공통 차트 생성 함수
 	 * @param {string} containerId - 차트를 표시할 div의 ID
@@ -423,9 +422,19 @@ document.addEventListener("DOMContentLoaded", () => {
 	  const chart = agCharts.AgCharts.create(options);
 	  return chart;
 	}
-	 
+	// ✅ 데이터 범위에 따라 적절한 step 자동 계산
+	 function getAutoStep(maxValue) {
+	   if (maxValue <= 100) return 10; // 100
+	   if (maxValue <= 1000) return 100; // 1000
+	   if (maxValue <= 10000) return 1000; // 10000
+	   if (maxValue <= 100000) return 10000; // 100000
+	   if (maxValue <= 1000000) return 100000; // 100000
+	   if (maxValue <= 10000000) return 1000000; // 1000000
+	   return Math.pow(10, Math.floor(Math.log10(maxValue)) - 1);
+	 }
      async function drawInboundTrendChart(lotCode) {
          try {
+        	 showLoader("gridTrendWrapper","데이터를 불러오는 중입니다");
            // ✅ 서버로 데이터 요청
            const payload = { companyCode: compCode, lotCode: lotCode };
            const res = await axios.post("/api/v1/stock/inboundTrend", payload, {
@@ -438,10 +447,19 @@ document.addEventListener("DOMContentLoaded", () => {
              qty: Number(d.qty || d.QTY || 0),
              product: String(d.productName || d.PRODUCTNAME || "미확인"),
            })); */
+           // ✅ 데이터 유효성 검사
+           if (!res.data || !Array.isArray(res.data) || res.data.length === 0) {
+             container.innerHTML = `
+               <div style="text-align:center; padding:60px 0; color:#777; font-size:15px;">
+                 📭 조회된 데이터가 없습니다.
+               </div>`;
+             return;
+           }
 
           // ✅ 데이터 변환
           const data = res.data.map((d) => {
             const rawMonth = String(d.month || d.MONTH);
+           
             return {
               month: rawMonth, // 문자열 보장
               qty: Number(d.qty || d.QTY || 0),
@@ -450,6 +468,10 @@ document.addEventListener("DOMContentLoaded", () => {
           });
 
            console.log("📦 차트 데이터:", data);
+           
+           // ✅ 최대값 구해서 step 자동 결정
+           const maxQty = Math.max(...data.map(d => d.qty));
+           const step = getAutoStep(maxQty);
 
            // ✅ 차트 옵션 설정
            const options = {
@@ -483,6 +505,12 @@ document.addEventListener("DOMContentLoaded", () => {
                  type: "number",
                  position: "left",
                  title: { text: "입고 수량" },
+                 nice: false,                   // 자동 눈금 계산 끄기
+                 domain: [0, undefined],        // 최소값 강제 0 (원한다면)
+                 interval: { step },  // 원하는 눈금 간격
+                 label: {
+                     formatter: (params) => params.value.toLocaleString(),
+                 },
                },
              ],
              legend: { position: "bottom" },
@@ -493,44 +521,21 @@ document.addEventListener("DOMContentLoaded", () => {
            agCharts.AgCharts.create(options);
          } catch (err) {
            console.error("🚨 데이터 로딩 실패:", err);
+           container.innerHTML = `
+        	      <div style="text-align:center; padding:60px 0; color:#c00; font-size:15px;">
+        	        ⚠️ 데이터를 불러오는 중 오류가 발생했습니다.
+        	      </div>`;
+         } finally{
+        	 hideLoader("gridTrendWrapper");
          }
        }
 
-	 
-/* 	 async function drawInboundTrendChart(lotCode) {
-		  try {
-			 
-			  const payload = {
-					  companyCode : compCode,
-					  lotCode : lotCode
-			  }
-			  console.log("payload : "+payload);
-		    const res = await axios.post(`/api/v1/stock/inboundTrend`,payload, { withCredentials: true });
-		    const data = res.data.map(d => ({
-		        month: String(d.month || d.MONTH),
-		        qty: Number(d.qty || d.QTY || 0),
-		        name: String(d.productName || d.PRODUCTNAME || "제품명없음")
-		      }));
-		    console.log("📊 data:", JSON.stringify(data, null, 2));
-		    console.log("data.name"+data[0]?.name);
-		    createChart({
-		    	  containerId: "inTrendtGrid",
-		    	  data,
-		    	  xKey: "month",
-		    	  yKey: "qty",
-		    	  xName: data[0]?.name, // ✅ Y축 라벨은 고정 텍스트
-		    	  chartType: "bar"
-		    	});
-		  } catch (err) {
-		    console.error("차트 데이터 로드 실패:", err);
-		    toastr.error("데이터 로드 실패: " + (err.response?.data?.message || err.message));
-		  }
-		} */
  	
  	resetBtn.addEventListener('click' , ()=>{
  		document.querySelectorAll('.form-control').forEach(input => input.value = '');
  		loadFilteredData();
  		inDetailGridOptions.api.setRowData([]);
+ 		container.innerHTML = "";
         selectedRow = null;
  		
  	});
@@ -813,9 +818,9 @@ const inListGrid = initGrid({
     onRowClicked: async (event) => {
     	try{
     		showLoader("gridDetailWrapper","데이터를 불러오는 중입니다...");
-	        console.log("선택된 행 데이터(selectedRow):", event.data);
+	        //console.log("선택된 행 데이터(selectedRow):", event.data);
 	        selectedRow = event.data.lotCode;
-	        console.log("selectedRow : "+selectedRow);
+	        //console.log("selectedRow : "+selectedRow);
 	        await loadInDetailData(selectedRow); // 상세 그리드 데이터 로드
 	        await drawInboundTrendChart(selectedRow); // 입고 추이 데이터 로드
     	}catch(err){
@@ -1000,65 +1005,11 @@ async function openProductModal() {
 	}
 
 
-
 	const modalEl = document.getElementById("businessModal");
 	const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   	// CALL MODAL
-	//모달 데이터 로드 함수
-	/* async function loadModalData() {
-
-			const eGridDiv = document.querySelector('#myGrid'); // div 선택
-			if(!eGridDiv)  return console.error("myGrid div가 존재하지 않습니다!");
-			
-			 const columnDefs = [
-				    { headerName: "거래처코드", field: "cusCode" },
-				    { headerName: "거래처명", field: "cusName" },
-			        { headerName: "담당자명", field: "empName" },
-			        { headerName: "사업자번호", field: "bizNo" },
-			        { headerName: "대표명", field: "ceoName" },
-			        { headerName: "업태", field: "bizType" },
-			        { headerName: "종목", field: "bizCategory" },
-			        { headerName: "거래처주소", field: "addr" }
-			        
-			];
-    	if (!gridApi) {
-		    const gridOptions = {
-		        columnDefs: columnDefs,
-		        rowSelection: "single",
-		        rowData: [],
-		        onGridReady: async function(event) {
-		        	gridApi = event.api;
-		            
-		        },
-		        onRowDoubleClicked: function(event) {
-		           
-		            document.getElementById("businessPartner").value = event.data.cusName;
-		            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
-		            
-		          }
-		     
-		    	};
-		    		new agGrid.Grid(eGridDiv, gridOptions);
-    	}
-
-		// axios로 데이터 가져오기	  
-		try {
-				const res = await axios.get(`/api/v1/stock/cusList/${compCode}`);
-				// gridApi가 준비되었는지 확인
-				if (gridApi) {
-					gridApi.setRowData(res.data);
-				} else {
-				    // gridApi가 아직 준비 안된 경우 100ms 후 재시도
-				    setTimeout(() => loadModalData(), 100);
-				}
-			} catch (err) {
-				 console.error(err);
-			}
-	}// end of loadModalData */
-	
-
-
-  // Axios 등록 + Toast
+  	
+	// Axios 등록 + Toast
 	const toastEl = document.getElementById('successToast');
 	const toast = new bootstrap.Toast(toastEl);	
 
