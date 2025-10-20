@@ -44,7 +44,7 @@
                         ON IC.IC_CODE = D.IC_CODE AND IC.COMPANY_CODE = D.COMPANY_CODE
                      WHERE IC.COMPANY_CODE = #{companyCode}
                        AND TO_CHAR(IC.IC_DATE,'YYYYMM') = #{yearMonth}
-                       AND IC.IC_STATUS = 'T'
+                       AND IC.IC_STATUS = 'F'
                    ) AMT
               JOIN ACCOUNT A ON A.ACCT_CODE = AMT.ACCT_CODE
              WHERE A.USE_YN = 'Y'

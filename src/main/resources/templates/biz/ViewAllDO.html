@@ -114,13 +114,6 @@
               <button
                 type="button"
                 class="btn btn-outline-primary"
-                data-status="처리중"
-              >
-                처리중
-              </button>
-              <button
-                type="button"
-                class="btn btn-outline-primary"
                 data-status="출하완료"
               >
                 출하완료
@@ -209,6 +202,7 @@
           const exDateStart = document.getElementById("exDateStart"); // 납기일자 시작
           const exDateEnd = document.getElementById("exDateEnd"); // 납기일자 종료
           const customer = document.getElementById("customer"); // 거래처
+          const status = document.getElementById("status"); // 진행상태
 
           // === 전체 상태값 초기화 ===
           let currentStatus = "";
@@ -243,7 +237,7 @@
             defaultColDef: { sortable: true, resizable: true },
             onRowDoubleClicked: (e) => {
               if (!e.data?.orderCode) return;
-              window.location.href = `/biz/ship/dispatch/${e.data.orderCode}`;
+              location.href = `/biz/ship/dispatch/${e.data.orderCode}`;
             },
           };
 

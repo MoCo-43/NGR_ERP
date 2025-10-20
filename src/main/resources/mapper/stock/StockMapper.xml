@@ -563,7 +563,8 @@ SELECT
        DUE_DATE ,
        LOT_CODE ,
        BUSINESS_PARTNER , 
-       BUSINESS_CODE 
+       BUSINESS_CODE,
+       POSTED_FLAG
 FROM INBOUND 
 WHERE COMPANY_CODE = #{compCode}
 </select>
@@ -958,6 +959,7 @@ SELECT
     oh.business_code AS businessCode,
     oh.business_partner AS businessPartner,
     oh.due_date AS dueDate,
+    oh.posted_flag,
     CASE
         WHEN COUNT(o.outbound_no) > 1 
             THEN MIN(o.product_name) || ' 외 ' || (COUNT(o.outbound_no) - 1) || '건'
@@ -976,7 +978,7 @@ SELECT
 FROM outbound_header oh
 JOIN outbound o ON oh.outb_header_code = o.outb_header_code
 GROUP BY oh.outb_header_code, oh.outbound_date, oh.business_code,
-         oh.business_partner, oh.due_date, oh.do_code
+         oh.business_partner, oh.due_date, oh.do_code,oh.posted_flag
 ORDER BY oh.outb_header_code DESC
 </select>
 

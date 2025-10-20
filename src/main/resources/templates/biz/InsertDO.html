@@ -71,6 +71,11 @@
 
   <body>
     <section layout:fragment="content">
+      <input
+        type="hidden"
+        id="companyCode"
+        th:value="${#authentication.principal.empLoginVO.matNo}"
+      />
       <div class="card shadow">
         <!-- 헤더 -->
         <div
@@ -284,6 +289,7 @@
       <script th:inline="none">
         // 주문서조회 재귀/이벤트 루프 방지
         let _selectGuard = false;
+
         // DOM refs
         const writeDateEl = document.getElementById("writeDate");
         const customerCodeEl = document.getElementById("cusCode");
@@ -414,6 +420,7 @@
         const sumQty = document.getElementById("sumQty");
         const sumSupply = document.getElementById("sumSupply");
         const sumVat = document.getElementById("sumVat");
+
         function updateSummary() {
           if (!itemGridApi) return;
           let tQty = 0,
@@ -447,16 +454,44 @@
             ],
           });
         };
+
+        // 주문서번호 확인하는 function
+        function hasEmptyPoCode() {
+          let emptyFound = false;
+          // 그리드 전체 건수 찾기
+          const totalRows = itemGridApi.getDisplayedRowCount();
+          if (totalRows == 0) {
+            return true;
+          }
+
+          itemGridApi.forEachNode((n) => {
+            if (!n.data?.poCode || n.data.poCode.trim() === "") {
+              emptyFound = true;
+            }
+          });
+          return emptyFound;
+        }
+
+        // 하단 선택삭제 버튼
         document.getElementById("btnDelRow").onclick = () => {
           const sel = itemGridApi.getSelectedRows();
           if (!sel.length) return toastr.info("삭제할 행을 선택하세요");
           itemGridApi.applyTransaction({ remove: sel });
           updateSummary();
+          if (hasEmptyPoCode()) {
+            document.getElementById("btnFindProduct").disabled = false;
+          }
         };
+
+        // 하단 전체삭제 버튼
         document.getElementById("btnClearRows").onclick = () => {
           itemGridApi.setRowData([]);
           updateSummary();
+
+          document.getElementById("btnFindProduct").disabled = false;
         };
+
+        // 상단 초기화버튼
         document.getElementById("btnReset").onclick = () => {
           [
             "writeDate",
@@ -470,32 +505,69 @@
           updateSummary();
         };
 
-        // 저장
         document.getElementById("btnSave").onclick = async () => {
-          const header = {
-            writeDate: writeDateEl.value,
-            customerCode: customerCodeEl.value,
-            customerName: customerNameEl.value,
-            managerName: managerNameEl.value,
-            tel: telEl.value,
-            shipDate: shipDateEl.value,
-            addr: addrEL.value,
-            zipCode: zipCodeEL.value,
-            notes: document.getElementById("notes")?.value || "",
-          };
-          //if (!header.writeDate) return toastr.error("작성일자를 입력하세요");
-          if (!header.customerName) return toastr.error("거래처를 입력하세요");
-          if (!header.shipDate) return toastr.error("출하예정일을 입력하세요");
+          if (!itemGridApi) {
+            alert("그리드가 아직 준비되지 않았습니다.");
+            return;
+          }
 
-          const lineItems = [];
-          itemGridApi.forEachNode((n) =>
-            lineItems.push(computeRow({ ...n.data }))
+          // 1) 모든 행 데이터 수집
+          const lineItemsRaw = [];
+          itemGridApi.forEachNode((n) => {
+            if (n.data) lineItemsRaw.push({ ...n.data });
+          });
+
+          if (!lineItemsRaw.length) {
+            toastr?.error?.("품목을 1개 이상 추가하세요");
+            return;
+          }
+
+          // 2) poCode 수집 (중복 제거)
+          const poCodes = Array.from(
+            new Set(lineItemsRaw.map((r) => r.poCode).filter(Boolean))
           );
-          if (!lineItems.length)
-            return toastr.error("품목을 1개 이상 추가하세요");
+          if (poCodes.length === 0) {
+            toastr?.error?.(
+              "주문서번호(poCode)가 없습니다. 주문서에서 가져온 뒤 저장하세요."
+            );
+            return;
+          }
 
+          // 3) 금액 계산 적용
+          const lineItems = lineItemsRaw.map((d) => {
+            const supAmt =
+              (Number(d.orderQty) || 0) * (Number(d.unitPrice) || 0);
+            const vatAmt = Math.round(supAmt * 0.1);
+            return { ...d, supAmt, vatAmt };
+          });
+
+          // 4) 헤더 값 수집 (span은 textContent)
+          const header = {
+            poCodes, // 여러 개
+            writeDate: document.getElementById("writeDate").value,
+            customerCode: document.getElementById("cusCode").value,
+            customerName: document.getElementById("cusName").value,
+            managerName: document.getElementById("managerName").textContent,
+            tel: document.getElementById("tel").value,
+            shipDate: document.getElementById("shipDate").value,
+            addr: document.getElementById("sample4_roadAddress").value,
+            zipCode: document.getElementById("sample4_postcode").value,
+            notes: document.getElementById("notes")?.value || "",
+            companyCode: document.getElementById("companyCode").value,
+          };
+
+          if (!header.customerName) {
+            toastr?.error?.("거래처를 입력하세요");
+            return;
+          }
+          if (!header.shipDate) {
+            toastr?.error?.("출하예정일을 입력하세요");
+            return;
+          }
+
+          // 5) payload
           const payload = {
-            poCode: header.poCode,
+            poCode: header.poCodes,
             cusCode: header.customerCode,
             name: header.managerName,
             doCreated: header.writeDate,
@@ -503,7 +575,7 @@
             addr: header.addr,
             zipCode: header.zipCode,
             notes: header.notes ?? "",
-            companyCode: 1,
+            companyCode: header.companyCode,
             dodetails: lineItems.map((it) => ({
               productCode: it.productCode,
               orderQty: it.orderQty ?? 0,
@@ -514,12 +586,15 @@
               companyCode: it.companyCode,
             })),
           };
+
+          console.log("[btnSave] payload:", payload);
+
           try {
             await axios.post("/api/biz/doinsert", payload);
-            toastr.success("등록되었습니다");
+            alert("등록되었습니다");
           } catch (e) {
             console.error(e);
-            toastr.error("등록 실패");
+            toastr?.error?.("등록 실패");
           }
         };
 
@@ -668,6 +743,19 @@
             if (!sel.length) return alert("거래처를 선택하세요.");
             document.getElementById("cusName").value = sel[0].cusName ?? "";
             document.getElementById("cusCode").value = sel[0].cusCode ?? "";
+
+            // (긴급출하시) 상대거래처담당자/연락처/도로명주소/우편번호
+            // 상대거래처담당자
+            document.getElementById("managerName").value =
+              sel[0].cempName ?? "";
+            // 연락처
+            document.getElementById("tel").value = sel[0].tel ?? "";
+            // 도로명주소
+            document.getElementById("sample4_roadAddress").value =
+              sel[0].addr ?? "";
+            // 우편번호
+            document.getElementById("sample4_postcode").value =
+              sel[0].zipCode ?? "";
           });
 
         // ---------- 주문서조회 모달 ----------
@@ -810,24 +898,20 @@
               vatAmt: Math.round(
                 (row.supAmt ?? (row.unitPrice || 0) * (row.orderQty || 1)) * 0.1
               ),
-              note: `${row.poStart || ""} 주문 건에서 가져옴`,
+              note: row.notes,
               payMethod: "현금",
             }));
-
-            window.itemGridApi.applyTransaction({ add: newItems });
-            window.updateSummary?.();
+            itemGridApi.setRowData([]);
+            itemGridApi.applyTransaction({ add: newItems });
+            updateSummary?.();
             (
               bootstrap.Modal.getInstance(poHistoryModalEl) ||
               bootstrap.Modal.getOrCreateInstance(poHistoryModalEl)
             ).hide();
+
+            // 주문서기반으로 출하지시시 품목코드 비활성화
+            document.getElementById("btnFindProduct").disabled = true;
           });
-        console.log({
-          modalExists: !!document.getElementById("PoHistoryModal"),
-          gridExists: !!document.getElementById("poHistoryGrid"),
-          button:
-            document.querySelector('[data-bs-target="#PoHistoryModal"]')
-              ?.outerHTML || null,
-        });
       </script>
     </th:block>
   </body>

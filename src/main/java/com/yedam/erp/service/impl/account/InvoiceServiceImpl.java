@@ -22,8 +22,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 	 private final InvoiceMapper invoiceMapper;
 	
 	    @Override
-	    public List<InvoiceHeaderVO> getInvoiceHeaders(Long companyCode) {
-	        return invoiceMapper.selectInvoiceHeaders(companyCode);
+	    public List<InvoiceHeaderVO> getInvoiceHeaders(Long companyCode,String fromDate, String toDate) {
+	        return invoiceMapper.selectInvoiceHeaders(companyCode, fromDate, toDate);
 	    }
 
 	    @Override
@@ -57,6 +57,11 @@ public class InvoiceServiceImpl implements InvoiceService {
 
 	        // Mapper 호출
 	        invoiceMapper.insertInvoiceWithLines(header);
+	        if ("P".equals(header.getType())) {
+	            invoiceMapper.updateInboundP(header.getCompanyCode(), header.getOrderCode());
+	        } else if ("S".equals(header.getType())) {
+	            invoiceMapper.updateOutboundP(header.getCompanyCode(), header.getOrderCode());
+	        }
 	    }
 	    
 	    // 전자 세금 계산서 호출
@@ -83,6 +88,18 @@ public class InvoiceServiceImpl implements InvoiceService {
 		@Override
 		public CustomerVO selectCustomerInfo(String cusCode, Long companyCode) {
 			return invoiceMapper.selectCustomerInfo(cusCode, companyCode);
+		}
+		
+		@Override
+		public void updateInboundP(Long companyCode, String lotCode) {
+			 invoiceMapper.updateInboundP(companyCode, lotCode);
+			
+		}
+
+		@Override
+		public void updateOutboundP(Long compnayCode, String outbHeaderCode) {
+			invoiceMapper.updateOutboundP(compnayCode, outbHeaderCode);
+			
 		}
 	    
 	    
