@@ -204,7 +204,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         // 로그인 성공 시 실패횟수 초기화
         empLoginMapper.resetLoginFail(emp.getEmpId());
 
-        response.sendRedirect("/main");
+        response.sendRedirect("/login");
     }
 }
 

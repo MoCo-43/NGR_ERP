@@ -20,7 +20,8 @@
         T1.token,
         T1.emp_img,
         T1.dept_code,
-        T1.emp_mobile
+        T1.emp_mobile,
+        T1.com_name AS comName 
     FROM
         emp_login T1
     INNER JOIN
@@ -56,6 +57,7 @@
             code_id,
             two_step_method,
             token,
+            com_name AS comName,
             name
         FROM
             emp_login
@@ -81,6 +83,7 @@
             T1.token,
             T1.emp_mobile,
             T1.name,
+            T1.com_name AS comName, 
             T1.email
         FROM
             emp_login T1
@@ -163,7 +166,7 @@
             'N',
             0,
             'Y',
-            #{email}
+            #{email},
             #{comName}
         )
     </insert>

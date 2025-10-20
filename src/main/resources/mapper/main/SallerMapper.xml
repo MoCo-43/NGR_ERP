@@ -1,8 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.yedam.erp.mapper.main.SallerMapper">
-	<select id="sallerList" parameterType="String" resultType="SallerVO">
-		select * from saller 
-		where sal_id = #{salId}
-	</select>
+
+  <resultMap id="SallerMap" type="com.yedam.erp.vo.main.SallerVO">
+    <id property="sallerNo" column="SALLER_NO"/>
+    <result property="salId" column="SAL_ID"/>
+    <result property="salPw" column="SAL_PW"/>
+    <result property="salName" column="SAL_NAME"/>
+    <result property="salCompany" column="SAL_COMPANY"/>
+    <result property="salBiz" column="SAL_BIZ"/>
+    <result property="salAddress" column="SAL_ADDRESS"/>
+    <result property="salEmail" column="SAL_EMAIL"/>
+    <result property="salTel" column="SAL_TEL"/>
+  </resultMap>
+
+  <!-- 로그인용 조회 -->
+  <select id="sallerList" parameterType="String" resultMap="SallerMap">
+    SELECT 
+      SALLER_NO,
+      SAL_ID,
+      SAL_PW,
+      SAL_NAME,
+      SAL_COMPANY,
+      SAL_BIZ,
+      SAL_ADDRESS,
+      NVL(SAL_EMAIL, '') AS SAL_EMAIL
+    FROM SALLER
+    WHERE SAL_ID = #{salId}
+  </select>
+
+  <!-- 세금계산서용 단건 조회 -->
+  <select id="selectSallerByNo" parameterType="long" resultMap="SallerMap">
+    SELECT 
+      SALLER_NO,
+      SAL_ID,
+      SAL_PW,
+      SAL_NAME,
+      SAL_COMPANY,
+      SAL_BIZ,
+      SAL_TEL,
+      SAL_ADDRESS,
+      NVL(SAL_EMAIL, '') AS SAL_EMAIL
+    FROM SALLER
+    WHERE SALLER_NO = #{sallerNo}
+  </select>
+
 </mapper>

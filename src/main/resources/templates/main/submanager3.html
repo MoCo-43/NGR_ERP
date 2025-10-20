@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
+<head>
+<title layout:fragment="title">구독 계정관리</title>
+<th:block layout:fragment="head_extra">
+	<link
+		href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+		rel="stylesheet">
+	<style>
+/* 기존 스타일 유지 */
+.detail-box {
+	background-color: #f8f9fa;
+	border: 1px solid #dee2e6;
+	padding: 20px;
+	border-radius: 8px;
+	margin-top: 20px;
+}
+
+.subscription-detail-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 15px;
+	justify-content: space-between;
+	margin-top: 15px;
+}
+
+.subscription-box {
+	background-color: #ffffff;
+	border: 1px solid #dee2e6;
+	padding: 15px;
+	border-radius: 6px;
+	flex: 1;
+	min-width: 300px;
+}
+
+.subscription-box-header {
+	font-size: 1.1rem;
+	font-weight: bold;
+	margin-bottom: 15px;
+	text-align: center;
+	border-bottom: 2px solid #0d6efd;
+	padding-bottom: 10px;
+}
+
+.package-button {
+	display: block;
+	width: 100%;
+	padding: 15px;
+	margin-bottom: 15px;
+	border: 2px solid #0d6efd;
+	border-radius: 4px;
+	text-align: center;
+	font-weight: bold;
+	font-size: 1.3rem;
+	background-color: #e9f2ff;
+	color: #0d6efd;
+}
+
+.contract-info-item {
+	margin-bottom: 20px;
+}
+
+.contract-info-item label {
+	display: block;
+	font-size: 0.9rem;
+	color: #6c757d;
+	margin-bottom: 5px;
+	font-weight: bold;
+}
+
+.contract-info-field {
+	border: 1px solid #ced4da;
+	padding: 10px;
+	border-radius: 4px;
+	background-color: #e9ecef;
+	font-weight: 500;
+}
+
+.contract-date-group {
+	display: flex;
+	gap: 10px;
+}
+
+.contract-date-group>div {
+	flex: 1;
+}
+
+.document-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 15px;
+	padding: 5px 0;
+	border-bottom: 1px dashed #e9ecef;
+	font-weight: 500;
+}
+
+.document-buttons .btn {
+	margin-left: 5px;
+	font-size: 0.8rem;
+	padding: 5px 10px;
+	min-width: 60px;
+}
+
+.document-item:last-child {
+	border-bottom: none;
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+</style>
+</th:block>
+</head>
+
+<body>
+	<section layout:fragment="content" class="p-4">
+		<div class="detail-box">
+			<h5 class="fw-bold mb-3">구독 내역</h5>
+			<div class="subscription-detail-container">
+				
+				<div class="subscription-box">
+					<div class="subscription-box-header">구독 패키지 확인</div>
+					
+					<div class="package-button"
+						th:text="${subscription?.subPlan?.planName} ?: '구독 정보 없음'"></div>
+					
+					<div class="subscription-box-header" style="margin-top: 20px; border-color: #6c757d;">구독 모듈</div>
+
+					<div th:if="${avaiModules != null and !avaiModules.isEmpty()}">
+						<ul class="list-group list-group-flush">
+							<li class="list-group-item" th:each="module : ${avaiModules}"
+								th:text="${module.trim()}"></li>
+						</ul>
+					</div>
+
+					<div th:unless="${avaiModules != null and !avaiModules.isEmpty()}"
+						style="padding: 15px; text-align: center; color: #6c757d;">
+						사용 가능한 모듈이 없습니다.</div>
+				</div>
+
+				<div class="subscription-box">
+					<div class="subscription-box-header">계약 정보</div>
+					<div class="contract-info-item">
+						<label>기간</label>
+						<div class="contract-info-field"
+							th:text="${subscription} ? ${subscription.mon} + '개월' : '-'"></div>
+					</div>
+					<div class="contract-date-group">
+						<div class="contract-info-item">
+							<label>구독 시작일</label>
+							<div class="contract-info-field"
+								th:text="${subscription} ? ${#dates.format(subscription.startDate, 'yyyy-MM-dd')} : '-'"></div>
+						</div>
+						<div class="contract-info-item">
+							<label>구독 종료일</label>
+							<div class="contract-info-field"
+								th:text="${subscription} ? ${#dates.format(subscription.endDate, 'yyyy-MM-dd')} : '-'"></div>
+						</div>
+					</div>
+
+					<button class="btn btn-warning" id="subCancel"
+						th:attr="data-sub-id=${subscription.subCode},
+                 data-end-date=${#dates.format(subscription.endDate,'yyyy-MM-dd')},
+                 data-billing-key=${subscription.billingKey}">
+						구독취소</button>
+				</div>
+
+				<div class="subscription-box">
+					<div class="subscription-box-header">문서</div>
+					<div class="document-item">
+						<span>계약서</span>
+						<div class="document-buttons">
+							<button class="btn btn-sm btn-outline-primary"
+								id="btnPreviewContract">미리보기</button>
+							<button class="btn btn-sm btn-outline-danger"
+								id="btnDownloadContractPdf">PDF</button>
+						</div>
+					</div>
+					<div class="document-item">
+						<span>세금계산서</span>
+						<div class="document-buttons">
+							<button class="btn btn-sm btn-outline-primary">미리보기</button>
+							<button class="btn btn-sm btn-outline-danger">PDF</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<div id="contract-document"
+		th:replace="main/content :: contractFragment" style="display: none;"></div>
+
+	<th:block layout:fragment="body_extra">
+		<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+		<script src="/js/cuteAlert.js"></script>
+		<link rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" />
+		<link rel="stylesheet" href="/style/confirm.css" />
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+		<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let contractHtmlContent = null; 
+    const subCancelBtn = document.getElementById('subCancel'); // 변수명 유지
+
+    // 1. 페이지 로드 시, 계약서 HTML 가져오기 (기존 로직)
+    fetch('/sub/contract-html')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('서버에서 계약서를 불러오지 못했습니다.');
+            }
+            return response.text();
+        })
+        .then(html => {
+            contractHtmlContent = html;
+        })
+        .catch(err => {
+            console.error('계약서 로드 실패:', err);
+            document.getElementById('btnPreviewContract').disabled = true;
+            document.getElementById('btnDownloadContractPdf').disabled = true;
+        });
+
+    // 2️. 새 창 미리보기 (기존 로직)
+    document.getElementById('btnPreviewContract').addEventListener('click', function() {
+        if (!contractHtmlContent) return alert('계약서 내용을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+        const popup = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+        popup.document.write(contractHtmlContent);
+        popup.document.close();
+    });
+
+    // 3️⃣ PDF 다운로드 (기존 로직)
+    document.getElementById('btnDownloadContractPdf').addEventListener('click', function() {
+        // ... (기존 PDF 생성 로직 동일) ...
+        if (!contractHtmlContent) return alert('계약서 내용을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+
+        const pdfButton = this;
+        pdfButton.textContent = '생성 중...';
+        pdfButton.disabled = true;
+        
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.style.top = '0';
+        tempContainer.style.width = '800px'; 
+        tempContainer.innerHTML = contractHtmlContent;
+        document.body.appendChild(tempContainer);
+        
+        const elementToCapture = tempContainer.querySelector('#contract-document') || tempContainer;
+
+        html2canvas(elementToCapture, {
+            scale: 2,
+            useCORS: true,
+            windowWidth: elementToCapture.scrollWidth,
+            windowHeight: elementToCapture.scrollHeight
+        }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const imgWidth = 210;
+            const pageHeight = 297;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                doc.addPage();
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+            doc.save('NGR_ERP_서비스_이용계약서.pdf');
+        }).catch(err => {
+            console.error("PDF 생성 오류:", err);
+            alert('PDF 생성에 실패했습니다.');
+        }).finally(() => {
+            document.body.removeChild(tempContainer);
+            pdfButton.textContent = 'PDF';
+            pdfButton.disabled = false;
+        });
+    });
+
+ 	// ==========================================================
+    // 4. 구독 취소 (환불 없는 버전)
+    // ==========================================================
+    if(subCancelBtn){
+        subCancelBtn.addEventListener('click', async (e)=>{
+            const button = e.currentTarget;
+            const endDateStr = button.dataset.endDate;
+            
+            // 1. 확인 메시지 (환불 문구 제거)
+            const res = await cuteAlert({
+                type:"question", 
+                title:"구독 취소 확인",
+                message:`정말 구독을 취소하시겠습니까? 취소 후에도 ${endDateStr}까지 이용 가능합니다.`,
+				imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000', // 아이콘 유지
+                confirmText:"네, 취소합니다", 
+                cancelText:"아니오"
+            });
+            
+            if(res!==true) return;
+            
+            button.disabled=true; 
+            button.textContent="취소 처리 중...";
+
+            try{
+                // 2. Payload (환불 관련 데이터 제거)
+				const payload = {
+				    subCode: button.dataset.subId,        // 구독 ID
+				    billingKey: button.dataset.billingKey, // 빌링 키
+				    cancelReason: "사용자 구독 취소"
+				};
+                
+                // 3. API 호출 ( /cancel ) - 환불 없는 단순 취소 API
+                const response = await axios.post("/sub/cancel", payload, {
+                    headers:{'Content-Type':'application/json'},
+                    withCredentials:true
+                });
+                
+                // 4. 성공 메시지 (remainingDays 포함)
+                toastr.success(`${response.data.message} (남은 이용 기간: ${response.data.remainingDays}일)`);
+                button.textContent="취소 완료";
+                
+            } catch(err){
+                // 5. 실패 처리
+                console.error("구독 취소 실패:", err);
+                toastr.error(err.response?.data?.message || "구독 취소 중 오류 발생");
+                button.disabled=false; 
+                button.textContent="구독취소";
+            }
+        });
+    }
+});
+</script>
+	</th:block>
+</body>
+</html>

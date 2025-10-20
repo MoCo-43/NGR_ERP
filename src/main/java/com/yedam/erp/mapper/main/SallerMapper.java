@@ -9,4 +9,6 @@ import com.yedam.erp.vo.main.SallerVO;
 @Mapper
 public interface SallerMapper {
 	List<SallerVO> sallerList();
+	SallerVO selectSallerByNo(Long sallerNo);
+
 }

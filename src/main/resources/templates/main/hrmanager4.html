@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
+<head>
+    <title layout:fragment="title">사원계정관리</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-grid.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/styles/ag-theme-quartz.css" />
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.3/dist/ag-grid-community.min.noStyle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+<th:block layout:fragment="content">
+    <div class="container">
+        <h4 class="mb-3">사원 계정 관리</h4>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <select id="dept-filter" class="form-select d-inline-block w-auto me-2">
+                    <option value="">전체 부서</option>
+                    <option value="경영팀">경영팀</option>
+                    <option value="재고팀">재고팀</option>
+                    <option value="인사팀">인사팀</option>
+                    <option value="회계팀">회계팀</option>
+                    <option value="영업팀">영업팀</option>
+                </select>
+                <select id="title-filter" class="form-select d-inline-block w-auto">
+                    <option value="">전체 직급</option>
+                    <option value="팀원">팀원</option>
+                    <option value="팀장">팀장</option>
+                </select>
+            </div>
+            <div>
+                <button id="search-btn" class="btn btn-dark btn-sm">조회</button>
+                <button id="role-update-btn" class="btn btn-outline-danger btn-sm">권한 변경</button>
+                <button id="create-btn" class="btn btn-outline-primary btn-sm">계정생성</button>
+                <button id="activate-default-btn" class="btn btn-outline-success btn-sm">사원번호</button>
+            </div>
+        </div>
+
+        <div id="employee-grid" class="ag-theme-quartz" style="height: 600px;"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gridDiv = document.querySelector('#employee-grid');
+
+            const ROLES = ["ROLE_ADMIN", "ROLE_MANAGER", "ROLE_USER", "ROLE_GUEST"];
+            const USE_STATUS = ["Y", "N"]; // ✅ 활성/비활성 상태값
+
+            // 컬럼 정의
+            const columnDefs = [
+                { headerName: '', checkboxSelection: true, headerCheckboxSelection: true, maxWidth: 50 },
+                { field: 'name', headerName: '사원이름' },
+                { field: 'empId', headerName: '사번 (로그인ID)' },
+                { field: 'title', headerName:'직급' },
+                { field: 'deptName', headerName: '부서이름' },
+                { field: 'email', headerName: '이메일' },
+                {
+                    field: 'comName',
+                    headerName: '권한',
+                    editable: true,
+                    cellEditor: 'agSelectCellEditor',
+                    cellEditorParams: {
+                        values: ROLES
+                    },
+                    valueFormatter: (p) => p.value || ''
+                },
+                {
+                    field: 'isUsed',
+                    headerName: '계정상태',
+                    editable: true,
+                    cellEditor: 'agSelectCellEditor',
+                    cellEditorParams: {
+                        values: USE_STATUS
+                    },
+                    valueFormatter: (p) => p.value === 'Y' ? '활성' : '비활성'
+                }
+            ];
+
+            // AG Grid 옵션
+            const gridOptions = {
+                columnDefs: columnDefs,
+                rowData: [],
+                rowSelection: 'multiple',
+                suppressRowClickSelection: true,
+                defaultColDef: { sortable: true, filter: true, resizable: true },
+                pagination: true,
+                paginationPageSize: 20,
+                overlayLoadingTemplate: '<span class="ag-overlay-loading-center">불러오는 중...</span>',
+                overlayNoRowsTemplate: '<span class="ag-overlay-no-rows-center">데이터가 없습니다.</span>',
+
+                onCellValueChanged: (event) => {
+                	  const field = event.colDef.field;
+
+                	  // ✅ 권한 변경 처리
+                	  if (field === 'comName') {
+                	    const { empId, name } = event.data;
+                	    const newRole = event.newValue;
+                	    if (!newRole) return;
+
+                	    axios.post('/admin/update-role', { empId, newRole })
+                	      .then(() => {
+                	        alert(`[${name}]님의 권한이 [${newRole}]로 변경되었습니다.`);
+                	        // ✅ 성공 시 즉시 반영
+                	        event.node.setDataValue('comName', newRole);
+                	      })
+                	      .catch(err => {
+                	        console.error('권한 변경 오류:', err);
+                	        alert('권한 변경 중 오류가 발생했습니다.');
+                	        // 실패 시 이전 값으로 복구
+                	        event.node.setDataValue('comName', event.oldValue);
+                	      });
+                	  }
+
+                	  // ✅ 계정 상태 변경 처리
+                	  if (field === 'isUsed') {
+                	    const { empId, name } = event.data;
+                	    const newStatus = event.newValue;
+
+                	    axios.post('/admin/update-employee-status', { empId, isUsed: newStatus })
+                	      .then(() => {
+                	        alert(`[${name}]님의 계정 상태가 [${newStatus === 'Y' ? '활성' : '비활성'}]으로 변경되었습니다.`);
+                	        // 성공 시 즉시 반영
+                	        event.node.setDataValue('isUsed', newStatus);
+                	        event.api.refreshCells({ rowNodes: [event.node], force: true });
+                	      })
+                	      .catch(err => {
+                	        console.error('상태 변경 오류:', err);
+                	        alert('계정 상태 변경 중 오류가 발생했습니다.');
+                	        // 실패 시 이전 값으로 복구
+                	        event.node.setDataValue('isUsed', event.oldValue);
+                	      });
+                	  }
+                	}
+            };
+
+            // AG Grid 생성
+            const gridApi = agGrid.createGrid(gridDiv, gridOptions);
+
+            // 사원 목록 로딩 함수
+            function loadEmployees(deptName = '', title = '') {
+                gridApi.showLoadingOverlay();
+                axios.get(`/hrLists?deptName=${encodeURIComponent(deptName)}&title=${encodeURIComponent(title)}`)
+                    .then(response => {
+                        gridApi.updateGridOptions({ rowData: response.data || [] });
+                        if (!response.data || response.data.length === 0) {
+                            gridApi.showNoRowsOverlay();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('사원 목록 로딩 오류:', error);
+                        gridApi.showNoRowsOverlay();
+                        alert('데이터를 불러오는 중 오류가 발생했습니다.');
+                    });
+            }
+
+            // --- 이벤트 리스너들 ---
+            document.getElementById('search-btn').addEventListener('click', () => {
+                const selectedDeptName = document.getElementById('dept-filter').value;
+                const selectedTitle = document.getElementById('title-filter').value;
+                loadEmployees(selectedDeptName, selectedTitle);
+            });
+
+            document.getElementById('activate-default-btn').addEventListener('click', () => {
+                const selectedNodes = gridApi.getSelectedNodes();
+                if (selectedNodes.length === 0) {
+                    alert('계정을 활성화할 사원을 선택해주세요.');
+                    return;
+                }
+                const selectedEmpIds = selectedNodes.map(node => node.data.empId);
+
+                if (confirm(`선택된 ${selectedEmpIds.length}명의 사원 계정을 [사번]으로 활성화하고 초기 비밀번호를 전송하시겠습니까?`)) {
+                    axios.post('/activate-default', selectedEmpIds)
+                        .then(response => {
+                            alert(response.data);
+                            gridApi.deselectAll();
+                        })
+                        .catch(error => {
+                            console.error('초기 비밀번호 전송 오류:', error);
+                            alert('오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
+                        });
+                }
+            });
+
+            // 🔸 권한 버튼 → 선택된 행의 권한 셀 바로 편집 진입
+            document.getElementById('role-update-btn').addEventListener('click', () => {
+                const selectedNodes = gridApi.getSelectedNodes();
+                if (selectedNodes.length !== 1) {
+                    alert('권한을 변경할 사원 1명만 선택해주세요.');
+                    return;
+                }
+                const node = selectedNodes[0];
+                gridApi.startEditingCell({
+                    rowIndex: node.rowIndex,
+                    colKey: 'comName'
+                });
+            });
+
+            document.getElementById('create-btn').addEventListener('click', () => {
+                const selectedNodes = gridApi.getSelectedNodes();
+                if (selectedNodes.length === 0) {
+                    alert('신규 계정을 생성할 사원을 선택해주세요.');
+                    return;
+                }
+
+                const payload = {
+                    empIds: selectedNodes.map(node => node.data.empId),
+                    role: 'ROLE_USER'
+                };
+
+                if (confirm(`선택된 ${payload.empIds.length}명의 사원 계정을 [신규 ID]로 생성하고 [${payload.role}] 권한을 부여합니다.`)) {
+                    axios.post('/activate-custom-with-role', payload)
+                        .then(response => {
+                            alert(response.data.message);
+                            gridApi.deselectAll();
+                        })
+                        .catch(error => {
+                            console.error('신규 계정 생성 오류:', error);
+                            alert('오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
+                        });
+                }
+            });
+
+            // 페이지 최초 로드
+            loadEmployees();
+        });
+    </script>
+</th:block>
+</body>
+</html>

@@ -21,5 +21,6 @@ public interface CompanyMapper {
     
     Optional<CompanyVO> findByMatNo(Long matNo);
     List<CompanyVO> companyList();
+    CompanyVO selectCompanyByNo(Long matNo);
 
 }

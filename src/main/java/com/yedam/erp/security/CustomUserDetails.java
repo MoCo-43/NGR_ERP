@@ -55,8 +55,13 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        System.out.println("=== [CustomUserDetails] getAuthorities() 호출됨 ===");
+        System.out.println("empId: " + empLoginVO.getEmpId());
+        System.out.println("codeId: " + empLoginVO.getCodeId());
+        System.out.println("comName: " + empLoginVO.getComName());
     	// 1. DB에 저장된 권한명
     	String roleName = empLoginVO.getComName();
+    	System.out.println(roleName);
     	//2.권한명이 비어있거나 공백일 경우
     	if (!StringUtils.hasText(roleName)) {
     		//권한이 없는사용자는 아무석도 못하게 하거나,기본권한을 준다.role_user
@@ -68,6 +73,27 @@ public class CustomUserDetails implements UserDetails {
     	// 예시: 단일 권한을 부여하는 경우
        // return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
     }
+//    @Override
+//    public Collection<? extends GrantedAuthority> getAuthorities() {
+//        // 1️ 공통권한테이블에서 join된 권한명 가져오기
+//        String roleName = empLoginVO.getComName(); //  comName 사용
+//
+//        // 2️ ROLE_ 접두어가 없으면 자동으로 붙여주기
+//        if (StringUtils.hasText(roleName) && !roleName.startsWith("ROLE_")) {
+//            roleName = "ROLE_" + roleName;
+//        }
+//
+//        // 3️ 권한이 비어있을 경우 기본 ROLE_USER 부여
+//        if (!StringUtils.hasText(roleName)) {
+//            roleName = "ROLE_USER";
+//        }
+//
+//        // 4️ 확인용 로그
+//        System.out.println("로그인된 권한명(comName): " + roleName);
+//
+//        // 5️ Spring Security 권한 객체로 반환
+//        return Collections.singletonList(new SimpleGrantedAuthority(roleName));
+//    }
 
     /**
      * 사용자의 비밀번호를 반환

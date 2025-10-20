@@ -1,230 +1,252 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yedam.erp.mapper.main.SubscriptionMapper">
-<select id="getMaxComCode" resultType="string">
-        SELECT MAX(COM_CODE) FROM COMPANY
-        WHERE COM_CODE LIKE 'COM%'
-    </select>
+	<select id="getMaxComCode" resultType="string">
+		SELECT MAX(COM_CODE) FROM COMPANY
+		WHERE COM_CODE LIKE 'COM%'
+	</select>
 
-    <insert id="insertSubscription" parameterType="SubscriptionVO">
-        INSERT INTO SUBSCRIPTION (
-            SUB_CODE, START_DATE, END_DATE, TOTAL_USERS, SUB_STATUS, 
-            SUB_PLAN_NO, TOTAL_PAY, MAT_NO, MON, COM_CODE
-        ) VALUES (
-            #{subCode}, SYSDATE, ADD_MONTHS(SYSDATE, #{mon}), #{totalUsers}, #{subStatus}, 
-            #{subPlanNo}, #{totalPay}, #{matNo}, #{mon}, #{comCode}
-        )
-    </insert>
+	<insert id="insertSubscription" parameterType="SubscriptionVO">
+		INSERT INTO SUBSCRIPTION (
+		SUB_CODE, START_DATE, END_DATE, TOTAL_USERS, SUB_STATUS,
+		SUB_PLAN_NO, TOTAL_PAY, MAT_NO, MON, COM_CODE
+		) VALUES (
+		#{subCode}, SYSDATE, ADD_MONTHS(SYSDATE, #{mon}), #{totalUsers}, #{subStatus},
+		#{subPlanNo}, #{totalPay}, #{matNo}, #{mon}, #{comCode}
+		)
+	</insert>
 
-    <update id="updateCompanyComCode" parameterType="map">
-        UPDATE COMPANY
-        SET 
-            COM_CODE = #{comCode},
-           <if test="compName != null and compName !=''"> COMP_NAME = #{compName}, </if>
-            <if test="brm != null and brm !=''">BRM = #{brm},</if>
-            <if test="ceo != null and ceo !=''">CEO = #{ceo},</if>
-            SUB_DATE = SYSDATE 
-        WHERE MAT_NO = #{matNo}
-    </update>
-    
-    <select id="selectCompanyInfoByMatNo" parameterType="long" resultType="map">
-        SELECT 
-            MAT_NO, CEO, COMP_NAME, MAT_NAME, MAT_MAIL,
-            COMP_ADDR, COMP_DEL_ADDR, BRM, COM_CODE 
-        FROM COMPANY
-        WHERE MAT_NO = #{matNo}
-    </select>
-    <select id="findSubscriptionsByComCode" parameterType="String" resultType="com.yedam.erp.vo.main.SubscriptionVO">
-    SELECT
-        s.sub_code,
-        s.start_date,
-        s.end_date,
-        s.sub_status,
-        p.plan_name AS planName
-    FROM
-        subscription s
-    JOIN
-        sub_plan p ON s.sub_plan_no = p.sub_plan_no
-    WHERE
-        s.com_code = #{comCode}
-    ORDER BY
-        s.start_date DESC
-</select>
-   <!-- 전체 컬럼 포함, SubPlanVO nested 매핑 -->
-    <resultMap id="SubscriptionWithPlanResult" type="com.yedam.erp.vo.main.SubscriptionVO">
-        <result property="subCode" column="sub_code"/>
-        <result property="startDate" column="start_date"/>
-        <result property="endDate" column="end_date"/>
-        <result property="totalUsers" column="total_users"/>
-        <result property="subStatus" column="sub_status"/>
-        <result property="subPlanNo" column="sub_plan_no"/>
-        <result property="totalPay" column="total_pay"/>
-        <result property="matNo" column="mat_no"/>
-        <result property="mon" column="mon"/>
-        <result property="comCode" column="com_code"/>
-        <association property="subPlan" javaType="com.yedam.erp.vo.main.SubPlanVO">
-            <result property="planName" column="planName"/>
-            <result property="avaiModules" column="modules"/>
-            <result property="subPlanNo" column="sub_plan_no"/>
-        </association>
-    </resultMap>
+	<update id="updateCompanyComCode" parameterType="map">
+		UPDATE COMPANY
+		SET
+		COM_CODE = #{comCode},
+		<if test="compName != null and compName !=''"> COMP_NAME = #{compName}, </if>
+		<if test="brm != null and brm !=''">BRM = #{brm},</if>
+		<if test="ceo != null and ceo !=''">CEO = #{ceo},</if>
+		SUB_DATE = SYSDATE
+		WHERE MAT_NO = #{matNo}
+	</update>
 
-<select id="findLatestSubscriptionByMatNo" 
-        resultMap="SubscriptionWithPlanResult"  parameterType="Long">
-    SELECT *
-    FROM (
-        SELECT s.sub_code, s.start_date, s.end_date, s.total_users, s.sub_status, 
-               s.sub_plan_no, s.total_pay, s.mat_no, s.mon, s.com_code,
-               p.plan_name AS planName, p.avai_modules AS modules
-        FROM subscription s
-        JOIN sub_plan p ON s.sub_plan_no = p.sub_plan_no
-        WHERE s.mat_no = #{matNo}
-        ORDER BY s.start_date DESC
-    )
-    WHERE ROWNUM = 1
-</select>
-<!-- 빌링키 정기결제 관련 -->
-<insert id="insertBiling" parameterType="com.yedam.erp.vo.main.SubscriptionVO">
-    <selectKey keyProperty="subCode" resultType="String" order="BEFORE">
-        SELECT 'SUB-' || TO_CHAR(SYSDATE, 'YYMMDDHH24MISS') || '-' || LPAD(sub_code_seq.NEXTVAL, 4, '0') FROM DUAL
-    </selectKey>
-    INSERT INTO subscription (
-        sub_code,
-        start_date, --panding상태 임시sysdate
-        sub_status,
-        sub_plan_no,
-        total_users,
-        mat_no,
-        customer_key,
-        total_pay,
-        mon
-    ) VALUES (
-        #{subCode},
-        SYSDATE,
-        'PENDING',  -- 'PENDING' 또는 'WAITING' 같은 대기 상태로 저장
-        #{subPlanNo},
-        #{totalUsers},
-        #{matNo},
-        #{customerKey},
+	<select id="selectCompanyInfoByMatNo" parameterType="long"
+		resultType="map">
+		SELECT
+		MAT_NO, CEO, COMP_NAME, MAT_NAME, MAT_MAIL,
+		COMP_ADDR, COMP_DEL_ADDR, BRM, COM_CODE
+		FROM COMPANY
+		WHERE MAT_NO = #{matNo}
+	</select>
+	<select id="findSubscriptionsByComCode" parameterType="String"
+		resultType="com.yedam.erp.vo.main.SubscriptionVO">
+		SELECT
+		s.sub_code,
+		s.start_date,
+		s.end_date,
+		s.sub_status,
+		p.plan_name AS planName
+		FROM
+		subscription s
+		JOIN
+		sub_plan p ON s.sub_plan_no = p.sub_plan_no
+		WHERE
+		s.com_code = #{comCode}
+		ORDER BY
+		s.start_date DESC
+	</select>
+	<!-- 전체 컬럼 포함, SubPlanVO nested 매핑 -->
+	<resultMap id="SubscriptionWithPlanResult"
+		type="com.yedam.erp.vo.main.SubscriptionVO">
+		<result property="subCode" column="sub_code" />
+		<result property="startDate" column="start_date" />
+		<result property="endDate" column="end_date" />
+		<result property="totalUsers" column="total_users" />
+		<result property="subStatus" column="sub_status" />
+		<result property="subPlanNo" column="sub_plan_no" />
+		<result property="totalPay" column="total_pay" />
+		<result property="matNo" column="mat_no" />
+		<result property="mon" column="mon" />
+		<result property="comCode" column="com_code" />
+		<association property="subPlan"
+			javaType="com.yedam.erp.vo.main.SubPlanVO">
+			<result property="planName" column="planName" />
+			<result property="avaiModules" column="modules" />
+			<result property="subPlanNo" column="sub_plan_no" />
+		</association>
+	</resultMap>
+
+	<select id="findLatestSubscriptionByMatNo"
+		resultMap="SubscriptionWithPlanResult" parameterType="Long">
+		SELECT *
+		FROM (
+		SELECT s.sub_code, s.start_date, s.end_date, s.total_users, s.sub_status,
+		s.sub_plan_no, s.total_pay, s.mat_no, s.mon, s.com_code,
+		p.plan_name AS planName, p.avai_modules AS modules
+		FROM subscription s
+		JOIN sub_plan p ON s.sub_plan_no = p.sub_plan_no
+		WHERE s.mat_no = #{matNo}
+		ORDER BY s.start_date DESC
+		)
+		WHERE ROWNUM = 1
+	</select>
+	<!-- 빌링키 정기결제 관련 -->
+	<insert id="insertBiling"
+		parameterType="com.yedam.erp.vo.main.SubscriptionVO">
+		<selectKey keyProperty="subCode" resultType="String"
+			order="BEFORE">
+			SELECT 'SUB-' || TO_CHAR(SYSDATE, 'YYMMDDHH24MISS') || '-' ||
+			LPAD(sub_code_seq.NEXTVAL, 4, '0') FROM DUAL
+		</selectKey>
+		INSERT INTO subscription (
+		sub_code,
+		start_date, --panding상태 임시sysdate
+		sub_status,
+		sub_plan_no,
+		total_users,
+		mat_no,
+		customer_key,
+		total_pay,
+		mon
+		) VALUES (
+		#{subCode},
+		SYSDATE,
+		'PENDING', -- 'PENDING' 또는 'WAITING' 같은 대기 상태로 저장
+		#{subPlanNo},
+		#{totalUsers},
+		#{matNo},
+		#{customerKey},
 		#{totalPay},
-        #{mon}
-    )
-</insert>
-<select id="findLatestSubscriptionByComCode"
-        parameterType="String"
-        resultType="com.yedam.erp.vo.main.SubscriptionVO">
-    SELECT *
-    FROM (
-        SELECT *
-        FROM subscription
-        WHERE com_code = #{comCode}
-        ORDER BY start_date DESC
-    )
-    WHERE ROWNUM = 1
-</select>
+		#{mon}
+		)
+	</insert>
+	<select id="findLatestSubscriptionByComCode"
+		parameterType="String"
+		resultType="com.yedam.erp.vo.main.SubscriptionVO">
+		SELECT *
+		FROM (
+		SELECT *
+		FROM subscription
+		WHERE com_code = #{comCode}
+		ORDER BY start_date DESC
+		)
+		WHERE ROWNUM = 1
+	</select>
 
-<select id="findSubscriptionsDueForPaymentToday" resultType="com.yedam.erp.vo.main.SubscriptionVO">
-    SELECT 
-        sub_code,
-        mat_no,
-        customer_key,
-        billing_key,
-        total_pay
-    FROM 
-        subscription
-    WHERE 
-        TRUNC(next_pay_date) = TRUNC(SYSDATE)
-    AND 
-        billing_key IS NOT NULL
-    AND 
-        sub_status = 'ACTIVE'
-</select>
-<select id="findPendingSubscriptionByCustomerKey" parameterType="String" resultType="com.yedam.erp.vo.main.SubscriptionVO">
-       SELECT * FROM (
-        SELECT 
-            sub_code,
-            mat_no,
-            sub_plan_no,
-            total_users,
-            total_pay,
-            mon,
-            customer_key,
-            sub_status
-            FROM 
-            subscription
-        WHERE 
-            customer_key = #{customerKey}
-        AND 
-            sub_status = 'PENDING'
-        ORDER BY 
-            start_date DESC
-    )
-    WHERE ROWNUM = 1
-    </select>
-    <update id="activatePendingSubscription" parameterType="com.yedam.erp.vo.main.SubscriptionVO">
-        UPDATE subscription
-        SET
-            sub_status = 'ACTIVE',
-            start_date = SYSDATE,                       
-            end_date = ADD_MONTHS(SYSDATE, #{mon}),     
-            next_pay_date = ADD_MONTHS(SYSDATE, 1), 
-            billing_key = #{billingKey},                
-            com_code = #{comCode},
-            status = 'Y'                      
-        WHERE
-            sub_code = #{subCode}
-        AND
-            sub_status = 'PENDING'
-    </update>
-<update id="processPayment" parameterType="com.yedam.erp.vo.main.PayLogVO">
-    {CALL process_subscription_payment(
-        #{amount, jdbcType=NUMERIC},
-        #{transactionNo, jdbcType=VARCHAR},
-        #{payMethod, jdbcType=VARCHAR},
-        #{subCode, jdbcType=VARCHAR},
-        #{billingKeyNo, jdbcType=VARCHAR}
-    )}
-</update>
-<update id="updateBillingKeyByCustomerKey">
-    UPDATE SUBSCRIPTION
-    SET    BILLING_KEY = #{billingKey}
-    WHERE  SUB_CODE = (SELECT SUB_CODE
-                       FROM (
-                           SELECT   SUB_CODE
-                           FROM     SUBSCRIPTION
-                           WHERE    CUSTOMER_KEY = #{customerKey}
-                           ORDER BY START_DATE DESC
-                       )
-                       WHERE ROWNUM = 1)
-</update>
-<!-- 구독 취소
-<update id="cancelSubscription" parameterType="Long">
-    UPDATE subscription
-    SET status = 'N',
-        end_date = CASE
-                     WHEN end_date > SYSDATE THEN end_date
-                     ELSE SYSDATE
-                   END
-    WHERE sub_code = #{subCode}
-      AND sub_status = 'ACTIVE'
-</update>-->
+	<select id="findSubscriptionsDueForPaymentToday"
+		resultType="com.yedam.erp.vo.main.SubscriptionVO">
+		SELECT
+		sub_code,
+		mat_no,
+		customer_key,
+		billing_key,
+		total_pay
+		FROM
+		subscription
+		WHERE
+		TRUNC(next_pay_date) = TRUNC(SYSDATE)
+		AND
+		billing_key IS NOT NULL
+		AND
+		sub_status = 'ACTIVE'
+	</select>
+	<select id="findPendingSubscriptionByCustomerKey"
+		parameterType="String"
+		resultType="com.yedam.erp.vo.main.SubscriptionVO">
+		SELECT * FROM (
+		SELECT
+		sub_code,
+		mat_no,
+		sub_plan_no,
+		total_users,
+		total_pay,
+		mon,
+		customer_key,
+		sub_status
+		FROM
+		subscription
+		WHERE
+		customer_key = #{customerKey}
+		AND
+		sub_status = 'PENDING'
+		ORDER BY
+		start_date DESC
+		)
+		WHERE ROWNUM = 1
+	</select>
+	<update id="activatePendingSubscription"
+		parameterType="com.yedam.erp.vo.main.SubscriptionVO">
+		UPDATE subscription
+		SET
+		sub_status = 'ACTIVE',
+		start_date = SYSDATE,
+		end_date = ADD_MONTHS(SYSDATE, #{mon}),
+		next_pay_date = ADD_MONTHS(SYSDATE, 1),
+		billing_key = #{billingKey},
+		com_code = #{comCode},
+		status = 'Y'
+		WHERE
+		sub_code = #{subCode}
+		AND
+		sub_status = 'PENDING'
+	</update>
+	<update id="processPayment"
+		parameterType="com.yedam.erp.vo.main.PayLogVO">
+		{CALL process_subscription_payment(
+		#{amount, jdbcType=NUMERIC},
+		#{transactionNo, jdbcType=VARCHAR},
+		#{payMethod, jdbcType=VARCHAR},
+		#{subCode, jdbcType=VARCHAR},
+		#{billingKeyNo, jdbcType=VARCHAR}
+		)}
+	</update>
+	<update id="updateBillingKeyByCustomerKey">
+		UPDATE SUBSCRIPTION
+		SET BILLING_KEY = #{billingKey}
+		WHERE SUB_CODE = (SELECT SUB_CODE
+		FROM (
+		SELECT SUB_CODE
+		FROM SUBSCRIPTION
+		WHERE CUSTOMER_KEY = #{customerKey}
+		ORDER BY START_DATE DESC
+		)
+		WHERE ROWNUM = 1)
+	</update>
+	<!-- 세금계산서 품목 조회 -->
+	<select id="selectInvoiceItemsByMatNo" parameterType="long"
+		resultType="hashmap">
+		SELECT
+		p.plan_name AS itemName,
+		COALESCE(s.mon, 0) AS qty, -- 구독 개월 수
+		COALESCE(p.base_salary, 0) AS unitPrice, -- 기본요금
+		(COALESCE(p.base_salary, 0) * COALESCE(s.mon, 0)) AS supplyAmt, -- 공급가액
+		ROUND((COALESCE(p.base_salary, 0) * COALESCE(s.mon, 0)) * 0.1) AS
+		taxAmt -- 세액 (10%)
+		FROM subscription s
+		JOIN sub_plan p ON s.sub_plan_no = p.sub_plan_no
+		WHERE s.mat_no = #{matNo}
+	</select>
 
-<!-- 구독 조회 --> 
-<select id="getSubscriptionBySubCode" parameterType="String" resultType="SubscriptionVO">
-    SELECT sub_code, sub_status, status, start_date, end_date, mon, billing_key
-    FROM subscription
-    WHERE sub_code = #{subCode}
-</select>
-<update id="cancelSubscriptionBySubCode" parameterType="String">
-        UPDATE subscription_table
-        SET status = 'CANCELLED'
-        WHERE sub_code = #{subCode}
-    </update>
-<select id="callCancelSubscriptionProc" statementType="CALLABLE" parameterType="java.util.Map">
-    {CALL CANCEL_SUBSCRIPTION_PROC(
-      #{p_sub_code, mode=IN, jdbcType=VARCHAR},
-      #{p_cancel_reason, mode=IN, jdbcType=VARCHAR},
-      #{p_remaining_days, mode=OUT, jdbcType=NUMERIC}
-    )}
-  </select>
+	<!-- 구독 취소 <update id="cancelSubscription" parameterType="Long"> UPDATE 
+		subscription SET status = 'N', end_date = CASE WHEN end_date > SYSDATE THEN 
+		end_date ELSE SYSDATE END WHERE sub_code = #{subCode} AND sub_status = 'ACTIVE' 
+		</update> -->
+
+	<!-- 구독 조회 -->
+	<select id="getSubscriptionBySubCode" parameterType="String"
+		resultType="SubscriptionVO">
+		SELECT sub_code, sub_status, status, start_date, end_date, mon, billing_key
+		FROM subscription
+		WHERE sub_code = #{subCode}
+	</select>
+	<update id="cancelSubscriptionBySubCode" parameterType="String">
+		UPDATE subscription_table
+		SET status = 'CANCELLED'
+		WHERE sub_code = #{subCode}
+	</update>
+	<select id="callCancelSubscriptionProc" statementType="CALLABLE"
+		parameterType="java.util.Map">
+		{CALL CANCEL_SUBSCRIPTION_PROC(
+		#{p_sub_code, mode=IN, jdbcType=VARCHAR},
+		#{p_cancel_reason, mode=IN, jdbcType=VARCHAR},
+		#{p_remaining_days, mode=OUT, jdbcType=NUMERIC}
+		)}
+	</select>
 </mapper>

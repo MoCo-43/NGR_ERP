@@ -41,6 +41,5 @@ public interface SubscriptionService {
     //SubscriptionVO getSubscription(Long subCode);
     //회사구독최신내역조회
     SubscriptionVO findLatestSubscriptionByComCode(String comCode);
-
-    
+    List<Map<String, Object>> findInvoiceItemsByMatNo(Long matNo);
 }

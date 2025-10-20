@@ -126,4 +126,9 @@ public class CompanyServiceImpl implements CompanyService {
         return companyMapper.companyList();
     }
 
+	@Override
+	public CompanyVO selectCompanyByNo(Long matNo) {
+		return companyMapper.selectCompanyByNo(matNo);
+	}
+
 }

@@ -24,9 +24,9 @@ public class MvcConfig implements WebMvcConfigurer {
 		       .addResourceLocations("file:" + uploadDir + "/sign/");
 	        
 	        // 공통
+	        registry.addResourceHandler("/uploads/signatures/**")
+            .addResourceLocations("file:" + uploadDir + "/uploads/signatures/");
 
-	        
-	        
 	    }
 
 	public void addViewControllers(ViewControllerRegistry registry) {

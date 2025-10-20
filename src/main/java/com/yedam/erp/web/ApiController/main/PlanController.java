@@ -63,12 +63,21 @@ public class PlanController {  // 이름 오타 수정
         return result > 0 ? ResponseEntity.ok(plan) : ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
+//    @DeleteMapping("/{planNo}")
+//    public ResponseEntity<Void> deletePlan(@PathVariable Long planNo, @RequestParam Long empIdNo) {
+//        Map<String, Object> param = new HashMap<>();
+//        param.put("planNo", planNo);
+//        param.put("empIdNo", SessionUtil.empIdNo());
+//
+//        int result = planService.deletePlan(param);
+//        return result > 0 ? ResponseEntity.noContent().build() 
+//                          : ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+//    }
     @DeleteMapping("/{planNo}")
-    public ResponseEntity<Void> deletePlan(@PathVariable Long planNo, @RequestParam Long empIdNo) {
+    public ResponseEntity<Void> deletePlan(@PathVariable Long planNo) {
         Map<String, Object> param = new HashMap<>();
         param.put("planNo", planNo);
         param.put("empIdNo", SessionUtil.empIdNo());
-
         int result = planService.deletePlan(param);
         return result > 0 ? ResponseEntity.noContent().build() 
                           : ResponseEntity.status(HttpStatus.FORBIDDEN).build();
