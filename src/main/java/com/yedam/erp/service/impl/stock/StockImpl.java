@@ -260,7 +260,7 @@ public class StockImpl implements StockService{
 
 	@Override
 	public int updateSign(InvenVO payload) {
-		
+		payload.setCompanyCode(SessionUtil.companyId());
 		return mapper.updateIcSignDataByIcCode(payload);
 		
 	}
@@ -330,6 +330,12 @@ public class StockImpl implements StockService{
 		 * return stats;
 		 */
 		return mapper.getInAndOutCountOutput(params);
+	}
+
+
+	@Override
+	public List<InvenVO> getIcListByParam(Map<String, Object> params) {
+		return mapper.getIcListByParam(params);
 	}
 
 

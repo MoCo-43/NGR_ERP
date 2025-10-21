@@ -89,7 +89,7 @@ public interface StockMapper {
 	// 결산 마스터 조회
 	public List<InvenVO> getIcList(Long companyCode);
 	public List<InvenVO> findInvenList(Map<String, Object> params);
-	
+	public List<InvenVO> getIcListByParam(Map<String , Object> params);
 	
 	// 결산 디테일 조회
 	public List<InvenDetailVO> getIcDetailList(Long companyCode ,  @Param("icCode")String selectedRow);

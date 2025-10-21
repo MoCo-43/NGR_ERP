@@ -38,7 +38,7 @@
 		  background-color: #93caf9 !important;
 		  
 		  font-weight: bold;
-	}
+  }
   </style>
 </head>
 <body>
@@ -188,7 +188,7 @@
   <!-- 스크립트 -->
 <script th:inline="none">
 document.addEventListener("DOMContentLoaded", () => {
-	
+	console.log("window.auth check : "+auth);
 	// 변수 지정 및 초기화
 	const form = document.getElementById('filterForm');
 	const toastEl = document.getElementById('successToast');
@@ -197,13 +197,16 @@ document.addEventListener("DOMContentLoaded", () => {
 	// 모달부
 	const finalBtn = document.getElementById('final');// 총괄 담당자
 	const deptBtn = document.getElementById('dept'); // 부서 담당자
-	const fnImg = document.getElementById('finalImage'); // 총괄 서명
-	const dptImg = document.getElementById('deptImage'); // 부서 서명
+	let fnImg = document.getElementById('finalImage'); // 총괄 서명
+	let dptImg = document.getElementById('deptImage'); // 부서 서명
+	let slicedFinalSignLink = null;
+	let slicedEmpSignLink = null;
 	
 	const modalInTdCode = document.getElementById('icCode'); // 문서코드 td
 	const modalInTdDate = document.getElementById('icCodeInDate'); // 작성일자 td
 	
-	const icsSubmitBtnInModal = document.getElementById('icsSubmitBtnInModal');
+	const icsModalEl = document.getElementById('icsModal'); // 결산 승인 모달
+	const icsSubmitBtnInModal = document.getElementById('icsSubmitBtnInModal'); // 모달창 결산 승인 버튼
 	
 	let selectICDate = null; // 작성된일자(ic_code에서 쪼개서 저장)
 	let selectedRow = null; // 전역(이벤트 바깥)으로 선언
@@ -336,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	        }
 	        console.log("params:", params); // 👈 params 확인
 	        const res = await axios.post("/api/v1/stock/icFilteredList", params, {withCredentials: true });
-	        console.log("res:", res.data); // 👈 res 확인
+	        //console.log("res:", res.data); // 👈 res 확인
 	        icListGrid.gridOptions.api.setRowData(res.data);
 	    } catch (err) {
 	        console.error(err);
@@ -353,8 +356,21 @@ document.addEventListener("DOMContentLoaded", () => {
 		  return Number(params.value).toLocaleString();
 	}
 	
+	document.getElementById('icsCancelBtnInModal').addEventListener('click',()=>{
+		fnImg.src="";
+		dptImg.src="";
+		finalBtn.style.display = 'block';
+		deptBtn.style.display = 'block';
+        if (icsModal){
+        	toastr["warning"]("결산 승인을 취소합니다.","확인 후 다시 시도해 주십시오.");
+        	icsModal.hide();
+        }
+		
+	});
+	
 	
 	async function openIcModal(rowData) {
+  		
 	    selectedRow = rowData.icCode;
 	    selectedRowStatus = rowData.icStatus;
 	    selectICDate = selectedRow.replace(/^IC(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
@@ -366,6 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	    fnImg.src = "/sign/finSign.png";
 	    dptImg.src = "/sign/empSign.png";
 	    
+	    
 	    // 버튼 숨기기 (서명 등록용 버튼)
 	    finalBtn.style.display = 'none';
 	    deptBtn.style.display = 'none';
@@ -373,7 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	    // 하단 승인/취소 버튼 숨기기
 	    icsSubmitBtnInModal.style.display = 'none';
 	    const cancelBtn = document.getElementById('icsCancelBtnInModal'); // cancel 버튼 id
-	    if(cancelBtn) cancelBtn.style.display = 'none';
+	    if(cancelBtn) { cancelBtn.style.display = 'none';}
 	    
 	    // 모달 show
 	    const icsModalEl = document.getElementById('icsModal');
@@ -397,8 +414,13 @@ document.addEventListener("DOMContentLoaded", () => {
 	        	cellStyle: (params) => {
 	                if (params.value === "결재대기") {
 	                    return { backgroundColor: "#f5da2c", color: "#d10202" ,  fontWeight: "bold" }; // 노랑 배경 + 글자색
+	                } else if(params.value === "결재완료"){
+	                	return { backgroundColor: "#054cb5", color: "#ffffff" }; // 기본 스타일
+	                } else{
+	                	return { backgroundColor: "#ffcc80",  /* 연한 주황 */
+	                			 color: "#7a3e00"             /* 어두운 오렌지 계열 */
+	                           };
 	                }
-	                return { backgroundColor: "#054cb5", color: "#ffffff" }; // 기본 스타일
 	            }	
 	        },
 	        { headerName: "결산조회", field: "icReport", width: 150,
@@ -540,7 +562,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	async function loadICDetailData(){
 		try {
 		    const res = await axios.get(`/api/v1/stock/icDetailList/${selectedRow}`, { withCredentials: true });
-		    console.log("loadICDetailData: "+JSON.stringify(res.data, null, 2));
+		    // console.log("loadICDetailData: "+JSON.stringify(res.data, null, 2));
 		    if (invenGridOptions) {
 		      // rowData 세팅
 		      invenGridOptions.api.setRowData(res.data);
@@ -631,6 +653,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadICDetailDataInModal(selectedIcCode){
 	try {
+		showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
 	    const res = await axios.get(`/api/v1/stock/icDetailList/${selectedIcCode}`, { withCredentials: true });
 	    const detailGrid = document.getElementById('detailGrid');
 	    console.log("loadICDetailData: "+JSON.stringify(res.data, null, 2));
@@ -650,6 +673,8 @@ async function loadICDetailDataInModal(selectedIcCode){
 	  } catch (err) {
 	    console.error(err);
 	    toastr.error('데이터 로드 실패');
+	  } finally {
+		hideLoader("gridModalWrapper");
 	  }
 		 
 	}// END OF loadICDetailDataInModal
@@ -658,13 +683,18 @@ async function loadICDetailDataInModal(selectedIcCode){
 	  [finalBtn, deptBtn].forEach(btn => {
 		  btn.addEventListener('click', e => {
 		    console.log(`${btn.id} 클릭됨`);
+		    const compareRole = {auth};
 		    // 공통 처리 로직
 		    console.log("id : "+e.target.id);
 		    let fileName = e.target.id;
-		    if(fileName == 'final'){
+		    if(fileName == 'final' && compareRole == finalBtn.dataset.role){
 		    	fnImg.src = "/sign/finSign.png";
 		    	finalBtn.style.display = 'none'
-		    }else if(fileName =='dept'){
+		    }else if(fileName == 'final' && compareRole != finalBtn.dataset.role) {
+		    	toastr["warning"]("권한을 확인해 주세요.", "접속자의 권한과 맞지 않습니다.");
+		    	return; // CASE >> div-id : final CLICK > ROLE_NAME IS NOT THE SANE 'ROLE_MANAGER'
+		    }
+		    if(fileName =='dept'){
 		    	dptImg.src = "/sign/empSign.png";
 		    	deptBtn.style.display = 'none'
 		    }
@@ -675,13 +705,20 @@ async function loadICDetailDataInModal(selectedIcCode){
 	registerIcBtn.addEventListener('click', async (event) => {
 		event.preventDefault(); // 페이지 새로고침 방지
 		console.log("결산 등록 모달 호출시 > selectedRow(IC_CODE) : "+selectedRow);
-		selectICDate = selectedRow.replace(/^IC(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
-		modalInTdCode.innerHTML = selectedRow; // 문서코드에 IC_CODE 입력
-		modalInTdDate.innerHTML = selectICDate; // 문서코드에 IC_DATE 입력
 		if(selectedRow == null) { 
 			  toastr.error('행을 선택해주세요');
 			  return;
 		  }
+		selectICDate = selectedRow.replace(/^IC(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+		modalInTdCode.innerHTML = selectedRow; // 문서코드에 IC_CODE 입력
+		modalInTdDate.innerHTML = selectICDate; // 문서코드에 IC_DATE 입력
+		const stat = await axios.post('/api/v1/stock/icList',{icCode : selectedRow},{ withCredentials: true });
+		console.log("stat.data : "+stat.data[0]?.icCode);
+		if(stat.data.empSign){
+			//fnImg.src = "/sign/"+stat.data[0].finalSign;
+			dptImg.src = "/sign/"+stat.data[0].empSign;
+			deptBtn.style.display = 'none'
+		}
 		if(selectedRowStatus == '결재완료'){
 			  toastr.error('결재 완료된 내역입니다');
 			  return;
@@ -720,27 +757,30 @@ async function loadICDetailDataInModal(selectedIcCode){
 		
     // 재고현황보고서 모달 승인 클릭시 서명부 업데이트
 	icsSubmitBtnInModal.addEventListener('click', async() => {
-		
 		console.log("현재 선택된 IC_CODE 값 : "+selectedRow);
 		  try {
 			  const icCode = selectedRow;
-			  const slicedFinalSignLink = fnImg.src.substr(fnImg.src.lastIndexOf('/')+1);
-			  const slicedEmpSignLink = dptImg.src.substr(fnImg.src.lastIndexOf('/')+1);
-			  console.log('slicedFinalSignLink : '+slicedFinalSignLink);
-			  console.log('slicedEmpSignLink : '+slicedEmpSignLink);
+			  slicedFinalSignLink = fnImg.src.substr(fnImg.src.lastIndexOf('/')+1);
+			  slicedEmpSignLink = dptImg.src.substr(dptImg.src.lastIndexOf('/')+1);
+			  //console.log('slicedFinalSignLink : '+slicedFinalSignLink);
+			  //console.log('slicedEmpSignLink : '+slicedEmpSignLink);
+			  if(slicedFinalSignLink == 'insert'){slicedFinalSignLink = '';}
 			  const payload = {
 					icCode : icCode,
-					finalSign : slicedFinalSignLink,
-					empSign : slicedEmpSignLink
+					finalSign : slicedFinalSignLink || null,
+					empSign : slicedEmpSignLink || null
 			  };
-			  
-			  console.log("payload is Array? : "+Array.isArray(payload));
-			  if(!payload.icCode || !payload.finalSign || !payload.empSign){ toastr.error('등록되지 않은 부분이 존재합니다!');  return;}
+			  const isMissingSign = !payload.finalSign || !payload.empSign;
+			  const alertMsg = isMissingSign
+			    ? "서명되지 않은 부분이 존재합니다.\n진행하시겠습니까?"
+			    : "정말 진행하시겠습니까?";
+			  //console.log("payload is Array? : "+Array.isArray(payload));
+			  // if(!payload.icCode || !payload.finalSign || !payload.empSign){ toastr.error('등록되지 않은 부분이 존재합니다!');  return;}
 				  // confirm 먼저
 			        const res = await cuteAlert({
 			        	type: "question",
-			            title: "최종 확인",
-			            message: "정말 진행하시겠습니까?",
+			            title: "결산 확인",
+			            message: alertMsg,
 			            imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
 			            confirmText: "네",
 			            cancelText: "아니오"
@@ -749,9 +789,11 @@ async function loadICDetailDataInModal(selectedIcCode){
 			        if(res !== true) {
 			            return; // 취소 시 함수 종료
 			        }
-			  await axios.put("/api/v1/stock/signUpdate", payload, {
-			      headers: { 'Content-Type': 'application/json' }
-			    });
+			  console.log("📦 최종 payload:", JSON.stringify(payload, null, 2));
+			  await axios.put("/api/v1/stock/signUpdate", payload,  {
+				  headers: { 'Content-Type': 'application/json' },
+				  withCredentials: true
+				});
 			  toastr.success('등록성공');
 			  const icsModalEl = document.getElementById('icsModal');
 		        const icsModal = bootstrap.Modal.getInstance(icsModalEl);
@@ -759,7 +801,26 @@ async function loadICDetailDataInModal(selectedIcCode){
 		        
 		      const listRes = await axios.get('/api/v1/stock/icList', { withCredentials: true });
 		      icListGrid.gridOptions.api.setRowData(listRes.data);
+		      
+		      // 등록된 행 다시 선택
+		      icListGrid.gridOptions.api.forEachNode((node) => {
+		    	  if (node.data.icCode === selectedRow) {
+		    	    node.setSelected(true);
+		    	  }
+		    	});
+		      
+		   	  // 상세 그리드도 리로드
+		      if (selectedRow) {
+		        await loadICDetailData(selectedRow);
+		      }
+		   	  
+		   	  // 모달 내부 그리드 초기화
+		      if (initICModalGridOptions) {
+		        initICModalGridOptions.api.setRowData([]);
+		      }
 			  
+		      console.log("✅ 모든 그리드 리로드 완료");
+		      
 		  }catch(err){
 			  alert('등록 실패: ' + err.message);
 			  toastr.error('등록 실패: ' + err.message,{timeOut: 3000});
