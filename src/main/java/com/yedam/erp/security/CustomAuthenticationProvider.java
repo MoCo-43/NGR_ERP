@@ -145,7 +145,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             String salPw = request.getParameter("salPw");
 
             // Mapper에서 판매자 로그인 전용 메서드 호출
-           salVO = sallerMapper.findSallerById(salId);
+           salVO = sallerMapper.sallerList(salId);
 
             if (salVO == null || !passwordEncoder.matches(salPw, salVO.getSalPw())) {
                 throw new BadCredentialsException("판매자 아이디 또는 비밀번호가 올바르지 않습니다.");

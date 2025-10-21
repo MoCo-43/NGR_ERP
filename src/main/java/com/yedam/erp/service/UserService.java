@@ -133,11 +133,11 @@ public class UserService {
     @Transactional
     public void verifySmsAndSendResetEmail(PasswordResetRequestVO requestVO) {
         
-        // 1. ★ Redis에서 인증번호 조회
+        // 1.  Redis에서 인증번호 조회
         String redisKey = "sms_auth:" + requestVO.getUserKey();
         String savedCode = redisTemplate.opsForValue().get(redisKey);
 
-        // 2. ★ 인증번호 검증
+        // 2.  인증번호 검증
         if (savedCode == null) {
             throw new IllegalArgumentException("인증 시간이 만료되었습니다. 다시 시도해주세요.");
         }
@@ -151,7 +151,7 @@ public class UserService {
             throw new NoSuchElementException("사용자 정보를 찾을 수 없습니다."); // 2단계에서 정보가 없을 리 없지만 방어 코드
         }
 
-        // 4. ★ 1회용 토큰 생성 및 DB 저장 (pw_rest_token 테이블)
+        // 4.  1회용 토큰 생성 및 DB 저장 (pw_rest_token 테이블)
         String token = UUID.randomUUID().toString();
         PwResetTokenVO resetToken = new PwResetTokenVO();
         resetToken.setToken(token);
@@ -167,7 +167,7 @@ public class UserService {
         
         emailService.sendSimpleMessage(requestVO.getMatMail(), "[ERP 시스템] 비밀번호 재설정 안내", emailBody);
         
-        // 6. ★ 성공 시 Redis에 저장된 인증번호 즉시 삭제 (재사용 방지)
+        // 6.  성공 시 Redis에 저장된 인증번호 즉시 삭제 (재사용 방지)
         redisTemplate.delete(redisKey);
 
         logger.info("SMS 인증 성공 및 비밀번호 재설정 이메일 발송 완료: empId={}", requestVO.getEmpId());
