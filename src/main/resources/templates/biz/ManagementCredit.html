@@ -321,6 +321,10 @@
 
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
+          // 초기 로딩: 정책/이력도 미리 조회
+          fetchPolicy();
+          fetchHistory();
+
           // ===== 공통 =====
           const $ = (s) => document.querySelector(s);
 
@@ -384,28 +388,73 @@
             }
           );
 
-          // ----- ② 정책 그리드 -----
+          // ----- 정책 그리드 -----
+
+          // 사용여부
+          const ynLabel = { Y: "사용", N: "미사용" };
+
           const policyCols = [
             {
               headerName: "등급",
-              field: "gradeCode",
-              width: 100,
-              editable: false,
+              field: "grade",
+              flex: 1,
+              editable: true,
             },
             {
-              headerName: "최대한도(원)",
-              field: "limitMax",
-              width: 180,
+              headerName: "등급이름",
+              field: "gradeName",
+              flex: 1,
+              editable: true,
+            },
+            {
+              headerName: "최대한도",
+              field: "maxLimit",
+              flex: 1,
               editable: true,
               valueFormatter: money,
               valueParser: (p) =>
                 Number(String(p.newValue).replaceAll(",", "") || 0),
             },
             {
-              headerName: "설명",
-              field: "description",
+              headerName: "할인율",
+              field: "discountRate",
               flex: 1,
               editable: true,
+            },
+            {
+              headerName: "월별할인횟수",
+              field: "monDiscCnt",
+              flex: 1,
+              editable: true,
+            },
+            {
+              headerName: "여신적용",
+              field: "allowCredit",
+              flex: 1,
+              editable: true,
+              cellEditor: "agSelectCellEditor",
+              cellEditorParams: { values: ["Y", "N"] }, // ✅ 내부 값은 Y/N 고정
+              valueFormatter: (p) => ynLabel[p.value] || "", // ✅ 화면엔 한글만
+              valueParser: (p) => {
+                // ✅ 혹시 한글이 들어와도 Y/N으로 환원
+                if (p.newValue === "사용") return "Y";
+                if (p.newValue === "미사용") return "N";
+                return p.newValue ?? ""; // 기본적으로는 에디터 값(Y/N)
+              },
+            },
+            {
+              headerName: "선입금적용",
+              field: "prepayRequired",
+              flex: 1,
+              editable: true,
+              cellEditor: "agSelectCellEditor",
+              cellEditorParams: { values: ["Y", "N"] },
+              valueFormatter: (p) => ynLabel[p.value] || "",
+              valueParser: (p) => {
+                if (p.newValue === "사용") return "Y";
+                if (p.newValue === "미사용") return "N";
+                return p.newValue ?? "";
+              },
             },
           ];
           const gridPolicy = createGrid("#gridPolicy", policyCols, fetchPolicy);
@@ -607,27 +656,34 @@
             }
           }
 
+          // 여신등급정책 가져오기
+
           async function fetchPolicy() {
             try {
-              const res = await axios.get("/api/biz/credit-policy");
-              const rows = (Array.isArray(res.data) ? res.data : []).map(
-                (r) => ({
-                  gradeCode: (
-                    r.gradeCode ??
-                    r.GRADE_CODE ??
-                    r.grade ??
-                    ""
-                  ).toUpperCase(),
-                  limitMax: Number(r.limitMax ?? r.LIMIT_MAX ?? 0),
-                  description: r.description ?? r.DESCRIPTION ?? "",
-                })
-              );
-              setRows(gridPolicy, rows);
+              const res = await axios.get("/api/biz/crdgradelist");
+              const list = [];
+
+              if (Array.isArray(res.data)) {
+                for (const r of res.data) {
+                  list.push({
+                    grade: r.grade,
+                    gradeName: (r.gradeName ?? "").toUpperCase(),
+                    maxLimit: Number(r.maxLimit || 0),
+                    discountRate: r.discountRate ?? 0,
+                    monDiscCnt: r.monDiscCnt ?? 0,
+                    allowCredit: r.allowCredit ?? "N",
+                    prepayRequired: r.prepayRequired ?? "N",
+                  });
+                }
+              }
+
+              setRows(gridPolicy, list);
+              console.log("등급정책 데이터는 =>", res.data);
               // 정책 캐시 갱신
-              policyMap = rows.reduce(
-                (m, r) => ((m[r.gradeCode] = r.limitMax), m),
-                {}
-              );
+              policyMap = {};
+              for (const r of list) {
+                policyMap[r.gradeCode] = r.maxLimit;
+              }
             } catch (e) {
               console.error(e);
               setRows(gridPolicy, []);
@@ -720,7 +776,7 @@
             const e = document.createElement("div");
             e.className = "d-flex gap-2";
             e.innerHTML = `<button class="btn btn-sm btn-outline-primary">수정</button>
-                     <button class="btn btn-sm btn-outline-warning">중지</button>`;
+                             <button class="btn btn-sm btn-outline-warning">중지</button>`;
             const [btnEdit, btnStop] = e.querySelectorAll("button");
             btnEdit.addEventListener("click", () =>
               openCreditModal("edit", p.data)
@@ -742,10 +798,6 @@
             });
             return e;
           }
-
-          // 초기 로딩: 정책/이력도 미리 조회
-          fetchPolicy();
-          fetchHistory();
         });
       </script>
     </th:block>

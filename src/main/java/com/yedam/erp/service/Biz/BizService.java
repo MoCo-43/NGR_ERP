@@ -3,6 +3,7 @@ package com.yedam.erp.service.Biz;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.yedam.erp.vo.Biz.CreditGradeVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -66,5 +67,7 @@ public interface BizService {
   // void deactivate(Long companyCode, Long cusCode, String user);
 
 
+  // 여신등급정책조회
+  List<CreditGradeVO>getCreditGrade(Long companyCode);
 }
 
