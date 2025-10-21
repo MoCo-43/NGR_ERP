@@ -468,9 +468,15 @@ public class StockController {
 	 }
 	 
 	 
-	 @PostMapping("/inboundTrend")
+	 @PostMapping("/inboundTrend") // 제품조회 페이지 - 입고추이 
 	 public List<InboundVO> inboundTrendChart(@RequestBody Map<String , Object> payload){
 		 return service.inboundTrendChart(payload);
+	 }
+	 
+	 @PostMapping("/getInAndOutCountOutput") // dashboard 용 최근 6개월 입/출고 건수 조회
+	 public List<Map<String , Object>> getInAndOutCountOutput(@RequestBody Map<String , Object> params){
+		 System.out.println("Api-controller > compCode : "+params.get("compCode"));
+		 return service.getInAndOutCountOutput(params);
 	 }
 	 
 	
