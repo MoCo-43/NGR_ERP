@@ -133,4 +133,8 @@ public interface StockMapper {
 	
 	// 월별 입고 추이
 	public List<InboundVO> inboundTrendChart(Map<String, Object> payload);
+	
+	
+	// dashboard 용 최근 6개월 입/출고 건
+	public List<Map<String , Object>> getInAndOutCountOutput(Map<String , Object> params);
 }

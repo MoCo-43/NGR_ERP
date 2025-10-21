@@ -114,4 +114,8 @@ public interface StockService {
 	
 	// 월별 입고 추이
 	public List<InboundVO> inboundTrendChart(Map<String, Object> payload);
+	
+	
+	// dashboard용 최근 6개월 입/출고 건수 조회
+	public List<Map<String , Object>> getInAndOutCountOutput(Map<String , Object> params);
 }

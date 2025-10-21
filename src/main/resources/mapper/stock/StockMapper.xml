@@ -1115,4 +1115,41 @@ WHERE ic_code = #{icCode}
 
 </update>
 
+<!-- 대쉬보드용 최근 6개월간 입/출고 건수 조회 -->
+<select id="getInAndOutCountOutput" resultType="map" parameterType="map">
+<![CDATA[
+SELECT 
+    TO_CHAR(base_date, 'YYYY-MM') AS "month", 
+    SUM(inbound_cnt) AS "inCnt", 
+    SUM(outbound_cnt) AS "outCnt" 
+FROM (
+    -- 입고
+    SELECT 
+        inbound_date AS base_date, 
+        COUNT(*) AS inbound_cnt, 
+        0 AS outbound_cnt 
+    FROM inbound 
+    WHERE inbound_date >= ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -5) 
+      AND inbound_date < ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1) 
+      AND company_code = #{compCode} 
+    GROUP BY inbound_date 
+
+    UNION ALL 
+
+    -- 출고
+    SELECT 
+        outbound_date AS base_date, 
+        0 AS inbound_cnt, 
+        COUNT(*) AS outbound_cnt 
+    FROM outbound_header 
+    WHERE outbound_date >= ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -5) 
+      AND outbound_date < ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1) 
+      AND company_code = #{compCode} 
+    GROUP BY outbound_date
+) 
+GROUP BY TO_CHAR(base_date, 'YYYY-MM') 
+ORDER BY month DESC 
+]]>
+</select>
+
 </mapper>
