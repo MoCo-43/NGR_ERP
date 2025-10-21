@@ -118,6 +118,14 @@ public class StockController {
 		return service.getIcList(companyCode);
 	}
 	
+	@PostMapping("/icList") // 결산 리스트
+	public List<InvenVO> getIcList(@RequestBody Map<String , Object>params){
+		Long companyCode = SessionUtil.companyId();
+		System.out.println(companyCode);
+		params.put("companyCode", companyCode);
+		return service.getIcListByParam(params);
+	}
+	
 	
 	@GetMapping("/icDetailList/{selectedRow}") // 결산 상세 리스트
 	public List<InvenDetailVO> getIcDetailList(@PathVariable String selectedRow){
@@ -455,8 +463,9 @@ public class StockController {
 	 @PutMapping("/signUpdate") // 전자서명 등록 수정
 	 public ResponseEntity<String> updateSign(@RequestBody InvenVO payload) {
 		 try {
-			 System.out.println(payload.getFinalSign());
-			 System.out.println(payload.getEmpSign());
+			 System.out.println("payload.getFinalSign() : "+payload.getFinalSign());
+			 System.out.println("payload.getEmpSign() : "+payload.getEmpSign());
+			 payload.setCompanyCode(SessionUtil.companyId());
 			 service.updateSign(payload);
 			 return ResponseEntity.ok("서명 등록 완료!");
 		} catch (Exception e) {

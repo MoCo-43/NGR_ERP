@@ -487,7 +487,8 @@ SELECT ic.IC_CODE,
        ic.EMP_ID, 
        emp.NAME, 
        CASE WHEN ic.IC_STATUS = 'T' THEN '결재대기'
-            ELSE '결재완료' END AS IC_STATUS
+            WHEN ic.IC_STATUS = 'F' THEN '결재완료'
+            ELSE '승인심사중' END AS IC_STATUS
       
 FROM INVENTORY_CLOSING ic 
 LEFT JOIN EMP_LOGIN emp 
@@ -498,9 +499,36 @@ WHERE ic.COMPANY_CODE = #{companyCode}
         TRUNC(TO_DATE(#{icDate}, 'YYYY-MM-DD'), 'MM')   <!-- 해당월 1일 -->
         AND LAST_DAY(TO_DATE(#{icDate}, 'YYYY-MM-DD'))  <!-- 해당월 말일 -->
 </if>
-<if test="icStatus != null">
+<if test="icStatus != null and icStatus != ''">
   AND ic.ic_status = #{icStatus} 
 </if>
+</select>
+
+<!-- 결산 모달호출시 해당 결산에 이미 부서담당자 서명이 존재하면 -->
+<select id="getIcListByParam" parameterType="map" resultType="InvenVO">
+<!-- SELECT 
+       ic.IC_CODE,  
+       ic.IC_DATE, 
+       ic.EMP_ID, 
+       ic.final_sign,
+       ic.emp_sign,
+       emp.NAME, 
+       CASE WHEN ic.IC_STATUS = 'T' THEN '결재대기'
+            WHEN ic.IC_STATUS = 'F' THEN '결재완료'
+            ELSE '승인심사중' END AS IC_STATUS
+      
+FROM INVENTORY_CLOSING ic 
+LEFT JOIN EMP_LOGIN emp 
+ON ic.emp_id = emp.emp_id 
+WHERE ic.COMPANY_CODE = #{companyCode} 
+AND ic.IC_CODE = #{icCode} -->
+SELECT 
+       IC_CODE,  
+       FINAL_SIGN, 
+       EMP_SIGN 
+FROM INVENTORY_CLOSING  
+WHERE COMPANY_CODE = #{companyCode} 
+AND IC_CODE = #{icCode}
 </select>
 
 <!-- 결산 조회 - 마스터 -->
@@ -511,7 +539,8 @@ SELECT
        ic.EMP_ID, 
        emp.NAME, 
        CASE WHEN ic.IC_STATUS = 'T' THEN '결재대기'
-            ELSE '결재완료' END AS IC_STATUS
+            WHEN ic.IC_STATUS = 'F' THEN '결재완료'
+            ELSE '승인심사중' END AS IC_STATUS
       
 FROM INVENTORY_CLOSING ic 
 LEFT JOIN EMP_LOGIN emp 
@@ -1108,10 +1137,35 @@ LEFT JOIN INVENTORY_CLOSING_DETAIL prev
 
 <!-- 결산 승인 서명 등록 수정 -->
 <update id="updateIcSignDataByIcCode" parameterType="InvenVO">
-UPDATE INVENTORY_CLOSING 
-SET final_sign = #{finalSign} 
-    ,emp_sign = #{empSign}  
-WHERE ic_code = #{icCode}
+
+  UPDATE INVENTORY_CLOSING
+  <set>
+    <choose>
+      <when test="finalSign != null and finalSign != ''">
+        final_sign = #{finalSign},
+        emp_sign = #{empSign} 
+      </when>
+      <otherwise>
+        emp_sign = #{empSign} 
+      </otherwise>
+    </choose>
+  </set>
+  WHERE ic_code = #{icCode}
+  AND company_code = #{companyCode}
+
+
+<!--   UPDATE INVENTORY_CLOSING
+  <set>
+    <if test="finalSign == '' or finalSign == null">
+      ic_status = 'W',
+      emp_sign = #{empSign},
+    </if>
+    <if test="finalSign != null and finalSign != ''">
+      final_sign = #{finalSign},
+      emp_sign = #{empSign},
+    </if>
+  </set>
+  WHERE ic_code = #{icCode} -->
 
 </update>
 
