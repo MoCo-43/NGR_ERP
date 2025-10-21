@@ -14,12 +14,12 @@ public class SallerServiceImpl implements SallerService{
 	@Autowired
 	SallerMapper mapper;
 	@Override
-	public List<SallerVO> sallerList() {
-		return mapper.sallerList();
-	}
-	@Override
 	public SallerVO selectSallerByNo(Long sallerNo) {
         if (sallerNo == null) sallerNo = 1L;
         return mapper.selectSallerByNo(sallerNo);
     }
+	@Override
+	public SallerVO sallerList(String salId) {
+		return mapper.sallerList(salId);
+	}
 }

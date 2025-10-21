@@ -6,7 +6,7 @@ import com.yedam.erp.vo.main.SallerVO;
 
 @Mapper
 public interface SallerMapper {
-	SallerVO findSallerById(@Param("salId") String salId);
+	SallerVO sallerList(@Param("salId") String salId);
 	SallerVO selectSallerByNo(Long sallerNo);
 
 }

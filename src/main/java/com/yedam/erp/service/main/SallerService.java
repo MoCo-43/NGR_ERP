@@ -7,6 +7,6 @@ import org.apache.ibatis.annotations.Param;
 import com.yedam.erp.vo.main.SallerVO;
 
 public interface SallerService {
-	List<SallerVO> sallerList();
+	SallerVO sallerList(@Param("salId") String salId);
     SallerVO selectSallerByNo(@Param("sallerNo") Long sallerNo);
 }

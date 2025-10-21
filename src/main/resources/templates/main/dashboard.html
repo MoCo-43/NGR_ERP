@@ -295,16 +295,16 @@ canvas {
   };
 
   // --- 2. 인사 모듈 (재고 영역 차용) ---
-  const hrData = {
-    labels: ['월', '화', '수', '목', '금'],
-    datasets: [{
-      label: '휴가 사용률',
-      data: [1, 3, 2, 4, 1],
-      fill: false,
-      borderColor: 'rgb(255, 99, 132)',
-      tension: 0.1
-    }]
-  };
+  //const hrData = {
+    //labels: ['월', '화', '수', '목', '금'],
+    //datasets: [{
+     // label: '휴가 사용률',
+      //data: [1, 3, 2, 4, 1],
+      //fill: false,
+      //borderColor: 'rgb(255, 99, 132)',
+      //tension: 0.1
+    //}]
+  //};
 
   // --- 3. 손익 데이터 크롤링 ---
  async function fetchProfitValue() {
@@ -406,7 +406,7 @@ canvas {
   
   // 인사 모듈
   fetchHrMembersChart();
-  createChart('hrChart', 'line', hrData);
+  //createChart('hrChart', 'line', hrData);
   
   // 회계 모듈
   renderAccountingChart(); // ✅ 회계 모듈은 비동기 렌더링

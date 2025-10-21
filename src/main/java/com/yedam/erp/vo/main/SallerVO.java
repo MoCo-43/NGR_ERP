@@ -13,4 +13,5 @@ public class SallerVO {
 	private String salAddress;
 	private String salEmail;
 	private String salTel;
+	private String comName;
 }
