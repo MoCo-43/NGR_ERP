@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.Biz.BizService;
+import com.yedam.erp.vo.Biz.CreditGradeVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -260,5 +261,12 @@ public class BizController {
     //     if (changed == 0) return ResponseEntity.notFound().build();
     //     return ResponseEntity.noContent().build();
     // }
+
+  // 여신등급정책조회
+  @GetMapping("/crdgradelist")
+  public List<CreditGradeVO>getCreditGrade() {
+      Long companyCode = SessionUtil.companyId();
+    return service.getCreditGrade(companyCode);
+  }
 
 }

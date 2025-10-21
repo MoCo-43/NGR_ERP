@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.springframework.data.repository.query.Param;
 
+import com.yedam.erp.vo.Biz.CreditGradeVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -83,4 +84,7 @@ public interface BizMapper {
   // int deactivateCredit(@Param("companyCode") Long companyCode,
   //                      @Param("cusCode") Long cusCode);
 
+
+  // 여신등급정책조회
+  List<CreditGradeVO>getCreditGrade(Long companyCode);
 }

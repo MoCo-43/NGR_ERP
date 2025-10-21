@@ -159,12 +159,12 @@
               minWidth: 160,
               flex: 1,
             },
-            { headerName: "대표자명", field: "repName", width: 110 },
+            { headerName: "대표자명", field: "ceoName", width: 110 },
             { headerName: "전화번호", field: "tel", width: 140 },
             { headerName: "주소", field: "addr", minWidth: 220, flex: 1 },
             {
               headerName: "사용여부",
-              field: "useYn",
+              field: "activeStatus",
               width: 100,
               cellClass: "text-center",
               valueFormatter: (p) =>
@@ -208,11 +208,16 @@
               ? gridApi.setGridOption("rowData", rows)
               : gridApi.setRowData(rows);
 
-          // ===== DOM =====
+          // ===== 상단 검색 DOM =====
+          // 상호
           const qName = document.getElementById("qName");
+          // 대표자명
           const qRep = document.getElementById("qRep");
+          // 사업자번호
           const qBizNo = document.getElementById("qBizNo");
+          // 종목
           const qType = document.getElementById("qType");
+          // 검색버튼
           const btnSearch = document.getElementById("btnSearch");
 
           let useYn = ""; // 버튼 그룹 상태
@@ -239,11 +244,11 @@
           async function search() {
             try {
               const params = {
-                useYn: useYn || "",
-                name: qName.value?.trim() || "",
-                rep: qRep.value?.trim() || "",
-                bizNo: qBizNo.value?.trim() || "",
-                type: qType.value?.trim() || "",
+                activeStatus: (useYn ?? "").toString(),
+                name: (qName.value || "").trim(),
+                rep: (qRep.value || "").trim(),
+                bizNo: (qBizNo.value || "").trim(),
+                type: (qType.value || "").trim(),
               };
 
               const res = await axios.get("/api/biz/mngcustomer", {
@@ -256,13 +261,21 @@
 
               // 서버 응답 키 → 화면 키 매핑(유연 매핑)
               const mapped = rows.map((r) => ({
-                cusCode: r.cusCode ?? r.code ?? "",
-                cusName: r.cusName ?? r.name ?? "",
-                repName: r.repName ?? r.ceoName ?? r.ceo ?? "",
-                tel: r.tel ?? r.phone ?? "",
+                cusCode: r.cusCode ?? "",
+                empName: r.empName,
+                cempName: r.cempName,
+                cusName: r.cusName ?? "",
+                bizNo: r.bizNo,
+                ceoName: r.ceoName ?? "",
+                bizType: r.bizType,
+                bizCategory: r.bizCategory,
+                tel: r.tel ?? "",
                 addr:
                   r.addr ?? [r.addr1, r.addr2].filter(Boolean).join(" ") ?? "",
-                useYn: r.useYn ?? r.activeStatus ?? r.enabled ?? "",
+                zipCode: r.zipCode,
+                activeStatus: r.activeStatus,
+                bankName: r.bankName,
+                bankAccount: r.bankAccount,
               }));
 
               setRows(mapped);
@@ -327,74 +340,47 @@
               keys.find((k) => g[k] !== undefined)
                 ? g[keys.find((k) => g[k] !== undefined)]
                 : "";
-
-            customerModalEl.querySelector("#cusCode").value = get(
-              "cusCode",
-              "code",
-              ""
-            );
-            customerModalEl.querySelector("#cusName").value = get(
-              "cusName",
-              "name",
-              ""
-            );
-            customerModalEl.querySelector("#bizType").value = get(
-              "bizType",
-              ""
-            );
-            customerModalEl.querySelector("#bizCategory").value = get(
-              "bizCategory",
-              ""
-            );
-            customerModalEl.querySelector("#bizNo").value = get("bizNo", "");
-            customerModalEl.querySelector("#tel").value = get(
-              "tel",
-              "phone",
-              ""
-            );
-            customerModalEl.querySelector("#qRep").value = get(
-              "repName",
-              "ceoName",
-              "ceo",
-              ""
-            );
-            customerModalEl.querySelector("#email").value = get("email", "");
-            customerModalEl.querySelector("#addr").value = get("addr", "");
-            customerModalEl.querySelector("#zipCode").value = get(
-              "zipCode",
-              ""
-            );
-            customerModalEl.querySelector("#managerName").value = get(
-              "managerName",
-              ""
-            );
-            customerModalEl.querySelector("#remark").value = get(
-              "remark",
-              "note",
-              ""
-            );
-            customerModalEl.querySelector("#useYn").value =
-              get("useYn", "activeStatus", "enabled", "Y") || "Y";
+            customerModalEl.querySelector("#cusCode").value = get("cusCode");
+            customerModalEl.querySelector("#cempName").value = get("cempName");
+            customerModalEl.querySelector("#empName").value = get("empName");
+            customerModalEl.querySelector("#cusName").value = get("cusName");
+            customerModalEl.querySelector("#bizNo").value = get("bizNo");
+            customerModalEl.querySelector("#ceoName").value = get("ceoName");
+            customerModalEl.querySelector("#bizType").value = get("bizType");
+            customerModalEl.querySelector("#bizCategory").value =
+              get("bizCategory");
+            customerModalEl.querySelector("#tel").value = get("tel");
+            customerModalEl.querySelector("#email").value = get("email");
+            customerModalEl.querySelector("#addr").value = get("addr");
+            customerModalEl.querySelector("#zipCode").value = get("zipCode");
+            customerModalEl.querySelector("#activeStatus").value =
+              get("activeStatus");
+            customerModalEl.querySelector("#bankName").value = get("bankName");
+            customerModalEl.querySelector("#bankAccount").value =
+              get("bankAccount");
           }
 
           function collectPayloadFromForm() {
             const f = customerModalEl.querySelector("#customerForm");
-            // 백엔드 컬럼에 맞춘 키로 구성 (등록/수정 공통)
+            // 거래처 및 여신 등록 BACK단 처리
             return {
-              cusCode: f.cusCode.value || null, // 수정 시 필요
+              // 거래처등록
+              cusCode: f.cusCode.value,
+              cempName: f.cempName.value,
+              empName: f.empName.value,
               cusName: f.cusName.value,
+              bizNo: f.bizNo.value,
+              ceoName: f.ceoName.value,
               bizType: f.bizType.value,
               bizCategory: f.bizCategory.value,
-              bizNo: f.bizNo.value,
               tel: f.tel.value,
-              ceoName: f.repName.value, // repName → ceoName
               email: f.email.value,
               addr: f.addr.value,
               zipCode: f.zipCode.value,
-              managerName: f.managerName.value,
-              remark: f.remark.value,
-              activeStatus: f.useYn.value || "Y", // useYn → activeStatus
-              // 여신(있다면)
+              activeStatus: f.activeStatus.value,
+              bankName: f.bankName.value,
+              bankAccount: f.bankAccount.value,
+              // 여신 등록
               creditLimit: Number(f.creditLimit?.value || 0),
               payTerm: f.payTerm?.value || "",
               billUse: f.billUse?.value || "",
