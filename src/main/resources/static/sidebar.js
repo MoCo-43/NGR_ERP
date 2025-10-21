@@ -1,101 +1,8 @@
 const auth = window.APP_CONTEXT?.auth || "";
 console.log("권한:", auth);
 
-/** 모듈별 메뉴 데이터 */
+/** 메뉴 데이터 */
 const MENUS = {
-  hr: {
-    title: "인사",
-    content: "인사 대시보드",
-    groups: [
-      {
-        title: "사원관리",
-        items: [
-          ["사원 관리", "/emps"],
-          ["수당 관리", "/allowcode"],
-          ["공제 관리", "/deductcode"],
-        ],
-      },
-      { title: "부서관리", items: [["부서관리", "/dept"]] },
-      {
-        title: "급여관리",
-        items: [
-          ["급여대장", "/payroll"],
-          ["급여이체현황", "/paytransfer"],
-        ],
-      },
-    ],
-  },
-  inventory: {
-    title: "재고",
-    content: "재고 대시보드",
-    groups: [
-      {
-        title: "입고관리",
-        items: [
-          ["입고조회", "/stock/inbound/list"],
-          ["입고등록", "/stock/inbound/insert"],
-        ],
-      },
-      {
-        title: "출고관리",
-        items: [
-          ["출고조회", "/stock/outbound/list"],
-          ["출고등록", "/stock/outbound/insert"],
-        ],
-      },
-      {
-        title: "발주관리",
-        items: [
-          ["발주계획조회", "/stock/plan/list"],
-          ["발주계획등록", "/stock/plan/insert"],
-          ["발주서 조회", "/stock/order/list"],
-          ["발주서 등록", "/stock/order/insert"],
-        ],
-      },
-      {
-        title: "재고결산",
-        items: [["재고결산", "/stock/invenclosing/insert"]],
-      },
-      {
-        title: "제품관리",
-        items: [
-          ["제품조회", "/stock/product/list"],
-          ["제품등록", "/stock/product/insert"],
-        ],
-      },
-    ],
-  },
-  sales: {
-    title: "영업",
-    content: "영업 대시보드",
-    groups: [
-      {
-        title: "주문서",
-        items: [
-          ["주문서조회", "/biz/polist"],
-          ["주문서입력", "/biz/poinsert"],
-        ],
-      },
-      {
-        title: "출하지시서",
-        items: [
-          ["출하지시서조회", "/biz/dolist"],
-          ["출하지시서입력", "/biz/doinsert"],
-        ],
-      },
-      {
-        title: "거래처",
-        items: [
-          ["거래처관리", "/biz/mngcus"],
-          ["여신관리", "/biz/mngcredit"],
-        ],
-      },
-      {
-        title: "영업관리현황",
-        items: [["거래명세서", "/biz/saleinvoice"]],
-      },
-    ],
-  },
   accounting: {
     title: "회계",
     content: "회계 대시보드",
@@ -115,28 +22,23 @@ const MENUS = {
       { title: "재무상태표", items: [["재무상태표", "/balanceSheet"]] },
     ],
   },
-  mains: {
-    title: "마이페이지",
-    content: "마이페이지대시보드",
+  hr: {
+    title: "인사",
+    content: "인사 대시보드",
     groups: [
-      { title: "구독관리", items: [["구독정보관리", "/sub/admin/subList"]] },
-      { title: "계정관리", items: [["계정관리", "/admin/hrmanager"]] },
       {
-        title: "마이페이지",
+        title: "사원관리",
         items: [
-          [
-            "마이페이지",
-            /*[[@{/mypage/mylist(empId=${session.loginUser.empId})}]]*/ "/mypage/mylist",
-          ],
-          //["일정관리","/mypage/schedules"]
+          ["사원 관리", "/emps"],
+          ["수당 관리", "/allowcode"],
+          ["공제 관리", "/deductcode"],
         ],
       },
     ],
   },
 };
 
-
-/** DOM 참조 */
+/** DOM 단축 */
 const $ = (id) => document.getElementById(id);
 const sidebarTitle = () => $("sidebarTitle");
 const navRoot = () => $("navRoot");
@@ -146,13 +48,12 @@ const contentTitle = () => $("contentTitle");
 function renderSidebar(key) {
   const data = MENUS[key] || MENUS.hr;
   const currentPath = window.location.pathname;
-
-  if (sidebarTitle()) sidebarTitle().textContent = data.title;
-  if (contentTitle()) contentTitle().textContent = data.content;
-
   const root = navRoot();
   if (!root) return;
+
   root.innerHTML = "";
+  if (sidebarTitle()) sidebarTitle().textContent = data.title;
+  if (contentTitle()) contentTitle().textContent = data.content;
 
   data.groups.forEach((grp) => {
     const wrap = document.createElement("div");
@@ -167,41 +68,42 @@ function renderSidebar(key) {
     let hasActiveItem = false;
 
     grp.items.forEach(([label, href]) => {
-       // 🔒 특정 권한에서 세부 항목만 숨기기
-  if (auth === "ROLE_USER") {
-    const restrictedItems = [
-		"/accountList",
-      // "/income"        // <- 다른 것도 추가 가능
-    ];
+      if (auth === "ROLE_USER") {
+        const restricted = ["/accountList"];
+        if (restricted.includes(href)) return;
+      }
 
-    if (restrictedItems.includes(href)) {
-      return; // 이 세부 항목은 스킵
-    }
-    }
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = href;
+      a.textContent = label;
 
-       const li = document.createElement("li");
-  const a = document.createElement("a");
-  a.href = href;
-  a.textContent = label;
+      const pathOnly = new URL(a.href, window.location.origin).pathname;
+      if (pathOnly === currentPath) {
+        a.classList.add("active");
+        hasActiveItem = true;
+      }
 
-  if (a.pathname === currentPath) {
-    a.classList.add("active");
-    hasActiveItem = true;
-  }
+      // ✅ 링크 클릭 시 기본 동작 유지 + 토글 이벤트 차단
+      a.addEventListener("click", (e) => {
+        e.stopPropagation(); // 부모 div로 버블링 방지
+      });
 
-  li.appendChild(a);
-  ul.appendChild(li);
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+
+    // ✅ 그룹 토글은 group-title 클릭일 때만 작동
+    gtitle.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return; // a 클릭은 무시
+      ul.classList.toggle("open");
     });
 
     if (hasActiveItem) ul.classList.add("open");
-    gtitle.addEventListener("click", () => ul.classList.toggle("open"));
 
-    // 그룹에 유효한 메뉴가 있으면 추가 (다 숨겨지면 skip)
-    if (ul.children.length > 0) {
-      wrap.appendChild(gtitle);
-      wrap.appendChild(ul);
-      root.appendChild(wrap);
-    }
+    wrap.appendChild(gtitle);
+    if (ul.children.length > 0) wrap.appendChild(ul);
+    root.appendChild(wrap);
   });
 }
 
@@ -212,9 +114,8 @@ function initTabs() {
   let activeTabKey = "hr";
 
   for (const key in MENUS) {
-    const groups = MENUS[key].groups;
-    for (const group of groups) {
-      if (group.items.some(([label, href]) => href === currentPath)) {
+    for (const group of MENUS[key].groups) {
+      if (group.items.some(([_, href]) => href === currentPath)) {
         activeTabKey = key;
         break;
       }
@@ -223,13 +124,9 @@ function initTabs() {
   }
 
   tabs.forEach((t) => {
-    if (t.dataset.tab === activeTabKey) {
-      t.classList.add("active");
-      t.setAttribute("aria-selected", "true");
-    } else {
-      t.classList.remove("active");
-      t.setAttribute("aria-selected", "false");
-    }
+    const isActive = t.dataset.tab === activeTabKey;
+    t.classList.toggle("active", isActive);
+    t.setAttribute("aria-selected", isActive);
 
     t.addEventListener("click", (e) => {
       e.preventDefault();
@@ -246,7 +143,5 @@ function initTabs() {
   renderSidebar(activeTabKey);
 }
 
-/** 초기 구동 */
-document.addEventListener("DOMContentLoaded", () => {
-  initTabs();
-});
+/** 초기 실행 */
+document.addEventListener("DOMContentLoaded", initTabs);
