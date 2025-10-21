@@ -3,13 +3,16 @@ package com.yedam.erp.service.impl.Biz;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.apache.catalina.manager.util.SessionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.Biz.BizMapper;
+import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.Biz.BizService;
 import com.yedam.erp.vo.Biz.CreditExposureVO;
+import com.yedam.erp.vo.Biz.CreditGradeVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -174,4 +177,12 @@ public class BizServiceImpl implements BizService {
   //   bizMapper.deactivateCredit(companyCode, cusCode);
   //   // TODO: 비활성화 이력 필요 시 별도 history insert
   // }
+
+  
+  // 여신등급정책조회
+  @Override
+  public 
+  List<CreditGradeVO>getCreditGrade(Long companyCode) {
+    return bizMapper.getCreditGrade(companyCode);
+  }
 }

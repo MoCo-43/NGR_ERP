@@ -27,6 +27,7 @@
     SAL_COMPANY,
     SAL_BIZ,
     SAL_ADDRESS,
+    COM_NAME,
     NVL(SAL_EMAIL, '') AS SAL_EMAIL
   FROM SALLER
   WHERE SAL_ID = #{salId}

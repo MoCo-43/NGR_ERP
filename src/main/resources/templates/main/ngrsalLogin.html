@@ -24,13 +24,13 @@
 <div class="auth-forms">
 <h2>saller Login</h2>
     <!-- 로그인 폼 -->
-    <form th:action="@{/salLogin}" method="post">
+    <form th:action="@{/ngrlogin}" method="post">
       <input type="hidden" name="role" id="role-input" value="saller">
       <div class="input-field">
-        <input type="text" name="empId" placeholder="아이디" required >
+        <input type="text" name="salId" placeholder="아이디" required >
       </div>
       <div class="input-field">
-        <input type="password" name="empPw" placeholder="비밀번호" required>
+        <input type="password" name="salPw" placeholder="비밀번호" required>
       </div>
       <div class="input-field">
         <label>

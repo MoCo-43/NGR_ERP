@@ -122,10 +122,10 @@ public class WebSecurityConfig {
 	@Order(1)
 	public SecurityFilterChain ngrSecurityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
 	    http
-		    .securityMatcher("/ngrlogin","/ngrlogin/**","/ngrlogout")
+		    .securityMatcher("/ngrlogin","/ngrlogin/**","/ngrlogout","/sal/salList")
 		    .csrf(csrf -> csrf.disable())
 	        .authorizeHttpRequests(auth -> auth
-	            .requestMatchers("/ngrlogin","/ngrlogin/**","/img/**", "/css/**").permitAll()
+	            .requestMatchers("/ngrlogin","/ngrlogin/**","/sal/salList","/img/**", "/css/**").permitAll()
 	            .anyRequest().authenticated()
 	        )
 	        .formLogin(form -> form
@@ -140,7 +140,7 @@ public class WebSecurityConfig {
 	            })
 	            .successHandler((request, response, authentication) -> {
 	                System.out.println("로그인 성공: " + authentication.getName());
-	                response.sendRedirect("/");
+	                response.sendRedirect("/sal/salList");
 	            })
 	            .permitAll()
 	        )
