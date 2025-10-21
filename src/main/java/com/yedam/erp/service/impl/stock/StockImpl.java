@@ -323,13 +323,13 @@ public class StockImpl implements StockService{
 
 	@Override
 	public List<Map<String, Object>> getInAndOutCountOutput(Map<String, Object> params) {
-		List<Map<String, Object>> stats = mapper.getInAndOutCountOutput(params);
-			for (Map<String, Object> row : stats) {
-			    System.out.println("월: " + row.get("month"));
-			    System.out.println("입고건수: " + row.get("inCnt"));
-			    System.out.println("출고건수: " + row.get("outCnt"));
-			}
-		return stats;
+		/*List<Map<String, Object>> stats = mapper.getInAndOutCountOutput(params);
+		 * for (Map<String, Object> row : stats) { System.out.println("월: " +
+		 * row.get("month")); System.out.println("입고건수: " + row.get("inCnt"));
+		 * System.out.println("출고건수: " + row.get("outCnt")); }
+		 * return stats;
+		 */
+		return mapper.getInAndOutCountOutput(params);
 	}
 
 
