@@ -38,7 +38,7 @@ public class WebSecurityConfig {
 	}
 	//구독결제후 
 	@Bean
-	@Order(2)
+	@Order(3)
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(requests -> requests
@@ -70,9 +70,9 @@ public class WebSecurityConfig {
 				);
 		return http.build();
 	}
-	//구독결제전 order 우선순위 지정
+	//구독결제전 order 우선순위 지정,마스터관리자만
 	@Bean
-	@Order(1)
+	@Order(2)
 	public SecurityFilterChain salSecurityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
 	    http
 	        .securityMatcher("/salLogin", "/salLogin/**","/salLogout","/register","/checkId/**")
@@ -117,7 +117,50 @@ public class WebSecurityConfig {
 
 	    return http.build();
 	}
+	//판매자
+	@Bean
+	@Order(1)
+	public SecurityFilterChain ngrSecurityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
+	    http
+		    .securityMatcher("/ngrlogin","/ngrlogin/**","/ngrlogout")
+		    .csrf(csrf -> csrf.disable())
+	        .authorizeHttpRequests(auth -> auth
+	            .requestMatchers("/ngrlogin","/ngrlogin/**","/img/**", "/css/**").permitAll()
+	            .anyRequest().authenticated()
+	        )
+	        .formLogin(form -> form
+	            .loginPage("/ngrlogin")
+	            .loginProcessingUrl("/ngrlogin")
+	            .usernameParameter("salId")
+	            .passwordParameter("salPw")
+	            .defaultSuccessUrl("/", true)
+	            .failureHandler((request, response, exception) -> {
+	                System.out.println("로그인 실패: " + exception.getMessage());
+	                response.sendRedirect("/ngrlogin?error");
+	            })
+	            .successHandler((request, response, authentication) -> {
+	                System.out.println("로그인 성공: " + authentication.getName());
+	                response.sendRedirect("/");
+	            })
+	            .permitAll()
+	        )
+	        .rememberMe(remember -> remember
+	            .tokenRepository(tokenRepository(dataSource))
+	            .tokenValiditySeconds(60 * 60 * 24 * 3)
+	            .key("ngrloginKey")
+	            .userDetailsService(customUserDetailsService)
+	        )
+	        .logout(logout -> logout
+	            .logoutUrl("/ngrlogout")
+	            .logoutSuccessHandler((request, response, authentication) -> {
+	                System.out.println("로그아웃 성공: " + (authentication != null ? authentication.getName() : "익명"));
+	                response.sendRedirect("/ngrlogin?logout");
+	            })
+	            .deleteCookies("JSESSIONID")
+	        );
 
+	    return http.build();
+	}
 
 //    @Bean
 //    public PersistentTokenRepository tokenRepository(DataSource dataSource) {
