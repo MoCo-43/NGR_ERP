@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
 import com.yedam.erp.vo.main.EmpLoginVO;
+import com.yedam.erp.vo.main.SallerVO;
 
 import lombok.Data;
 
@@ -22,7 +23,8 @@ import lombok.Data;
 public class CustomUserDetails implements UserDetails {
 
     // 인증된 사용자의 핵심 정보를 담는 VO 객체
-    private final EmpLoginVO empLoginVO;
+    private EmpLoginVO empLoginVO;
+    private  SallerVO sallerVO;
     //private final String empName; // 이름 필드 추가
     /**
      * 생성자를 통해 DB 등에서 조회한 사용자 정보 객체(EmpLoginVO)를 주입받습니다.
@@ -32,7 +34,9 @@ public class CustomUserDetails implements UserDetails {
         this.empLoginVO = empLoginVO;
         //this.empName = empLoginVO.getEmpNameFromJoin(); // join 해서 들고오기 
     }
-
+    public CustomUserDetails(SallerVO sallerVO) {
+        this.sallerVO = sallerVO;
+    }
     /**
      * UserDetails 인터페이스에 정의되지 않은 추가적인 사용자 정보(예: 이름, 부서 등)에 접근해야 할 경우를 위해
      * 원본 VO 객체를 반환하는 getter 메소드입니다.
@@ -41,7 +45,10 @@ public class CustomUserDetails implements UserDetails {
     public EmpLoginVO getEmpLoginVO() {
         return empLoginVO;
     }
-
+    
+    public SallerVO getSallerVO() {
+    	return sallerVO;
+    }
     // UserDetails 인터페이스의 핵심 메소드 구현
     /**
      * 사용자가 가진 권한(Role) 목록을 반환합니다.
@@ -132,6 +139,13 @@ public class CustomUserDetails implements UserDetails {
         return true; // 요구사항에 따라 DB의 계정 만료일 필드와 비교하는 로직으로 변경 가능
     }
 
+    public String getSallerId() {
+    	return sallerVO.getSalId();
+    }
+    
+    public String getSallerPw() {
+    	return sallerVO.getSalPw();
+    }
     /**
      * 계정이 잠기지 않았는지 여부를 반환합니다.
      * 로그인 실패 횟수 초과 등의 사유로 계정이 잠겼는지 확인하는 데 사용됩니다.

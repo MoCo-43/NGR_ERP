@@ -19,17 +19,17 @@
 
   <!-- 로그인용 조회 -->
   <select id="sallerList" parameterType="String" resultMap="SallerMap">
-    SELECT 
-      SALLER_NO,
-      SAL_ID,
-      SAL_PW,
-      SAL_NAME,
-      SAL_COMPANY,
-      SAL_BIZ,
-      SAL_ADDRESS,
-      NVL(SAL_EMAIL, '') AS SAL_EMAIL
-    FROM SALLER
-    WHERE SAL_ID = #{salId}
+  SELECT 
+    SALLER_NO,
+    SAL_ID,
+    SAL_PW,
+    SAL_NAME,
+    SAL_COMPANY,
+    SAL_BIZ,
+    SAL_ADDRESS,
+    NVL(SAL_EMAIL, '') AS SAL_EMAIL
+  FROM SALLER
+  WHERE SAL_ID = #{salId}
   </select>
 
   <!-- 세금계산서용 단건 조회 -->

@@ -98,7 +98,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 //}
 
 import com.yedam.erp.mapper.main.EmpLoginMapper;
+import com.yedam.erp.mapper.main.SallerMapper;
 import com.yedam.erp.vo.main.EmpLoginVO;
+import com.yedam.erp.vo.main.SallerVO;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -113,6 +115,8 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
     @Autowired
     private EmpLoginMapper empLoginMapper;
+    @Autowired
+    private SallerMapper sallerMapper;
 
     @Autowired
     @Lazy
@@ -127,14 +131,39 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String requestURI = request.getRequestURI();
 
-        EmpLoginVO userVO;
-
+//        EmpLoginVO userVO;
+//        SallerVO salVO;
+        
+        EmpLoginVO userVO = null;  // 🔹 밖에서 선언
+        SallerVO salVO = null;     // 🔹 밖에서 선언
+        UserDetails userDetails = null;
         // 2. 요청 URI에 따라 인증 로직 분기
-        if (requestURI.startsWith("/salLogin")) {
+        
+        //  1. 판매자 로그인 (/ngrlogin)
+        if (requestURI.startsWith("/ngrlogin")) {
+            String salId = request.getParameter("salId");
+            String salPw = request.getParameter("salPw");
+
+            // Mapper에서 판매자 로그인 전용 메서드 호출
+           salVO = sallerMapper.findSallerById(salId);
+
+            if (salVO == null || !passwordEncoder.matches(salPw, salVO.getSalPw())) {
+                throw new BadCredentialsException("판매자 아이디 또는 비밀번호가 올바르지 않습니다.");
+            }
+
+            // 필요 시 권한 ROLE_SELLER 부여용 VO 속성 추가
+            //userVO.setRole("ROLE_");
+            userDetails = new CustomUserDetails(salVO); 
+            System.out.println("판매자 로그인 성공: " + salId);
+        }
+
+        
+        
+        else if (requestURI.startsWith("/salLogin")) {
             //'회사 코드'가 필요 없는 /salLogin 인증 처리 
 
             // 직원 ID로 사용자 정보 조회 (mat_no가 없는 사용자를 찾는 로직)
-            userVO = empLoginMapper.findByEmpId(empId);
+        	 userVO = empLoginMapper.findByEmpId(empId);
 
             // 사용자 정보가 없거나 비밀번호가 일치하지 않으면 예외 발생
             if (userVO == null || !passwordEncoder.matches(empPw, userVO.getEmpPw())) {
@@ -144,7 +173,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             // if (userVO.getMatNo() != null) {
             //     throw new BadCredentialsException("잘못된 로그인 경로입니다.");
             // }
-
+            userDetails = new CustomUserDetails(userVO);
         } else {
             //'회사 코드'가 필요한 일반 로그인 인증 처리
             String comCode = request.getParameter("comCode");
@@ -161,10 +190,12 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             if (userVO == null || !passwordEncoder.matches(empPw, userVO.getEmpPw())) {
                 throw new BadCredentialsException("아이디, 비밀번호 또는 회사 아이디가 올바르지 않습니다.");
             }
+            userDetails = new CustomUserDetails(userVO);
         }
 
         // 3. 인증 성공 시, UserDetails 객체를 생성하여 반환
-        UserDetails userDetails = new CustomUserDetails(userVO);
+        //UserDetails userDetails = new CustomUserDetails(userVO);
+       // UserDetails sellerDetails = new CustomUserDetails(salVO);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
