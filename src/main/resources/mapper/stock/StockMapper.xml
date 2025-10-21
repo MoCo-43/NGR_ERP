@@ -1148,7 +1148,7 @@ FROM (
     GROUP BY outbound_date
 ) 
 GROUP BY TO_CHAR(base_date, 'YYYY-MM') 
-ORDER BY month DESC 
+ORDER BY "month" 
 ]]>
 </select>
 

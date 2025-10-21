@@ -163,26 +163,33 @@ canvas {
 
 				<div class="module-card">
 					<div class="module-title">인사 모듈</div>
-					<canvas id="inventoryChart"></canvas>
+					<canvas id="hrChart"></canvas>
 					<!-- ⭐️ 이 캔버스 ID에 DB 데이터를 로드합니다. -->
 				</div>
-
+				 
 				<div class="module-card">
 					<div class="module-title">재고 모듈</div>
-					<canvas id="hrChart"></canvas>
+					<canvas id="invenChart"></canvas>
 				</div>
 
 				<div class="module-card">
 					<div class="module-title">회계 모듈</div>
 					<canvas id="accountingChart"></canvas>
 				</div>
+				
+				
 
 			</div>
 
 		</div>
 
-
+ 	<!-- Axios 등록 -->
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 		<script th:inline="javascript">
+		<!-- 세선정보 저장 -->
+		 const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+		 const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+		
   // Chart.js 공통 생성 함수
   function createChart(canvasId, type, data, extraOptions = {}) {
     const ctx = document.getElementById(canvasId);
@@ -212,6 +219,69 @@ canvas {
       }
     });
   }
+  
+  //✅ 최근 6개월 입출고 데이터 조회
+  async function fetchInOutData() {
+    try {
+    	console.log(compCode);
+      const payload = { compCode: compCode };
+      const res = await axios.post("/api/v1/stock/getInAndOutCountOutput", payload, {
+        withCredentials: true
+      });
+      return res.data; // [{month, inCnt, outCnt}, ...]
+    } catch (err) {
+      console.error("❌ 입출고 데이터 로드 실패:", err);
+      return []; // 실패 시 빈 배열 반환
+    }
+  }
+  //✅ 입출고 차트 렌더링 (Chart.js)
+  async function renderInOutChart() {
+    const data = await fetchInOutData();
+    if (!data || data.length === 0) return;
+
+    const labels = data.map(d => d.month);
+    const inbound = data.map(d => d.inCnt);
+    const outbound = data.map(d => d.outCnt);
+    const avg = data.map(d => (d.inCnt + d.outCnt) / 2);
+
+    const chartData = {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: '입고 건수',
+          data: inbound,
+          backgroundColor: 'rgba(54, 162, 235, 0.6)'
+        },
+        {
+          type: 'bar',
+          label: '출고 건수',
+          data: outbound,
+          backgroundColor: 'rgba(255, 99, 132, 0.6)'
+        },
+        {
+          type: 'line',
+          label: '입출고 평균',
+          data: avg,
+          borderColor: 'rgba(255, 206, 86, 1)',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3,
+          yAxisID: 'y'
+        }
+      ]
+    };
+
+    createChart('invenChart', 'bar', chartData, {
+      title: {
+        display: true,
+        text: '최근 6개월 입·출고 현황 (평균 포함)',
+        font: { size: 14 }
+      },
+      noWon: true
+    });
+  }
+
 
   // --- 1. 영업 모듈 ---
   const salesData = {
@@ -286,7 +356,7 @@ canvas {
 
   // --- 5. 인사 모듈 데이터 로드 ---
   async function fetchHrMembersChart() {
-    const canvasId = 'inventoryChart';
+    const canvasId = 'hrChart';
     try {
       const response = await fetch('/api/dashboard/empmembers');
       if (!response.ok) throw new Error(`HTTP 요청 실패: ${response.status}`);
@@ -329,11 +399,22 @@ canvas {
     }
   }
 
-  // --- 6. 모든 차트 렌더링 ---
+  // --- 6. 모든 차트 렌더링 --- //
+  
+  // 영업 모듈
   createChart('salesChart', 'bar', salesData);
+  
+  // 인사 모듈
   fetchHrMembersChart();
   createChart('hrChart', 'line', hrData);
+  
+  // 회계 모듈
   renderAccountingChart(); // ✅ 회계 모듈은 비동기 렌더링
+  
+  // 재고 모듈
+  renderInOutChart(); // ✅ 재고 파트 차트 일괄 처리
+  
+  // --------------------- //
 </script>
 
 	</section>
