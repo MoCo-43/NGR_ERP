@@ -28,13 +28,7 @@
   <script th:src="@{/js/common.js}"></script>
   <script th:src="@{/js/cuteAlert.js}"></script>
   
-<script th:inline="javascript">
-  window.APP_CONTEXT = {
-    auth: /*[[${#authentication.principal.empLoginVO.comName}]]*/ "",
-    empId: /*[[${#authentication.principal.empLoginVO.empId}]]*/ "",
-    empName: /*[[${#authentication.principal.empLoginVO.name}]]*/ ""
-  };
-</script>
+
   <!-- 레이아웃 안전판 & 너구리 톤 -->
   <style>
     /* === 레이아웃 안전판 === */
@@ -124,6 +118,14 @@
         crossorigin="anonymous"
         referrerpolicy="no-referrer"
       ></script>
+      <script th:inline="javascript">
+  window.APP_CONTEXT = {
+    auth: /*[[${#authentication.principal.empLoginVO.comName}]]*/ "",
+    empId: /*[[${#authentication.principal.empLoginVO.empId}]]*/ "",
+    empName: /*[[${#authentication.principal.empLoginVO.name}]]*/ ""
+  };
+  
+</script>
   <script th:src="@{/sidebar.js}"></script>
     <th:block layout:fragment="body_extra">
     </th:block>
@@ -141,6 +143,7 @@
         </div>
       </div>
 </div>
+
 <script>
 toastr.options = {
   closeButton: false,
