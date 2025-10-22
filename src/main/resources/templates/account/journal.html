@@ -300,11 +300,6 @@ async function saveRow(data){
 
   console.log("▶ payload 준비 완료:", payload);
 
-  if (!isSavable(payload)) {
-    console.log("▶ 저장 불가: isSavable check 실패");
-    return;
-  }
-
   try {
     let res;
     if (!data.lineNo) {
