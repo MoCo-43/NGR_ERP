@@ -130,7 +130,8 @@ public class EmpLoginController {
                 .contentType(mediaType)
                 .body(resource);
     }
-    //전자서명 이미지 조회
+
+ // 전자서명 이미지 조회
     @GetMapping("/signature/{matNo}")
     @ResponseBody
     public ResponseEntity<Resource> getSignature(@PathVariable Long matNo) throws IOException {
@@ -140,8 +141,14 @@ public class EmpLoginController {
             return ResponseEntity.notFound().build();
         }
 
-        // DB에는 파일명만 저장되어 있음 → 경로 보정
         String fileName = latestSign.getSignPath();
+
+        // DB 값이 'upload/sign/파일명.png' 인 경우 보정
+        if (fileName.startsWith("upload/sign/")) {
+            fileName = fileName.substring("upload/sign/".length());
+        }
+
+        // 물리 저장 위치: C:/upload/uploads/signatures/
         String fullPath = uploadDir + "/uploads/signatures/" + fileName;
 
         log.info("✅ signPath (fixed): {}", "/uploads/signatures/" + fileName);
@@ -149,6 +156,7 @@ public class EmpLoginController {
 
         File file = new File(fullPath);
         if (!file.exists()) {
+            log.warn("❌ 전자서명 파일 없음: {}", fullPath);
             return ResponseEntity.notFound().build();
         }
 
@@ -157,6 +165,7 @@ public class EmpLoginController {
                 .contentType(MediaType.IMAGE_PNG)
                 .body(resource);
     }
+
 //    @GetMapping("/signature/{matNo}")
 //    public ResponseEntity<Resource> getSignatureImage(@PathVariable Long matNo) {
 //        try {
