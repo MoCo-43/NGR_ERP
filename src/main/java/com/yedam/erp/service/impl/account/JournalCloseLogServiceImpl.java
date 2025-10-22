@@ -27,25 +27,38 @@ public class JournalCloseLogServiceImpl implements JournalCloseLogService {
     	   // ✅ 합계 조회
         JournalAmountSumVO sum = logMapper.sumAmountByJrnNos(companyCode, jrnNoList);
 
+        // ✅ 역분개일 경우 debit/credit 반전
+        Long debit = sum.getDebit();
+        Long credit = sum.getCredit();
+
+        if ("reverse".equalsIgnoreCase(actionType)) {
+            Long tmp = debit;
+            debit = credit;
+            credit = tmp;
+        }
         JournalCloseLogVO vo = new JournalCloseLogVO();
         vo.setCompanyCode(companyCode);
         vo.setJrnRange(getRange(jrnNoList));
         vo.setActionType(actionType);
-        vo.setDebitSum(sum != null ? sum.getDebit() : 0L);
-        vo.setCreditSum(sum != null ? sum.getCredit() : 0L);
+        vo.setDebitSum(sum != null ? debit : 0L);
+        vo.setCreditSum(sum != null ? credit : 0L);
         vo.setCreatedBy(loginUser);
         vo.setRemarks(remarks);
         vo.setStatus(status);
-
+        System.out.println(vo);
         // ✅ 기존 insert → MERGE 로 변경
-        logMapper.upsertJournalCloseLog(vo);
+       if("reverse".equalsIgnoreCase(actionType)) {
+    	   logMapper.insertJournalCloseLog(vo);
+       } else {    	   
+    	   logMapper.upsertJournalCloseLog(vo);
+       }
     }
 
     @Override
     public List<JournalCloseLogVO> getLogList(Long companyCode) {
         return logMapper.selectJournalCloseLogList(companyCode);
     }
-
+    
     /**
      * 전표번호 범위 문자열 생성
      * ex) v-20250915-001, v-20250915-002, v-20250915-005 → "001~005"
@@ -78,5 +91,7 @@ public class JournalCloseLogServiceImpl implements JournalCloseLogService {
         params.put("jrnNo", jrnNo);
         return logMapper.selectJournalCloseLogByJrn(params);
     }
+
+	
 
 }

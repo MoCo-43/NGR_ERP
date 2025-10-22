@@ -7,28 +7,30 @@
 
   <!-- 로그 저장 -->
   <insert id="insertJournalCloseLog" parameterType="com.yedam.erp.vo.account.JournalCloseLogVO">
-    INSERT INTO journal_close_log (
-        log_id,
-        company_code,
-        jrn_range,
-        action_type,
-        debit_sum,
-        credit_sum,
-        created_by,
-        remarks,
-        status
-    ) VALUES (
-        seq_journal_close_log.NEXTVAL,
-        #{companyCode},
-        #{jrnRange},
-        #{actionType},
-        #{debitSum},
-        #{creditSum},
-        #{createdBy},
-        #{remarks},
-        'reverse'   
-    )
-  </insert>
+  INSERT INTO journal_close_log (
+      log_id,
+      company_code,
+      jrn_range,
+      action_type,
+      debit_sum,
+      credit_sum,
+      created_by,
+      remarks,
+      status,
+      action_date
+  ) VALUES (
+      seq_journal_close_log.NEXTVAL,
+      #{companyCode},
+      #{jrnRange},
+      #{actionType},
+      #{debitSum},
+      #{creditSum},
+      #{createdBy},
+      #{remarks},
+      #{status},     <!-- ✅ 파라미터 그대로 전달 -->
+      SYSDATE
+  )
+</insert>
  
  <!-- 기존 insert 하던거 merge하나로 처리중 -->
 <insert id="upsertJournalCloseLog" parameterType="com.yedam.erp.vo.account.JournalCloseLogVO">
@@ -53,11 +55,11 @@
   WHEN NOT MATCHED THEN
     INSERT (
       log_id, company_code, jrn_range, action_type, debit_sum, credit_sum,
-      created_by, remarks, status, action_date
+      created_by, remarks, status,jrn_no, action_date
     )
     VALUES (
       seq_journal_close_log.NEXTVAL, #{companyCode}, #{jrnRange}, #{actionType},
-      #{debitSum}, #{creditSum}, #{createdBy}, #{remarks}, #{status}, SYSDATE
+      #{debitSum}, #{creditSum}, #{createdBy}, #{remarks}, #{status}, #{jrnNo}, SYSDATE
     )
 </insert>
 

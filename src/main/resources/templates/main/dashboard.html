@@ -9,10 +9,30 @@
 	rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
 	rel="stylesheet">
+<!-- ⭐ Material Symbols > deployed_code_update icon만 추가 (전부추가시 '&icon_names' 부분 삭제) [ 295KB => 1.7KB ] -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=deployed_code_update" rel="stylesheet">
+<!--  base에 있는 버전과 달라서 강제 주입 --> 
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+    crossorigin="anonymous"
+  />
+  <!-- AG Grid CSS (Quartz) -->
+   <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
+    />
+   <link
+     rel="stylesheet"
+     href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
+   />
+   <!-- CSS -->
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <th:block layout:fragment="head_extra">
 	<script
 		src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 	<style>
+	
 /* 1. 기본 레이아웃 재정의 */
     html, body {
         height: 100%;
@@ -81,6 +101,11 @@
         color: #4a69bd;
     }
     
+    .material-symbols {
+        font-size: 36px;
+        color: #4a69bd;
+    }
+    
     .stat-value {
         font-size: 32px; /* 폰트 크기 미세 조정 */
         font-weight: 700;
@@ -121,6 +146,7 @@ canvas {
 	height: 100% !important;
 	max-height: 100%;
 }
+
 </style>
 </th:block>
 </head>
@@ -146,10 +172,10 @@ canvas {
 					</div>
 				</div>
 
-				<div class="stat-card">
+				<div class="stat-card" id="clickDiv">
 					<div class="stat-header">
-						<span class="stat-label">재고 현황</span> <span class="material-icons">inventory_2</span>
-					<div class="stat-value">0개</div>
+						<span class="stat-label">연간 주문 건수</span> <span class="material-symbols material-symbols-outlined">deployed_code_update</span>
+					<div class="stat-value" id="annOrderCntDiv">0건</div>
 					</div>
 				</div>
 			</div>
@@ -182,13 +208,31 @@ canvas {
 			</div>
 
 		</div>
-
+		
+   <div th:replace="~{/stock/modals/dashOrderDetailModal :: businessModal}"></div>
+   
  	<!-- Axios 등록 -->
 	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-		<script th:inline="javascript">
-		<!-- 세선정보 저장 -->
-		 const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
-		 const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+	<!-- ag-Grid JS -->
+	<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/dist/ag-grid-community.min.noStyle.js"></script>
+	<!-- JS -->
+	<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+	<!-- 한국어 locale -->
+	<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+	
+	<script th:inline="javascript">
+	<!-- 세선정보 저장 -->
+	const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+	const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+
+	/* 변수 초기화 및 지정 */
+	const businessModalEl = document.getElementById("businessModal");
+	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
+	const div = document.querySelector('#annOrderCntDiv');
+	const clickDiv = document.querySelector('#clickDiv');
+	let gridApi = null;
+	let inDetailGridOptions = null;
 		
   // Chart.js 공통 생성 함수
   function createChart(canvasId, type, data, extraOptions = {}) {
@@ -218,6 +262,230 @@ canvas {
         }
       }
     });
+  }
+  
+	//강제 딜레이 부여
+	function debounce(func, wait = 300) {
+		    let timeout;
+		    return function(...args) {
+		        clearTimeout(timeout);
+		        timeout = setTimeout(() => func.apply(this, args), wait);
+		}
+	}
+	
+  /**
+	 * 한국어 flatpickr 공통 초기화 함수
+	 * @param {string} selector - input 요소 선택자 (ex: "#inboundDate")
+	 * @param {Object} options - flatpickr 옵션 추가 가능
+	 */
+	 // date picker 초기화
+  function initKoreanDatePicker(selector, options = {}) {
+	    flatpickr(selector, {
+	        locale: "ko",
+	        dateFormat: "Y-m-d",
+	        allowInput: true,
+	        enableTime: false,
+	        onReady: function(selectedDates, dateStr, instance) {
+	        	const btnWrapper = document.createElement("div");
+	            // 공통 스타일
+	            btnWrapper.style.cssText = `
+	            	 display: flex;
+	                justify-content: space-between; /* 좌우 끝 */
+	                width: 100%;                   /* 전체 너비 확보 */
+	                padding: 2px 6px;              /* 달력과 버튼 간 여백 */
+	                box-sizing: border-box;
+	                margin-top: 2px;
+	            `;
+	
+	            // 오늘 버튼
+	            const todayBtn = document.createElement("button");
+	            todayBtn.type = "button";
+	            todayBtn.textContent = "오늘";
+	            todayBtn.className = "btn btn-outline-primary btn-sm"; // 테두리 보이게
+	            todayBtn.style.cssText = "font-size: 0.65rem; padding: 2px 6px;";
+	            todayBtn.addEventListener("click", () => {
+	                instance.setDate(new Date());
+	                loadFilteredData(); 
+	                instance.close();
+	            });
+	
+	            // 초기화 버튼
+	            const clearBtn = document.createElement("button");
+	            clearBtn.type = "button";
+	            clearBtn.textContent = "초기화";
+	            clearBtn.className = "btn btn-outline-secondary btn-sm"; // 테두리 보이게
+	            clearBtn.style.cssText = "font-size: 0.65rem; padding: 2px 6px;";
+	            clearBtn.addEventListener("click", () => {
+	                instance.clear();
+	                loadFilteredData(); 
+	                instance.close();
+	            });
+	
+	            // 버튼 붙이기
+	            btnWrapper.appendChild(clearBtn);
+	            btnWrapper.appendChild(todayBtn);
+	
+	            instance.calendarContainer.appendChild(btnWrapper);
+	        },
+	        ...options
+	    });
+	}// END OF initKoreanDatePicker
+	
+	//공통 모달 호출 함수
+	function initGrid(config) {
+	    const eGridDiv = document.getElementById(config.el);
+	    if (!eGridDiv) {
+	        console.error(`${config.el} div를 찾을 수 없습니다!`);
+	        return null;
+	    }
+		let gridApi = null;
+	    const gridOptions = {
+	        columnDefs: config.columnDefs || [],
+	        rowSelection: config.rowSelection || "single",
+	        pagination: true,
+	        paginationPageSize: config.paginationPageSize || 12,
+	        domLayout: config.domLayout || "normal",
+	        rowData: [],
+	        defaultColDef: {
+	            resizable: true,
+	            sortable: true,
+	            minWidth: 100,
+	        },
+	        onRowDoubleClicked: (event) => {
+	            if (typeof config.onRowDoubleClicked === "function") {
+	                config.onRowDoubleClicked(event);
+	            }
+	        },
+	       onRowClicked: (event) => {
+	            if (typeof config.onRowClicked === "function") {
+	                config.onRowClicked(event);
+	            }
+	        },
+	        onGridReady: (event) => {
+	            if (typeof config.onGridReady === "function") {
+	                config.onGridReady(event);
+	            }
+	            event.api.sizeColumnsToFit();
+	        },
+	    };
+
+	    new agGrid.Grid(eGridDiv, gridOptions);
+	    return { gridApi: gridOptions.api, gridOptions };
+	}// END OF FUNCTION
+
+	
+	//view  
+	document.getElementById("cusNameInModal").addEventListener("input", debounce(loadFilteredData, 300));
+	document.getElementById("methodInModal").addEventListener("input", debounce(loadFilteredData, 300));
+  
+  const inDetailColumnDefs = [
+  	{ headerName: "No.", valueGetter: "node.rowIndex + 1", width: 70 },
+      { headerName: "주문코드", field: "poCode" },
+      { headerName: "등록일자", field: "poDate" },
+      { headerName: "등록자", field: "creater" },
+      { headerName: "거래처명", field: "cusName" },
+      { headerName: "지불방식", field: "payMethod" },
+  ];
+
+  function initDashboardGrid() {
+	    const { gridOptions } = initGrid({
+	        el: "myGrid",
+	        columnDefs: inDetailColumnDefs,
+	        pagination: true,
+	        paginationPageSize: 10,
+	        domLayout: "normal"
+	    });
+
+	    inDetailGridOptions = gridOptions;
+	}
+
+  // 모달 초기화 버튼 클릭시
+  resetBtn.addEventListener('click' , async ()=>{
+		document.querySelectorAll('.form-control').forEach(input => input.value = '');
+		// 약간의 시간(예: 100ms) 후에 데이터 로드 실행
+		  setTimeout(() => {
+		    loadFilteredData();
+		  }, 100);
+	});
+  // 모달 그리드 데이터 조회
+  async function loadFilteredData() {
+		// view page filter
+	    try {
+	        showLoader("gridBsModalWrapper");
+	        const cusName = document.getElementById("cusNameInModal").value;
+	        const payMethod = document.getElementById("methodInModal").value;
+	        // const poDate = document.getElementById("poDateInModal").value;
+			
+	        const params = {
+	        		  cusName : document.getElementById("cusNameInModal").value || null,
+	        		  payMethod : document.getElementById("methodInModal").value || null,
+	        		  //poDate : document.getElementById("poDateInModal").value || null
+	        }
+	        console.log("params:", params); // 👈 params 확인
+	        const res = await axios.post("/api/v1/stock/getAnnualOrderDetailByParam", params, {withCredentials: true });
+	        inDetailGridOptions.api.setRowData(res.data);
+	    } catch (err) {
+	        console.error(err);
+	        toastr.error("조회 실패");
+	    } finally {
+	        hideLoader("gridBsModalWrapper");
+	    }
+	}
+  
+  // dashboard 주문건수 클릭시 모달 호출
+  clickDiv.addEventListener('click',async()=>{
+	  businessModal.show();
+	  await loadBusinessData();
+  });
+  
+  function initBusinessGrid() {
+	    const eGridDiv = document.getElementById('myGrid');
+	    const gridOptions = {
+	        columnDefs : inDetailColumnDefs,
+	        rowSelection: "single",
+	        pagination: true,
+	        domLayout: 'normal',
+	        rowData: [],
+	        onGridReady: (event) => {
+	            gridApi = event.api;
+	            gridApi.sizeColumnsToFit();
+	            loadBusinessData();
+	        },
+	        defaultColDef: {
+	            resizable: true,   // 컬럼 너비 조절 가능
+	            sortable: true,    // 정렬 가능
+	            minWidth: 100,     // 최소 너비
+	        },
+	        onRowDoubleClicked: (event) => {}
+	    };
+	    new agGrid.Grid(eGridDiv, gridOptions);
+	}
+  
+	//거래처 데이터 로드
+	async function loadBusinessData() {
+	    try {
+	    	const payload = {compCode: compCode}
+	        const res = await axios.get("/api/v1/stock/getAnnualOrderDetail", {withCredentials: true});
+	        if (inDetailGridOptions) {
+	        	inDetailGridOptions.api.setRowData(res.data);
+	        	inDetailGridOptions.api.sizeColumnsToFit();
+	        }
+	    } catch (err) { console.error(err); }
+	}
+	
+  initDashboardGrid(); // 모달 초기 셋팅
+  
+  
+  //✅ 연간 주문건수 대시보드(작성된 주문서 기준)
+  async function annualOrderCntData(){
+	  try{
+		  const res = await axios.get("/api/v1/stock/getAnnualOrderCnt", {withCredentials: true} );
+		  const annCnt = res.data[0]?.orderCnt;
+		  div.innerHTML = annCnt + '건';
+	  }catch(err){
+		  toastr['error']('No data found');
+		  console.log(err);
+	  }
   }
   
   //✅ 최근 6개월 입출고 데이터 조회
@@ -403,6 +671,7 @@ canvas {
   
   // 영업 모듈
   createChart('salesChart', 'bar', salesData);
+  annualOrderCntData();
   
   // 인사 모듈
   fetchHrMembersChart();
@@ -417,6 +686,6 @@ canvas {
   // --------------------- //
 </script>
 
-	</section>
+</section>
 </body>
 </html>

@@ -130,7 +130,8 @@ public class EmpLoginController {
                 .contentType(mediaType)
                 .body(resource);
     }
-    //전자서명 이미지 조회
+
+ // 전자서명 이미지 조회
     @GetMapping("/signature/{matNo}")
     @ResponseBody
     public ResponseEntity<Resource> getSignature(@PathVariable Long matNo) throws IOException {
@@ -140,23 +141,70 @@ public class EmpLoginController {
             return ResponseEntity.notFound().build();
         }
 
-        // DB에는 파일명만 저장되어 있음 → 경로 보정
-        String fileName = latestSign.getSignPath();
+        // DB 값: /uploads/signatures/1761121622471_signature_1761121622459.png
+        String filePath = latestSign.getSignPath();
+
+        //  디렉터리 부분 제거하고 파일명만 추출
+        String fileName = filePath.substring(filePath.lastIndexOf("/") + 1);
+
+        // 실제 서버 물리 경로 생성
         String fullPath = uploadDir + "/uploads/signatures/" + fileName;
 
-        log.info("✅ signPath (fixed): {}", "/uploads/signatures/" + fileName);
+        log.info("🧾 signPath(DB): {}", filePath);
         log.info("✅ Full file path: {}", fullPath);
 
         File file = new File(fullPath);
         if (!file.exists()) {
+            log.warn("❌ 파일이 존재하지 않습니다: {}", fullPath);
             return ResponseEntity.notFound().build();
         }
 
         Resource resource = new FileSystemResource(file);
+
+        // ✅ MIME 타입 자동 판단
+        String lower = fileName.toLowerCase();
+        MediaType mediaType = MediaType.IMAGE_JPEG;
+        if (lower.endsWith(".png")) mediaType = MediaType.IMAGE_PNG;
+        else if (lower.endsWith(".gif")) mediaType = MediaType.IMAGE_GIF;
+
         return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_PNG)
+                .contentType(mediaType)
                 .body(resource);
     }
+//    @GetMapping("/signature/{matNo}")
+//    @ResponseBody
+//    public ResponseEntity<Resource> getSignature(@PathVariable Long matNo) throws IOException {
+//        DocumentsVO latestSign = documentService.selectLatestSignature(matNo);
+//
+//        if (latestSign == null || latestSign.getSignPath() == null) {
+//            return ResponseEntity.notFound().build();
+//        }
+//
+//        String fileName = latestSign.getSignPath();
+//
+//        // DB 값이 'upload/sign/파일명.png' 인 경우 보정
+//        if (fileName.startsWith("upload/sign/")) {
+//            fileName = fileName.substring("upload/sign/".length());
+//        }
+//
+//        // 물리 저장 위치: C:/upload/uploads/signatures/
+//        String fullPath = uploadDir + "/uploads/signatures/" + fileName;
+//
+//        log.info("✅ signPath (fixed): {}", "/uploads/signatures/" + fileName);
+//        log.info("✅ Full file path: {}", fullPath);
+//
+//        File file = new File(fullPath);
+//        if (!file.exists()) {
+//            log.warn("❌ 전자서명 파일 없음: {}", fullPath);
+//            return ResponseEntity.notFound().build();
+//        }
+//
+//        Resource resource = new FileSystemResource(file);
+//        return ResponseEntity.ok()
+//                .contentType(MediaType.IMAGE_PNG)
+//                .body(resource);
+//    }
+
 //    @GetMapping("/signature/{matNo}")
 //    public ResponseEntity<Resource> getSignatureImage(@PathVariable Long matNo) {
 //        try {

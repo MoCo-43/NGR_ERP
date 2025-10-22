@@ -76,6 +76,7 @@ public interface StockService {
 	// 결산 마스터 조회
 	public List<InvenVO> getIcList(Long companyCode);
 	public List<InvenVO> findInvenList(Map<String, Object> params);
+	public List<InvenVO> getIcListByParam(Map<String , Object> params);
 	
 	
 	// 결산 디테일 조회
@@ -118,4 +119,18 @@ public interface StockService {
 	
 	// dashboard용 최근 6개월 입/출고 건수 조회
 	public List<Map<String , Object>> getInAndOutCountOutput(Map<String , Object> params);
+	
+	
+	// dashboard용 연간 주문 건수 조회
+	public List<Map<String , Object>> getAnnualOrderCnt(Long companyCode);
+
+	
+	// dashboard용 연간 주문 상세 조회 - 기본
+	public List<Map<String, Object>> getAnnualOrderDetail(Long companyCode);
+		
+		
+	// dashboard용 연간 주문 상세 조회 - 키워드 필터링
+	public List<Map<String, Object>> getAnnualOrderDetailByParam(Map<String , Object> params);
+	
+	
 }

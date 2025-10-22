@@ -1,27 +1,9 @@
 const auth = window.APP_CONTEXT?.auth || "";
 console.log("권한:", auth);
 
-/** 메뉴 데이터 */
+
+/** 모듈별 메뉴 데이터 */
 const MENUS = {
-  accounting: {
-    title: "회계",
-    content: "회계 대시보드",
-    groups: [
-      { title: "계정 과목", items: [["계정 과목 관리", "/accountList"]] },
-      {
-        title: "전표",
-        items: [
-          ["매출매입전표", "/invoice"],
-          ["일반전표", "/journal"],
-          ["자금전표", "/moneyInvoice"],
-          ["급여전표", "/payment"],
-          ["전표 마감", "/close"],
-        ],
-      },
-      { title: "손익계산서", items: [["손익계산서", "/income"]] },
-      { title: "재무상태표", items: [["재무상태표", "/balanceSheet"]] },
-    ],
-  },
   hr: {
     title: "인사",
     content: "인사 대시보드",
@@ -34,11 +16,127 @@ const MENUS = {
           ["공제 관리", "/deductcode"],
         ],
       },
+      { title: "부서관리", items: [["부서관리", "/dept"]] },
+      {
+        title: "급여관리",
+        items: [
+          ["급여대장", "/payroll"],
+          ["급여이체현황", "/paytransfer"],
+        ],
+      },
+    ],
+  },
+  inventory: {
+    title: "재고",
+    content: "재고 대시보드",
+    groups: [
+      {
+        title: "입고관리",
+        items: [
+          ["입고조회", "/stock/inbound/list"],
+          ["입고등록", "/stock/inbound/insert"],
+        ],
+      },
+      {
+        title: "출고관리",
+        items: [
+          ["출고조회", "/stock/outbound/list"],
+          ["출고등록", "/stock/outbound/insert"],
+        ],
+      },
+      {
+        title: "발주관리",
+        items: [
+          ["발주계획조회", "/stock/plan/list"],
+          ["발주계획등록", "/stock/plan/insert"],
+          ["발주서 조회", "/stock/order/list"],
+          ["발주서 등록", "/stock/order/insert"],
+        ],
+      },
+      {
+        title: "재고결산",
+        items: [["재고결산", "/stock/invenclosing/insert"]],
+      },
+      {
+        title: "제품관리",
+        items: [
+          ["제품조회", "/stock/product/list"],
+          ["제품등록", "/stock/product/insert"],
+        ],
+      },
+    ],
+  },
+  sales: {
+    title: "영업",
+    content: "영업 대시보드",
+    groups: [
+      {
+        title: "주문서",
+        items: [
+          ["주문서조회", "/biz/polist"],
+          ["주문서입력", "/biz/poinsert"],
+        ],
+      },
+      {
+        title: "출하지시서",
+        items: [
+          ["출하지시서조회", "/biz/dolist"],
+          ["출하지시서입력", "/biz/doinsert"],
+        ],
+      },
+      {
+        title: "거래처",
+        items: [
+          ["거래처관리", "/biz/mngcus"],
+          ["여신관리", "/biz/mngcredit"],
+        ],
+      },
+      {
+        title: "영업관리현황",
+        items: [["거래명세서", "/biz/saleinvoice"]],
+      },
+    ],
+  },
+  accounting: {
+    title: "회계",
+    content: "회계 대시보드",
+    groups: [
+      { title: "계정 과목", items: [["계정 과목 관리", "/accountList"]] },
+      {
+        title: "전표",
+        items: [
+          ["매출매입전표", "/invoice"],
+          ["일반전표", "/journal"],
+          ["자금전표", "/moneyInvoice"],
+          ["급여전표", "/payment"],
+          ["전표 마감", "/accountclose"],
+        ],
+      },
+      { title: "손익계산서", items: [["손익계산서", "/income"]] },
+      { title: "재무상태표", items: [["재무상태표", "/balanceSheet"]] },
+    ],
+  },
+  mains: {
+    title: "마이페이지",
+    content: "마이페이지대시보드",
+    groups: [
+      { title: "구독관리", items: [["구독정보관리", "/sub/admin/subList"]] },
+      { title: "계정관리", items: [["계정관리", "/admin/hrmanager"]] },
+      {
+        title: "마이페이지",
+        items: [
+          [
+            "마이페이지",
+            /*[[@{/mypage/mylist(empId=${session.loginUser.empId})}]]*/ "/mypage/mylist",
+          ],
+          //["일정관리","/mypage/schedules"]
+        ],
+      },
     ],
   },
 };
 
-/** DOM 단축 */
+/** DOM 참조 */
 const $ = (id) => document.getElementById(id);
 const sidebarTitle = () => $("sidebarTitle");
 const navRoot = () => $("navRoot");
@@ -48,12 +146,13 @@ const contentTitle = () => $("contentTitle");
 function renderSidebar(key) {
   const data = MENUS[key] || MENUS.hr;
   const currentPath = window.location.pathname;
-  const root = navRoot();
-  if (!root) return;
 
-  root.innerHTML = "";
   if (sidebarTitle()) sidebarTitle().textContent = data.title;
   if (contentTitle()) contentTitle().textContent = data.content;
+
+  const root = navRoot();
+  if (!root) return;
+  root.innerHTML = "";
 
   data.groups.forEach((grp) => {
     const wrap = document.createElement("div");
@@ -69,7 +168,8 @@ function renderSidebar(key) {
 
     grp.items.forEach(([label, href]) => {
       if (auth === "ROLE_USER") {
-        const restricted = ["/accountList"];
+        const restricted = ["/accountList",
+        					"/payroll"];
         if (restricted.includes(href)) return;
       }
 
@@ -114,8 +214,9 @@ function initTabs() {
   let activeTabKey = "hr";
 
   for (const key in MENUS) {
-    for (const group of MENUS[key].groups) {
-      if (group.items.some(([_, href]) => href === currentPath)) {
+    const groups = MENUS[key].groups;
+    for (const group of groups) {
+      if (group.items.some(([label, href]) => href === currentPath)) {
         activeTabKey = key;
         break;
       }
@@ -124,9 +225,13 @@ function initTabs() {
   }
 
   tabs.forEach((t) => {
-    const isActive = t.dataset.tab === activeTabKey;
-    t.classList.toggle("active", isActive);
-    t.setAttribute("aria-selected", isActive);
+    if (t.dataset.tab === activeTabKey) {
+      t.classList.add("active");
+      t.setAttribute("aria-selected", "true");
+    } else {
+      t.classList.remove("active");
+      t.setAttribute("aria-selected", "false");
+    }
 
     t.addEventListener("click", (e) => {
       e.preventDefault();
@@ -143,5 +248,7 @@ function initTabs() {
   renderSidebar(activeTabKey);
 }
 
-/** 초기 실행 */
-document.addEventListener("DOMContentLoaded", initTabs);
+/** 초기 구동 */
+document.addEventListener("DOMContentLoaded", () => {
+  initTabs();
+});

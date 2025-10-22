@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/ag-grid-community@30.2.1/styles/ag-theme-quartz.css"
+    />
+  </head>
+  <body>
+    <!-- fragment 이름을 businessModal 로 지정 -->
+    <div th:fragment="businessModal">
+      <div class="modal fade" id="businessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">연간 주문 상세 조회</h5>
+            <button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal" aria-label="닫기">
+            <i class="fas fa-times"></i>
+          </button>
+            </div>
+
+            <!-- 모달 바디 시작 -->
+            <div class="modal-body">
+              <!-- 버튼 영역: 카드 밖, 오른쪽 상단 고정 -->
+              <!-- <div class="d-flex justify-content-end mb-2 gap-2">
+                <button type="button" form="searchForm" class="btn btn-primary bsmSearchBtn" id="searchBtn">
+                  검색
+                </button>
+                <button type="button" form="searchForm" class="btn btn-danger bsmResetBtn">
+                  초기화
+                </button>
+              </div> -->
+               <!-- 필터링 영역 -->
+               <div class="btn-bar d-flex align-items-center gap-2 mb-3">
+		        <input type="text" class="form-control form-control-sm" id="cusNameInModal" name="cusNameInModal"
+		               placeholder="거래처명" style="max-width: 180px;">
+		        <input type="text" class="form-control form-control-sm" id="methodInModal" name="methodInModal"
+		       		list="vatTypeList" placeholder="지불방식" style="max-width: 180px;">
+					<datalist id="vatTypeList">
+					  <option value="BILL">
+					  <option value="CASH">
+					</datalist>
+		        <!-- <input type="text" id="poDateInModal" name="poDateInModal"
+		               placeholder="등록일자" class="form-control form-control-sm" style="max-width: 180px;"> -->
+		        <button class="btn btn-danger btn-sm" type="button" id="resetBtn">
+		          <i class="bi bi-arrow-counterclockwise"></i> 초기화
+		        </button>
+		      </div>
+              <!-- 검색폼 카드 -->
+              <!-- <form
+                th:action="@{/list}"
+                method="get"
+                id="searchForm"
+                class="card p-3 mb-3"
+              >
+			 <div class="row g-3 align-items-end">
+			    거래처명
+			    <div class="col-md-4">
+			      <label for="keyword" class="form-label">거래처명</label>
+			      <input
+			        type="text"
+			        id="keyword"
+			        name="keyword"
+			        class="form-control"
+			        placeholder="검색어 입력"
+			      />
+			    </div>
+			    담당자명
+			    <div class="col-md-3">
+			      <label for="empId" class="form-label">담당자명</label>
+			      <input
+			        type="text"
+			        id="empId"
+			        name="empId"
+			        class="form-control"
+			        placeholder="담당자 입력"
+			      />
+			    </div>
+			      업태
+			    <div class="col-md-4">
+			      <label for="bizType" class="form-label">지불방식</label>
+			      <input
+			        type="text"
+			        id="bizType"
+			        name="bizType"
+			        class="form-control"
+			        placeholder="업태 입력"
+			      />
+			    </div>
+			    종목
+			    <div class="col-md-4">
+			      <label for="bizCategory" class="form-label">등록일자</label>
+			      <input
+			        type="text"
+			        id="bizCategory"
+			        name="bizCategory"
+			        class="form-control"
+			        placeholder="종목 입력"
+			      />
+			    </div>
+			  </div>
+              </form> -->
+               <div id="gridBsModalWrapper" style="position: relative; width: 100%; max-height: 500px;">
+              <!-- 검색 결과 ag-Grid -->
+              <div id="myGrid" class="ag-theme-quartz" style="height:400px; width:100%;"></div>
+              <!-- 로딩 스피너 -->
+	            <div id="loaderBsModal" class="loader-overlay" style="display: none;">
+	              <div class="spinner-border text-primary" role="status">
+	                <span class="visually-hidden">Loading...</span>
+	              </div>
+	            </div>
+              </div>
+            <!-- 모달 바디 종료 -->
+            </div>
+
+            <!-- 모달 푸터 시작-->
+            <div class="modal-footer">
+            
+             <!-- 모달 푸터 종료-->
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </body>
+</html>
