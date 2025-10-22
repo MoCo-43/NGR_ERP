@@ -14,9 +14,9 @@ public class SallerServiceImpl implements SallerService{
 	@Autowired
 	SallerMapper mapper;
 	
-	@Override public List<SallerVO> sallerList() { 
-		return mapper.sallerList();
-	}
+//	@Override public List<SallerVO> sallerList() { 
+//		return mapper.sallerList();
+//	}
 	 
 	@Override
 	public SallerVO selectSallerByNo(Long sallerNo) {
