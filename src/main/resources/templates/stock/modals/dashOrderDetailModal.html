@@ -46,7 +46,18 @@
 		        <button class="btn btn-danger btn-sm" type="button" id="resetBtn">
 		          <i class="bi bi-arrow-counterclockwise"></i> 초기화
 		        </button>
+		          <!-- ✅ 여기부터 추가 -->
+				  <div class="ms-auto d-flex align-items-center gap-3">
+				    <button class="btn btn-outline-success btn-sm" type="button" id="linkBtnIn">
+					  <i class="bi bi-box-arrow-in-down"></i> 입고조회
+					</button>
+					
+					<button class="btn btn-outline-danger btn-sm" type="button" id="linkBtnOut">
+					  <i class="bi bi-box-arrow-up"></i> 출고조회
+					</button>
+				  </div>
 		      </div>
+
               <!-- 검색폼 카드 -->
               <!-- <form
                 th:action="@{/list}"
