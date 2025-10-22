@@ -3,16 +3,14 @@ package com.yedam.erp.service.impl.Biz;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.apache.catalina.manager.util.SessionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.erp.mapper.Biz.BizMapper;
-import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.Biz.BizService;
-import com.yedam.erp.vo.Biz.CreditExposureVO;
 import com.yedam.erp.vo.Biz.CreditGradeVO;
+import com.yedam.erp.vo.Biz.CreditVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -117,18 +115,47 @@ public class BizServiceImpl implements BizService {
 
 
 	
-	// 거래처관리 조회
+	// 거래처 및 여신 조회
 	@Override
 	public List<CustomerVO> getCustomerManagement(Long companyCode) {
 		return bizMapper.getCustomerManagement(companyCode);
 	}
 
-	// 거래처관리 등록
-	@Override	
-	public int insertCustomer(CustomerVO cvo) {
-		return bizMapper.insertCustomer(cvo);
-	}
+  // 거래처 관리 및 여신등록
+  @Override
+  @Transactional
+public int insertCustomerWithCredit(CustomerVO cvo) {
+  // 0) 필수 값 점검 (회사코드 등)
+  if (cvo.getCompanyCode() == null) {
+    throw new IllegalArgumentException("companyCode is required");
+  }
 
+  // 1) CUS_CODE 생성
+  String cusCode = bizMapper.nextCusCode();   // SELECT FN_CUS_CODE('') FROM DUAL
+  cvo.setCusCode(cusCode);
+
+  // 2) 거래처 저장
+  int affected = bizMapper.insertCustomer(cvo);
+  if (affected != 1) {
+    throw new IllegalStateException("insertCustomer failed");
+  }
+
+  // 3) 여신 저장
+  CreditVO cr = cvo.getCredit();
+  if (cr != null) {                 // 고객코드 연결 필수
+    cr.setCompanyCode(cvo.getCompanyCode());
+    if (cr.getActiveStatus() == null || cr.getActiveStatus().isBlank()) {
+      cr.setActiveStatus("Y");
+    }
+    affected += bizMapper.insertCredit(cr);    // 정상이면 +1
+  }
+
+  // 4) 총 영향 행수 반환 (고객=1, 여신 있으면 +1)
+  return affected;
+}
+
+
+  
 	// 거래처관리 수정  updateCustomerByCode
     @Override
     @Transactional

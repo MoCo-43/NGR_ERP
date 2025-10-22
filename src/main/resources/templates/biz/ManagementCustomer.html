@@ -261,6 +261,7 @@
 
               // 서버 응답 키 → 화면 키 매핑(유연 매핑)
               const mapped = rows.map((r) => ({
+                // 거래처
                 cusCode: r.cusCode ?? "",
                 empName: r.empName,
                 cempName: r.cempName,
@@ -276,6 +277,13 @@
                 activeStatus: r.activeStatus,
                 bankName: r.bankName,
                 bankAccount: r.bankAccount,
+
+                // 여신
+                creditLimit: r.creditLimit,
+                creditGrade: r.creditGrade,
+                startDate: r.startDate,
+                expireDate: r.expireDate,
+                cactiveStatus: r.activeStatus,
               }));
 
               setRows(mapped);
@@ -306,8 +314,8 @@
               keyboard: false,
             });
 
+          // 모달 등록버튼 처리
           function setModalMode(mode) {
-            // mode: "create" | "edit"
             customerModalEl.dataset.mode = mode;
 
             const titleEl = customerModalEl.querySelector(".modal-title");
@@ -328,11 +336,12 @@
           function resetCustomerForm() {
             const f = customerModalEl.querySelector("#customerForm");
             f.reset();
-            customerModalEl.querySelector("#useYn").value = "Y";
+            customerModalEl.querySelector("#cactiveStatus").value = "Y";
             const credit = customerModalEl.querySelector("#creditLimit");
             if (credit) credit.value = 0;
           }
 
+          // 여신등록입력
           function fillCustomerForm(row) {
             // 그리드 데이터 → 폼으로 주입(키 매핑 유연)
             const g = row || {};
@@ -340,6 +349,8 @@
               keys.find((k) => g[k] !== undefined)
                 ? g[keys.find((k) => g[k] !== undefined)]
                 : "";
+
+            // 거래처등록 DOM
             customerModalEl.querySelector("#cusCode").value = get("cusCode");
             customerModalEl.querySelector("#cempName").value = get("cempName");
             customerModalEl.querySelector("#empName").value = get("empName");
@@ -360,9 +371,9 @@
               get("bankAccount");
           }
 
+          // 거래처 및 여신 등록 BACK단 처리
           function collectPayloadFromForm() {
             const f = customerModalEl.querySelector("#customerForm");
-            // 거래처 및 여신 등록 BACK단 처리
             return {
               // 거래처등록
               cusCode: f.cusCode.value,
@@ -380,13 +391,10 @@
               activeStatus: f.activeStatus.value,
               bankName: f.bankName.value,
               bankAccount: f.bankAccount.value,
-              // 여신 등록
-              creditLimit: Number(f.creditLimit?.value || 0),
-              payTerm: f.payTerm?.value || "",
-              billUse: f.billUse?.value || "",
             };
           }
 
+          // 모달 열기 함수
           function openCustomerModal(mode, row) {
             setModalMode(mode);
             resetCustomerForm();
@@ -473,8 +481,7 @@
                   await axios.post("/api/biz/mngcustomer", payload);
                   alert("등록되었습니다.");
                 } else {
-                  // 수정: REST 스타일(권장)
-                  // 예) /api/biz/mngcustomer/{cusCode}
+                  // 거래처별(cusCode)신규등록
                   await axios.put(
                     `/api/biz/mngcustomer/${encodeURIComponent(
                       payload.cusCode
@@ -509,52 +516,14 @@
             customerModalEl.dataset.mode = "create";
           });
 
-          // 여신 관련
+          // 여신 등록처리
           document.addEventListener("DOMContentLoaded", () => {
-            const monthSel = document.getElementById("cr_monthSel");
-            const daySel = document.getElementById("cr_daySel");
-            const creditGrade = document.getElementById("cr_creditGrade");
-            const creditLimit = document.getElementById("cr_creditLimit");
-            const useY = document.getElementById("cr_useY");
-            const useN = document.getElementById("cr_useN");
-
-            // 1~31일 select 생성
-            daySel.innerHTML = Array.from({ length: 31 }, (_, i) => i + 1)
-              .map((d) => `<option value="${d}">${d}</option>`)
-              .join("");
-            daySel.value = "1";
-
-            // 월말 선택시 일 비활성화
-            monthSel.addEventListener("change", () => {
-              daySel.disabled = monthSel.value === "EOM";
-            });
-
-            // 수금일 사용여부
-            function toggleUse() {
-              const disabled = useN.checked;
-              monthSel.disabled = disabled;
-              daySel.disabled = disabled || monthSel.value === "EOM";
-            }
-            useY.addEventListener("change", toggleUse);
-            useN.addEventListener("change", toggleUse);
-            toggleUse();
-
-            // 신용등급 → 여신한도 자동 설정
-            const limitByGrade = {
-              A: 500000000,
-              B: 100000000,
-              C: 50000000,
-              D: 10000000,
-              E: 0,
-            };
-
-            creditGrade.addEventListener("change", () => {
-              const g = creditGrade.value;
-              creditLimit.value = limitByGrade[g];
-              creditLimit.max = limitByGrade[g];
-              if (g === "E") creditLimit.disabled = true;
-              else creditLimit.disabled = false;
-            });
+            // 여신등록 DOM
+            const creditLimitEl = document.getElementById("creditLimit");
+            const creditGradeEl = document.getElementById("creditGrade");
+            const startDateEl = document.getElementById("startDate");
+            const expireDateEl = document.getElementById("expireDate");
+            const activeStatusEl = document.getElementById("cactiveStatus");
 
             // 초기화 버튼
             document
@@ -571,25 +540,21 @@
                 toggleUse();
               });
 
-            // 등록 버튼 (예시)
+            // 여신 등록 버튼
             document
               .getElementById("btnCreditSave")
               .addEventListener("click", async () => {
                 const payload = {
-                  cusCode: document.getElementById("cr_cusCode").value,
-                  manager: document.getElementById("cr_manager").value,
-                  creditLimit: creditLimit.value,
-                  payMethod: document.getElementById("cr_payMethod").value,
-                  tel: document.getElementById("cr_tel").value,
-                  creditGrade: creditGrade.value,
-                  monthSel: monthSel.value,
-                  daySel: daySel.value,
-                  useYn: useY.checked ? "Y" : "N",
-                  startDate: document.getElementById("cr_startDate").value,
-                  endDate: document.getElementById("cr_endDate").value,
+                  // useYn: useY.checked ? "Y" : "N",
+                  // 여신 등록
+                  creditLimit: Number(creditLimitEl.value),
+                  creditGrade: creditGradeEl.value,
+                  startDate: startDateEl.value,
+                  expireDate: expireDateEl.value,
+                  cactiveStatus: activeStatusEl.value,
                 };
                 console.log("payload =>", payload);
-                await axios.post("/api/sales/credit", payload);
+                await axios.post("/api/biz/mngcustomer", payload);
                 alert("등록 완료!");
               });
           });

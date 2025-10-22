@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.yedam.erp.vo.Biz.CreditGradeVO;
+import com.yedam.erp.vo.Biz.CreditVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -44,11 +45,12 @@ public interface BizService {
   // 출하지시서 등록
   Long createDo(DoInsertVO dovo);
 
-  // 거래처관리 조회
+  // 거래처 및 여신 조회
   List<CustomerVO> getCustomerManagement(Long companyCode);
 
-  // 거래처관리 등록
-  int insertCustomer(CustomerVO cvo);
+  // 거래처 관리 및 여신등록
+  int insertCustomerWithCredit(CustomerVO cvo);
+
 
   // 거래처관리 수정
   int updateCustomerByCode(CustomerVO cvo);
