@@ -124,35 +124,34 @@ public class BizServiceImpl implements BizService {
   // 거래처 관리 및 여신등록
   @Override
   @Transactional
-public int insertCustomerWithCredit(CustomerVO cvo) {
-  // 0) 필수 값 점검 (회사코드 등)
-  if (cvo.getCompanyCode() == null) {
-    throw new IllegalArgumentException("companyCode is required");
-  }
-
-  // 1) CUS_CODE 생성
-  String cusCode = bizMapper.nextCusCode();   // SELECT FN_CUS_CODE('') FROM DUAL
-  cvo.setCusCode(cusCode);
-
-  // 2) 거래처 저장
-  int affected = bizMapper.insertCustomer(cvo);
-  if (affected != 1) {
-    throw new IllegalStateException("insertCustomer failed");
-  }
-
-  // 3) 여신 저장
-  CreditVO cr = cvo.getCredit();
-  if (cr != null) {                 // 고객코드 연결 필수
-    cr.setCompanyCode(cvo.getCompanyCode());
-    if (cr.getActiveStatus() == null || cr.getActiveStatus().isBlank()) {
-      cr.setActiveStatus("Y");
+  public int insertCustomerWithCredit(CustomerVO cvo) {
+    if (cvo.getCompanyCode() == null) {
+      throw new IllegalArgumentException("companyCode is required");
     }
-    affected += bizMapper.insertCredit(cr);    // 정상이면 +1
-  }
 
-  // 4) 총 영향 행수 반환 (고객=1, 여신 있으면 +1)
-  return affected;
-}
+    // 1) CUS_CODE 생성
+    String cusCode = bizMapper.nextCusCode();
+    cvo.setCusCode(cusCode);
+
+    // 2) 거래처 저장
+    int affected = bizMapper.insertCustomer(cvo);
+    if (affected != 1) {
+      throw new IllegalStateException("insertCustomer failed");
+    }
+
+    // 3) 여신 저장 (옵션)
+    CreditVO cr = cvo.getCredit();
+    if (cr != null) {
+      cr.setCusCode(cusCode);                                 // ★★ 꼭 필요
+      cr.setCompanyCode(cvo.getCompanyCode());
+      if (cr.getCActiveStatus() == null || cr.getCActiveStatus().isBlank()) {
+        cr.setCActiveStatus("Y");
+      }
+      affected += bizMapper.insertCredit(cr);
+    }
+
+    return affected; // 총 영향행 (1 또는 2)
+  }
 
 
   
@@ -163,6 +162,16 @@ public int insertCustomerWithCredit(CustomerVO cvo) {
         int updated = bizMapper.updateCustomerByCode(cvo);
         return updated;
     }
+
+  // 거래처여신관리 수정
+    @Override
+    @Transactional
+    public int updateCreditByCode(CreditVO cvo) {
+      int cupdated = bizMapper.updateCreditByCode(cvo);
+      return cupdated;
+    }
+
+
 
 	// 거래처여신관리 조회
     @Override

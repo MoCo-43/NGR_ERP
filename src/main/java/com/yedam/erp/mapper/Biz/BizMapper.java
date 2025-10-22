@@ -87,6 +87,12 @@ public interface BizMapper {
 
   // 거래처관리 수정
   int updateCustomerByCode(CustomerVO cvo);
+  // 거래처여신관리 수정
+  int updateCreditByCode(CreditVO cvo);
+
+
+  
+
   // 거래처여신 조회
       /**
      * 회사별 거래처 여신현황 조회

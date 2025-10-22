@@ -1,6 +1,8 @@
 package com.yedam.erp.web.ApiController;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.yedam.erp.security.SessionUtil;
 import com.yedam.erp.service.Biz.BizService;
 import com.yedam.erp.vo.Biz.CreditGradeVO;
+import com.yedam.erp.vo.Biz.CreditVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -137,29 +140,48 @@ public class BizController {
 
   // 거래처, 거래처별 여신등록
   @PostMapping(value="/mngcustomer")
-public ResponseEntity<Integer> insCusCredit(@RequestBody CustomerVO cvo) {
-  Long companyCode = SessionUtil.companyId();
-  cvo.setCompanyCode(companyCode);
-  int result = service.insertCustomerWithCredit(cvo);
-  return ResponseEntity.ok(result); // 1 or 2
-}
+  public ResponseEntity<Map<String, Object>> insCusCredit(@RequestBody CustomerVO cvo) {
+    Long companyCode = SessionUtil.companyId();
+    cvo.setCompanyCode(companyCode);
+    int result = service.insertCustomerWithCredit(cvo);
+
+    Map<String, Object> body = new HashMap<>();
+    body.put("affected", result);
+    body.put("cusCode", cvo.getCusCode()); // ★★ 서비스에서 세팅된 신규 코드
+    return ResponseEntity.ok(body);
+  }
 
 
 
   // 거래처 수정
- @PutMapping("/mngcustomer/{cusCode}")
-    public ResponseEntity<?> updateCustomerByCode(
-            @PathVariable String cusCode,
-            @RequestBody CustomerVO cvo
-    ) {
-        cvo.setCusCode(cusCode);
+  @PutMapping("/mngcustomer/{cusCode}")
+      public ResponseEntity<?> updateCustomerByCode(
+              @PathVariable String cusCode,
+              @RequestBody CustomerVO cvo
+      ) {
+          cvo.setCusCode(cusCode);
 
-        int updated = service.updateCustomerByCode(cvo);
-        if (updated == 0) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.noContent().build(); // 또는 ok(vo)
-  }
+          int updated = service.updateCustomerByCode(cvo);
+          if (updated == 0) {
+              return ResponseEntity.notFound().build();
+          }
+          return ResponseEntity.noContent().build(); // 또는 ok(vo)
+    }
+
+  // 거래처 여신 수정
+  @PutMapping("/mngcuscredit/{cusCode}")
+  public ResponseEntity<?> updateCreditByCode(
+      @PathVariable String cusCode,
+      @RequestBody CreditVO cvo
+  ) {
+          cvo.setCusCode(cusCode);
+
+          int updated = service.updateCreditByCode(cvo);
+          if (updated == 0) {
+              return ResponseEntity.notFound().build();
+          }
+          return ResponseEntity.noContent().build(); // 또는 ok(vo)
+      }
 
     // 거래처여신관리 조회
      @GetMapping("/crdlist")

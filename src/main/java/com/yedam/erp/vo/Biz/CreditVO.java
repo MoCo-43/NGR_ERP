@@ -13,6 +13,6 @@ public class CreditVO {
   private Date startDate;
   private Date expireDate;
   private Long leftPrice;
-  private String activeStatus;
+  private String cActiveStatus;
   private Long companyCode;
 }
