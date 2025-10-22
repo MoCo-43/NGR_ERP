@@ -21,13 +21,10 @@
       />
 
       <style>
-        /* 그리드 영역 */
         #customerGrid.ag-theme-quartz {
           height: 560px;
           width: 100%;
         }
-
-        /* 디자인 보정 (주문서 조회 샘플 톤과 동일) */
         .btn-filter-group .btn {
           min-width: 108px;
         }
@@ -48,7 +45,7 @@
 
   <body>
     <section layout:fragment="content">
-      <!-- 검색/필터 카드 -->
+      <!-- 검색/필터 -->
       <div class="card shadow mb-4">
         <div
           class="card-header py-3 d-flex align-items-center justify-content-between"
@@ -57,7 +54,6 @@
         </div>
 
         <div class="card-body">
-          <!-- 1. 사용여부 버튼 (전체 / Y / N) -->
           <div
             class="btn-filter-group btn-group mb-3"
             role="group"
@@ -68,7 +64,6 @@
             <button class="btn btn-outline-primary" data-use="N">미사용</button>
           </div>
 
-          <!-- 2~5. 검색 조건 (상호/대표자/사업자번호/종목) -->
           <div class="form-inline flex-wrap gap-2">
             <label class="mr-2 mb-2">상호</label>
             <input
@@ -107,7 +102,7 @@
         </div>
       </div>
 
-      <!-- *************** 거래처 리스트(ag-Grid) *************** -->
+      <!-- 리스트 -->
       <div class="card shadow mb-0">
         <div
           class="card-header py-3 d-flex align-items-center justify-content-between"
@@ -128,7 +123,7 @@
         </div>
       </div>
 
-      <!-- 거래처 등록 모달 -->
+      <!-- 거래처/여신 모달 프래그먼트 -->
       <div th:replace="~{biz/modals/CustomerModal :: mngcustomermodal}"></div>
     </section>
 
@@ -145,7 +140,21 @@
 
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
-          // ===== ag-Grid 컬럼 (화면설계 기준) =====
+          // ========= helpers =========
+          const sel = (q, r = document) => r.querySelector(q);
+          const selAll = (q, r = document) => Array.from(r.querySelectorAll(q));
+          const limitByGrade = { A: 100_000_000, B: 50_000_000, C: 20_000_000 };
+          const toYmd = (v) => {
+            if (!v) return "";
+            if (typeof v === "string" && v.length >= 10) return v.slice(0, 10);
+            const d = new Date(v);
+            if (Number.isNaN(d.getTime())) return "";
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            const dd = String(d.getDate()).padStart(2, "0");
+            return `${d.getFullYear()}-${mm}-${dd}`;
+          };
+
+          // ========= grid =========
           const columnDefs = [
             {
               headerName: "거래처코드",
@@ -171,11 +180,8 @@
                 p.value === "Y" ? "Y" : p.value === "N" ? "N" : "",
             },
           ];
-
-          // ===== Grid 옵션 =====
           const gridDiv = document.getElementById("customerGrid");
           let gridApi;
-
           const gridOptions = {
             columnDefs,
             rowData: [],
@@ -187,52 +193,34 @@
               gridApi = p.api;
               search();
             },
-
-            // 행 클릭 시 수정 모드로 모달 오픈
             onRowClicked: (e) => {
-              if (!e?.data) return;
-              openCustomerModal("edit", e.data); // 아래 공용 함수
+              if (e?.data) openCustomerModal("edit", e.data);
             },
           };
-
-          if (window.agGrid?.createGrid) {
+          if (window.agGrid?.createGrid)
             gridApi = agGrid.createGrid(gridDiv, gridOptions);
-          } else {
+          else {
             new agGrid.Grid(gridDiv, gridOptions);
             gridApi = gridOptions.api;
           }
-
-          // helper (v31의 setGridOption 대응)
           const setRows = (rows) =>
             gridApi?.setGridOption
               ? gridApi.setGridOption("rowData", rows)
               : gridApi.setRowData(rows);
 
-          // ===== 상단 검색 DOM =====
-          // 상호
-          const qName = document.getElementById("qName");
-          // 대표자명
-          const qRep = document.getElementById("qRep");
-          // 사업자번호
-          const qBizNo = document.getElementById("qBizNo");
-          // 종목
-          const qType = document.getElementById("qType");
-          // 검색버튼
-          const btnSearch = document.getElementById("btnSearch");
-
-          let useYn = ""; // 버튼 그룹 상태
-
-          // 1) 사용여부 필터 버튼
-          document
-            .querySelectorAll(".btn-filter-group [data-use]")
-            .forEach((btn) => {
-              btn.addEventListener("click", () => {
-                useYn = btn.getAttribute("data-use") || "";
-                search(); // 버튼만 눌러도 즉시 조회
-              });
+          // ========= search =========
+          const qName = sel("#qName"),
+            qRep = sel("#qRep"),
+            qBizNo = sel("#qBizNo"),
+            qType = sel("#qType");
+          const btnSearch = sel("#btnSearch");
+          let useYn = "";
+          selAll(".btn-filter-group [data-use]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              useYn = btn.getAttribute("data-use") || "";
+              search();
             });
-
-          // 2) 조회 버튼 / Enter로 조회
+          });
           btnSearch.addEventListener("click", () => search());
           [qName, qRep, qBizNo, qType].forEach((el) => {
             el.addEventListener("keydown", (e) => {
@@ -240,7 +228,6 @@
             });
           });
 
-          // ===== API 호출 =====
           async function search() {
             try {
               const params = {
@@ -250,42 +237,37 @@
                 bizNo: (qBizNo.value || "").trim(),
                 type: (qType.value || "").trim(),
               };
-
               const res = await axios.get("/api/biz/mngcustomer", {
                 params,
                 withCredentials: true,
               });
-
-              console.log("거래처 조회값은 => ", res);
               const rows = Array.isArray(res.data) ? res.data : [];
-
-              // 서버 응답 키 → 화면 키 매핑(유연 매핑)
-              const mapped = rows.map((r) => ({
-                // 거래처
-                cusCode: r.cusCode ?? "",
-                empName: r.empName,
-                cempName: r.cempName,
-                cusName: r.cusName ?? "",
-                bizNo: r.bizNo,
-                ceoName: r.ceoName ?? "",
-                bizType: r.bizType,
-                bizCategory: r.bizCategory,
-                tel: r.tel ?? "",
-                addr:
-                  r.addr ?? [r.addr1, r.addr2].filter(Boolean).join(" ") ?? "",
-                zipCode: r.zipCode,
-                activeStatus: r.activeStatus,
-                bankName: r.bankName,
-                bankAccount: r.bankAccount,
-
-                // 여신
-                creditLimit: r.creditLimit,
-                creditGrade: r.creditGrade,
-                startDate: r.startDate,
-                expireDate: r.expireDate,
-                cactiveStatus: r.activeStatus,
-              }));
-
+              const mapped = rows.map((r) => {
+                const cr = r.credit || {};
+                return {
+                  cusCode: r.cusCode ?? "",
+                  empName: r.empName ?? "",
+                  cempName: r.cempName ?? "",
+                  cusName: r.cusName ?? "",
+                  bizNo: r.bizNo ?? "",
+                  ceoName: r.ceoName ?? "",
+                  bizType: r.bizType ?? "",
+                  bizCategory: r.bizCategory ?? "",
+                  tel: r.tel ?? "",
+                  addr: r.addr ?? "",
+                  zipCode: r.zipCode ?? "",
+                  activeStatus: r.activeStatus ?? "Y",
+                  bankName: r.bankName ?? "",
+                  bankAccount: r.bankAccount ?? "",
+                  // 여신
+                  creditLimit: cr.creditLimit ?? null,
+                  creditGrade: cr.creditGrade ?? null,
+                  startDate: cr.startDate ?? null,
+                  expireDate: cr.expireDate ?? null,
+                  cActiveStatus: cr.cActiveStatus ?? null,
+                  credit: cr,
+                };
+              });
               setRows(mapped);
             } catch (err) {
               console.error(err);
@@ -293,20 +275,7 @@
             }
           }
 
-          // ===== 모달창 신규 거래처 등록 열기 =====
-          document
-            .getElementById("btnCusRegister")
-            .addEventListener("click", () => {
-              openCustomerModal("create", null);
-            });
-
-          /*
-
-거래처 등록,수정 제어 공용모달
-
-*/
-
-          // ===== 모달 공용 제어 =====
+          // ========= modal/tabs =========
           const customerModalEl = document.getElementById("mngcustomermodal");
           const bsCustomerModal = () =>
             new bootstrap.Modal(customerModalEl, {
@@ -314,108 +283,10 @@
               keyboard: false,
             });
 
-          // 모달 등록버튼 처리
-          function setModalMode(mode) {
-            customerModalEl.dataset.mode = mode;
-
-            const titleEl = customerModalEl.querySelector(".modal-title");
-            const submitEl =
-              customerModalEl.querySelector("#btnSubmitCustomer");
-            const codeEl = customerModalEl.querySelector("#cusCode"); // disabled 표시용
-
-            if (mode === "create") {
-              titleEl && (titleEl.textContent = "거래처 등록");
-              submitEl && (submitEl.textContent = "등록");
-              codeEl && (codeEl.value = "등록후 생성"); // 안내 문구
-            } else {
-              titleEl && (titleEl.textContent = "거래처 수정");
-              submitEl && (submitEl.textContent = "저장");
-            }
-          }
-
-          function resetCustomerForm() {
-            const f = customerModalEl.querySelector("#customerForm");
-            f.reset();
-            customerModalEl.querySelector("#cactiveStatus").value = "Y";
-            const credit = customerModalEl.querySelector("#creditLimit");
-            if (credit) credit.value = 0;
-          }
-
-          // 여신등록입력
-          function fillCustomerForm(row) {
-            // 그리드 데이터 → 폼으로 주입(키 매핑 유연)
-            const g = row || {};
-            const get = (...keys) =>
-              keys.find((k) => g[k] !== undefined)
-                ? g[keys.find((k) => g[k] !== undefined)]
-                : "";
-
-            // 거래처등록 DOM
-            customerModalEl.querySelector("#cusCode").value = get("cusCode");
-            customerModalEl.querySelector("#cempName").value = get("cempName");
-            customerModalEl.querySelector("#empName").value = get("empName");
-            customerModalEl.querySelector("#cusName").value = get("cusName");
-            customerModalEl.querySelector("#bizNo").value = get("bizNo");
-            customerModalEl.querySelector("#ceoName").value = get("ceoName");
-            customerModalEl.querySelector("#bizType").value = get("bizType");
-            customerModalEl.querySelector("#bizCategory").value =
-              get("bizCategory");
-            customerModalEl.querySelector("#tel").value = get("tel");
-            customerModalEl.querySelector("#email").value = get("email");
-            customerModalEl.querySelector("#addr").value = get("addr");
-            customerModalEl.querySelector("#zipCode").value = get("zipCode");
-            customerModalEl.querySelector("#activeStatus").value =
-              get("activeStatus");
-            customerModalEl.querySelector("#bankName").value = get("bankName");
-            customerModalEl.querySelector("#bankAccount").value =
-              get("bankAccount");
-          }
-
-          // 거래처 및 여신 등록 BACK단 처리
-          function collectPayloadFromForm() {
-            const f = customerModalEl.querySelector("#customerForm");
-            return {
-              // 거래처등록
-              cusCode: f.cusCode.value,
-              cempName: f.cempName.value,
-              empName: f.empName.value,
-              cusName: f.cusName.value,
-              bizNo: f.bizNo.value,
-              ceoName: f.ceoName.value,
-              bizType: f.bizType.value,
-              bizCategory: f.bizCategory.value,
-              tel: f.tel.value,
-              email: f.email.value,
-              addr: f.addr.value,
-              zipCode: f.zipCode.value,
-              activeStatus: f.activeStatus.value,
-              bankName: f.bankName.value,
-              bankAccount: f.bankAccount.value,
-            };
-          }
-
-          // 모달 열기 함수
-          function openCustomerModal(mode, row) {
-            setModalMode(mode);
-            resetCustomerForm();
-            if (mode === "edit" && row) fillCustomerForm(row);
-            bsCustomerModal().show();
-          }
-
-          /* 
-
-          거래처 모달 등록 
-
-           */
-          const modalEl = document.getElementById("mngcustomermodal");
-          if (!modalEl) return;
-
-          const tabInfoBtn = modalEl.querySelector("#tabInfoBtn");
-          const tabCreditBtn = modalEl.querySelector("#tabCreditBtn");
-          const paneInfo = modalEl.querySelector("#paneInfo");
-          const paneCredit = modalEl.querySelector("#paneCredit");
-
-          // 탭 전환
+          const tabInfoBtn = sel("#tabInfoBtn"),
+            tabCreditBtn = sel("#tabCreditBtn");
+          const paneInfo = sel("#paneInfo"),
+            paneCredit = sel("#paneCredit");
           function activateInfoTab() {
             tabInfoBtn.classList.remove("btn-outline-secondary");
             tabInfoBtn.classList.add("btn-primary");
@@ -434,143 +305,235 @@
           }
           tabInfoBtn.addEventListener("click", activateInfoTab);
           tabCreditBtn.addEventListener("click", activateCreditTab);
-          activateInfoTab(); // 기본은 거래처정보
 
-          // 초기화
-          modalEl
-            .querySelector("#btnFormReset")
-            .addEventListener("click", () => {
-              modalEl.querySelector("#customerForm").reset();
-              // 기본값 복원
-              modalEl.querySelector("#useYn").value = "Y";
-              modalEl.querySelector("#creditLimit").value = 0;
-            });
+          // 여신 DOM
+          // ========= form refs =========
+          const customerForm = sel("#customerForm");
+          const creditGradeEl = sel("#creditGrade");
+          const creditLimitEl = sel("#creditLimit");
+          const startDateEl = sel("#startDate");
+          const expireDateEl = sel("#expireDate");
+          const cActiveStatusEl = sel("#cActiveStatus");
 
-          // 주소 검색(다음 주소 API 등 연결 지점)
-          modalEl
-            .querySelector("#btnFindAddr")
-            .addEventListener("click", () => {
-              // TODO: 프로젝트 주소검색 연동 (예: daum.Postcode)
-              // 완료 시: addr.value = "..."; zipCode.value = "...";
-              alert("주소 검색 연동 지점입니다.");
-            });
+          // 여신초기값
+          // ========= form utils =========
+          function resetCustomerForm() {
+            customerForm.reset();
+            sel("#activeStatus").value = "Y";
+            sel("#cusCode").value = "등록후 생성";
+            creditGradeEl.value = "C";
+            creditLimitEl.value = limitByGrade["C"] ?? 0;
+            startDateEl.value = "";
+            expireDateEl.value = "";
+            cActiveStatusEl.value = "Y";
+          }
 
-          // 담당자 검색(사내 사용자 모달 연동 지점)
-          modalEl
-            .querySelector("#btnFindManager")
-            .addEventListener("click", () => {
-              // TODO: 사원 검색 모달/그리드 연동 후 선택값 세팅
-              alert("담당자 검색 연동 지점입니다.");
-            });
+          // 거래처 DOM
+          function fillCustomerForm(row = {}) {
+            sel("#cusCode").value = row.cusCode ?? "";
+            sel("#cempName").value = row.cempName ?? "";
+            sel("#empName").value = row.empName ?? "";
+            sel("#cusName").value = row.cusName ?? "";
+            sel("#bizNo").value = row.bizNo ?? "";
+            sel("#ceoName").value = row.ceoName ?? "";
+            sel("#bizType").value = row.bizType ?? "";
+            sel("#bizCategory").value = row.bizCategory ?? "";
+            sel("#tel").value = row.tel ?? "";
+            sel("#email").value = row.email ?? "";
+            sel("#addr").value = row.addr ?? "";
+            sel("#zipCode").value = row.zipCode ?? "";
+            sel("#activeStatus").value = row.activeStatus ?? "Y";
+            sel("#bankName").value = row.bankName ?? "";
+            sel("#bankAccount").value = row.bankAccount ?? "";
+          }
 
-          // 등록
-          modalEl
-            .querySelector("#btnSubmitCustomer")
-            .addEventListener("click", async () => {
-              const mode = modalEl.dataset.mode || "create";
-              const f = modalEl.querySelector("#customerForm");
-              if (!f.cusName.value.trim()) {
-                alert("상호는 필수입니다.");
-                f.cusName.focus();
-                return;
-              }
-              const payload = collectPayloadFromForm();
-              try {
-                if (mode === "create") {
-                  // 신규 등록
-                  await axios.post("/api/biz/mngcustomer", payload);
-                  alert("등록되었습니다.");
-                } else {
-                  // 거래처별(cusCode)신규등록
-                  await axios.put(
-                    `/api/biz/mngcustomer/${encodeURIComponent(
-                      payload.cusCode
-                    )}`,
-                    payload
-                  );
-                  alert("저장되었습니다.");
-                }
-                bootstrap.Modal.getInstance(modalEl)?.hide();
-                // 저장 후 목록 갱신
-                search();
-              } catch (err) {
-                console.error(err);
-                alert("저장에 실패했습니다.");
-              }
-            });
+          // 여신탭 초기값
+          function fillCreditForm(cr) {
+            if (!cr) {
+              creditGradeEl.value = "C";
+              creditLimitEl.value = limitByGrade["C"] ?? 0;
+              startDateEl.value = "";
+              expireDateEl.value = "";
+              cActiveStatusEl.value = "Y";
+              return;
+            }
+            creditGradeEl.value = cr.creditGrade ?? "C";
+            creditLimitEl.value = cr.creditLimit ?? limitByGrade["C"] ?? 0;
+            startDateEl.value = toYmd(cr.startDate);
+            expireDateEl.value = toYmd(cr.expireDate);
+            cActiveStatusEl.value = cr.cActiveStatus;
+          }
 
-          // 모달 열릴 때 기본 상태/값 초기화
-          customerModalEl.addEventListener("show.bs.modal", () => {
-            activateInfoTab();
-            // create일 때만 초기화
-            const mode = customerModalEl.dataset.mode || "create";
+          function collectCustomerPayload() {
+            const cusCodeDom = sel("#cusCode").value;
+            return {
+              cusCode: cusCodeDom === "등록후 생성" ? "" : cusCodeDom,
+              cempName: sel("#cempName").value,
+              empName: sel("#empName").value,
+              cusName: sel("#cusName").value,
+              bizNo: sel("#bizNo").value,
+              ceoName: sel("#ceoName").value,
+              bizType: sel("#bizType").value,
+              bizCategory: sel("#bizCategory").value,
+              tel: sel("#tel").value,
+              email: sel("#email").value,
+              addr: sel("#addr").value,
+              zipCode: sel("#zipCode").value,
+              activeStatus: sel("#activeStatus").value,
+              bankName: sel("#bankName").value,
+              bankAccount: sel("#bankAccount").value,
+            };
+          }
+
+          function collectCreditPayload() {
+            return {
+              creditGrade: creditGradeEl.value,
+              creditLimit: Number(creditLimitEl.value || 0),
+              startDate: startDateEl.value, // "YYYY-MM-DD"
+              expireDate: expireDateEl.value, // "YYYY-MM-DD"
+              cActiveStatus: cActiveStatusEl.value,
+            };
+          }
+
+          // ========= modal open =========
+          function setModalMode(mode) {
+            const el = document.getElementById("mngcustomermodal");
+            if (!el) {
+              console.error("[mngcustomermodal] 모달 루트 없음");
+              return;
+            }
+            el.dataset.mode = mode;
+            const titleEl = el.querySelector(".modal-title");
+            const submitEl = el.querySelector("#btnSubmitCustomer");
+            const codeEl = el.querySelector("#cusCode");
             if (mode === "create") {
-              resetCustomerForm();
-              customerModalEl.querySelector("#cusCode").value = "등록후 생성";
+              titleEl && (titleEl.textContent = "거래처 등록");
+              submitEl && (submitEl.textContent = "저장");
+              codeEl && (codeEl.value = "등록후 생성");
+            } else {
+              titleEl && (titleEl.textContent = "거래처/여신 수정");
+              submitEl && (submitEl.textContent = "저장");
+            }
+          }
+
+          async function openCustomerModal(mode, row) {
+            setModalMode(mode);
+            resetCustomerForm();
+            if (mode === "edit" && row) {
+              fillCustomerForm(row);
+              fillCreditForm(row.credit || null);
+            } else {
+              fillCreditForm(null);
+            }
+            activateInfoTab();
+            bsCustomerModal().show();
+          }
+
+          // ========= actions =========
+          sel("#btnCusRegister").addEventListener("click", () =>
+            openCustomerModal("create", null)
+          );
+          sel("#btnFormReset").addEventListener("click", () => {
+            resetCustomerForm();
+            sel("#activeStatus").value = "Y";
+          });
+
+          // 여신 단독 업데이트 (수정 탭에서만 사용)
+          async function updateCreditStandalone(cusCode) {
+            if (!cusCode || cusCode === "등록후 생성") {
+              alert("먼저 거래처를 저장해 거래처코드를 생성하세요.");
+              return false;
+            }
+            const payload = collectCreditPayload();
+            if (payload.creditLimit < 0) {
+              alert("여신한도는 0 이상이어야 합니다.");
+              return false;
+            }
+            if (
+              payload.startDate &&
+              payload.expireDate &&
+              payload.startDate > payload.expireDate
+            ) {
+              alert("종료일이 시작일보다 빠를 수 없습니다.");
+              return false;
+            }
+            console.log("[PUT] /api/biz/mngcuscredit", cusCode, payload);
+            try {
+              await axios.put(
+                `/api/biz/mngcuscredit/${encodeURIComponent(cusCode)}`,
+                payload
+              );
+              alert("여신이 수정되었습니다.");
+              return true;
+            } catch (err) {
+              console.error(err);
+              if (err?.response?.status === 404)
+                alert(
+                  "해당 거래처의 여신 정보가 없습니다. 먼저 여신을 등록하세요."
+                );
+              else alert("여신 수정에 실패했습니다.");
+              return false;
+            }
+          }
+
+          // 현재 여신 탭이 활성인지
+          function isCreditTabActive() {
+            return !document
+              .getElementById("paneCredit")
+              .classList.contains("d-none");
+          }
+
+          // 고객 저장 (POST/PUT)
+          async function saveCustomer(mode, customer) {
+            if (mode === "create") {
+              await axios.post("/api/biz/mngcustomer", customer);
+            } else {
+              await axios.put(
+                `/api/biz/mngcustomer/${encodeURIComponent(customer.cusCode)}`,
+                customer
+              );
+            }
+          }
+
+          // 저장 버튼 하나로 분기 (create: 고객+여신, edit: 탭 기준)
+          sel("#btnSubmitCustomer").addEventListener("click", async () => {
+            const mode = customerModalEl.dataset.mode || "create";
+            if (!customerForm.cusName.value.trim()) {
+              alert("상호는 필수입니다.");
+              customerForm.cusName.focus();
+              return;
+            }
+            try {
+              if (mode === "create") {
+                const customer = collectCustomerPayload();
+                customer.credit = collectCreditPayload(); // 신규는 함께 저장
+                await saveCustomer("create", customer);
+              } else {
+                if (isCreditTabActive()) {
+                  const cusCode = sel("#cusCode")?.value?.trim();
+                  const ok = await updateCreditStandalone(cusCode); // 여신만 저장
+                  if (!ok) return;
+                } else {
+                  const customer = collectCustomerPayload(); // 고객만 저장
+                  await saveCustomer("edit", customer);
+                }
+              }
+              bootstrap.Modal.getInstance(customerModalEl)?.hide();
+              search();
+            } catch (err) {
+              console.error(err);
+              alert("저장에 실패했습니다.");
             }
           });
 
-          // 모달창을 닫을때 항상 기본값, 열 때는 openCustomerModal()의 기본값으로 설정
+          // modal hooks
+          customerModalEl.addEventListener("show.bs.modal", () =>
+            activateInfoTab()
+          );
           customerModalEl.addEventListener("hidden.bs.modal", () => {
             resetCustomerForm();
             customerModalEl.dataset.mode = "create";
           });
-
-          // 여신 등록처리
-          document.addEventListener("DOMContentLoaded", () => {
-            // 여신등록 DOM
-            const creditLimitEl = document.getElementById("creditLimit");
-            const creditGradeEl = document.getElementById("creditGrade");
-            const startDateEl = document.getElementById("startDate");
-            const expireDateEl = document.getElementById("expireDate");
-            const activeStatusEl = document.getElementById("cactiveStatus");
-
-            // 초기화 버튼
-            document
-              .getElementById("btnCreditReset")
-              .addEventListener("click", () => {
-                creditGrade.value = "C";
-                creditLimit.value = limitByGrade["C"];
-                document.getElementById("cr_payMethod").value = "";
-                document.getElementById("cr_tel").value = "";
-                document.getElementById("cr_manager").value = "";
-                monthSel.value = "1";
-                daySel.value = "1";
-                useY.checked = true;
-                toggleUse();
-              });
-
-            // 여신 등록 버튼
-            document
-              .getElementById("btnCreditSave")
-              .addEventListener("click", async () => {
-                const payload = {
-                  // useYn: useY.checked ? "Y" : "N",
-                  // 여신 등록
-                  creditLimit: Number(creditLimitEl.value),
-                  creditGrade: creditGradeEl.value,
-                  startDate: startDateEl.value,
-                  expireDate: expireDateEl.value,
-                  cactiveStatus: activeStatusEl.value,
-                };
-                console.log("payload =>", payload);
-                await axios.post("/api/biz/mngcustomer", payload);
-                alert("등록 완료!");
-              });
-          });
-
-          // ===== 모달창 신규 거래처 등록 열기 =====
-          // document
-          //   .getElementById("btnCusRegister")
-          //   .addEventListener("click", () => {
-          //     const modalEl = document.getElementById("mngcustomermodal");
-          //     if (!modalEl) return;
-          //     const bsModal = new bootstrap.Modal(modalEl, {
-          //       backdrop: "static",
-          //       keyboard: false,
-          //     });
-          //     bsModal.show();
-          //   });
         });
       </script>
     </th:block>

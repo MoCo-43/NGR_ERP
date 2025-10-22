@@ -54,6 +54,10 @@ public interface BizService {
 
   // 거래처관리 수정
   int updateCustomerByCode(CustomerVO cvo);
+  // 거래처여신관리 수정
+  int updateCreditByCode(CreditVO cvo);
+
+
 
   // 거래처여신 조회
   List<CustomerCreditVO> selectCrdMaster(Long companyCode, LocalDate monthBase);

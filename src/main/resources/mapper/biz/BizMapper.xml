@@ -305,13 +305,13 @@ ORDER BY
     <result property="creditGrade"   column="CREDIT_GRADE"/>
     <result property="startDate"     column="START_DATE"/>
     <result property="expireDate"       column="EXPIRE_DATE"/>
-    <result property="activeStatus"  column="ACTIVE_STATUS"/>
+    <result property="cActiveStatus"  column="ACTIVE_STATUS"/>
     <result property="cusCode"       column="CUS_CODE"/>      <!-- FK 보조 -->
     <result property="companyCode"   column="COMPANY_CODE"/>  <!-- FK 보조 -->
   </association>
 </resultMap>
 
-<!-- 2) 조회 쿼리: 별칭 + LEFT JOIN -->
+<!-- 거래처 및 여신 조회 -->
 <select id="getCustomerManagement" resultMap="CustomerWithCreditMap" parameterType="long">
   SELECT
     c.CUS_NO, c.CUS_CODE, c.EMP_NO, c.CEMP_NAME, c.EMP_NAME, c.CUS_NAME, c.BIZ_NO,
@@ -319,7 +319,7 @@ ORDER BY
     c.ACTIVE_STATUS,
     c.GBN, c.BANK_NAME, c.BANK_ACCOUNT, c.COMPANY_CODE,
     cm.CREDIT_LIMIT, cm.CREDIT_GRADE, cm.START_DATE, cm.EXPIRE_DATE,
-    cm.ACTIVE_STATUS
+    cm.ACTIVE_STATUS AS C_ACTIVE_STATUS, cm.CUS_CODE
   FROM CUSTOMER c
   JOIN CREDIT_MASTER cm ON cm.CUS_CODE = c.CUS_CODE
   WHERE c.COMPANY_CODE = #{companyCode}
@@ -352,13 +352,13 @@ ORDER BY
 <insert id="insertCredit" parameterType="CreditVO">
   INSERT INTO CREDIT_MASTER(
     CUS_CODE, CREDIT_LIMIT, CREDIT_GRADE,
-    START_DATE, EXPIRE_DATE, DUE_DATE,
-    ACTIVE_STATUS, COMPANY_CODE, MANAGER
+    START_DATE, EXPIRE_DATE,
+    ACTIVE_STATUS AS C_ACTIVE_STATUS, COMPANY_CODE
   )
   VALUES (
     #{cusCode}, #{creditLimit}, #{creditGrade},
-    #{startDate}, #{endDate}, #{dueDate},
-    #{activeStatus}, #{companyCode}, #{manager}
+    #{startDate}, #{expireDate},
+    #{activeStatus}, #{companyCode}
   )
 </insert>
 
@@ -387,6 +387,22 @@ ORDER BY
     </set>
     WHERE CUS_CODE = #{cusCode}
   </update>
+
+<!-- 거래처 여신 수정 -->
+  <update id="updateCreditByCode" parameterType="CreditVO">
+    UPDATE CREDIT_MASTER
+    <set>
+      <if test="creditLimit != null">        CREDIT_LIMIT = #{creditLimit},</if>
+      <if test="creditGrade != null">       CREDIT_GRADE = #{creditGrade},</if>
+      <if test="startDate != null">       START_DATE = #{startDate},</if>
+      <if test="expireDate != null">        EXPIRE_DATE = #{expireDate},</if>
+      <if test="cActiveStatus != null">          ACTIVE_STATUS = #{cActiveStatus},</if>
+    </set>
+    WHERE CUS_CODE = #{cusCode}
+  </update>
+
+  
+
 
 <!-- 여신관리 조회 -->
   <!-- 기준월 파라미터가 null이면 SYSDATE 사용 -->
