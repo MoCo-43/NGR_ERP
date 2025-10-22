@@ -127,29 +127,24 @@ public class BizController {
 
 
 
-
-
-
-
-  // 거래처 조회
+  // 거래처 및 여신 조회
   @GetMapping("/mngcustomer")
   public List<CustomerVO> getCustomerManagement() {
     Long companyCode = SessionUtil.companyId();
     return service.getCustomerManagement(companyCode);
   }
 
-  // 거래처 등록
-  @PostMapping(value = "/mngcustomer", consumes = "application/json")
-  public ResponseEntity<Integer> insertCustomer(@RequestBody CustomerVO cvo) {
 
-    // 세션에서 회사코드 꺼내오기
-    Long companyCode = SessionUtil.companyId();
-    cvo.setCompanyCode(companyCode);
-    
+  // 거래처, 거래처별 여신등록
+  @PostMapping(value="/mngcustomer")
+public ResponseEntity<Integer> insCusCredit(@RequestBody CustomerVO cvo) {
+  Long companyCode = SessionUtil.companyId();
+  cvo.setCompanyCode(companyCode);
+  int result = service.insertCustomerWithCredit(cvo);
+  return ResponseEntity.ok(result); // 1 or 2
+}
 
-    int result = service.insertCustomer(cvo);
-    return ResponseEntity.ok(result);
-  }
+
 
   // 거래처 수정
  @PutMapping("/mngcustomer/{cusCode}")

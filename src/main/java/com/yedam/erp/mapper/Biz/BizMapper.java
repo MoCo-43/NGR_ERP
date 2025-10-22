@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.springframework.data.repository.query.Param;
 
 import com.yedam.erp.vo.Biz.CreditGradeVO;
+import com.yedam.erp.vo.Biz.CreditVO;
 import com.yedam.erp.vo.Biz.CustomerCreditVO;
 import com.yedam.erp.vo.Biz.CustomerVO;
 import com.yedam.erp.vo.Biz.DeliveryOrderVO;
@@ -50,10 +51,40 @@ public interface BizMapper {
   // ==출하지시서 디테일==
   int insertDODetails(DoInsertVO dovo);
 
-  // 거래처관리 조회
+  // 거래처 및 여신 조회
   List<CustomerVO> getCustomerManagement(Long companyCode);
-  // 거래처관리 등록
+
+  // 거래처코드 생성
+  String nextCusCode();
+  // 거래처 관리 및 여신등록
   int insertCustomer(CustomerVO cvo);
+  // 거래처별 여신등록
+  int insertCredit(CreditVO cvo);
+
+  /*
+   *   @Transactional
+  public void insertCustomerWithCredit(CustomerVO cvo) {
+    // 1) 고객코드 생성
+    String cusCode = bizMapper.nextCusCode();
+    cvo.setCusCode(cusCode);
+
+    // 2) 거래처 등록
+    bizMapper.insertCustomer(cvo);
+
+    // 3) 여신 등록 (있을 경우)
+    if (cvo.getCredit() != null) {
+      CreditVO cr = cvo.getCredit();
+      cr.setCusCode(cusCode);
+      cr.setCompanyCode(cvo.getCompanyCode());
+      if (cr.getActiveStatus() == null) cr.setActiveStatus("Y");
+      bizMapper.insertCredit(cr);
+    }
+  }
+   * 
+   * 
+   */
+
+
   // 거래처관리 수정
   int updateCustomerByCode(CustomerVO cvo);
   // 거래처여신 조회
