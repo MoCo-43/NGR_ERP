@@ -119,4 +119,8 @@ public interface StockService {
 	
 	// dashboard용 최근 6개월 입/출고 건수 조회
 	public List<Map<String , Object>> getInAndOutCountOutput(Map<String , Object> params);
+	
+	
+	// dashboard용 연간 주문 건수 조회
+	public List<Map<String , Object>> getAnnualOrderCnt(Long companyCode);
 }

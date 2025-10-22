@@ -137,4 +137,8 @@ public interface StockMapper {
 	
 	// dashboard 용 최근 6개월 입/출고 건
 	public List<Map<String , Object>> getInAndOutCountOutput(Map<String , Object> params);
+	
+	
+	// dashboard용 연간 주문 건수 조회
+	public List<Map<String , Object>> getAnnualOrderCnt(Long companyCode);
 }

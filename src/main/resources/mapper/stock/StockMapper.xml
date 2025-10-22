@@ -1206,4 +1206,15 @@ ORDER BY "month"
 ]]>
 </select>
 
+<!-- 연간 주문건수 대시보드 조회 -->
+<select id="getAnnualOrderCnt" resultType="map" parameterType="Long">
+SELECT COUNT(*) as "orderCnt" ,
+       TO_CHAR(po_start,'YYYY') as "poDate" 
+FROM PURCHASE_ORDER 
+WHERE TO_CHAR(po_start,'YYYY') = TO_CHAR(sysdate,'YYYY') 
+AND COMPANY_CODE = #{companyCode} 
+GROUP BY TO_CHAR(po_start,'YYYY')
+
+</select>
+
 </mapper>
