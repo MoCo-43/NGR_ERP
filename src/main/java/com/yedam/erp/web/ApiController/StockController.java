@@ -114,14 +114,14 @@ public class StockController {
 	@GetMapping("/icList") // 결산 리스트
 	public List<InvenVO> getIcList(){
 		Long companyCode = SessionUtil.companyId();
-		System.out.println(companyCode);
+		// System.out.println(companyCode);
 		return service.getIcList(companyCode);
 	}
 	
 	@PostMapping("/icList") // 결산 리스트
 	public List<InvenVO> getIcList(@RequestBody Map<String , Object>params){
 		Long companyCode = SessionUtil.companyId();
-		System.out.println(companyCode);
+		// System.out.println(companyCode);
 		params.put("companyCode", companyCode);
 		return service.getIcListByParam(params);
 	}
@@ -130,14 +130,14 @@ public class StockController {
 	@GetMapping("/icDetailList/{selectedRow}") // 결산 상세 리스트
 	public List<InvenDetailVO> getIcDetailList(@PathVariable String selectedRow){
 		Long companyCode = SessionUtil.companyId();
-		System.out.println(companyCode);
+		// System.out.println(companyCode);
 		return service.getIcDetailList(companyCode,selectedRow);
 	}
 	
 	@GetMapping("/inboundList") // 입고 조회
 	public List<InboundVO> getInboundList(){
 		Long companyCode = SessionUtil.companyId();
-		System.out.println(companyCode);
+		// System.out.println(companyCode);
 		return service.getInboundList(companyCode);
 	}
 	
@@ -182,7 +182,7 @@ public class StockController {
 	
 	@PostMapping("/outboundInsert")
 	public ResponseEntity<?> insertOutbound(@RequestBody OutboundHeaderVO payload){
-		System.out.println("넘어온 payload : "+payload);
+		// System.out.println("넘어온 payload : "+payload);
 //		if (payload.toString().isEmpty()) {
 		// NULL || empty CHECK
 //			System.out.println("payload의 값이 비어있습니다.\n다시 확인해주세요.");
@@ -463,8 +463,8 @@ public class StockController {
 	 @PutMapping("/signUpdate") // 전자서명 등록 수정
 	 public ResponseEntity<String> updateSign(@RequestBody InvenVO payload) {
 		 try {
-			 System.out.println("payload.getFinalSign() : "+payload.getFinalSign());
-			 System.out.println("payload.getEmpSign() : "+payload.getEmpSign());
+			 // System.out.println("payload.getFinalSign() : "+payload.getFinalSign());
+			 // System.out.println("payload.getEmpSign() : "+payload.getEmpSign());
 			 payload.setCompanyCode(SessionUtil.companyId());
 			 service.updateSign(payload);
 			 return ResponseEntity.ok("서명 등록 완료!");
@@ -484,7 +484,7 @@ public class StockController {
 	 
 	 @PostMapping("/getInAndOutCountOutput") // dashboard 용 최근 6개월 입/출고 건수 조회
 	 public List<Map<String , Object>> getInAndOutCountOutput(@RequestBody Map<String , Object> params){
-		 System.out.println("Api-controller > compCode : "+params.get("compCode"));
+		 // System.out.println("Api-controller > compCode : "+params.get("compCode"));
 		 return service.getInAndOutCountOutput(params);
 	 }
 	 
@@ -556,6 +556,20 @@ public class StockController {
 	    	return service.getAnnualOrderCnt(companyCode);
 	    }
 	 
-	
+	    
+	    // 연간 주문건수 대시보드 상세 조회 - 기본
+	    @GetMapping("/getAnnualOrderDetail")
+	    public List<Map<String , Object>> getAnnualOrderDetail(){
+	    	Long companyCode = SessionUtil.companyId();
+	    	return service.getAnnualOrderDetail(companyCode);
+	    }
+	    
+	    
+	    // 연간 주문건수 대시보드 상세 조회 - 키워드 필터
+	    @PostMapping("/getAnnualOrderDetailByParam")
+	    public List<Map<String , Object>> getAnnualOrderDetailByParam(@RequestBody Map<String , Object> params){
+	    	 params.put("companyCode", SessionUtil.companyId());
+	    	return service.getAnnualOrderDetailByParam(params);
+	    }
 	
 }

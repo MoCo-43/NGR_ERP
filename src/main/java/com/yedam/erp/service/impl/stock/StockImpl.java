@@ -345,6 +345,18 @@ public class StockImpl implements StockService{
 	}
 
 
+	@Override
+	public List<Map<String, Object>> getAnnualOrderDetailByParam(Map<String, Object> params) {
+		return mapper.getAnnualOrderDetailByParam(params);
+	}
+
+
+	@Override
+	public List<Map<String, Object>> getAnnualOrderDetail(Long companyCode) {
+		return mapper.getAnnualOrderDetail(companyCode);
+	}
+
+
 
 
 }

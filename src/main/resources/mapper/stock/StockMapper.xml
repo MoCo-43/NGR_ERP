@@ -1217,4 +1217,54 @@ GROUP BY TO_CHAR(po_start,'YYYY')
 
 </select>
 
+<!-- 모달창 상세 조회 기본 -->
+<select id="getAnnualOrderDetail" resultType="map" parameterType="Long">
+SELECT 
+       TO_CHAR(po.po_start,'YYYY-MM-DD') as "poDate", 
+       po.creater AS "creater", 
+       po.pay_method AS "payMethod",
+       po.po_code AS "poCode",
+       cu.cus_name AS "cusName"   
+FROM PURCHASE_ORDER po 
+JOIN CUSTOMER cu 
+ON po.cus_code = cu.cus_code 
+WHERE TO_CHAR(po.po_start,'YYYY') = TO_CHAR(sysdate,'YYYY') 
+AND po.COMPANY_CODE = #{companyCode} 
+GROUP BY TO_CHAR(po.po_start,'YYYY-MM-DD'),
+         po.creater,
+         po.pay_method,
+         po.po_code,
+         cu.cus_name 
+
+</select>
+
+
+<!-- 모달창 상세 조회 필터 -->
+<select id="getAnnualOrderDetailByParam" resultType="map" parameterType="map">
+SELECT 
+       TO_CHAR(po.po_start,'YYYY-MM-DD') as "poDate", 
+       po.creater AS "creater", 
+       po.pay_method AS "payMethod",
+       po.po_code AS "poCode",
+       cu.cus_name AS "cusName"   
+FROM PURCHASE_ORDER po 
+JOIN CUSTOMER cu 
+ON po.cus_code = cu.cus_code 
+WHERE TO_CHAR(po.po_start,'YYYY') = TO_CHAR(sysdate,'YYYY') 
+AND po.COMPANY_CODE = #{companyCode} 
+<if test="cusName != null and cusName != ''">
+ AND cu.cus_name LIKE '%' || #{cusName} || '%' 
+</if>
+<if test="payMethod != null and payMethod != ''">
+ AND po.pay_method = #{payMethod} 
+</if>
+GROUP BY TO_CHAR(po.po_start,'YYYY-MM-DD'),
+         po.creater,
+         po.pay_method,
+         po.po_code,
+         cu.cus_name 
+
+</select>
+
+
 </mapper>
