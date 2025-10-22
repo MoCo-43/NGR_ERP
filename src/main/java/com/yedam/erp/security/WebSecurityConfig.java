@@ -44,7 +44,7 @@ public class WebSecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(requests -> requests
-						.requestMatchers("/", "/api/**", "/*.css", "/*.js", "/img/**", "/prodimg/**", "/sign/**","/findpw")
+						.requestMatchers("/", "/api/**", "/*.css", "/*.js", "/img/**", "/prodimg/**", "/sign/**","/findpw","/subscribe")
 						.permitAll()
 						.requestMatchers("/admin/**","/sub/admin/**").hasRole("ADMIN")
 		                // 관리자 전용 페이지
@@ -77,10 +77,10 @@ public class WebSecurityConfig {
 	@Order(2)
 	public SecurityFilterChain salSecurityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
 	    http
-	        .securityMatcher("/salLogin", "/salLogin/**","/salLogout","/register","/checkId/**")
+	        .securityMatcher("/salLogin", "/salLogin/**","/salLogout","/register","/checkId/**","/subDetails")
 	        .csrf(csrf -> csrf.disable())
 	        .authorizeHttpRequests(auth -> auth
-	            .requestMatchers("/checkId/**","/salLogin", "/salLogin/**","/subDetails**","/register","/img/**", "/css/**").permitAll()
+	            .requestMatchers("/checkId/**","/salLogin", "/salLogin/**","/subDetails**","/register","/img/**", "/css/**","/subDetails").permitAll()
 	            .anyRequest().authenticated()
 	        )
 	        .formLogin(form -> form
@@ -91,15 +91,17 @@ public class WebSecurityConfig {
 	            .defaultSuccessUrl("/", true)
 	            // 로그인 실패 시 콘솔 출력
 	            .failureHandler((request, response, exception) -> {
-	                System.out.println("로그인 실패: " + exception.getMessage());
-	                //response.sendRedirect("/salLogin?error");
-	                if (exception instanceof LockedException) {
-	                    response.sendRedirect("/login?locked");
-	                } else if (exception instanceof BadCredentialsException) {
-	                    response.sendRedirect("/login?error");
-	                } else {
-	                    response.sendRedirect("/login?error");
-	                }
+//	                System.out.println("로그인 실패: " + exception.getMessage());
+//	                //response.sendRedirect("/salLogin?error");
+//	                if (exception instanceof LockedException) {
+//	                    response.sendRedirect("/login?locked");
+//	                } else if (exception instanceof BadCredentialsException) {
+//	                    response.sendRedirect("/login?error");
+//	                } else {
+//	                    response.sendRedirect("/login?error");
+//	                }
+                response.sendRedirect("/salLogin?error");
+
 	            })
 	            // 로그인 성공 시 콘솔 출력
 	            .successHandler((request, response, authentication) -> {
