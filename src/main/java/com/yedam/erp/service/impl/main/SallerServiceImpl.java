@@ -13,6 +13,7 @@ import com.yedam.erp.vo.main.SallerVO;
 public class SallerServiceImpl implements SallerService{
 	@Autowired
 	SallerMapper mapper;
+
 	@Override
 	public SallerVO selectSallerByNo(Long sallerNo) {
         if (sallerNo == null) sallerNo = 1L;

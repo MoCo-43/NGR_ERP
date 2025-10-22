@@ -1,6 +1,7 @@
 const auth = window.APP_CONTEXT?.auth || "";
 console.log("권한:", auth);
 
+
 /** 모듈별 메뉴 데이터 */
 const MENUS = {
   hr: {
