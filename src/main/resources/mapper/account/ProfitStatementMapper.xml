@@ -30,7 +30,6 @@ FROM (
     JOIN ACCOUNT A ON J.ACCT_CODE = A.ACCT_CODE
     WHERE J.COMPANY_CODE = #{companyCode}
       AND (TO_CHAR(J.JRN_DATE, 'YYYYMM') = #{prevYm} OR TO_CHAR(J.JRN_DATE, 'YYYYMM') = #{curYm})
-
     UNION ALL
 
     /* ===== 급여 전표 (PAYROLL_JRN_HIST 기준) ===== */
