@@ -9,6 +9,8 @@
 	rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
 	rel="stylesheet">
+<!-- ⭐ Material Symbols 추가 -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 <th:block layout:fragment="head_extra">
 	<script
 		src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -81,6 +83,11 @@
         color: #4a69bd;
     }
     
+    .material-symbols {
+        font-size: 36px;
+        color: #4a69bd;
+    }
+    
     .stat-value {
         font-size: 32px; /* 폰트 크기 미세 조정 */
         font-weight: 700;
@@ -121,6 +128,7 @@ canvas {
 	height: 100% !important;
 	max-height: 100%;
 }
+
 </style>
 </th:block>
 </head>
@@ -148,8 +156,8 @@ canvas {
 
 				<div class="stat-card">
 					<div class="stat-header">
-						<span class="stat-label">재고 현황</span> <span class="material-icons">inventory_2</span>
-					<div class="stat-value">0개</div>
+						<span class="stat-label">연간 주문건수</span> <span class="material-symbols material-symbols-outlined">deployed_code_update</span>
+					<div class="stat-value" id="annOrderCntDiv">0건</div>
 					</div>
 				</div>
 			</div>
@@ -218,6 +226,20 @@ canvas {
         }
       }
     });
+  }
+  
+  //✅ 연간 주문건수 대시보드(작성된 주문서 기준)
+  async function annualOrderCntData(){
+	  const div = document.querySelector('#annOrderCntDiv');
+	  // console.log("#annOrderCntDiv"+div.innerHTML);
+	  try{
+		  const res = await axios.get("/api/v1/stock/getAnnualOrderCnt", {withCredentials: true} );
+		  const annCnt = res.data[0]?.orderCnt;
+		  div.innerHTML = annCnt + '건';
+	  }catch(err){
+		  toastr['error']('No data found');
+		  console.log(err);
+	  }
   }
   
   //✅ 최근 6개월 입출고 데이터 조회
@@ -403,6 +425,7 @@ canvas {
   
   // 영업 모듈
   createChart('salesChart', 'bar', salesData);
+  annualOrderCntData();
   
   // 인사 모듈
   fetchHrMembersChart();

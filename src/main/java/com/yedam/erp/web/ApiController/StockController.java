@@ -548,6 +548,13 @@ public class StockController {
 	                .contentType(mediaType)
 	                .body(resource);
 	    }
+	    
+	    // 연간 주문건수 대시보드 조회
+	    @GetMapping("/getAnnualOrderCnt")
+	    public List<Map<String, Object>>getAnnualOrderCnt(){
+	    	Long companyCode = SessionUtil.companyId();
+	    	return service.getAnnualOrderCnt(companyCode);
+	    }
 	 
 	
 	

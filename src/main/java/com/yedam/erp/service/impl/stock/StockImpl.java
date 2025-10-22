@@ -339,6 +339,12 @@ public class StockImpl implements StockService{
 	}
 
 
+	@Override
+	public List<Map<String, Object>> getAnnualOrderCnt(Long companyCode) {
+		return mapper.getAnnualOrderCnt(companyCode);
+	}
+
+
 
 
 }
