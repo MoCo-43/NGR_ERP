@@ -3,6 +3,7 @@
 	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
 	layout:decorate="~{layout/base}">
 <head>
+<base href="http://localhost:80/">
 <title layout:fragment="title">구독 계정관리</title>
 <th:block layout:fragment="head_extra">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -209,17 +210,19 @@ document.addEventListener('DOMContentLoaded', function() {
 	let taxInvoiceHtmlContent = null;
 	const subCancelBtn = document.getElementById('subCancel');
 
-	// ✅ 계약서 HTML 로드
-	fetch('/sub/contract-html')
-		.then(r => r.text()).then(html => contractHtmlContent = html)
-		.catch(err => console.error('계약서 로드 실패:', err));
+	//  계약서 HTML 로드
+	const matNo = 1001; // 실제 로그인 회사의 matNo를 넣거나 서버에서 가져오세요
+	fetch(`/sub/contract-view/${matNo}`)
+	  .then(r => r.text())
+	  .then(html => contractHtmlContent = html)
+	  .catch(err => console.error('계약서 로드 실패:', err));
 
-	// ✅ 세금계산서 HTML 로드
+	//  세금계산서 HTML 로드
 	fetch('/sub/taxInvoice-html')
 		.then(r => r.text()).then(html => taxInvoiceHtmlContent = html)
 		.catch(err => console.error('세금계산서 로드 실패:', err));
 
-	// ✅ 계약서 미리보기
+	//  계약서 미리보기
 	document.getElementById('btnPreviewContract').addEventListener('click', () => {
 		if (!contractHtmlContent) return alert('계약서 로딩 중입니다.');
 		const popup = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
@@ -227,13 +230,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		popup.document.close();
 	});
 
-	// ✅ 계약서 PDF
+	// 계약서 PDF
 	document.getElementById('btnDownloadContractPdf').addEventListener('click', () => {
 		if (!contractHtmlContent) return alert('계약서 로딩 중입니다.');
 		generatePdf(contractHtmlContent, 'NGR_ERP_서비스_이용계약서.pdf');
 	});
 
-	// ✅ 세금계산서 미리보기
+	// 세금계산서 미리보기
 	document.getElementById('btnPreviewTaxInvoice').addEventListener('click', () => {
 		if (!taxInvoiceHtmlContent) return alert('세금계산서 로딩 중입니다.');
 		const popup = window.open('', '_blank', 'width=1000,height=800,scrollbars=yes');
@@ -241,13 +244,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		popup.document.close();
 	});
 
-	// ✅ 세금계산서 PDF
+	// 세금계산서 PDF
 	document.getElementById('btnDownloadTaxInvoicePdf').addEventListener('click', () => {
 		if (!taxInvoiceHtmlContent) return alert('세금계산서 로딩 중입니다.');
 		generatePdf(taxInvoiceHtmlContent, '세금계산서.pdf');
 	});
 
-	// ✅ PDF 공통 함수
+	// PDF 공통 함수
 	function generatePdf(htmlContent, fileName) {
 		const temp = document.createElement('div');
 		temp.style.position = 'absolute';
@@ -269,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		.finally(() => document.body.removeChild(temp));
 	}
 
-	// ✅ 구독 취소
+	// 구독 취소
 	if(subCancelBtn){
 		subCancelBtn.addEventListener('click', async (e)=>{
 			const button = e.currentTarget;
@@ -277,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			const res = await cuteAlert({
 				type:"question",
 				title:"구독 취소 확인",
-				message:`정말 구독을 취소하시겠습니까? 취소 후에도 ${endDateStr}까지 이용 가능합니다.`,
+				message:`정말 구독을 취소하시겠습니까?\n 취소 후에도 ${endDateStr}까지\n 이용 가능합니다.`,
 				imgUrl:'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
 				confirmText:"네, 취소합니다",
 				cancelText:"아니오"

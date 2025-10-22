@@ -140,7 +140,7 @@
   <p style="font-weight: bold;">전자서명</p>
 
   <!-- signPath가 존재하고 비어있지 않을 때만 표시 -->
-<img th:if="${signPath != null and #strings.isNotEmpty(signPath)}"
+<img th:if="${signPath != null and !#strings.isEmpty(signPath)}"
      th:src="@{'/signature/' + ${matNo}}"
      alt="전자서명"
      style="width:200px; border:1px solid #ccc; padding:5px;" />
@@ -148,7 +148,6 @@
 <p th:if="${signPath == null or #strings.isEmpty(signPath)}"
    style="color:#999;">서명 정보가 없습니다.</p>
 </div>
-
 </body>
 </html>
 

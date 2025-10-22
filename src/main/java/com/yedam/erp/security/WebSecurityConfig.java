@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -90,7 +92,14 @@ public class WebSecurityConfig {
 	            // 로그인 실패 시 콘솔 출력
 	            .failureHandler((request, response, exception) -> {
 	                System.out.println("로그인 실패: " + exception.getMessage());
-	                response.sendRedirect("/salLogin?error");
+	                //response.sendRedirect("/salLogin?error");
+	                if (exception instanceof LockedException) {
+	                    response.sendRedirect("/login?locked");
+	                } else if (exception instanceof BadCredentialsException) {
+	                    response.sendRedirect("/login?error");
+	                } else {
+	                    response.sendRedirect("/login?error");
+	                }
 	            })
 	            // 로그인 성공 시 콘솔 출력
 	            .successHandler((request, response, authentication) -> {
