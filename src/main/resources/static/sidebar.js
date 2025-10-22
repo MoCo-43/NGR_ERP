@@ -1,3 +1,7 @@
+const auth = window.APP_CONTEXT?.auth || "";
+console.log("권한:", auth);
+
+
 /** 모듈별 메뉴 데이터 */
 const MENUS = {
   hr: {
@@ -163,30 +167,42 @@ function renderSidebar(key) {
     let hasActiveItem = false;
 
     grp.items.forEach(([label, href]) => {
+      if (auth === "ROLE_USER") {
+        const restricted = ["/accountList",
+        					"/payroll"];
+        if (restricted.includes(href)) return;
+      }
+
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.href = href;
       a.textContent = label;
 
-      if (a.pathname === currentPath) {
+      const pathOnly = new URL(a.href, window.location.origin).pathname;
+      if (pathOnly === currentPath) {
         a.classList.add("active");
         hasActiveItem = true;
       }
+
+      // ✅ 링크 클릭 시 기본 동작 유지 + 토글 이벤트 차단
+      a.addEventListener("click", (e) => {
+        e.stopPropagation(); // 부모 div로 버블링 방지
+      });
 
       li.appendChild(a);
       ul.appendChild(li);
     });
 
-    if (hasActiveItem) {
-      ul.classList.add("open");
-    }
-
-    gtitle.addEventListener("click", () => {
+    // ✅ 그룹 토글은 group-title 클릭일 때만 작동
+    gtitle.addEventListener("click", (e) => {
+      if (e.target.closest("a")) return; // a 클릭은 무시
       ul.classList.toggle("open");
     });
 
+    if (hasActiveItem) ul.classList.add("open");
+
     wrap.appendChild(gtitle);
-    wrap.appendChild(ul);
+    if (ul.children.length > 0) wrap.appendChild(ul);
     root.appendChild(wrap);
   });
 }

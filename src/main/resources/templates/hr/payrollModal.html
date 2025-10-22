@@ -140,7 +140,7 @@
   const $ = (id) => document.getElementById(id); // id로 DOM 요소를 가져오는 유틸 함수
   // 백엔드 급여 대장 API
   const API_BASE = '/api/v1/payrolls'; // 급여대장  API 
-  const auth = /*[[${#authentication.principal.empLoginVO.comName}]]*/ "";
+  const autho = /*[[${#authentication.principal.empLoginVO.comName}]]*/ "";
 
   let gridApi = null; // 사원별 급여내역 ag-Grid 인스턴스 API 참조
   let deptGridApi = null; // 부서 합계 ag-Grid 인스턴스 API 참조
@@ -500,10 +500,10 @@
     const b = e.target.closest('button'); if (!b) return;
    
     if (b.id === 'pd-btn-confirm'){
-    	 if(auth == "ROLE_USER"){
+    	 if(autho == "ROLE_USER"){
     			const ok = await cuteAlert({
     			    type: 'warning',
-    			    title: `현재권한:${auth}`,
+    			    title: `현재권한:${autho}`,
     			    message: '관리자 직급만 확정이 가능합니다.',
     			    cancelText: '취소'
     			  });
