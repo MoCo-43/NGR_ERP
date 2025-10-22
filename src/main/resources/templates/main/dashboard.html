@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
 	rel="stylesheet">
 <!-- ⭐ Material Symbols > deployed_code_update icon만 추가 (전부추가시 '&icon_names' 부분 삭제) [ 295KB => 1.7KB ] -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=deployed_code_update" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=order_approve" rel="stylesheet">
 <!--  base에 있는 버전과 달라서 강제 주입 --> 
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
@@ -28,6 +28,7 @@
    />
    <!-- CSS -->
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
 <th:block layout:fragment="head_extra">
 	<script
 		src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -146,7 +147,34 @@ canvas {
 	height: 100% !important;
 	max-height: 100%;
 }
-
+.card-msg-header {
+  display: inline-block;       /* 인라인 형태로 띄움 */
+  position: relative;          /* 필요 시 위치 조정 가능 */
+  top: -10px;                  /* 살짝 위로 띄우기 */
+  right: 0;                    /* 오른쪽 정렬 */
+  margin-left: auto;           /* flex 없이도 우측 정렬 */
+  
+  width: 200px;
+  height: 80px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 15px 15px 15px 3px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.3s ease, top 0.3s ease;
+}
+.card-msg-header.show {
+  opacity: 1;
+  top: -20px; /* show될 때 살짝 위로 올라오며 fade-in */
+}
+.hidden {
+  display: none;
+}
+.msg-body {
+  font-size: 10px;
+  color: #333;
+}
 </style>
 </th:block>
 </head>
@@ -174,12 +202,21 @@ canvas {
 
 				<div class="stat-card" id="clickDiv">
 					<div class="stat-header">
-						<span class="stat-label">연간 주문 건수</span> <span class="material-symbols material-symbols-outlined">deployed_code_update</span>
+						<span class="stat-label" id="titleLabel">연간 주문 건수</span> <span class="material-symbols material-symbols-outlined">order_approve</span>
 					<div class="stat-value" id="annOrderCntDiv">0건</div>
 					</div>
 				</div>
 			</div>
-
+				<!-- 문구 호출 시작 -->
+				<!-- <div class="card card-msg-header" id="messageCard">
+				  <div class="card-body msg-body">
+					 <p id="messageText" class="hidden">
+					      해당 CARD 클릭시<br>상세정보 확인이 가능합니다.
+					 </p>
+				  </div>
+				</div> -->
+				<!-- 문구 호출 종료 -->
+			
 			<div class="modules-group">
 
 				<div class="module-card">
@@ -231,9 +268,10 @@ canvas {
 	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
 	const div = document.querySelector('#annOrderCntDiv');
 	const clickDiv = document.querySelector('#clickDiv');
+	const titleLabel = document.querySelector('#titleLabel');
 	let gridApi = null;
 	let inDetailGridOptions = null;
-		
+	
   // Chart.js 공통 생성 함수
   function createChart(canvasId, type, data, extraOptions = {}) {
     const ctx = document.getElementById(canvasId);
@@ -263,7 +301,32 @@ canvas {
       }
     });
   }
-  
+  function showMessage() {
+	  const messageElement = document.getElementById('messageCard');
+	  const messageText = document.getElementById('messageText');
+
+	  // 보이기
+	  messageElement.classList.add('show');
+	  messageText.classList.remove('hidden');
+
+	  // 3초 후 숨기기
+	  setTimeout(() => {
+	    messageElement.classList.remove('show');
+	    messageText.classList.add('hidden');
+	  }, 3000);
+	}
+  	// showMessage();
+  	
+  // 입고조회 버튼 클릭 시 이동
+  document.getElementById("linkBtnIn").addEventListener("click", () => {
+    window.location.href = "/stock/inbound/list"; // ✅ 여기에 이동할 URL 입력
+  });
+
+  // 출고조회 버튼 클릭 시 이동
+  document.getElementById("linkBtnOut").addEventListener("click", () => {
+    window.location.href = "/stock/outbound/list"; // ✅ 여기에 이동할 URL 입력
+  });
+  	
 	//강제 딜레이 부여
 	function debounce(func, wait = 300) {
 		    let timeout;
@@ -480,8 +543,10 @@ canvas {
   async function annualOrderCntData(){
 	  try{
 		  const res = await axios.get("/api/v1/stock/getAnnualOrderCnt", {withCredentials: true} );
-		  const annCnt = res.data[0]?.orderCnt;
+		  const annCnt = res.data[0]?.orderCnt; // 주문 건수
+		  const annYear = res.data[0]?.poDate; // 작성 연도
 		  div.innerHTML = annCnt + '건';
+		  titleLabel.innerHTML = annYear+"년 총 주문 건수";
 	  }catch(err){
 		  toastr['error']('No data found');
 		  console.log(err);
