@@ -1,5 +1,6 @@
 package com.yedam.erp.security;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -102,6 +104,7 @@ import com.yedam.erp.mapper.main.SallerMapper;
 import com.yedam.erp.vo.main.EmpLoginVO;
 import com.yedam.erp.vo.main.SallerVO;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 /**
@@ -203,39 +206,31 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     public boolean supports(Class<?> authentication) {
         return authentication.equals(UsernamePasswordAuthenticationToken.class);
     }
+    
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
-                                        AuthenticationException exception) throws java.io.IOException {
+                                        AuthenticationException exception) throws IOException, ServletException {
+        String empId = request.getParameter("empId");
+        if (empId != null && !empId.isEmpty()) {
+            EmpLoginVO emp = empLoginMapper.findByEmpId(empId);
+            if (emp != null) {
+                long failCount = emp.getFailedLoginAtt() == null ? 1L : emp.getFailedLoginAtt() + 1L;
+                emp.setFailedLoginAtt(failCount);
 
-        String empId = request.getParameter("username");
-        EmpLoginVO emp = empLoginMapper.findByEmpId(empId);
+                if (failCount >= 5) {
+                    emp.setIsLocked("Y");
+                    LocalDateTime unlockTime = LocalDateTime.now().plusMinutes(10);
+                    emp.setLockUntil(Date.from(unlockTime.atZone(ZoneId.systemDefault()).toInstant()));
+                }
 
-        if (emp != null) {
-        	long failCount = emp.getFailedLoginAtt() == null ? 1L : emp.getFailedLoginAtt() + 1L;
-        	emp.setFailedLoginAtt(failCount);
-
-            // 5회 이상 실패하면 10분 잠금
-            if (failCount >= 5) {
-                emp.setIsLocked("Y");
-                LocalDateTime unlockTime = LocalDateTime.now().plusMinutes(10);
-                emp.setLockUntil(Date.from(unlockTime.atZone(ZoneId.systemDefault()).toInstant()));
+                empLoginMapper.updateLoginFail(emp);
             }
-
-            empLoginMapper.updateLoginFail(emp);
         }
 
-        response.sendRedirect("/login?error=true");
-    }
-
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws java.io.IOException {
-
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        EmpLoginVO emp = userDetails.getEmpLoginVO();
-
-        // 로그인 성공 시 실패횟수 초기화
-        empLoginMapper.resetLoginFail(emp.getEmpId());
-
-        response.sendRedirect("/login");
+        if (exception instanceof LockedException) {
+            response.sendRedirect("/login?locked");
+        } else {
+            response.sendRedirect("/login?error");
+        }
     }
 }
 
