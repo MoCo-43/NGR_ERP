@@ -123,4 +123,14 @@ public interface StockService {
 	
 	// dashboard용 연간 주문 건수 조회
 	public List<Map<String , Object>> getAnnualOrderCnt(Long companyCode);
+
+	
+	// dashboard용 연간 주문 상세 조회 - 기본
+	public List<Map<String, Object>> getAnnualOrderDetail(Long companyCode);
+		
+		
+	// dashboard용 연간 주문 상세 조회 - 키워드 필터링
+	public List<Map<String, Object>> getAnnualOrderDetailByParam(Map<String , Object> params);
+	
+	
 }
