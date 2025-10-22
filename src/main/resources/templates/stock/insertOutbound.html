@@ -50,38 +50,38 @@
       <div class="d-flex justify-content-end mb-3">
       	<button type="button" class="btn btn-dark me-2" id="searchBtn">지시서조회</button>
 	    <button type="button" class="btn btn-primary me-2" id="submitBtn">등록</button>
-	    <button type="reset" class="btn btn-danger" form="insertList">초기화</button>
+	    <button type="button" class="btn btn-danger" form="insertList" id="resetBtn">초기화</button>
        </div>
     </div>
     
       <form class="row g-3" id="insertList" enctype="application/x-www-form-urlencoded">
       <div class="col-md-3">
           <label for="compCode" class="form-label">회사코드</label>
-          <input type="text" class="form-control" id="compCode" name="compCode">
+          <input type="text" class="form-control" id="compCode" name="compCode" readonly>
         </div>
         <div class="col-md-3">
           <label for="doCode" class="form-label">지시서코드</label>
-          <input type="text" class="form-control" id="doCodeInput" name="doCode" placeholder="지시서코드 기입">
+          <input type="text" class="form-control fc" id="doCodeInput" name="doCode" placeholder="지시서코드 기입">
         </div>
          <div class="col-md-3">
           <label for="businessCode" class="form-label">거래처코드</label>
-          <input type="text" class="form-control" id="businessCodeInput" name="businessCode">
+          <input type="text" class="form-control fc" id="businessCodeInput" name="businessCode">
         </div>
         <div class="col-md-3">
           <label for="businessPartner" class="form-label">거래처명</label>
-          <input type="text" class="form-control" id="businessPartnerInput" name="businessPartner">
+          <input type="text" class="form-control fc" id="businessPartnerInput" name="businessPartner">
         </div>
         <div class="col-md-3">
           <label for="outBoundDate" class="form-label">출고일자</label>
-          <input type="date" class="form-control" id="outBoundDate" name="outBoundDate">
+          <input type="date" class="form-control fc" id="outBoundDate" name="outBoundDate">
         </div>
         <div class="col-md-3">
           <label for="dueDate" class="form-label">납기일자</label>
-          <input type="date" class="form-control" id="dueDateInput" name="dueDate">
+          <input type="date" class="form-control fc" id="dueDateInput" name="dueDate">
         </div>
         <div class="col-md-3">
           <label for="empId" class="form-label">담당자명</label>
-          <input type="text" class="form-control" id="empId" name="empId">
+          <input type="text" class="form-control" id="empId" name="empId" readonly>
         </div>
         
       </form>
@@ -144,6 +144,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const tableBody = document.querySelector('#orderItemsTable tbody');
 	const taxSelect = document.getElementById('taxType'); // 상단 세율 select
 	const searchBtn = document.getElementById('searchBtn'); // 발주계획 조회 버튼
+	const resetBtn = document.getElementById('resetBtn'); // 초기화 버튼
  	let gridApi = null;
  	let gridOptions = null;
  	let orderListGridApi = null;
@@ -194,6 +195,15 @@ document.addEventListener("DOMContentLoaded", () => {
  	    new agGrid.Grid(eGridDiv, gridOptions);
  	    return { gridApi: gridOptions.api, gridOptions };
 	}// END OF FUNCTION
+	
+	// 빈값 체크 공통 함수
+	function hasEmptyFields(obj) {
+		  return Object.entries(obj).some(([key, value]) => {
+		    // details 배열은 따로 처리
+		    if (key === "details") return !value || value.length === 0;
+		    return value === null || value === undefined || value === "";
+		  });
+		}
  	
  	//let gridCreated = false;
  	// withCredentials: true를 추가해야 쿠키 기반 세션을 함께 보내서 로그인 상태를 유지
@@ -210,7 +220,14 @@ document.addEventListener("DOMContentLoaded", () => {
 		})
 	  .catch(err => console.error(err));
  	
-	
+ 	// 초기화 버튼 클릭시 
+ 	resetBtn.addEventListener('click', () => {
+		  document.querySelectorAll('.fc').forEach(el => {
+		    if ('value' in el) el.value = "";
+		  });
+	});
+ 	
+ 	
 	// 지시서 조회 버튼 클릭시 모달 호출
 	searchBtn.addEventListener('click', async () => {
 	    const orderListModalEl = document.getElementById('delOrderListModal');
@@ -366,6 +383,10 @@ document.addEventListener("DOMContentLoaded", () => {
 			            details : details 
 		            };
 		  console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
+		  if (hasEmptyFields(payload)) {
+			  toastr.warning("필수 항목이 비어 있습니다. 값을 확인해주세요.");
+			  return;
+			}
 		  //console.log("payload.orderPrice: "+payload.orderPrice);
 		  try {
 			  	
