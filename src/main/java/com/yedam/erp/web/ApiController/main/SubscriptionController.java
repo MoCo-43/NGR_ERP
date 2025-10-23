@@ -136,7 +136,7 @@ public class SubscriptionController {
         model.addAttribute("targetStep", 5);
         model.addAttribute("subPlan", new SubPlanVO());
 
-        return "main/subDetail";
+        return "main/subdetail";
     }
     
     /**
