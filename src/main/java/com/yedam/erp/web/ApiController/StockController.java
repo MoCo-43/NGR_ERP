@@ -3,6 +3,9 @@ package com.yedam.erp.web.ApiController;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -100,7 +104,7 @@ public class StockController {
 		return ResponseEntity.ok("생성완료");
 	}
 	
-	@PostMapping("/icFilteredList")
+	@PostMapping("/icFilteredList") // 결산 필터링
 	public List<InvenVO> icFilteredList(@RequestBody Map<String,Object> params){
 		// 전체 선택 시 빈 문자열("")이면 null로 변경
 	    Object status = params.get("icStatus");
@@ -548,6 +552,30 @@ public class StockController {
 	                .contentType(mediaType)
 	                .body(resource);
 	    }
+	    
+	    
+	    @PostMapping("/uploadSign") // canvas 로 그려진 서명 등록
+	    public ResponseEntity<String> uploadSign(@RequestParam("file") MultipartFile file) {
+	        try {
+	            File dir = new File(uploadDir);
+	            if (!dir.exists()) dir.mkdirs();
+
+	            // 원본 파일명 그대로 저장 (예: finalSign.png, empSign.png)
+	            String fileName = file.getOriginalFilename();
+	            Path path = Paths.get(uploadDir, fileName);
+	            Files.write(path, file.getBytes());
+				/*
+				 * Path path = Paths.get(uploadDir + file.getOriginalFilename());
+				 * Files.write(path, file.getBytes());
+				 */
+
+	            return ResponseEntity.ok("업로드 성공");
+	        } catch (IOException e) {
+	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                    .body("업로드 실패: " + e.getMessage());
+	        }
+	    }
+
 	    
 	    // 연간 주문건수 대시보드 조회
 	    @GetMapping("/getAnnualOrderCnt")

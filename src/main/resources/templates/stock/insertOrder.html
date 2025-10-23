@@ -186,6 +186,23 @@ document.addEventListener("DOMContentLoaded", () => {
 	initToday();
  	
  	
+	// 빈값 체크 공통 함수
+	function hasEmptyFields(obj) {
+	  return Object.entries(obj).some(([key, value]) => {
+	    if (key === "details") {
+	      // details 배열 내부까지 검사
+	      return (
+	        !value || 
+	        value.length === 0 ||
+	        value.some(item =>
+	          Object.values(item).some(v => v === null || v === undefined || v === "")
+	        )
+	      );
+	    }
+	    return value === null || value === undefined || value === "";
+	  });
+	}
+	
  	
  	function resetOrderFields() {
  		  ["xpCode" , "businessPartnerInput" , "businessCodeInput" , "dueDate"].forEach(id => {
@@ -717,6 +734,11 @@ document.addEventListener("DOMContentLoaded", () => {
 		        };
 		  console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
 		  console.log("payload.dueDate: "+payload.dueDate);
+			// payload 구성 이후
+		  if (hasEmptyFields(payload)) {
+		    toastr.warning("필수 항목이 비어 있습니다. 값을 확인해주세요.");
+		    return;
+		  }
 		  try {
 			  	
 			    await axios.post('/api/v1/stock/orderInsert', payload, {
