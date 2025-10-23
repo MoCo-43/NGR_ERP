@@ -42,7 +42,7 @@
   ) s
     ON s.PO_ID = p.PO_ID
   WHERE c.COMPANY_CODE = #{companyCode}
-    AND p.PO_STATUS = '승인'
+    AND p.PO_STATUS = '승인대기'
   ORDER BY p.PO_START DESC
 </select>
 
@@ -68,7 +68,7 @@
       #{poStart},
       #{exDate},
       #{poDate},
-      '승인대기',
+      '작성완료',
       #{payMethod},
       #{notes},
       #{creditActive}
@@ -403,10 +403,10 @@ FROM   PRODUCT
   <update id="updateCreditByCode" parameterType="CreditVO">
     UPDATE CREDIT_MASTER
     <set>
-      <if test="creditLimit != null">        CREDIT_LIMIT = #{creditLimit},</if>
-      <if test="creditGrade != null">       CREDIT_GRADE = #{creditGrade},</if>
-      <if test="startDate != null">       START_DATE = #{startDate},</if>
-      <if test="expireDate != null">        EXPIRE_DATE = #{expireDate},</if>
+      <if test="creditLimit != null">           CREDIT_LIMIT = #{creditLimit},</if>
+      <if test="creditGrade != null">           CREDIT_GRADE = #{creditGrade},</if>
+      <if test="startDate != null">             START_DATE = #{startDate},</if>
+      <if test="expireDate != null">            EXPIRE_DATE = #{expireDate},</if>
       <if test="cActiveStatus != null">          ACTIVE_STATUS = #{cActiveStatus},</if>
     </set>
     WHERE CUS_CODE = #{cusCode}
@@ -414,11 +414,21 @@ FROM   PRODUCT
 
   
 
+<!-- 여신관리 페이지 -->
+<!-- 여신현황 조회 -->
+  <select id="selectCrdMaster" parameterType="long" resultType="CustomerCreditVO">
+  SELECT c.CUS_CODE, c.CUS_NAME, 
+        cm.CREDIT_GRADE, cm.CREDIT_LIMIT, cm.START_DATE, cm.EXPIRE_DATE, cm.ACTIVE_STATUS
+  FROM CREDIT_MASTER cm
+  JOIN CUSTOMER c ON cm.CUS_CODE = c.CUS_CODE
+  WHERE c.COMPANY_CODE = #{companyCode}
+  </select>
 
-<!-- 여신관리 조회 -->
+<!-- ======== OLD CODE ========-->
+  <!-- 거래처별 여신 조회(여신한도조회) -->
   <!-- 기준월 파라미터가 null이면 SYSDATE 사용 -->
-  <select id="selectCrdMaster" resultType="CustomerCreditVO">
-    /* 여신현황 + 할인잔여횟수 */
+  <!-- 
+      /* 여신현황 + 할인잔여횟수 */
     WITH inv AS (  /* 송장별 금액 (중복 방지) */
       SELECT
           ih.cus_code,
@@ -509,8 +519,7 @@ FROM   PRODUCT
     LEFT JOIN disc_used  du ON du.company_code = cm.company_code
                             AND du.cus_code     = TO_CHAR(cm.cus_code)
     WHERE cm.company_code = #{companyCode}
-    ORDER BY cm.cus_code
-  </select>
+    ORDER BY cm.cus_code -->
 
 
 <!-- 여신페이지-->

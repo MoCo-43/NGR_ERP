@@ -93,14 +93,8 @@ public interface BizMapper {
 
   
 
-  // 거래처여신 조회
-      /**
-     * 회사별 거래처 여신현황 조회
-     * @param companyCode 필수 (예: "1001")
-     * @param monthBase 기준월의 1일(예: 2025-10-01). null이면 SYSDATE 기준.
-     * @return 여신현황 리스트
-     */
-  List<CustomerCreditVO> selectCrdMaster(Long companyCode, @Param("monthBase") LocalDate monthBase);
+  // 여신현황조회
+  List<CustomerCreditVO> selectCrdMaster(Long companyCode);
 
   // 여신관리페이지
   // 1. 거래처별 관리 페이지

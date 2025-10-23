@@ -59,8 +59,8 @@ public interface BizService {
 
 
 
-  // 거래처여신 조회
-  List<CustomerCreditVO> selectCrdMaster(Long companyCode, LocalDate monthBase);
+  // 여신현황조회
+  List<CustomerCreditVO> selectCrdMaster(Long companyCode);
 
   // 여신관리페이지
   // 1. 거래처별 관리 페이지
