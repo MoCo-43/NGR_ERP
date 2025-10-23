@@ -67,6 +67,7 @@ public interface StockService {
 	public List<OrderVO> getOrderList(Long compId);
 	public List<OrderDetailVO> getOrderDetailByOrderCode(String orderCode);
 	public List<OrderDetailVO> getOrderDetailByXpCode(String orderCode);
+	public List<OrderVO> getFilteredOrderList(Map<String , Object> params);
 	
 	
 	// 발주 등록

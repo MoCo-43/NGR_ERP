@@ -387,6 +387,47 @@ GROUP BY
 ORDER BY orr.order_code DESC
 
 </select>
+<!-- 발주 조회 - 필터 -->
+<!-- 발주 조회 -->
+<select id="getFilteredOrderList" resultMap="orderListResultMap">
+SELECT
+       orr.order_code AS order_code,
+       orr.business_partner AS business_partner,
+       orr.cus_code AS cus_code,
+       orr.emp_id AS emp_id, 
+       CASE
+         WHEN COUNT(ord.od_no) > 1 
+             THEN MIN(ord.product_name) || ' 외 ' || (COUNT(ord.od_no) - 1) || '건' 
+         ELSE MIN(ord.product_name) 
+       END as "product_name",
+       SUM(ord.qty) AS qty,
+       orr.due_date AS due_date,
+       orr.vat_type AS vat_type,
+       sum(ord.sup_amt) AS sup_amt,
+       orr.xp_code AS xp_code 
+FROM order_req orr
+JOIN order_detail ord
+ON orr.order_code = ord.order_code 
+WHERE  orr.company_code = #{companyCode} 
+<if test="businessPartner != null and businessPartner != ''">
+ AND orr.business_partner LIKE '%' || #{businessPartner} || '%'  
+</if>
+<if test="dueDate != null and dueDate != ''">
+ AND orr.due_date = #{dueDate} 
+</if>
+GROUP BY 
+    orr.order_code,
+    orr.business_partner,
+    orr.cus_code,
+    orr.emp_id,
+    orr.due_date,
+    orr.vat_type,
+    orr.xp_code
+    
+<!-- ORDER BY TO_NUMBER(REGEXP_SUBSTR(orr.order_code, '\d+')) DESC -->
+ORDER BY orr.order_code DESC
+
+</select>
 <resultMap id="orderListResultMap" type="OrderVO">
     <id property="orderCode" column="order_code"/>
     <result property="businessPartner" column="business_partner"/>

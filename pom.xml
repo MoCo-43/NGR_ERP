@@ -207,6 +207,25 @@
 					</excludes>
 				</configuration>
 			</plugin>
+			<!-- 여기에 exec-maven-plugin 들어감 -->
+		      <!--<plugin>
+		        <groupId>org.codehaus.mojo</groupId>
+		        <artifactId>exec-maven-plugin</artifactId>
+		        <version>3.1.0</version>
+		        <executions>
+		          <execution>
+		            <id>compile-jasper-reports</id>
+		            <phase>generate-resources</phase>
+		            <goals>
+		              <goal>java</goal>
+		            </goals>
+		            <configuration>
+		              <mainClass>com.yedam.erp.util.JasperCompiler</mainClass>
+		              <classpathScope>compile</classpathScope>  ✅ 추가 
+		            </configuration>
+		          </execution>
+		        </executions>
+		      </plugin>-->
 		</plugins>
 	</build>
 
