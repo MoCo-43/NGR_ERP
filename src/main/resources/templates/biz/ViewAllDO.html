@@ -226,11 +226,9 @@
             { headerName: "거래처명", field: "customerName", minWidth: 140 },
             { headerName: "품목명", field: "productName", minWidth: 180 },
             {
-              headerName: "수량합계",
-              field: "totalQty",
-              width: 110,
-              valueFormatter: (p) =>
-                p.value ? new Date(p.value).toLocaleDateString("ko-KR") : "",
+              headerName: "주소",
+              field: "addr",
+              flex: 1,
             },
             {
               headerName: "납기일자",
@@ -300,7 +298,7 @@
                 insertDate: d.doCreated,
                 customerName: d.cusName,
                 productName: d.productName,
-                totalQty: d.totalQty,
+                addr: d.addr,
                 exDate: d.exDate,
                 status: d.doStatus,
               }));

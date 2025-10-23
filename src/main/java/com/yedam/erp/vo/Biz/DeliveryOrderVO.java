@@ -15,7 +15,7 @@ public class DeliveryOrderVO {
     private String cusName;     // 거래처 명
     private Date exDate;        // 출고예정일
     private String doStatus;    // 출하지시 상태
-    private Integer totalQty;   // 총 수량
+    private String addr;   // 주소
     private String notes;       // 비고
     private String creater;     // 생성자
     private String productCode; // 제품 코드 
