@@ -345,7 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	            { headerName: "거래처명", field: "businessPartner" },
 	            { headerName: "담당자", field: "empId" },
 	            { headerName: "제품명", field: "productName" },
-	            { headerName: "수량", field: "amount" },
+	            { headerName: "수량", field: "amount", type: 'numericColumn' },
 	            { headerName: "구매단가", field: "orderPrice" },
 	            { headerName: "공급가액", field: "supAmt" },
 	            { headerName: "세율유형", field: "vatType" }
@@ -389,8 +389,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	        const eDetailGridDiv = document.getElementById('orderDetailGrid');
 	        const detailColumnDefs = [
 	            { headerName: "제품명", field: "productName" },
-	            { headerName: "수량", field: "amount" },
-	            { headerName: "공급가액", field: "supAmt" },
+	            { headerName: "수량", field: "amount", type: 'numericColumn' },
+	            { headerName: "공급가액", field: "supAmt", type: 'numericColumn' },
 	            
 	        ];
 	        const detailGridOptions = {

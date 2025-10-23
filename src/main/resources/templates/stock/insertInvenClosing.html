@@ -309,14 +309,12 @@ document.addEventListener("DOMContentLoaded", () => {
 	    headers: { "Content-Type": "multipart/form-data" },
 	    withCredentials: true
 	  });
-	}
-	
-	
-	  // ----- 파일명 고정 규칙 -----
-	  const fileNames = {
-	    final: "finSign",
-	    dept:  "empSign"
-	  };
+	  // ✅ 업로드 후 새 이미지 즉시 반영 (캐시 방지용)
+	  const imgEl = fileName === "finSign" ? fnImg : dptImg;
+	  imgEl.src = `/sign/${fileName}.png?${Date.now()}`;
+
+	  toastr.success(`${fileName}.png 업로드 완료`);
+	}// END OF uploadSignature
 	
 	
 	  // ===== 캔버스 초기화 =====
@@ -361,9 +359,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 	  // ===== 파일 URL 생성 =====
-	  function getSignUrl(fileName) {
+	 /*  function getSignUrl(fileName) {
 	    return `/sign/${fileName}.png`;
-	  }
+	  } */
 
 	
 	// 이미지 확장자가 뭐가 됐던 이름이 같으면 찾아오기
@@ -514,6 +512,15 @@ document.addEventListener("DOMContentLoaded", () => {
 	    // 버튼 숨기기 (서명 등록용 버튼)
 	    finalBtn.style.display = 'none';
 	    deptBtn.style.display = 'none';
+	    
+	 	// 그리기/완료 버튼 및 캔버스 숨기기
+	    finalDrawBtn.style.display = "none";
+	    finalCanvas.style.display = "none";
+	    finalDoneBtn.style.display = "none";
+
+	    deptDrawBtn.style.display = "none";
+	    deptCanvas.style.display = "none";
+	    deptDoneBtn.style.display = "none";
 	    
 	    // 하단 승인/취소 버튼 숨기기
 	    icsSubmitBtnInModal.style.display = 'none';

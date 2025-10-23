@@ -530,7 +530,7 @@ const inListGrid = initGrid({
         { headerName: "출고코드", field: "outbHeaderCode" },
         { headerName: "지시코드", field: "doCode" },
         { headerName: "제품명", field: "productName" },
-        { headerName: "출고수량", field: "qty", valueFormatter: numberFormatter },
+        { headerName: "출고수량", field: "qty", type: 'numericColumn', valueFormatter: numberFormatter },
         { headerName: "거래처코드", field: "businessCode" },
         { headerName: "거래처명", field: "businessPartner" },
         { headerName: "유형", field: "type" , valueGetter: ()=>'주문서'},
