@@ -12,10 +12,10 @@ public class DoInsertVO {
     private String cusCode;      // 거래처코드
     private String poCode;           // 주문번호
     private String doCode;       // 지시서코드
-    private Integer empNo;       // 사원번호
+    private Long empNo;       // 사원번호
     private String name;         // 사원명
     private Date doCreated;    // 작성일자
-    private Integer totalQty;    // 총주문금액
+    private Long totalQty;    // 총주문금액
     private String doStatus;     // 진행상태
     private String notes;        // 비고
     private Long companyCode;  // 회사코드

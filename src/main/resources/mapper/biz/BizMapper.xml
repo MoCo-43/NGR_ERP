@@ -13,33 +13,37 @@
 
 <!-- 주문서 조회 -->
 <select id="selectPO" resultType="JoinPoVO" parameterType="long">
-SELECT
-    p.PO_CODE,
-    p.PO_START,
-    c.CUS_NAME,
-    p.CREATER,
-    CASE
-        WHEN pd_counts.cnt > 1 THEN pod.PRODUCT_NAME || ' 외 ' || (pd_counts.cnt - 1) || '건'
-        ELSE pod.PRODUCT_NAME
-    END AS PRODUCT_NAME,
-    c.BIZ_TYPE,
-    p.PO_STATUS,
-    p.NOTES,
-    p.EX_DATE
-FROM
-    CUSTOMER c
-JOIN
-    PURCHASE_ORDER p ON c.CUS_CODE = p.CUS_CODE
-JOIN
-    PO_DETAIL pod ON p.PO_ID = pod.PO_ID
-JOIN
-    (SELECT PO_ID, COUNT(*) as cnt 
-     FROM PO_DETAIL 
-     GROUP BY PO_ID)pd_counts
-ON
-    p.PO_ID = pd_counts.PO_ID
-WHERE c.COMPANY_CODE = #{companyCode}
-ORDER BY PO_START DESC
+  SELECT
+      p.PO_CODE,
+      p.PO_START,
+      c.CUS_NAME,
+      p.CREATER,
+      CASE
+          WHEN s.PROD_CNT > 1
+            THEN s.REP_NAME || ' 외 ' || (s.PROD_CNT - 1) || '건'
+          ELSE s.REP_NAME
+      END AS PRODUCT_NAME,
+      c.BIZ_TYPE,
+      p.PO_STATUS,
+      p.NOTES,
+      p.EX_DATE
+  FROM PURCHASE_ORDER p
+  JOIN CUSTOMER c
+    ON c.CUS_CODE = p.CUS_CODE
+  JOIN (
+      SELECT
+          pod.PO_ID,
+          COUNT(DISTINCT pod.PRODUCT_CODE) AS PROD_CNT,  -- 품목(코드) 수
+          MIN(pdt.PRODUCT_NAME) AS REP_NAME              -- 대표 품목명(사전순)
+      FROM PO_DETAIL pod
+      JOIN PRODUCT pdt
+        ON pdt.PRODUCT_CODE = pod.PRODUCT_CODE
+      GROUP BY pod.PO_ID
+  ) s
+    ON s.PO_ID = p.PO_ID
+  WHERE c.COMPANY_CODE = #{companyCode}
+    AND p.PO_STATUS = '승인'
+  ORDER BY p.PO_START DESC
 </select>
 
 
@@ -145,7 +149,7 @@ FROM   PRODUCT
          cm.CREDIT_GRADE, cm.LEFT_PRICE, 
          cp.DISCOUNT_RATE, cp.MON_DISC_CNT
   FROM CUSTOMER c
-  JOIN CREDIT_MASTER cm ON c.CUS_NO = cm.CUS_NO
+  JOIN CREDIT_MASTER cm ON c.CUS_CODE = cm.CUS_CODE
   JOIN CREDIT_POLICY cp ON cp.COMPANY_CODE = c.COMPANY_CODE 
                     AND cp.GRADE = cm.CREDIT_GRADE
   WHERE c.COMPANY_CODE = #{companyCode}
@@ -153,35 +157,40 @@ FROM   PRODUCT
 
   <!-- 출하지시서 조회 -->
   <select id="selectDo" resultType="DeliveryOrderVO" parameterType="Long">
-SELECT
-    d.DO_CODE,
-    d.DO_CREATED,
-    c.CUS_NAME,
-    CASE
-        WHEN COUNT(p.PRODUCT_NAME) > 1
-            THEN MIN(p.PRODUCT_NAME) || ' 외 ' || (COUNT(p.PRODUCT_NAME) - 1) || '건'
-        ELSE MIN(p.PRODUCT_NAME)
-    END AS PRODUCT_NAME,
-    SUM(dd.QTY) AS TOTAL_QTY,
-    d.EX_DATE,
-    d.DO_STATUS
-FROM DELIVERY_ORDER d
-JOIN CUSTOMER c
-  ON d.CUS_CODE = c.CUS_CODE
-JOIN DO_DETAIL dd
-  ON d.DO_NO = dd.DO_NO
-JOIN PRODUCT p
-  ON dd.PRODUCT_CODE = p.PRODUCT_CODE
-WHERE d.COMPANY_CODE = #{companyCode}
-GROUP BY
-    d.DO_CODE,
-    d.DO_CREATED,
-    c.CUS_NAME,
-    d.EX_DATE,
-    d.DO_STATUS
-ORDER BY
-    d.DO_CREATED DESC
+  SELECT
+      d.DO_CODE,
+      d.DO_CREATED,
+      c.CUS_NAME,
+      CASE
+          WHEN s.PROD_CNT > 1
+              THEN s.REP_NAME || ' 외 ' || (s.PROD_CNT - 1) || '건'
+          ELSE s.REP_NAME
+      END AS PRODUCT_NAME,
+      s.TOTAL_QTY,
+      d.EX_DATE,
+      d.DO_STATUS
+  FROM DELIVERY_ORDER d
+  JOIN CUSTOMER c
+    ON d.CUS_CODE = c.CUS_CODE
+  JOIN (
+      SELECT
+          dd.DO_NO,
+          COUNT(DISTINCT dd.PRODUCT_CODE) AS PROD_CNT,   -- 품목 수
+          MIN(p.PRODUCT_NAME) AS REP_NAME,               -- 대표 품목명 (사전순)
+          SUM(dd.QTY) AS TOTAL_QTY                       -- 총 수량
+      FROM DO_DETAIL dd
+      JOIN PRODUCT p
+        ON p.PRODUCT_CODE = dd.PRODUCT_CODE
+      GROUP BY dd.DO_NO
+  ) s
+    ON s.DO_NO = d.DO_NO
+  WHERE d.COMPANY_CODE = #{companyCode}
+  ORDER BY d.DO_CREATED DESC
 </select>
+
+
+
+
 
 <!-- 출하지시서 등록 -->
 <!-- 출하지시서 헤더 INSERT -->
@@ -235,8 +244,8 @@ ORDER BY
     <foreach collection="dodetails" item="d" separator=" UNION ALL ">
       SELECT
         #{d.productCode} AS productCode,
-        #{d.qty}         AS qty,
-        #{d.unitPrice}   AS unitPrice,
+        #{d.qty}          AS qty,
+        #{d.unitPrice}    AS unitPrice,
         #{d.supAmt}      AS supAmt,
         #{d.vatAmt}      AS vatAmt,
         #{d.dcAmt}       AS dcAmt
@@ -313,16 +322,16 @@ ORDER BY
 
 <!-- 거래처 및 여신 조회 -->
 <select id="getCustomerManagement" resultMap="CustomerWithCreditMap" parameterType="long">
-  SELECT
-    c.CUS_NO, c.CUS_CODE, c.EMP_NO, c.CEMP_NAME, c.EMP_NAME, c.CUS_NAME, c.BIZ_NO,
-    c.CEO_NAME, c.BIZ_TYPE, c.BIZ_CATEGORY, c.TEL, c.EMAIL, c.ADDR, c.ZIP_CODE,
-    c.ACTIVE_STATUS,
-    c.GBN, c.BANK_NAME, c.BANK_ACCOUNT, c.COMPANY_CODE,
-    cm.CREDIT_LIMIT, cm.CREDIT_GRADE, cm.START_DATE, cm.EXPIRE_DATE,
-    cm.ACTIVE_STATUS AS C_ACTIVE_STATUS, cm.CUS_CODE
-  FROM CUSTOMER c
-  JOIN CREDIT_MASTER cm ON cm.CUS_CODE = c.CUS_CODE
-  WHERE c.COMPANY_CODE = #{companyCode}
+    SELECT
+      c.CUS_NO, c.CUS_CODE, c.EMP_NO, c.CEMP_NAME, c.EMP_NAME, c.CUS_NAME, c.BIZ_NO,
+      c.CEO_NAME, c.BIZ_TYPE, c.BIZ_CATEGORY, c.TEL, c.EMAIL, c.ADDR, c.ZIP_CODE,
+      c.ACTIVE_STATUS,
+      c.GBN, c.BANK_NAME, c.BANK_ACCOUNT, c.COMPANY_CODE,
+      cm.CREDIT_LIMIT, cm.CREDIT_GRADE, cm.START_DATE, cm.EXPIRE_DATE,
+      cm.ACTIVE_STATUS AS C_ACTIVE_STATUS, cm.CUS_CODE
+    FROM CUSTOMER c
+    JOIN CREDIT_MASTER cm ON cm.CUS_CODE = c.CUS_CODE
+    WHERE c.COMPANY_CODE = #{companyCode}
 </select>
 
 
@@ -351,14 +360,16 @@ ORDER BY
 <!-- 1) 거래처별 여신 등록 -->
 <insert id="insertCredit" parameterType="CreditVO">
   INSERT INTO CREDIT_MASTER(
+    CREDIT_NO,
     CUS_CODE, CREDIT_LIMIT, CREDIT_GRADE,
     START_DATE, EXPIRE_DATE,
-    ACTIVE_STATUS AS C_ACTIVE_STATUS, COMPANY_CODE
+    ACTIVE_STATUS, COMPANY_CODE
   )
   VALUES (
+    CREDIT_NO_SEQ.NEXTVAL,
     #{cusCode}, #{creditLimit}, #{creditGrade},
     #{startDate}, #{expireDate},
-    #{activeStatus}, #{companyCode}
+    #{cActiveStatus}, #{companyCode}
   )
 </insert>
 
@@ -502,10 +513,10 @@ ORDER BY
   </select>
 
 
-<!-- 여신페이지 Mapper -->
+<!-- 여신페이지-->
+
+<!-- 여신 Mpas-->
   <!-- ================== ResultMaps ================== -->
-  <!-- 그리드(현황) -->
-  <!-- type 은 VO FQCN: com.example.credit.vo.CreditExposureVo -->
    <resultMap id="ExposureMap" type="CreditExposureVO">
     <result column="company_code"   property="companyCode"/>
     <result column="cus_code"       property="cusCode"/>
@@ -514,8 +525,6 @@ ORDER BY
     <result column="credit_limit"   property="creditLimit"/>
     <result column="start_date"     property="startDate"/>
     <result column="expire_date"    property="expireDate"/>
-    <result column="remain_limit"   property="remainLimit"/>
-    <result column="manager_name"   property="managerName"/>
     <result column="status"         property="status"/>
   </resultMap> 
 
@@ -529,7 +538,6 @@ ORDER BY
     <result column="due_date"       property="dueDate"/>
     <result column="start_date"     property="startDate"/>
     <result column="expire_date"    property="expireDate"/>
-    <result column="left_price"     property="leftPrice"/>
     <result column="active_status"  property="activeStatus"/>
     <result column="emp_name"       property="empName"/>
   </resultMap>

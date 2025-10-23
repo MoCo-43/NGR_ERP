@@ -247,7 +247,6 @@
                 return {
                   cusCode: r.cusCode ?? "",
                   empName: r.empName ?? "",
-                  cempName: r.cempName ?? "",
                   cusName: r.cusName ?? "",
                   bizNo: r.bizNo ?? "",
                   ceoName: r.ceoName ?? "",
@@ -331,7 +330,6 @@
           // 거래처 DOM
           function fillCustomerForm(row = {}) {
             sel("#cusCode").value = row.cusCode ?? "";
-            sel("#cempName").value = row.cempName ?? "";
             sel("#empName").value = row.empName ?? "";
             sel("#cusName").value = row.cusName ?? "";
             sel("#bizNo").value = row.bizNo ?? "";
@@ -368,7 +366,6 @@
             const cusCodeDom = sel("#cusCode").value;
             return {
               cusCode: cusCodeDom === "등록후 생성" ? "" : cusCodeDom,
-              cempName: sel("#cempName").value,
               empName: sel("#empName").value,
               cusName: sel("#cusName").value,
               bizNo: sel("#bizNo").value,
