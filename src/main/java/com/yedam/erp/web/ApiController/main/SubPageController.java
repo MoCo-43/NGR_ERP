@@ -52,7 +52,7 @@ public class SubPageController {
         model.addAttribute("company", company); 
         // ----------------------------------------------------------------
 
-        return "main/subDetail"; 
+        return "main/subdetail"; 
     }
 //    @GetMapping("/contract/{matNo}")
 //    public String viewContract(@PathVariable Long matNo, Model model) {

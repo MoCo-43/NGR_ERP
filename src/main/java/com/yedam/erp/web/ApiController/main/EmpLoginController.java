@@ -161,7 +161,7 @@ public class EmpLoginController {
 
         Resource resource = new FileSystemResource(file);
 
-        // ✅ MIME 타입 자동 판단
+        // MIME 타입 자동 판단
         String lower = fileName.toLowerCase();
         MediaType mediaType = MediaType.IMAGE_JPEG;
         if (lower.endsWith(".png")) mediaType = MediaType.IMAGE_PNG;
