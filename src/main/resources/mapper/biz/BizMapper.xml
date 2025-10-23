@@ -42,7 +42,6 @@
   ) s
     ON s.PO_ID = p.PO_ID
   WHERE c.COMPANY_CODE = #{companyCode}
-    AND p.PO_STATUS = '승인대기'
   ORDER BY p.PO_START DESC
 </select>
 
@@ -166,7 +165,7 @@ FROM   PRODUCT
               THEN s.REP_NAME || ' 외 ' || (s.PROD_CNT - 1) || '건'
           ELSE s.REP_NAME
       END AS PRODUCT_NAME,
-      s.TOTAL_QTY,
+      d.ADDR,
       d.EX_DATE,
       d.DO_STATUS
   FROM DELIVERY_ORDER d
@@ -176,8 +175,7 @@ FROM   PRODUCT
       SELECT
           dd.DO_NO,
           COUNT(DISTINCT dd.PRODUCT_CODE) AS PROD_CNT,   -- 품목 수
-          MIN(p.PRODUCT_NAME) AS REP_NAME,               -- 대표 품목명 (사전순)
-          SUM(dd.QTY) AS TOTAL_QTY                       -- 총 수량
+          MIN(p.PRODUCT_NAME) AS REP_NAME              -- 대표 품목명 (사전순)
       FROM DO_DETAIL dd
       JOIN PRODUCT p
         ON p.PRODUCT_CODE = dd.PRODUCT_CODE
@@ -424,188 +422,8 @@ FROM   PRODUCT
   WHERE c.COMPANY_CODE = #{companyCode}
   </select>
 
-<!-- ======== OLD CODE ========-->
-  <!-- 거래처별 여신 조회(여신한도조회) -->
-  <!-- 기준월 파라미터가 null이면 SYSDATE 사용 -->
-  <!-- 
-      /* 여신현황 + 할인잔여횟수 */
-    WITH inv AS (  /* 송장별 금액 (중복 방지) */
-      SELECT
-          ih.cus_code,
-          ih.invoice_no,
-          NVL( ih.total_amt,
-               SUM(NVL(il.sup_amt,0) + NVL(il.vat_amt,0)) ) AS invoice_amt
-      FROM invoice_header ih
-      LEFT JOIN invoice_line il
-        ON il.invoice_code = ih.invoice_code
-      GROUP BY ih.cus_code, ih.invoice_no, ih.total_amt
-    ),
-    applied AS (  /* 송장별 수금 적용합 */
-      SELECT
-          p.company_code,
-          p.cus_code,
-          pa.invoice_no,
-          SUM(pa.apply_amount) AS applied_amt
-      FROM payment p
-      JOIN payment_apply pa
-        ON pa.pay_code = p.pay_code
-      GROUP BY p.company_code, p.cus_code, pa.invoice_no
-    ),
-    ar_by_inv AS (  /* 회사 귀속 후 송장단위 미수 */
-      SELECT
-          cm.company_code,
-          i.cus_code,
-          i.invoice_no,
-          NVL(i.invoice_amt,0) AS invoice_amt,
-          NVL(a.applied_amt,0) AS applied_amt,
-          GREATEST(NVL(i.invoice_amt,0) - NVL(a.applied_amt,0), 0) AS ar_amt
-      FROM inv i
-      JOIN credit_master cm
-        ON TO_CHAR(cm.cus_code) = i.cus_code
-       AND NVL(cm.active_status,'Y') = 'Y'
-      LEFT JOIN applied a
-        ON a.company_code = cm.company_code
-       AND a.cus_code     = i.cus_code
-       AND a.invoice_no   = i.invoice_no
-    ),
-    ar_cust AS (  /* 고객별 미수 합계 */
-      SELECT company_code, cus_code, SUM(ar_amt) AS total_ar
-      FROM ar_by_inv
-      GROUP BY company_code, cus_code
-    ),
-    disc_limit AS (  /* 등급별 월 허용건수 */
-      SELECT
-        cm.company_code,
-        TO_CHAR(cm.cus_code) AS cus_code,
-        CASE WHEN cm.credit_grade = 'A' THEN 3
-             WHEN cm.credit_grade = 'B' THEN 1
-             ELSE 0 END AS limit_cnt
-      FROM credit_master cm
-    ),
-    disc_used AS (  /* 이번 달 여신할인 사용건수 (PURCHASE_ORDER + PO_DETAIL) */
-      SELECT
-        po.company_code,
-        po.cus_code,
-        COUNT(DISTINCT po.po_id) AS used_cnt,
-        SUM(NVL(pd.DC_AMT,0))  AS used_amt
-      FROM purchase_order po
-      JOIN po_detail      pd ON pd.po_id = po.po_id
-      WHERE TRUNC(po.po_date,'MM') = TRUNC(
-               /* monthBase가 null이면 SYSDATE */
-               NVL(#{monthBase, jdbcType=DATE}, SYSDATE), 'MM')
-        AND NVL(pd.credit_active,'N') = 'Y'
-        AND NVL(pd.DC_AMT,0) > 0
-      GROUP BY po.company_code, po.cus_code
-    )
-    SELECT
-      cm.company_code                                   AS COMPANY_CODE,
-      TO_CHAR(cm.cus_code)                              AS CUS_CODE,
-      /* 거래처명은 고객마스터가 있으면 거기에서 조인하세요. 임시로 invoice에서 하나 가져오려면 서브쿼리 사용 */
-      (SELECT MAX(ih.cus_name) FROM invoice_header ih WHERE ih.cus_code = TO_CHAR(cm.cus_code)) AS CUS_NAME,
-      cm.credit_grade                                    AS CREDIT_GRADE,
-      cm.credit_limit                                    AS CREDIT_LIMIT,
-      cm.start_date                                      AS START_DATE,
-      cm.expire_date                                     AS EXPIRE_DATE,
-      NVL(ac.total_ar, 0)                                AS USED_LIMIT,
-      (cm.credit_limit - NVL(ac.total_ar, 0))            AS REMAIN_LIMIT,
-      NVL(dl.limit_cnt,0)                                AS DISC_LIMIT_CNT,
-      NVL(du.used_cnt,0)                                 AS DISC_USED_CNT,
-      GREATEST(NVL(dl.limit_cnt,0) - NVL(du.used_cnt,0), 0) AS DISC_LEFT_CNT
-    FROM credit_master cm
-    LEFT JOIN ar_cust   ac ON ac.company_code = cm.company_code
-                          AND ac.cus_code     = TO_CHAR(cm.cus_code)
-    LEFT JOIN disc_limit dl ON dl.company_code = cm.company_code
-                            AND dl.cus_code     = TO_CHAR(cm.cus_code)
-    LEFT JOIN disc_used  du ON du.company_code = cm.company_code
-                            AND du.cus_code     = TO_CHAR(cm.cus_code)
-    WHERE cm.company_code = #{companyCode}
-    ORDER BY cm.cus_code -->
 
-
-<!-- 여신페이지-->
-
-<!-- 여신 Mpas-->
-  <!-- ================== ResultMaps ================== -->
-   <resultMap id="ExposureMap" type="CreditExposureVO">
-    <result column="company_code"   property="companyCode"/>
-    <result column="cus_code"       property="cusCode"/>
-    <result column="cus_name"       property="cusName"/>
-    <result column="credit_grade"   property="creditGrade"/>
-    <result column="credit_limit"   property="creditLimit"/>
-    <result column="start_date"     property="startDate"/>
-    <result column="expire_date"    property="expireDate"/>
-    <result column="status"         property="status"/>
-  </resultMap> 
-
-  <!-- 단건 상세 -->
-  <!-- type: com.example.credit.vo.CreditMasterVo -->
-  <resultMap id="MasterMap" type="CreditMasterVO">
-    <result column="company_code"   property="companyCode"/>
-    <result column="cus_code"       property="cusCode"/>
-    <result column="credit_grade"   property="creditGrade"/>
-    <result column="credit_limit"   property="creditLimit"/>
-    <result column="due_date"       property="dueDate"/>
-    <result column="start_date"     property="startDate"/>
-    <result column="expire_date"    property="expireDate"/>
-    <result column="active_status"  property="activeStatus"/>
-    <result column="emp_name"       property="empName"/>
-  </resultMap>
-
-  <!-- ================== SELECTS ================== -->
-
-  <!-- 1) 거래처별 여신 현황 (뷰 권장: V_CREDIT_EXPOSURE) -->
-  <select id="selectExposureList" resultMap="ExposureMap">
-    SELECT company_code, cus_code, cus_name, credit_grade, credit_limit,
-           start_date, expire_date, remain_limit, manager_name, status
-    FROM   V_CREDIT_EXPOSURE
-    WHERE  company_code = #{companyCode}
-    <if test="grade != null and grade != ''">
-      AND credit_grade = #{grade}
-    </if>
-    <if test="name != null and name != ''">
-      AND (UPPER(cus_name) LIKE '%'||UPPER(#{name})||'%'
-           OR TO_CHAR(cus_code) LIKE '%'||#{name}||'%')
-    </if>
-    <if test="manager != null and manager != ''">
-      AND (UPPER(manager_name) LIKE '%'||UPPER(#{manager})||'%')
-    </if>
-    ORDER BY cus_name
-  </select>
-
-  <!-- 2) 단건 조회(수정 모달/페이지) -->
-  <select id="selectCreditMaster" resultMap="MasterMap">
-    SELECT company_code, cus_code, credit_grade, credit_limit, due_date,
-           start_date, expire_date, left_price, NVL(active_status,'Y') AS active_status,
-           emp_name
-    FROM   credit_master
-    WHERE  company_code = #{companyCode}
-      AND  cus_code     = #{cusCode}
-  </select>
-
-  <!-- ================== UPSERT / UPDATE ================== -->
-
-  <!-- 3) 등록/수정 (MERGE) -->
-  <!-- parameterType 은 VO FQCN: com.example.credit.vo.CreditMasterVo -->
- <!--   <update id="upsertCreditMaster" parameterType="CreditMasterVO">
-    MERGE INTO credit_master t
-    USING (SELECT #{companyCode} AS company_code, #{cusCode} AS cus_code FROM dual) s
-      ON (t.company_code = s.company_code AND t.cus_code = s.cus_code)
-    WHEN MATCHED THEN UPDATE SET
-         credit_grade  = #{creditGrade},
-         credit_limit  = #{creditLimit},
-         due_date      = #{dueDate},
-         start_date    = #{startDate},
-         expire_date   = #{expireDate},
-         emp_name      = #{empName},
-         active_status = NVL(#{activeStatus}, 'Y')
-    WHEN NOT MATCHED THEN
-      INSERT (credit_no, company_code, cus_code, credit_grade, credit_limit,
-              due_date, start_date, expire_date, left_price, created_date, active_status, emp_name)
-      VALUES (SEQ_CREDIT_NO.NEXTVAL, #{companyCode}, #{cusCode}, #{creditGrade}, #{creditLimit},
-              #{dueDate}, #{startDate}, #{expireDate}, 0, SYSDATE, NVL(#{activeStatus}, 'Y'), #{empName})
-  </update>  -->
-
-  <!-- 4) 비활성화(실삭제 X) -->
+  <!-- 여신 비활성화 -->
   <update id="deactivateCredit">
     UPDATE credit_master
        SET active_status = 'N',
@@ -617,14 +435,23 @@ FROM   PRODUCT
 
 <!-- 여신 등급 정책 조회-->
 <select id="getCreditGrade" resultType="CreditGradeVO">
-SELECT GRADE, GRADE_NAME, MAX_LIMIT, DISCOUNT_RATE, MON_DISC_CNT, ALLOW_CREDIT, PREPAY_REQUIRED
+SELECT GRADE, GRADE_NAME, MAX_LIMIT, DISCOUNT_RATE, MON_DISC_CNT
 FROM CREDIT_POLICY
 WHERE COMPANY_CODE = #{companyCode}
 </select>
+
+
 
 <!-- 여신 등급 정책 추가 -->
 
 <!--  여신 등급 정책 업데이트 -->
 
 
+<!-- 여신등급 정책 변경이력 쿼리-->
+<!-- <select id="getCreditHistory" resultType="CreditHistoryVO">
+SELECT c.CUS_NAME, cph.CHANGED_DATE, cph.OLD_GRADE, cph.OLD_LIMIT, cph.OLD_DISC, cph.OLD_MON_DISC
+FROM CREDIT_POLICY_HISTORY cph
+JOIN CUSTOMER c ON cph.CUS_CODE = c.CUS_CODE
+WHERE c.COMPANY_CODE = #{companyCode}
+</select> -->
 </mapper>
