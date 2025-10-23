@@ -79,7 +79,7 @@ public interface StockMapper {
 	public List<OrderVO> getOrderList(Long compId);
 	public List<OrderDetailVO> getOrderDetailByOrderCode(String orderCode); 
 	public List<OrderDetailVO> getOrderDetailListByOrderCode(@Param("orderCode") String orderCode); // 입고등록용 발주 상세 조회
-	
+	public List<OrderVO> getFilteredOrderList(Map<String , Object> params);
 	
 	// 발주 등록
 	public void insertOrderReq(OrderVO order); // 마스터

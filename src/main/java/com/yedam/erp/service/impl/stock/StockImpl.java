@@ -357,6 +357,12 @@ public class StockImpl implements StockService{
 	}
 
 
+	@Override
+	public List<OrderVO> getFilteredOrderList(Map<String, Object> params) {
+		return mapper.getFilteredOrderList(params);
+	}
+
+
 
 
 }

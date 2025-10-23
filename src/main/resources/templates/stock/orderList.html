@@ -104,6 +104,11 @@
 </section>
   
 <th:block layout:fragment="body_extra">
+<!-- 세션 정보 저장 -->
+<script th:inline="javascript">
+    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+    const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+</script>
  <!-- Axios 등록 -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
  <!-- Bootstrap JS -->
@@ -128,8 +133,14 @@ document.addEventListener("DOMContentLoaded", () => {
 	const searchPartner = document.getElementById('partnerName');
 	const searchProduct = document.getElementById('productName');
 	const tableBody = document.querySelector('#orderItemsTable tbody');
+	const productModalEl = document.getElementById("productModal");
+	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
+	const businessModalEl = document.getElementById("businessModal");
+	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
+	let productGridApi = null;
+	let productGridOptions = null;
+	let selectedProductRow = null; // 클릭한 행 저장용
 	let productGrid = null; // 전역 변수
- 	let compCode = null; // compCode
  	let gridOptions = null;
  	let gridCreated = false;
  	let gridApi = null;
@@ -175,11 +186,35 @@ document.addEventListener("DOMContentLoaded", () => {
  	    new agGrid.Grid(eGridDiv, gridOptions);
  	    return { gridApi: gridOptions.api, gridOptions };
 	}// END OF FUNCTION
+	
+	document.getElementById("partnerName").addEventListener("input", loadFilteredData);
+	document.getElementById("dueDate").addEventListener("change", loadFilteredData);
+	
+	async function loadFilteredData() {
+		// view page filter
+	    try {
+	        showLoader("gridWrapper");
+	        const params = {
+	        		 companyCode: compCode,
+	        		 businessPartner: document.getElementById("partnerName").value,
+	        		 dueDate: document.getElementById("dueDate").value,
+	        }
+	        console.log("params:", params); // 👈 params 확인
+	        const res = await axios.post("/api/v1/stock/orderList", params, {withCredentials: true });
+	        orderListGrid.gridOptions.api.setRowData(res.data);
+	        orderListGrid.gridOptions.api.sizeColumnsToFit();
+	    } catch (err) {
+	        console.error(err);
+	        toastr.error("조회 실패");
+	    } finally {
+	        hideLoader("gridWrapper");
+	    }
+	}
 
 	// 회사코드 불러오기
-	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
+	/* axios.get("/api/v1/stock/getCompId", { withCredentials: true })
 	  .then(res => { compCode = res.data; })
-	  .catch(err => console.error(err));
+	  .catch(err => console.error(err)); */
 	
 	// 단위마다 "," 공통함수(문자 > 숫자 변환)
 	function numberFormatter(params) {
@@ -289,24 +324,13 @@ async function openProductModal() {
     productModal.show();
 }
  	
- 	
- 	
-	
-	// ------------------ 변수 초기화 ------------------
-	let productGridApi = null;
-	let productGridOptions = null;
-	let selectedProductRow = null; // 클릭한 행 저장용
-	const productModalEl = document.getElementById("productModal");
-	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
-	const businessModalEl = document.getElementById("businessModal");
-	const businessModal = bootstrap.Modal.getOrCreateInstance(businessModalEl);
 	
     // 거래처명 클릭 시 모달
 	searchPartner.addEventListener('click', () => {
 			businessModal.show(); // 항상 동일한 인스턴스 사용
 	        if (!gridApi) initBusinessGrid();
 	        else loadBusinessData();
- });
+ 	});
 	  // 제품명 클릭 시 모달
 	searchProduct.addEventListener('click', () => {	openProductModal(); });
 	
@@ -342,7 +366,6 @@ async function openProductModal() {
 	        },
 	        onRowDoubleClicked: (event) => {
 	        	document.getElementById("partnerName").value = event.data.cusName;
-	            
 	            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
 	        }
 	    };
@@ -351,7 +374,7 @@ async function openProductModal() {
 	// 거래처 데이터 로드
 	async function loadBusinessData() {
 	    try {
-	        const res = await axios.get("/api/v1/stock/cusList");
+	    	const res = await axios.get(`/api/v1/stock/cusList/${compCode}`);
 	        if (gridApi) {
 	            gridApi.setRowData(res.data);
 	            gridApi.sizeColumnsToFit();

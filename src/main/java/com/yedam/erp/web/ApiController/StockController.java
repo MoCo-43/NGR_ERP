@@ -356,6 +356,11 @@ public class StockController {
 		Long compId = SessionUtil.companyId();
 		return service.getOrderList(compId);
 	}
+	
+	@PostMapping("/orderList") // 발주 조회
+	public List<OrderVO> getFilterdOrderList(Map<String, Object> params){
+		return service.getFilteredOrderList(params);
+	}
 
 	@PostMapping("/orderInsert") // 발주 등록
 	public ResponseEntity<String> insertOrderReq(@RequestBody  OrderVO order){
