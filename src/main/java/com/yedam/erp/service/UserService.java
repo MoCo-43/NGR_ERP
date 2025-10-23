@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class UserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
+    @Value("${app.server-url}")
+    private String serverUrl;
     @Autowired
     private CompanyMapper companyMapper;
 
@@ -162,7 +165,7 @@ public class UserService {
         tokenMapper.save(resetToken); // PwResetTokenMapper.xml의 'save' 쿼리 실행
 
         // 5. 비밀번호 재설정 링크가 포함된 이메일 발송
-        String resetLink = "http://localhost/reset-password?token=" + token; // TODO: 실제 도메인으로 변경
+        String resetLink = serverUrl+"/reset-password?token=" + token; // TODO: 실제 도메인으로 변경
         String emailBody = "안녕하세요.\n비밀번호를 재설정하려면 아래 링크를 클릭하세요.\n이 링크는 30분 동안 유효합니다.\n\n" + resetLink;
         
         emailService.sendSimpleMessage(requestVO.getMatMail(), "[ERP 시스템] 비밀번호 재설정 안내", emailBody);
