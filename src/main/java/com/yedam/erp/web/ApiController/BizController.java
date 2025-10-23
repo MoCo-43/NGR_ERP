@@ -183,17 +183,11 @@ public class BizController {
           return ResponseEntity.noContent().build(); // 또는 ok(vo)
       }
 
-    // 거래처여신관리 조회
+  // 여신현황조회
      @GetMapping("/crdlist")
-     /**
-      * 예: GET /api/sales/credit/status?month=2025-10-01
-      * month는 yyyy-MM-01 형태(첫날) 전달을 권장
-      */
-     public List<CustomerCreditVO> status(
-             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate month     ) {
-    	 
+     public List<CustomerCreditVO> selectCrdMaster() {
        Long companyCode = SessionUtil.companyId();
-         return service.selectCrdMaster(companyCode, month);
+         return service.selectCrdMaster(companyCode);
      }
 
   // 여신관리페이지
