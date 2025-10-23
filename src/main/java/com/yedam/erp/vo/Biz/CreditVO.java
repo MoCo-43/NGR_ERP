@@ -6,7 +6,6 @@ import lombok.Data;
 
 @Data
 public class CreditVO {
-
   private String cusCode;
   private Long creditLimit;
   private String creditGrade;

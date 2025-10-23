@@ -45,7 +45,7 @@
             type="button"
             role="tab"
           >
-            거래처별 관리
+            여신현황
           </button>
         </li>
         <li class="nav-item">
@@ -87,16 +87,8 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">담당자</label>
-                  <input
-                    id="qManager"
-                    class="form-control"
-                    placeholder="담당자명"
-                  />
-                </div>
-                <div class="col-md-4">
                   <label class="form-label">신용등급</label>
-                  <select id="qGrade" class="form-select">
+                  <select id="qGrade" class="form-control">
                     <option value="">전체</option>
                     <option>A</option>
                     <option>B</option>
@@ -110,7 +102,6 @@
                 <button id="btnReset" class="btn btn-outline-danger">
                   초기화
                 </button>
-                <button id="btnSearch" class="btn btn-dark">조회</button>
                 <button id="btnNewCredit" class="btn btn-primary">
                   여신 등록
                 </button>
@@ -337,7 +328,7 @@
             E: 0,
           };
 
-          // ----- ① 관리 그리드 -----
+          // ----- 관리 그리드 -----
           const manageCols = [
             {
               headerName: "거래처코드",
@@ -365,17 +356,6 @@
             },
             { headerName: "적용시작일", field: "startDate", width: 130 },
             { headerName: "적용만료일", field: "expireDate", width: 130 },
-            {
-              headerName: "잔여한도",
-              field: "leftPrice",
-              width: 140,
-              valueFormatter: money,
-              cellClass: (p) =>
-                Number(p.value) <= 0
-                  ? "bg-danger-subtle text-danger"
-                  : "bg-success-subtle text-success",
-            },
-            { headerName: "담당자", field: "managerName", width: 120 },
             { headerName: "상태", field: "activeStatus", width: 110 },
             { headerName: "액션", width: 140, cellRenderer: actionBtns },
           ];
@@ -487,11 +467,9 @@
             fetchHistory
           );
 
-          // ===== 관리 탭 – 조회/정렬/초기화 =====
-          $("#btnSearch").addEventListener("click", fetchManage);
+          // ===== 검색필터 초기화 =====
           $("#btnReset").addEventListener("click", () => {
             $("#qName").value = "";
-            $("#qManager").value = "";
             $("#qGrade").value = "";
             fetchManage();
           });
@@ -534,7 +512,6 @@
               $("#startDate").value = row.startDate ?? "";
               $("#expireDate").value = row.expireDate ?? "";
               $("#activeStatus").value = row.activeStatus ?? "NORMAL";
-              $("#remark").value = "";
               applyPolicyLimit();
             }
             new bootstrap.Modal(creditModalEl, { backdrop: "static" }).show();
@@ -584,10 +561,6 @@
               startDate: $("#startDate").value || null,
               expireDate: $("#expireDate").value || null,
               activeStatus: $("#activeStatus").value || "NORMAL",
-              payMethod: $("#payMethod").value || "",
-              collectMonth: $("#collectMonth").value || "CUR",
-              collectDay: $("#collectDay").value || "1",
-              remark: $("#remark").value || "",
             };
             try {
               if (payload.creditNo) {
@@ -644,8 +617,6 @@
                   creditLimit: Number(r.creditLimit ?? r.CREDIT_LIMIT ?? 0),
                   startDate: r.startDate ?? r.START_DATE ?? "",
                   expireDate: r.expireDate ?? r.EXPIRE_DATE ?? "",
-                  leftPrice: Number(r.leftPrice ?? r.LEFT_PRICE ?? 0),
-                  managerName: r.managerName ?? r.MANAGER_NAME ?? "",
                   activeStatus: r.activeStatus ?? r.ACTIVE_STATUS ?? "NORMAL",
                 })
               );
@@ -657,7 +628,6 @@
           }
 
           // 여신등급정책 가져오기
-
           async function fetchPolicy() {
             try {
               const res = await axios.get("/api/biz/crdgradelist");
@@ -690,6 +660,7 @@
             }
           }
 
+          // 여신변경이력
           async function fetchHistory() {
             try {
               const res = await axios.get("/api/biz/credit-history", {
@@ -715,7 +686,7 @@
             }
           }
 
-          // 정책 저장/추가
+          // 여신 정책 저장/추가
           $("#btnPolicySave").addEventListener("click", async () => {
             const data = [];
             gridPolicy.api.forEachNode((n) => data.push(n.data));
