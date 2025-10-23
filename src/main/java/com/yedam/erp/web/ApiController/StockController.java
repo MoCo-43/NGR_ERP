@@ -78,6 +78,9 @@ public class StockController {
 	@Value("${file.upload.dir}")
     private String uploadDir;   // application.properties 경로 읽기
 	
+//	@Value("${yourcloud.upload.dir}")
+//	private String signDir;
+	
 	// 세션 회사코드 불러오기
 	@GetMapping("/getCompId")
 	public Long getCompId(Model model) {
@@ -556,24 +559,52 @@ public class StockController {
 	    
 	    @PostMapping("/uploadSign") // canvas 로 그려진 서명 등록
 	    public ResponseEntity<String> uploadSign(@RequestParam("file") MultipartFile file) {
-	        try {
-	            File dir = new File(uploadDir);
-	            if (!dir.exists()) dir.mkdirs();
+	    	try {
+	            // ✅ 루트경로(/upload)에 sign 하위폴더 추가
+	            String signDirPath = uploadDir + File.separator + "sign";
 
-	            // 원본 파일명 그대로 저장 (예: finalSign.png, empSign.png)
+	            // ✅ sign 디렉토리 생성 (없으면 자동 생성)
+	            File signDir = new File(signDirPath);
+	            if (!signDir.exists()) {
+	                boolean created = signDir.mkdirs();
+	                if (!created) {
+	                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                            .body("업로드 실패: sign 폴더 생성 실패 (" + signDirPath + ")");
+	                }
+	            }
+
+	            // ✅ 파일 저장
 	            String fileName = file.getOriginalFilename();
-	            Path path = Paths.get(uploadDir, fileName);
+	            Path path = Paths.get(signDirPath, fileName);
 	            Files.write(path, file.getBytes());
-				/*
-				 * Path path = Paths.get(uploadDir + file.getOriginalFilename());
-				 * Files.write(path, file.getBytes());
-				 */
 
-	            return ResponseEntity.ok("업로드 성공");
+	            return ResponseEntity.ok("업로드 성공: " + path.toString());
+
 	        } catch (IOException e) {
 	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 	                    .body("업로드 실패: " + e.getMessage());
 	        }
+			/*
+			 * try { // ✅ OS 자동 감지 String osName =
+			 * System.getProperty("os.name").toLowerCase();
+			 * 
+			 * // ✅ 환경별 업로드 경로 지정 String baseUploadDir; if (osName.contains("win")) {
+			 * baseUploadDir = "C:\\upload"; // 로컬 (Windows) } else { baseUploadDir =
+			 * "/upload"; // 리눅스 (운영) }
+			 * 
+			 * // ✅ sign 폴더 생성 (없을 시 자동 생성) String signDirPath = baseUploadDir +
+			 * File.separator + "sign"; File signDir = new File(signDirPath); if
+			 * (!signDir.exists() && !signDir.mkdirs()) { return
+			 * ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+			 * .body("업로드 실패: sign 폴더 생성 실패 (" + signDirPath + ")"); }
+			 * 
+			 * // ✅ 파일 저장 String fileName = file.getOriginalFilename(); Path path =
+			 * Paths.get(signDirPath, fileName); Files.write(path, file.getBytes());
+			 * 
+			 * return ResponseEntity.ok("업로드 성공: " + path); } catch (IOException e) { return
+			 * ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR) .body("업로드 실패: " +
+			 * e.getMessage()); }
+			 */
 	    }
 
 	    

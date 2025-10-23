@@ -199,9 +199,9 @@ const orderListGrid = initGrid({
         { headerName: "거래처코드", field: "cusCode" },
         { headerName: "담당자", field: "empId" },
         { headerName: "제품명", field: "productName" },
-        { headerName: "발주수량", field: "amount" },
+        { headerName: "발주수량", field: "amount", type: 'numericColumn' },
         { headerName: "납기예정일자", field: "dueDate" },
-        { headerName: "공급가액", field: "supAmt", valueFormatter: numberFormatter },
+        { headerName: "공급가액", field: "supAmt", type: 'numericColumn', valueFormatter: numberFormatter },
         {  field: "orderSheetLink",
             cellRenderer: (params) => {
             	const orderCode = params.data.orderCode;
