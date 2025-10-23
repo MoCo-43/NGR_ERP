@@ -201,7 +201,7 @@ html, body {
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
 
     <script th:inline="javascript">
-        const empIdNo = /*[[${session.emp?.empIdNo}]]*/ 0;
+    const empIdNo = /*[[${session.emp != null ? session.emp.empIdNo : 0}]]*/ 0;
     </script>
 
     <script type="module">
