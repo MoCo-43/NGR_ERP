@@ -124,7 +124,13 @@
     if (!(btn instanceof Element) || !btn.classList.contains('edu-del')) return;
     const no = btn.closest('tr')?.dataset.id;  // 행의 data-id 가져오기
     if (!no) return;
-    if (!confirm('삭제하시겠습니까?')) return; // 사용자 확인
+    const ok = await cuteAlert({
+	    type: 'warning',
+	    message: '삭제하시겠습니까?',
+	    confirmText: '확인',
+	    cancelText: '취소'
+	  });
+	  if (!ok) return;
     const res = await fetch('/api/hr/edu/' + no, { method:'DELETE' });
     if (!res.ok) return alert('삭제 실패');
     refresh(); // 삭제 후 목록 새로고침
