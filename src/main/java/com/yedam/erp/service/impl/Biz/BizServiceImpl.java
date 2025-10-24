@@ -157,16 +157,16 @@ public class BizServiceImpl implements BizService {
 	// 거래처관리 수정  updateCustomerByCode
     @Override
     @Transactional
-    public int updateCustomerByCode(CustomerVO cvo) {
-        int updated = bizMapper.updateCustomerByCode(cvo);
+    public int updateCustomerByCusCode(CustomerVO cvo) {
+        int updated = bizMapper.updateCustomerByCusCode(cvo);
         return updated;
     }
 
   // 거래처여신관리 수정
     @Override
     @Transactional
-    public int updateCreditByCode(CreditVO cvo) {
-      int cupdated = bizMapper.updateCreditByCode(cvo);
+    public int updateCreditByCusCode(CreditVO cvo) {
+      int cupdated = bizMapper.updateCreditByCusCode(cvo);
       return cupdated;
     }
 

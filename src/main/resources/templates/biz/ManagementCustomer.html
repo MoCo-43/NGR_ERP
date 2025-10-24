@@ -45,6 +45,9 @@
 
   <body>
     <section layout:fragment="content">
+    <!-- 거래처코드 들고오기 -->
+    <input id="cusCode" type="hidden">
+    
       <!-- 검색/필터 -->
       <div class="card shadow mb-4">
         <div
@@ -54,16 +57,8 @@
         </div>
 
         <div class="card-body">
-          <div
-            class="btn-filter-group btn-group mb-3"
-            role="group"
-            aria-label="useYn-filters"
-          >
-            <button class="btn btn-outline-primary" data-use="">전체</button>
-            <button class="btn btn-outline-primary" data-use="Y">사용</button>
-            <button class="btn btn-outline-primary" data-use="N">미사용</button>
-          </div>
 
+		<!--  검색필터 -->
           <div class="form-inline flex-wrap gap-2">
             <label class="mr-2 mb-2">상호</label>
             <input
@@ -98,37 +93,43 @@
             />
 
             <button id="btnSearch" class="btn btn-dark mb-2">조회</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 리스트 -->
-      <div class="card shadow mb-0">
-        <div
-          class="card-header py-3 d-flex align-items-center justify-content-between"
-        >
-          <h6 class="m-0 font-weight-bold text-primary">거래처 리스트</h6>
-          <div class="btn-group">
+                      <div class="btn-group">
             <button
               id="btnCusRegister"
               type="button"
-              class="btn btn-primary btn-slim"
+              class="btn btn-primary mb-2"
             >
               등록
             </button>
           </div>
+          </div>
+        </div>
+      <!-- 그리드 리스트 -->
+        <div
+          class="card-header py-3 d-flex align-items-center justify-content-between"
+        >
         </div>
         <div class="card-body">
+      <!--  로딩바 구역 -->
+        <div id="customerGridLoader" style="position: relative; width: 100%; max-height: 500px;">
           <div id="customerGrid" class="ag-theme-quartz"></div>
+      <!-- 로딩 스피너 -->
+        <div id="loaderBsModal" class="loader-overlay" style="display: none;">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
         </div>
+       </div>
       </div>
+
+
 
       <!-- 거래처/여신 모달 프래그먼트 -->
       <div th:replace="~{biz/modals/CustomerModal :: mngcustomermodal}"></div>
     </section>
 
     <th:block layout:fragment="body_extra">
-      <!-- libs -->
+      <!-- 라이브러리 -->
       <script
         defer
         src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"
@@ -137,10 +138,15 @@
         defer
         src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
       ></script>
+       <!-- 세션 정보 저장 -->
+	<script th:inline="javascript">
+	    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+	    const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+	</script>
 
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
-          // ========= helpers =========
+          // ========= DOM helpers =========
           const sel = (q, r = document) => r.querySelector(q);
           const selAll = (q, r = document) => Array.from(r.querySelectorAll(q));
           const limitByGrade = { A: 100_000_000, B: 50_000_000, C: 20_000_000 };
@@ -154,7 +160,7 @@
             return `${d.getFullYear()}-${mm}-${dd}`;
           };
 
-          // ========= grid =========
+          // ========= 거래처 리스트 그리드 =========
           const columnDefs = [
             {
               headerName: "거래처코드",
@@ -171,6 +177,7 @@
             { headerName: "대표자명", field: "ceoName", width: 110 },
             { headerName: "전화번호", field: "tel", width: 140 },
             { headerName: "주소", field: "addr", minWidth: 220, flex: 1 },
+            { headerName: "구분", field: "gbn", flex: 1 },
             {
               headerName: "사용여부",
               field: "activeStatus",
@@ -228,6 +235,9 @@
             });
           });
 
+          
+          // 그리드표시 및 검색기능
+          // 그리드 showLoader 적용 
           async function search() {
             try {
               const params = {
@@ -237,6 +247,7 @@
                 bizNo: (qBizNo.value || "").trim(),
                 type: (qType.value || "").trim(),
               };
+              showLoader('customerGridLoader',"거래처를 불러오는 중입니다...");
               const res = await axios.get("/api/biz/mngcustomer", {
                 params,
                 withCredentials: true,
@@ -245,6 +256,7 @@
               const mapped = rows.map((r) => {
                 const cr = r.credit || {};
                 return {
+                  gbn: r.gbn ?? "",
                   cusCode: r.cusCode ?? "",
                   empName: r.empName ?? "",
                   cusName: r.cusName ?? "",
@@ -272,9 +284,12 @@
               console.error(err);
               setRows([]);
             }
+            finally {
+            	hideLoader('customerGridLoader');
+            }
           }
 
-          // ========= modal/tabs =========
+          // ========= 거래처 및 여신등록 모달탭 설정 =========
           const customerModalEl = document.getElementById("mngcustomermodal");
           const bsCustomerModal = () =>
             new bootstrap.Modal(customerModalEl, {
@@ -314,12 +329,11 @@
           const expireDateEl = sel("#expireDate");
           const cActiveStatusEl = sel("#cActiveStatus");
 
-          // 여신초기값
+          // 거래처 초기값
           // ========= form utils =========
           function resetCustomerForm() {
             customerForm.reset();
             sel("#activeStatus").value = "Y";
-            sel("#cusCode").value = "등록후 생성";
             creditGradeEl.value = "C";
             creditLimitEl.value = limitByGrade["C"] ?? 0;
             startDateEl.value = "";
@@ -327,9 +341,10 @@
             cActiveStatusEl.value = "Y";
           }
 
-          // 거래처 DOM
+          // 거래처 DOM 지정
           function fillCustomerForm(row = {}) {
-            sel("#cusCode").value = row.cusCode ?? "";
+        	sel("#cusCode").value = row.cusCode ?? "";
+        	sel("#gbn").value = row.gbn ?? "";
             sel("#empName").value = row.empName ?? "";
             sel("#cusName").value = row.cusName ?? "";
             sel("#bizNo").value = row.bizNo ?? "";
@@ -362,10 +377,13 @@
             cActiveStatusEl.value = cr.cActiveStatus;
           }
 
+          
+          // 거래처코드값(cusCode) payload에서 들고 오기
           function collectCustomerPayload() {
-            const cusCodeDom = sel("#cusCode").value;
+        	const cusCode = sel("#cusCode")?.value?.trim();
             return {
-              cusCode: cusCodeDom === "등록후 생성" ? "" : cusCodeDom,
+              cusCode,
+              gbn: sel("#gbn").value,
               empName: sel("#empName").value,
               cusName: sel("#cusName").value,
               bizNo: sel("#bizNo").value,
@@ -382,6 +400,7 @@
             };
           }
 
+          // 여신정보 로딩
           function collectCreditPayload() {
             return {
               creditGrade: creditGradeEl.value,

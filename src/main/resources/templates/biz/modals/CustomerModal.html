@@ -56,17 +56,18 @@
             <!-- ====== 탭: 거래처정보 ====== -->
             <div id="paneInfo">
               <div class="row g-3">
-                <!-- 2. 거래처코드(자동) / 업태 -->
+              <label for="cusCode" id="cusCode" type="hidden"></label>
+                <!-- 거래처/판매처 구분-->
                 <div class="col-md-6">
-                  <label for="cusCode" class="form-label">거래처코드</label>
-                  <input
-                    type="text"
-                    id="cusCode"
-                    name="cusCode"
+                  <label for="gbn" class="form-label">구분</label>
+                  <select
+                    id="gbn"
+                    name="gbn"
                     class="form-control"
-                    placeholder="등록후 생성"
-                    disabled
-                  />
+                  >
+                    <option value="구매처" selected>구매처</option>
+                    <option value="판매처">판매처</option>
+                  </select>
                 </div>
                 <div class="col-md-6">
                   <label for="bizType" class="form-label">업태</label>
@@ -168,14 +169,13 @@
 
                 <!-- 4. 담당자(돋보기) -->
                 <div class="col-md-6">
-                  <label for="empName" class="form-label">사내담당자</label>
+                  <label for="empName" class="form-label">담당자</label>
                   <div class="input-group">
                     <input
                       type="text"
                       id="empName"
                       name="empName"
                       class="form-control"
-                      placeholder="담당자 선택"
                     />
                   </div>
                 </div>

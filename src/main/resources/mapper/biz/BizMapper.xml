@@ -13,36 +13,44 @@
 
 <!-- 주문서 조회 -->
 <select id="selectPO" resultType="JoinPoVO" parameterType="long">
-  SELECT
-      p.PO_CODE,
-      p.PO_START,
-      c.CUS_NAME,
-      p.CREATER,
-      CASE
-          WHEN s.PROD_CNT > 1
-            THEN s.REP_NAME || ' 외 ' || (s.PROD_CNT - 1) || '건'
-          ELSE s.REP_NAME
-      END AS PRODUCT_NAME,
-      c.BIZ_TYPE,
-      p.PO_STATUS,
-      p.NOTES,
-      p.EX_DATE
-  FROM PURCHASE_ORDER p
-  JOIN CUSTOMER c
-    ON c.CUS_CODE = p.CUS_CODE
-  JOIN (
-      SELECT
-          pod.PO_ID,
-          COUNT(DISTINCT pod.PRODUCT_CODE) AS PROD_CNT,  -- 품목(코드) 수
-          MIN(pdt.PRODUCT_NAME) AS REP_NAME              -- 대표 품목명(사전순)
-      FROM PO_DETAIL pod
-      JOIN PRODUCT pdt
-        ON pdt.PRODUCT_CODE = pod.PRODUCT_CODE
-      GROUP BY pod.PO_ID
-  ) s
-    ON s.PO_ID = p.PO_ID
-  WHERE c.COMPANY_CODE = #{companyCode}
-  ORDER BY p.PO_START DESC
+SELECT
+    p.PO_CODE,
+    p.PO_START,
+    c.CUS_NAME,
+    p.CREATER,
+    CASE
+        WHEN s.PROD_CNT > 1
+          THEN s.REP_NAME || ' 외 ' || (s.PROD_CNT - 1) || '건'
+        ELSE s.REP_NAME
+    END AS PRODUCT_NAME,
+    c.BIZ_TYPE,
+    p.PO_STATUS,
+    p.NOTES,
+    p.EX_DATE,
+    s.SUP_AMT   -- 과세 항목만 합산한 주문금액
+FROM PURCHASE_ORDER p
+JOIN CUSTOMER c
+  ON c.CUS_CODE = p.CUS_CODE
+JOIN (
+    SELECT
+        pod.PO_ID,
+        COUNT(DISTINCT pod.PRODUCT_CODE) AS PROD_CNT,
+        MIN(pdt.PRODUCT_NAME) AS REP_NAME,
+        --  과세 항목만 SUP_AMT 합산
+        SUM(
+          CASE 
+            WHEN pod.VAT_TYPE = '과세' THEN NVL(pod.SUP_AMT, 0)
+            ELSE 0
+          END
+        ) AS SUP_AMT
+    FROM PO_DETAIL pod
+    JOIN PRODUCT pdt
+      ON pdt.PRODUCT_CODE = pod.PRODUCT_CODE
+    GROUP BY pod.PO_ID
+) s
+  ON s.PO_ID = p.PO_ID
+WHERE c.COMPANY_CODE = #{companyCode}
+ORDER BY p.PO_START DESC
 </select>
 
 
@@ -119,7 +127,7 @@ WHERE PO_CODE = #{poCode}
 
 <!-- 주문서 조회(모달) -->
 <select id="getPoHistory" resultType="PoHistoryVO">
-SELECT po.PO_CODE, po.PO_START, po.CUS_CODE, po.CREATER, po.EX_DATE,
+SELECT po.PO_CODE, po.PO_START, po.CUS_CODE, po.CREATER, po.EX_DATE, po.PAY_METHOD,
        c.CUS_NAME, c.ADDR, c.ZIP_CODE, c.TEL,
        pd.PRODUCT_CODE, pd.PRODUCT_NAME, pd.ORDER_QTY, pd.UNIT_PRICE, pd.SUP_AMT
 FROM PURCHASE_ORDER po
@@ -127,6 +135,7 @@ JOIN PO_DETAIL pd ON po.PO_ID = pd.PO_ID
 JOIN CUSTOMER c ON po.CUS_CODE = c.CUS_CODE
 WHERE po.COMPANY_CODE = #{companyCode}
   AND po.PO_STATUS = '작성완료'
+ORDER BY po.PO_CODE DESC
 </select>
 
 
@@ -142,9 +151,9 @@ FROM   PRODUCT
 
 
 
-<!-- 거래처 조회(모달)-->
+<!-- 거래처 조회(모달) 판매처만 조회-->
 <select id="getCustomers" resultType="CusModalVO">
-  SELECT c.CUS_CODE, c.CUS_NAME, c.ADDR, c.ZIP_CODE, c.TEL, c.CEMP_NAME,
+  SELECT c.CUS_CODE, c.CUS_NAME, c.ADDR, c.ZIP_CODE, c.TEL,
          cm.CREDIT_GRADE, cm.LEFT_PRICE, 
          cp.DISCOUNT_RATE, cp.MON_DISC_CNT
   FROM CUSTOMER c
@@ -152,6 +161,7 @@ FROM   PRODUCT
   JOIN CREDIT_POLICY cp ON cp.COMPANY_CODE = c.COMPANY_CODE 
                     AND cp.GRADE = cm.CREDIT_GRADE
   WHERE c.COMPANY_CODE = #{companyCode}
+   AND  c.GBN = '판매처'
   </select>
 
   <!-- 출하지시서 조회 -->
@@ -199,7 +209,7 @@ FROM   PRODUCT
 
   INSERT INTO DELIVERY_ORDER (
     DO_NO, CUS_CODE, PO_CODE, DO_CODE,
-    EMP_NO, NAME, DO_CREATED, TOTAL_QTY,
+    NAME, DO_CREATED,
     DO_STATUS, NOTES, COMPANY_CODE,
     EX_DATE, ADDR, ZIP_CODE
   )
@@ -208,11 +218,9 @@ FROM   PRODUCT
     #{cusCode},
     #{poCode},
     fn_generate_code('DO', ''),
-    #{empNo},
     #{name},
     #{doCreated},
-    #{totalQty},
-    #{doStatus},
+    '작성완료',
     #{notes},
     #{companyCode},
     #{exDate},
@@ -225,14 +233,14 @@ FROM   PRODUCT
 <insert id="insertDODetails" parameterType="DoInsertVO">
   INSERT INTO DO_DETAIL (
     DOD_NO, DO_NO, PRODUCT_CODE,
-    QTY, UNIT_PRICE, SUP_AMT,
+    ORDER_QTY, UNIT_PRICE, SUP_AMT,
     VAT_AMT, DC_AMT, COMPANY_CODE
   )
   SELECT
     fn_generate_code('DOD', ''),
     #{doNo},
     t.productCode,
-    t.qty,
+    t.orderQty,
     t.unitPrice,
     t.supAmt,
     t.vatAmt,
@@ -242,7 +250,7 @@ FROM   PRODUCT
     <foreach collection="dodetails" item="d" separator=" UNION ALL ">
       SELECT
         #{d.productCode} AS productCode,
-        #{d.qty}          AS qty,
+        #{d.orderQty}          AS orderQty,
         #{d.unitPrice}    AS unitPrice,
         #{d.supAmt}      AS supAmt,
         #{d.vatAmt}      AS vatAmt,
@@ -252,27 +260,6 @@ FROM   PRODUCT
   ) t
 </insert>
 
-<!-- 이전코드 -->
-<!-- <insert id="insertDO" parameterType="DoInsertVO">
-  INSERT ALL
-    INTO DELIVERY_ORDER
-      (DO_NO, CUS_CODE, PO_CODE, DO_CODE, EMP_NO, NAME, DO_CREATED,
-       TOTAL_QTY, DO_STATUS, NOTES, COMPANY_CODE, EX_DATE, ADDR, ZIP_CODE)
-    VALUES
-      (DO_NO_SEQ.NEXTVAL, #{cusCode}, #{poCode}, fn_generate_code('DO', ''),
-       #{empNo}, #{name}, #{doCreated},
-       #{totalQty}, #{doStatus}, #{notes}, #{companyCode}, #{exDate},
-       #{addr}, #{zipCode})
-
-    <foreach collection="dodetails" item="dod">
-      INTO DO_DETAIL
-        (DOD_NO, DO_NO, PRODUCT_CODE, QTY, UNIT_PRICE, SUP_AMT, VAT_AMT, DC_AMT, COMPANY_CODE)
-      VALUES
-        (FN_DOD_CODE(), DO_NO_SEQ.CURRVAL, #{dod.productCode}, #{dod.qty},
-         #{dod.unitPrice}, #{dod.supAmt}, #{dod.vatAmt}, #{dod.dcPrice}, #{companyCode})
-    </foreach>
-  SELECT 1 FROM DUAL
-</insert> -->
 
 <!-- 거래처 조회-->
 <select id="selectCustomers" resultType="java.util.List" parameterType="String">
@@ -287,9 +274,9 @@ FROM   PRODUCT
 <resultMap id="CustomerWithCreditMap" type="CustomerVO">
   <!-- 거래처 -->
   <id     property="cusNo"        column="CUS_NO"/>
+  <result property="gbn"      column="GBN"/>
   <result property="cusCode"      column="CUS_CODE"/>
   <result property="empNo"        column="EMP_NO"/>
-  <result property="cempName"     column="CEMP_NAME"/>
   <result property="empName"      column="EMP_NAME"/>
   <result property="cusName"      column="CUS_NAME"/>
   <result property="bizNo"        column="BIZ_NO"/>
@@ -321,14 +308,14 @@ FROM   PRODUCT
 <!-- 거래처 및 여신 조회 -->
 <select id="getCustomerManagement" resultMap="CustomerWithCreditMap" parameterType="long">
     SELECT
-      c.CUS_NO, c.CUS_CODE, c.EMP_NO, c.CEMP_NAME, c.EMP_NAME, c.CUS_NAME, c.BIZ_NO,
+      c.CUS_NO, c.GBN, c.CUS_CODE, c.EMP_NO, c.EMP_NAME, c.CUS_NAME, c.BIZ_NO,
       c.CEO_NAME, c.BIZ_TYPE, c.BIZ_CATEGORY, c.TEL, c.EMAIL, c.ADDR, c.ZIP_CODE,
       c.ACTIVE_STATUS,
       c.GBN, c.BANK_NAME, c.BANK_ACCOUNT, c.COMPANY_CODE,
       cm.CREDIT_LIMIT, cm.CREDIT_GRADE, cm.START_DATE, cm.EXPIRE_DATE,
       cm.ACTIVE_STATUS AS C_ACTIVE_STATUS, cm.CUS_CODE
     FROM CUSTOMER c
-    JOIN CREDIT_MASTER cm ON cm.CUS_CODE = c.CUS_CODE
+    LEFT JOIN CREDIT_MASTER cm ON cm.CUS_CODE = c.CUS_CODE
     WHERE c.COMPANY_CODE = #{companyCode}
 </select>
 
@@ -342,14 +329,14 @@ FROM   PRODUCT
 <!-- 1) 거래처 등록 -->
 <insert id="insertCustomer" parameterType="CustomerVO">
   INSERT INTO CUSTOMER (
-    CUS_NO, CUS_CODE, EMP_NO, CEMP_NAME, EMP_NAME, CUS_NAME, BIZ_NO,
+    CUS_NO, CUS_CODE, EMP_NO, EMP_NAME, CUS_NAME, BIZ_NO,
     CEO_NAME, BIZ_TYPE, BIZ_CATEGORY, TEL, EMAIL, ADDR, ZIP_CODE,
     ACTIVE_STATUS, GBN, BANK_NAME, BANK_ACCOUNT, COMPANY_CODE
   )
   VALUES (
     CUS_NO_SEQ.NEXTVAL,
     #{cusCode},
-    #{empNo}, #{cempName}, #{empName}, #{cusName}, #{bizNo},
+    #{empNo}, #{empName}, #{cusName}, #{bizNo},
     #{ceoName}, #{bizType}, #{bizCategory}, #{tel}, #{email}, #{addr}, #{zipCode},
     #{activeStatus}, #{gbn}, #{bankName}, #{bankAccount}, #{companyCode}
   )
@@ -375,12 +362,11 @@ FROM   PRODUCT
 
 
 <!-- 거래처 수정 -->
-  <update id="updateCustomerByCode" parameterType="CustomerVO">
+  <update id="updateCustomerByCusCode" parameterType="CustomerVO">
     UPDATE CUSTOMER
     <set>
       <if test="ceoName != null">        CEO_NAME = #{ceoName},</if>
       <if test="empName != null">       EMP_NAME = #{empName},</if>
-      <if test="cempName != null">       CEMP_NAME = #{cempName},</if>
       <if test="cusName != null">        CUS_NAME = #{cusName},</if>
       <if test="bizNo != null">          BIZ_NO = #{bizNo},</if>
       <if test="bizType != null">        BIZ_TYPE = #{bizType},</if>
@@ -398,7 +384,7 @@ FROM   PRODUCT
   </update>
 
 <!-- 거래처 여신 수정 -->
-  <update id="updateCreditByCode" parameterType="CreditVO">
+  <update id="updateCreditByCusCode" parameterType="CreditVO">
     UPDATE CREDIT_MASTER
     <set>
       <if test="creditLimit != null">           CREDIT_LIMIT = #{creditLimit},</if>
