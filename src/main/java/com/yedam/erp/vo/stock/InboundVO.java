@@ -31,7 +31,7 @@ public class InboundVO {
 	private String businessCode; // 거래처코드
 	private String productCode; // 제품코드
 	@NumberFormat(pattern = "#,###")
-	private Long purchasePrice; // 제품 단가
+	private Long orderPrice; // 제품 단가
 	private String orderCode; // 발주 코드
 	
 

@@ -155,9 +155,9 @@
           productCode: d.productCode,
           productName: d.productName,
           qty:         d.qty,
-          price: d.purchasePrice,
-          supply: d.qty * d.purchasePrice,
-          vat: d.qty * d.purchasePrice * 0.1,
+          price: d.orderPrice,
+          supply: d.qty * d.orderPrice,
+          vat: d.qty * d.orderPrice * 0.1,
         }));
         window.invoiceGridApi.setRowData(rows);
         updateTotals();
