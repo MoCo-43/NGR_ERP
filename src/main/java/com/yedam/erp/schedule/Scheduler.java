@@ -23,18 +23,45 @@ public class Scheduler {
 		String empId = SessionUtil.empId();
 		Long compCode = SessionUtil.companyId();
 		System.out.println("empId , compCode check"+empId+", "+compCode);
-		InvenVO instance = new InvenVO();
-	    instance.setCompanyCode(compCode);
-	    instance.setEmpId(empId);
-        mapper.insertInvenClosing(instance);// 마스터 처리
-        
-        InvenDetailVO instDatail = new InvenDetailVO();
-		instDatail.setCompanyCode(compCode);
-		instDatail.setEmpId(empId);
-		instDatail.setIcCode(instance.getIcCode());
 		
-		mapper.insertInvenClosingDetail(instDatail); // 상세 처리
-        System.out.println("월말 재고결산 자동 생성 완료 ✅");
+		// ✅ 이미 이번 달 결산이 존재하는지 확인
+	    int exists = mapper.checkThisMonthSettlement();
+	    if (exists > 0) {
+	        System.out.println("🚫 이미 이번 달 결산 데이터가 존재합니다. 자동 생성 스킵.");
+	        return; // → 중복 생성 방지
+	    }
+	    
+	    // ✅ 없으면 신규 생성
+		/*
+		 * InvenVO instance = new InvenVO(); instance.setCompanyCode(compCode);
+		 * instance.setEmpId(empId); mapper.insertInvenClosing(instance);// 마스터 처리
+		 * 
+		 * InvenDetailVO instDatail = new InvenDetailVO();
+		 * instDatail.setCompanyCode(compCode); instDatail.setEmpId(empId);
+		 * instDatail.setIcCode(instance.getIcCode());
+		 * 
+		 * mapper.insertInvenClosingDetail(instDatail); // 상세 처리
+		 * System.out.println("월말 재고결산 자동 생성 완료 ✅");
+		 */
+	    createSettlement(compCode,empId);
     }
+	
+	// 공통 로직
+	private void createSettlement(Long compCode, String empId) {
+	    InvenVO master = new InvenVO();
+	    master.setCompanyCode(compCode);
+	    master.setEmpId(empId);
+
+	    mapper.insertInvenClosing(master);
+
+	    InvenDetailVO detail = new InvenDetailVO();
+	    detail.setCompanyCode(compCode);
+	    detail.setEmpId(empId);
+	    detail.setIcCode(master.getIcCode());
+
+	    mapper.insertInvenClosingDetail(detail);
+
+	    System.out.printf("✅ [%s] 결산 생성 완료: %s%n", master.getIcCode());
+	}
 	
 }
