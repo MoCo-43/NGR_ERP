@@ -157,18 +157,34 @@
               </div>
             </div>
 
-            <!-- 4행: 할인율 | 여신잔액 -->
-            <div class="row g-3 align-items-end mb-2">
-              <div class="col-md-6">
-                <label for="discountRate" class="form-label">할인율(%)</label>
-                <input id="discountRate" class="form-control" />
-              </div>
+			<!-- 4행: 할인율 | 여신잔액 -->
+			<div class="row g-3 align-items-end mb-2">
+			  <!-- 할인율 + 할인여부 -->
+			  <div class="col-md-6">
+			    <label for="discountRate" class="form-label">할인율(%)</label>
+			    <div class="input-group">
+			      <!-- 할인율 입력 -->
+			      <input
+			        id="discountRate"
+			        class="form-control"
+			        type="number"
+			        disabled
+			      />
+			      <!-- 할인여부 선택 -->
+			      <select id="creditActive" class="form-control" onchange="toggleDiscountRate()">
+			        <option value="N" selected>미적용</option>
+			        <option value="Y">적용</option>
+			      </select>
+			    </div>
+			  </div>
+			
+			  <!-- 여신잔액 -->
+			  <div class="col-md-6">
+			    <label for="leftPrice" class="form-label">여신잔액</label>
+			    <input id="leftPrice" class="form-control" type="text" readonly />
+			  </div>
+			</div>
 
-              <div class="col-md-6">
-                <label for="leftPrice" class="form-label">여신잔액</label>
-                <input id="leftPrice" class="form-control" disabled />
-              </div>
-            </div>
 
             <!-- 5행: 비고 (전폭) -->
             <div class="row g-3 align-items-end mb-2">
@@ -185,8 +201,7 @@
         </div>
       </div>
 
-      <!-- 제품 목록 (9) -->
-      <div class="card shadow">
+      <!-- 제품 목록 그리드 -->
         <div
           class="card-header d-flex align-items-center justify-content-between"
         >
@@ -202,13 +217,6 @@
               제품코드
             </button>
             <button
-              id="btnAddRow"
-              type="button"
-              class="btn btn-outline-secondary btn-slim"
-            >
-              행 추가
-            </button>
-            <button
               id="btnRemoveRow"
               type="button"
               class="btn btn-outline-danger btn-slim"
@@ -220,7 +228,7 @@
         <div class="card-body">
           <div id="itemGrid" class="ag-theme-quartz"></div>
         </div>
-      </div>
+
 
       <!-- 거래처 검색 모달 -->
       <div th:replace="~{biz/modals/PoCustomerModal :: customermodal}"></div>
@@ -243,8 +251,21 @@
         defer
         src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
       ></script>
+      <!-- 세션 정보 저장 -->
+	<script th:inline="javascript">
+	    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+	    const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+	</script>
 
       <script th:inline="none">
+      // 여신관련 전역설정(할인율, 월별할인, 여신잔여)
+      let selectedCustomer = {
+		  discountRate: 0,   // DB의 할인율 (%)
+		  leftPrice: 0,
+		  monDiscCnt: 0,
+		};
+      
+      
         document.addEventListener("DOMContentLoaded", () => {
           // DOM helpers
 
@@ -262,7 +283,23 @@
           }
 
           const toNum = (v) => Number(String(v ?? 0).replace(/[, ]/g, "")) || 0;
+   
+          
+          // 여신 적용할지에 대한 function
+          window.toggleDiscountRate = function () {
+        	    const select = document.getElementById("creditActive");
+        	    const input = document.getElementById("discountRate");
 
+        	    if (select.value === "Y") {
+        	      input.focus();
+        	      if (input.value === 0) input.value = 0;
+        	    } else {
+        	      input.value = 0;
+        	    }
+        	  };
+          
+          
+          
           // ===== 기본값 세팅 =====
           const today = new Date().toISOString().slice(0, 10);
           setVal("poStart", today);
@@ -299,7 +336,7 @@
             return applyVat ? Math.round(calcSupply(r) * VAT_RATE) : 0;
           }
 
-          //
+          // 행별 계산
           function recalcRow(data) {
             const price = toNum(data.unitPrice);
             const qty = toNum(data.orderQty);
@@ -332,12 +369,14 @@
             let sumSupply = 0,
               sumVat = 0,
               sumDc = 0,
+              totalQty = 0,
               cnt = 0;
             gridApi.forEachNodeAfterFilterAndSort((n) => {
               const r = n.data || {};
               sumSupply += r.supAmt;
               sumVat += r.vatAmt;
               sumDc += r.dcAmt;
+              totalQty += r.orderQty;
               cnt++;
             });
             const pinned = [
@@ -346,6 +385,7 @@
                 supAmt: sumSupply,
                 vatAmt: sumVat,
                 dcAmt: sumDc,
+                orderQty: totalQty,
               },
             ];
             gridApi.setPinnedBottomRowData
@@ -389,7 +429,7 @@
               width: 120,
               type: "rightAligned",
               valueParser: numberParser,
-              // valueGetter: (p) => calcSupply(p.data),
+              valueGetter: (p) => calcSupply(p.data),
             },
             {
               headerName: "부가세",
@@ -397,7 +437,7 @@
               width: 120,
               type: "rightAligned",
               valueParser: numberParser,
-              //  valueGetter: (p) => calcVat(p.data),
+               valueGetter: (p) => calcVat(p.data),
             },
             {
               headerName: "과세여부",
@@ -412,7 +452,7 @@
             {
               headerName: "할인금액",
               field: "dcAmt",
-              editable: true,
+              editable: false,
               width: 120,
               type: "rightAligned",
               valueParser: (p) => numberParser(calcSupply(p.data.dc)),
@@ -434,12 +474,13 @@
             onCellValueChanged: (p) => {
               const f = p.colDef.field;
               if (["orderQty"].includes(f)) {
-                const { supAmt, vatAmt, dcAmt } = recalcRow(p.data);
+                const { supAmt, vatAmt, dcAmt, orderQty } = recalcRow(p.data);
 
                 // 이 행의 계산 컬럼 값을 갱신
                 p.node.setDataValue("supAmt", supAmt);
                 p.node.setDataValue("vatAmt", vatAmt);
                 p.node.setDataValue("dcAmt", dcAmt);
+                p.node.setDataValue("totalQty", orderQty);
 
                 // 합계(고정 하단행)도 다시 합산
                 updatePinned();
@@ -454,19 +495,8 @@
             gridApi = gridOptions.api;
           }
 
-          // 행 추가/삭제
-          byId("btnAddRow").addEventListener("click", () => {
-            const blank = {
-              productCode: "",
-              productName: "",
-              unitPrice: null,
-              orderQty: null,
-              dcAmt: null,
-              notes: "",
-            };
-            gridApi.applyTransaction({ add: [blank] });
-            updatePinned();
-          });
+
+          // 행 삭제
           byId("btnRemoveRow").addEventListener("click", () => {
             const sel = gridApi.getSelectedRows?.() || [];
             if (!sel.length) return alert("삭제할 행을 선택하세요.");
@@ -503,20 +533,17 @@
                 return;
               }
 
-              const cusName = getVal("cusName");
-              if (!cusName) {
+              const cusCode = getVal("cusCode");
+              if (!cusCode) {
                 alert("거래처를 선택해 주세요.");
                 return;
               }
 
-              // 작성자
-              const creater = document.getElementById("creater").textContent;
 
               const payload = {
-                companyCode: Number(getVal("companyCode") || 0),
-                cusName,
+                companyCode: compCode,
                 cusCode: getVal("cusCode"),
-                creater,
+                creater: loginName,
                 poStart: getVal("poStart") || undefined,
                 exDate: getVal("exDate") || undefined,
                 poDate: getVal("poDate") || undefined,
@@ -531,11 +558,22 @@
               };
 
               console.log("vatType 은 ", payload.vatType);
+              const res = await cuteAlert({
+  	        	type: "question",
+  	            title: "주문 확인",
+  	            message: "주문서를 등록하시겠습니까?",
+  	            imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
+  	            confirmText: "네",
+  	            cancelText: "아니오"
+  	        });
+              if (res != true) {
+            	  return;
+              }
               await axios.post("/api/biz/poinsert", payload, {
                 headers: { "Content-Type": "application/json" },
               });
 
-              alert("등록되었습니다.");
+              toastr.success("등록되었습니다.");
               resetAll();
             } catch (e) {
               console.error(e);
@@ -641,6 +679,8 @@
               fetchPoHistoryData();
             });
 
+            
+            // 주문서 가져오기 버튼
             const importBtn = document.getElementById("PohImportBtn");
             if (importBtn) {
               importBtn.addEventListener("click", () => {
@@ -743,8 +783,8 @@
               const newItems = selectedRows.map((row) => ({
                 productCode: row.productCode,
                 productName: row.productName,
-                unitPrice: row.salesPrice || null,
-                orderQty: 0,
+                unitPrice: row.salesPrice,
+                orderQty: row.orderQty,
                 vatType: row.vatType,
               }));
 
@@ -833,7 +873,31 @@
             if (cusDiscountEl) cusDiscountEl.value = row.discountRate ?? "";
             if (cusLeftPriceEl) cusLeftPriceEl.value = row.leftPrice ?? "";
             if (monDiscCntEl) monDiscCntEl.value = row.monDiscCnt ?? "";
+            
+            // 상태에 DB값 보관
+            selectedCustomer.discountRate = Number(row.discountRate ?? 0);
+            selectedCustomer.leftPrice    = Number(row.leftPrice ?? 0);
+            selectedCustomer.monDiscCnt   = Number(row.monDiscCnt ?? 0);
+
+            // 화면 표시는 그대로
+            if (cusDiscountEl) cusDiscountEl.value = 0;               // 기본은 미적용이므로 0
+            if (cusLeftPriceEl) cusLeftPriceEl.value = row.leftPrice ?? "";
+            if (monDiscCntEl) monDiscCntEl.value = row.monDiscCnt ?? "";
+
+            // 선택 시 미적용으로 초기화
+            const creditActiveSel = document.getElementById("creditActive");
+            if (creditActiveSel) {
+              creditActiveSel.value = "N";
+              document.getElementById("discountRate").disabled = true;
           }
+            
+            // 고객 바뀌면 합계도 다시 계산(필요시)
+            if (gridApi) { 
+            	updatePinned(); 
+            	}
+            }
+            
+            
           // 거래처 모달의 선택 버튼 클릭 이벤트
           const importCustomerCodeBtn = document.getElementById("CstImportBtn");
           if (importCustomerCodeBtn) {

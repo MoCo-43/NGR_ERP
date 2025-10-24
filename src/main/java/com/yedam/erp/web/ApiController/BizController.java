@@ -1,13 +1,10 @@
 package com.yedam.erp.web.ApiController;
 
-import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,6 +27,8 @@ import com.yedam.erp.vo.Biz.PoHistoryVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
+
+import lombok.RequiredArgsConstructor;
 
 
 
@@ -155,13 +154,12 @@ public class BizController {
 
   // 거래처 수정
   @PutMapping("/mngcustomer/{cusCode}")
-      public ResponseEntity<?> updateCustomerByCode(
-              @PathVariable String cusCode,
-              @RequestBody CustomerVO cvo
-      ) {
-          cvo.setCusCode(cusCode);
+      public ResponseEntity<?> updateCustomerByCusCode(@PathVariable String cusCode, @RequestBody CustomerVO cvo) {
+          // CusCode 설정
+	  	  cvo.setCusCode(cusCode);
 
-          int updated = service.updateCustomerByCode(cvo);
+          
+          int updated = service.updateCustomerByCusCode(cvo);
           if (updated == 0) {
               return ResponseEntity.notFound().build();
           }
@@ -170,13 +168,12 @@ public class BizController {
 
   // 거래처 여신 수정
   @PutMapping("/mngcuscredit/{cusCode}")
-  public ResponseEntity<?> updateCreditByCode(
-      @PathVariable String cusCode,
-      @RequestBody CreditVO cvo
-  ) {
-          cvo.setCusCode(cusCode);
+  public ResponseEntity<?> updateCreditByCusCode(@PathVariable String cusCode, @RequestBody CreditVO cvo) {
+	      // CusCode 설정
+	  	  cvo.setCusCode(cusCode);
 
-          int updated = service.updateCreditByCode(cvo);
+
+          int updated = service.updateCreditByCusCode(cvo);
           if (updated == 0) {
               return ResponseEntity.notFound().build();
           }

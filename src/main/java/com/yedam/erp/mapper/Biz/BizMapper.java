@@ -86,9 +86,9 @@ public interface BizMapper {
 
 
   // 거래처관리 수정
-  int updateCustomerByCode(CustomerVO cvo);
+  int updateCustomerByCusCode(CustomerVO cvo);
   // 거래처여신관리 수정
-  int updateCreditByCode(CreditVO cvo);
+  int updateCreditByCusCode(CreditVO cvo);
 
 
   

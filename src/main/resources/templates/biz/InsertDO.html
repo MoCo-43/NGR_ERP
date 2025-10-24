@@ -63,11 +63,6 @@
 
   <body>
     <section layout:fragment="content">
-      <input
-        type="hidden"
-        id="companyCode"
-        th:value="${#authentication.principal.empLoginVO.matNo}"
-      />
       <div class="card shadow">
         <!-- 헤더 -->
         <div
@@ -129,7 +124,7 @@
                 <div class="input-group">
                   <span
                     class="form-control"
-                    id="managerName"
+                    id="creater"
                     th:text="${#authentication.principal.empLoginVO.name}"
                   ></span>
                 </div>
@@ -268,6 +263,11 @@
     </section>
 
     <th:block layout:fragment="body_extra">
+    <!-- 세션 정보 저장 -->
+<script th:inline="javascript">
+    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+    const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+</script>
       <script
         src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"
       ></script>
@@ -277,14 +277,19 @@
       <script
         src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"
       ></script>
+ <!-- toastr -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+</script>
 
       <script th:inline="none">
+      console.log("loginName : "+loginName);
+      console.log("compCode : "+compCode);
         let _selectGuard = false;
 
         // ---------- 유틸 ----------
         const parseNum = (v) => Number(String(v ?? "").replace(/,/g, "")) || 0;
         const computeRow = (d) => {
-          d.supAmt = (Number(d.qty) || 0) * (Number(d.unitPrice) || 0);
+          d.supAmt = (Number(d.orderQty) || 0) * (Number(d.unitPrice) || 0);
           d.vatAmt = Math.round((d.supAmt || 0) * 0.1);
           return d;
         };
@@ -313,16 +318,22 @@
               flex: 1,
             },
             {
-              headerName: "지불방식",
-              field: "payMethod",
-              editable: true,
-              width: 120,
-              cellEditor: "agSelectCellEditor",
-              cellEditorParams: { values: ["현금", "어음"] },
-            },
+            	  headerName: "지불방식",
+            	  field: "payMethod",
+            	  editable: true,
+            	  width: 120,
+            	  cellEditor: "agSelectCellEditor",
+            	  cellEditorParams: { values: ["CASH", "BILL"] },
+            	  // 화면 표시용 포매터
+            	  valueFormatter: (params) => {
+            	    if (params.value === "CASH") return "현금";
+            	    if (params.value === "BILL") return "어음";
+            	    return params.value || "";
+            	  },
+            	},
             {
               headerName: "수량",
-              field: "qty",
+              field: "orderQty",
               editable: true,
               width: 100,
               type: "rightAligned",
@@ -389,7 +400,7 @@
             tSup = 0,
             tVat = 0;
           itemGridApi.forEachNode((n) => {
-            tQty += Number(n.data?.qty || 0);
+            tQty += Number(n.data?.orderQty || 0);
             tSup += Number(n.data?.supAmt || 0);
             tVat += Number(n.data?.vatAmt || 0);
           });
@@ -407,7 +418,7 @@
                 productCode: "",
                 productName: "",
                 payMethod: "현금",
-                qty: 0,
+                orderQty: 0,
                 unitPrice: 0,
                 vatAmt: 0,
                 supAmt: 0,
@@ -479,16 +490,15 @@
             writeDate: document.getElementById("writeDate").value,
             customerCode: document.getElementById("cusCode").value,
             customerName: document.getElementById("cusName").value,
-            managerName:
-              document.getElementById("managerName").textContent ||
-              document.getElementById("managerName").value ||
+            creater:
+              document.getElementById("creater").textContent ||
+              document.getElementById("creater").value ||
               "",
             tel: document.getElementById("tel").value,
             shipDate: document.getElementById("shipDate").value,
             addr: document.getElementById("sample4_roadAddress").value,
             zipCode: document.getElementById("sample4_postcode").value,
             notes: document.getElementById("notes")?.value || "",
-            companyCode: document.getElementById("companyCode").value,
           };
 
           if (!header.customerName)
@@ -506,23 +516,24 @@
           const payload = {
             ...(poCodes.length > 0 ? { poCodes } : {}),
             cusCode: header.customerCode,
-            name: header.managerName,
+            creater: loginName,
             doCreated: header.writeDate,
             exDate: header.shipDate,
             addr: header.addr,
             zipCode: header.zipCode,
+            tel: header.tel,
             notes: header.notes ?? "",
-            companyCode: header.companyCode,
+            companyCode: compCode,
             dodetails: lineItems.map((it) => ({
               productCode: it.productCode,
-              qty: it.qty ?? 0,
+              orderQty: it.orderQty ?? 0,
               unitPrice: it.unitPrice ?? 0,
               supAmt: it.supAmt ?? 0,
               vatAmt: it.vatAmt ?? 0,
               dcAmt: Number(it.dcAmt || 0),
               companyCode: header.companyCode,
               poCode: it.poCode || null, // 주문서 없이 등록 가능
-              payMethod: it.payMethod || "현금",
+              payMethod: it.payMethod,
               note: it.note || "",
             })),
           };
@@ -595,8 +606,8 @@
               productCode: r.productCode,
               productName: r.productName,
               vatType: r.vatType,
-              payMethod: r.payMethod || "현금",
-              qty: r.qty || 1,
+              payMethod: r.payMethod,
+              qty: r.qty,
               unitPrice: r.salesPrice || 0,
               supAmt: (r.qty || 1) * (r.unitPrice || r.salesPrice || 0),
               vatAmt: Math.round(
@@ -794,14 +805,14 @@
               productCode: row.productCode ?? "",
               productName: row.productName ?? "",
               cusCode: row.cusCode ?? "",
-              qty: row.qty ?? 1,
+              orderQty: row.orderQty,
               unitPrice: row.unitPrice ?? 0,
-              supAmt: row.supAmt ?? (row.unitPrice || 0) * (row.qty || 1),
+              supAmt: row.supAmt ?? (row.unitPrice || 0) * (row.orderQty || 1),
               vatAmt: Math.round(
-                (row.supAmt ?? (row.unitPrice || 0) * (row.qty || 1)) * 0.1
+                (row.supAmt ?? (row.unitPrice || 0) * (row.orderQty || 1)) * 0.1
               ),
               note: row.notes,
-              payMethod: "현금",
+              payMethod: row.payMethod,
             }));
 
             itemGridApi.setRowData([]);

@@ -17,11 +17,12 @@ public class PoHistoryVO {
     private String cusCode;
     private String cusName;
     private String creater;
+    private String payMethod;
     private String productCode;
     private String productName;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate exDate;
-    private Integer orderQty;
+    private Long orderQty;
     private Long unitPrice; 
     private Long supAmt;
     private String zipCode;

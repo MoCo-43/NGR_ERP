@@ -1,6 +1,7 @@
 package com.yedam.erp.vo.Biz;
 
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
 public class CustomerVO {
@@ -23,8 +24,7 @@ public class CustomerVO {
   private String gbn;  // 구분
   private String bankName ;  // 은행명
   private String bankAccount; // 은행 계좌
-  private String cempName;  // 거래 담당자명
 
-      // ✅ 여신정보 포함
+      // 여신정보 포함
   private CreditVO credit;
 }
