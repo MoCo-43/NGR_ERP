@@ -190,7 +190,7 @@
 	        <!-- .jasper만 포함할 때 -->
 	        <include>**/*.jasper</include>
 	        <!-- 개발 환경에서도 쓰려면 둘 다 -->
-	        <include>**/*.jrxml</include>
+	        <!--<include>**/*.jrxml</include>-->
 	      </includes>
 	    </resource>
 	  </resources>
