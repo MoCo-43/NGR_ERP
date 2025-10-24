@@ -42,11 +42,20 @@ public class InvoiceHeaderVO {
     private List<InvoiceLineVO> lines;
     
     // 거래처
+    private String buyerBizno;
     private String buyerCeoName;
     private String buyerAddr;
     private String buyerBizType;
     private String buyerBizCategory;
     private String buyerEmail;
+    
+    // 거래처
+    private String sellerBizno;
+    private String sellerCeoName;
+    private String sellerAddr;
+    private String sellerBizType;
+    private String sellerBizCategory;
+    private String sellerEmail;
 
 
     
