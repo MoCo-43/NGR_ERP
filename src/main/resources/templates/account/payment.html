@@ -369,7 +369,7 @@ document.getElementById("btnRegister").addEventListener("click", async () => {
   try {
     const res = await axios.post("/api/account/payrollHist/save", payload);
     await initBaseGrid(ym);
-    toastr.success(`✅ 급여전표 등록 완료\n전표번호: ${res.data}`);
+    toastr.success(`✅ 급여전표 등록 완료`);
   } catch (err) {
     console.error("전표 등록 오류:", err);
     toastr.errror("전표 등록 중 오류 발생\n" + (err.response?.data?.message || ""));
