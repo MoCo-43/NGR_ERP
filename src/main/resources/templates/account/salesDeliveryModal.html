@@ -160,6 +160,7 @@
           note: ""
         }));
         window.invoiceGridApi.setRowData(rows);
+        updateTotals();
       }
     } catch (err) {
       console.error("invoiceModal 반영 중 오류", err);

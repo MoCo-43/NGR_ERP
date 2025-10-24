@@ -190,7 +190,7 @@ public class AccountController {
         List<String> jrnNoList = (List<String>) req.get("jrnNoList");
         String status = (String) req.get("status");
         String createdBy = (String) req.get("loginName");
-
+        String jrnNo = (String) req.get("jrnNo");
         if (jrnNoList == null || jrnNoList.isEmpty()) {
             return ResponseEntity.badRequest().body("전표번호가 없습니다.");
         }

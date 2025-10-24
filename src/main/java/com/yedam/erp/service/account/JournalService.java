@@ -37,4 +37,5 @@ public interface JournalService {
     
     // ✅ 역분개
     void reverseJournalCsv(Long companyCode, String originJrnNos, String createdBy);
+	
 }
