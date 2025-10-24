@@ -34,6 +34,7 @@ nav a {
 nav a:hover {
 	color: #3f51b5;
 }
+
 .settings-icon {
 	margin-left: 15px;
 	cursor: pointer;
@@ -58,23 +59,26 @@ nav a:hover {
 </style>
 
 		<header>
-			<div class="logo"><a href="http://localhost/">NGR_ERP</div>
+			<div class="logo">
+				<a th:href="@{/dashboard}">NGR_ERP
+			</div>
 			<nav>
 				<span sec:authorize="isAnonymous()"> <!--<a href="#" th:href="@{/login}">로그인</a>-->
 					<a href="#" th:href="@{/salLogin}">로그인</a> <a href="#"
 					th:href="@{/register}">회원가입</a>
 				</span> <span sec:authorize="isAuthenticated()">
-					<form th:action="@{/salLogout}" method="post"
+					<form th:action="@{/sallogout}" method="post"
 						style="display: inline;">
 						<a href="javascript:void(0);"
 							onclick="this.closest('form').submit();"
 							style="color: white; text-decoration: none;"> 로그아웃 </a>
 					</form>
 				</span> <a href="#" th:href="@{/subscribe}">구독</a> <a
-					th:href="@{/sallogin}" class="settings-icon"
+					th:href="@{/ngrlogin}" class="settings-icon"
 					style="text-decoration: none; color: white;"> <span
 					class="material-icons">settings</span>
-				</a>
+				</a> <a th:href="@{/}" style="text-decoration: none; color: white";> 
+				<span class="material-icons">home</span></a>
 			</nav>
 		</header>
 	</div>

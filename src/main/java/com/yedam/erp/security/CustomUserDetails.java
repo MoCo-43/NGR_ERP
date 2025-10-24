@@ -72,7 +72,7 @@ public class CustomUserDetails implements UserDetails {
             return Collections.singletonList(new SimpleGrantedAuthority(roleName));
         }
 
-        // 2️⃣ 판매자 로그인
+        // 2️판매자 로그인
         if (sallerVO != null) {
             System.out.println("판매자 로그인: salId = " + sallerVO.getSalId());
             // 판매자는 고정적으로 ROLE_SELLER 권한 부여
@@ -86,7 +86,7 @@ public class CustomUserDetails implements UserDetails {
             return Collections.singletonList(new SimpleGrantedAuthority(roleName));
         }
 
-        // 3️⃣ 예외 (로그인정보 없음)
+        // 3️예외 (로그인정보 없음)
         System.out.println("경고: empLoginVO, sallerVO 모두 null입니다.");
         return Collections.emptyList();
     }
