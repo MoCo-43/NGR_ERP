@@ -63,13 +63,14 @@ html, body {
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
     z-index: 10;
 }
+.card-body{
+	color: black;
+}
     </style>
 </th:block>
 
 <th:block layout:fragment="content">
     <div class="container-fluid">
-        <h1 class="h3 mb-4 text-gray-800">마이페이지</h1>
-
         <div class="row">
             <!-- 왼쪽: 프로필 및 사원 정보 -->
             <div class="col-lg-5">
@@ -206,7 +207,7 @@ html, body {
 
     <script type="module">
     document.addEventListener('DOMContentLoaded', () => {
-        // ✅ ================= 일정관리 기존 로직 =================
+        // ================= 일정관리 기존 로직 =================
         const calendarEl = document.getElementById('calendar');
         const modalEl = document.getElementById('scheduleModal');
         const modal = new bootstrap.Modal(modalEl);
