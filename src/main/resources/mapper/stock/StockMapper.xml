@@ -1082,7 +1082,7 @@ SELECT DISTINCT
        CASE WHEN EXISTS(
                 SELECT 1 FROM do_detail d2 
                 WHERE d2.do_no = (SELECT do_no FROM delivery_order WHERE do_code = #{doCode} AND vat_amt > 0)
-            ) THEN 'VAT 포함'
+            ) THEN '과세'
             ELSE '면세'
        END AS taxType
 FROM outbound_header oh
