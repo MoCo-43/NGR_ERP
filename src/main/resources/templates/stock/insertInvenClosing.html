@@ -505,8 +505,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	    modalInTdDate.innerHTML = selectICDate;
 	    
 	    // 서명 이미지 세팅
-	    fnImg.src = "/sign/finSign.png";
-	    dptImg.src = "/sign/empSign.png";
+	    /* fnImg.src = "/sign/finSign.png";
+	    dptImg.src = "/sign/empSign.png"; */
+	    // ✅ 서명 이미지 세팅 (자동 확장자 탐색, 리눅스 호환)
+	    await loadSignImage("finSign", fnImg);
+	    await loadSignImage("empSign", dptImg);
 	    
 	    
 	    // 버튼 숨기기 (서명 등록용 버튼)
