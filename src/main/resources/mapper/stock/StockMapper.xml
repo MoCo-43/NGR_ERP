@@ -587,6 +587,7 @@ FROM INVENTORY_CLOSING ic
 LEFT JOIN EMP_LOGIN emp 
 ON ic.emp_id = emp.emp_id 
 WHERE ic.COMPANY_CODE = #{companyCode}
+ORDER BY ic.IC_DATE 
 </select>
 
 <!-- 결산 조회 - 상세 -->
