@@ -80,7 +80,7 @@
 		  <option value="면세">면세</option>
 		</select> -->
 		<input type="text" class="form-control form-control-sm" id="vatType" name="vatType"
-		       list="vatTypeList" placeholder="공급처명" style="max-width: 180px;">
+		       list="vatTypeList" placeholder="과세여부" style="max-width: 180px;">
 		<datalist id="vatTypeList">
 		  <option value="과세">
 		  <option value="면세">
@@ -747,11 +747,12 @@ document.addEventListener("DOMContentLoaded", () => {
 	});
 	
 	 // 거래처명 클릭 시 모달
-	searchPartner.addEventListener('click', () => {
+	/* searchPartner.addEventListener('click', () => {
 			businessModal.show(); // 항상 동일한 인스턴스 사용
 	        if (!gridApi) initBusinessGrid();
 	        else loadBusinessData();
- 	});
+			// 거래처명으로 필터링 안하기 때문에 주석처리
+ 	}); */
 	
 	// 거래처 그리드 초기화
 	function initBusinessGrid() {
