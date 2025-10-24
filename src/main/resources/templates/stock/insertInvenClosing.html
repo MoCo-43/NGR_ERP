@@ -367,13 +367,14 @@ document.addEventListener("DOMContentLoaded", () => {
 	// 이미지 확장자가 뭐가 됐던 이름이 같으면 찾아오기
 	async function loadSignImage(baseName, imgElem) {
 		  const exts = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
-
+		  let found = false;
 		  for (const ext of exts) {
 		    const url = `/sign/${baseName}${ext}`;
 		    try {
 		      const res = await fetch(url, { method: 'HEAD' }); // ✅ 별도 정의 불필요
 		      if (res.ok) {
 		        imgElem.src = url;
+		        found = true;
 		        return;
 		      }
 		    } catch (e) {
@@ -381,8 +382,38 @@ document.addEventListener("DOMContentLoaded", () => {
 		    }
 		  }
 
-		  console.warn("❌ 등록된 서명 이미지 없음");
-		  imgElem.src = '/img/no-sign.png';
+		  /* console.warn("❌ 등록된 서명 이미지 없음");
+		  imgElem.src = '/img/no-sign.png'; */
+		  // ✅ 서명 이미지가 없을 경우
+		  if (!found) {
+		    console.warn(`❌ 등록된 ${baseName} 서명 이미지 없음`);
+		    imgElem.src = '/img/no-sign.png';
+		    toastr.warning(`등록된 ${baseName} 서명이 없습니다. 새로 등록해 주세요.`, "서명 없음");
+
+		    // ✅ 자동으로 해당 서명 그리기 버튼 활성화
+		    if (baseName === "finSign") {
+		      finalBtn.style.display = "inline-block";   // 등록 버튼 노출
+		      finalDrawBtn.style.display = "inline-block"; // 그리기 버튼 활성화
+		      finalCanvas.style.display = "none"; // 캔버스는 일단 숨김
+		    }
+		    if (baseName === "empSign") {
+		      deptBtn.style.display = "inline-block";
+		      deptDrawBtn.style.display = "inline-block";
+		      deptCanvas.style.display = "none";
+		    }
+		  } else {
+		    // ✅ 이미 서명이 존재하면 등록 버튼 비활성화
+		    if (baseName === "finSign") {
+		      finalBtn.style.display = "none";
+		      finalDrawBtn.style.display = "none";
+		      finalCanvas.style.display = "none";
+		    }
+		    if (baseName === "empSign") {
+		      deptBtn.style.display = "none";
+		      deptDrawBtn.style.display = "none";
+		      deptCanvas.style.display = "none";
+		    }
+		  }
 		}
 	
 	
@@ -849,7 +880,7 @@ async function loadICDetailDataInModal(selectedIcCode){
 
 	
 	  // 버튼 이벤트
-	  finalBtn.addEventListener('click', () => handleSignRequest('finalSign', finalImg));
+	  finalBtn.addEventListener('click', () => handleSignRequest('finSign', finalImg));
 	  deptBtn.addEventListener('click', () => handleSignRequest('empSign', deptImg));
 	  
 	  [finalBtn, deptBtn].forEach(btn => {
@@ -894,7 +925,7 @@ async function loadICDetailDataInModal(selectedIcCode){
 				    deptDoneBtn.style.display = "none";
 		    	}else if(compareRole == deptBtn.dataset.role && compareRole != 'ROLE_ADMIN'){
 				    	//fnImg.src = "/sign/finSign.png";
-				    	loadSignImage('empSign',fnImg);
+				    	loadSignImage('empSign',dptImg);
 				    	detpBtn.style.display = 'none'
 				    	deptDrawBtn.style.display = "none";
 				    	deptCanvas.style.display = "none";
@@ -938,7 +969,7 @@ async function loadICDetailDataInModal(selectedIcCode){
 		    if (!success) return; // ❌ “아니오” 클릭 시 즉시 종료
 		    
 		    // 파일 저장
-		    await uploadSignature(finalCanvas, "finSign");
+		    await uploadSignature(finalCanvas, "finalSign");
 
 		    toastr.success("총괄 담당자 서명 저장 완료");
 		  } catch (err) {
@@ -1049,8 +1080,8 @@ async function loadICDetailDataInModal(selectedIcCode){
 		console.log("현재 선택된 IC_CODE 값 : "+selectedRow);
 		  try {
 			  const icCode = selectedRow;
-			  slicedFinalSignLink = fnImg.src.substr(fnImg.src.lastIndexOf('/')+1);
-			  slicedEmpSignLink = dptImg.src.substr(dptImg.src.lastIndexOf('/')+1);
+			  slicedFinalSignLink = fnImg.src.substr(fnImg.src.lastIndexOf('/')+1).split('?')[0];
+			  slicedEmpSignLink = dptImg.src.substr(dptImg.src.lastIndexOf('/')+1).split('?')[0];
 			  //console.log('slicedFinalSignLink : '+slicedFinalSignLink);
 			  //console.log('slicedEmpSignLink : '+slicedEmpSignLink);
 			  if(slicedFinalSignLink == 'insert'){slicedFinalSignLink = '';}
