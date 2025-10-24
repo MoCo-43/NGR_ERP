@@ -121,6 +121,7 @@
     LEFT JOIN emp_login l 
     	ON TO_NUMBER(REGEXP_SUBSTR(e.emp_id, '[0-9]+$')) = l.emp_no
     <where>
+   		 e.leave_date IS NULL 
         <if test="deptName != null and deptName != ''">
             AND d.DEPT_NAME = #{deptName}
         </if>
