@@ -115,11 +115,11 @@
   LEFT JOIN CUSTOMER buyer
     ON ih.COMPANY_CODE = buyer.COMPANY_CODE
    AND ih.CUS_CODE = buyer.CUS_CODE
-   AND buyer.GBN = '판매처'
+   AND buyer.GBN = '구매처'
   LEFT JOIN CUSTOMER seller
     ON ih.COMPANY_CODE = seller.COMPANY_CODE
    AND ih.CUS_CODE = seller.CUS_CODE
-   AND seller.GBN = '구매처'
+   AND seller.GBN = '판매처'
   WHERE ih.INVOICE_CODE = #{invoiceCode}
     AND ih.COMPANY_CODE = #{companyCode}
   </select>
