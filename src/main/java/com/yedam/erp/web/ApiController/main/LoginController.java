@@ -236,7 +236,7 @@ public class LoginController {
         
         Map<String, Object> response = new HashMap<>();
         try {
-            // ★ UserService 2단계 호출 (성공 시 void, 실패 시 예외 발생)
+            //  UserService 2단계 호출 (성공 시 void, 실패 시 예외 발생)
             userService.verifySmsAndSendResetEmail(requestVO);
             
             // --- 성공 시 ---
@@ -279,7 +279,7 @@ public class LoginController {
         // 2. 토큰이 유효하면, 해당 토큰 값을 모델에 담아서
         //    새 비밀번호를 입력할 페이지로 이동
         model.addAttribute("token", token);
-        return "main/resetPasswordPage"; // ★ templates/main/resetPasswordPage.html
+        return "main/resetPasswordPage"; //  templates/main/resetPasswordPage.html
     }
     /**
      * [4단계: 비밀번호 최종 변경]
