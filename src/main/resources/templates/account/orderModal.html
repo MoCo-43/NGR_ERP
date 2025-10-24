@@ -160,6 +160,7 @@
           vat: d.qty * d.purchasePrice * 0.1,
         }));
         window.invoiceGridApi.setRowData(rows);
+        updateTotals();
       }
     } catch (err) {
       console.error("invoiceModal 적용 중 오류", err);

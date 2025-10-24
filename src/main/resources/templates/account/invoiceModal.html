@@ -316,12 +316,14 @@ document.addEventListener("DOMContentLoaded", () => {
     			    invoiceGridApi.forEachNode(node => {
     			      subtotal += Number(node.data.supply) || 0;
     			      vatTotal += Number(node.data.vat) || 0;
+    			     
     			    });
 
     			    invoiceGridApi.setPinnedBottomRowData([{
     			    	   productName: "합계",
     			    	  supply: subtotal,
-    			    	  vat: vatTotal
+    			    	  vat: vatTotal,
+    			    	
     			     }]);
     			    
     			  },
@@ -448,8 +450,8 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	      deptName: document.getElementById("deptNameInput").value,
 	      cusCode: document.getElementById("cusCodeInput").value,
 	      cusName: document.getElementById("cusNameInput").value,
-	      vatType: document.querySelector(".form-select-invoice").value,
-	      payMethod: document.getElementById("payMethodInput").value,
+	      vatType: document.querySelector("#vatTypeInput")?.value || ""	,
+	      payMethod: document.getElementById("payMethodSelect").value,
 	      memo: document.getElementById("memoInput").value,
 	      bankName: document.getElementById("bankNameInput").value,
 	      cashAccount: document.getElementById("accountNoInput").value,
@@ -501,7 +503,7 @@ document.getElementById("insertInvoiceBtn")?.addEventListener("click", async () 
 	});
 	
 function getVatRate() {
-	  const sel = document.querySelector(".form-select-invoice");
+	  const sel = document.querySelector("#vatTypeInput");
 	  if (!sel) return 0;
 	  return sel.value === "과세" ? 0.1 : 0.0;
 	}

@@ -143,5 +143,7 @@ public class JournalServiceImpl implements JournalService {
                 "전표 역분개"
             );
         }
+
+
  }
     

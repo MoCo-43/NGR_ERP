@@ -36,6 +36,7 @@ public class JournalCloseLogServiceImpl implements JournalCloseLogService {
             debit = credit;
             credit = tmp;
         }
+        
         JournalCloseLogVO vo = new JournalCloseLogVO();
         vo.setCompanyCode(companyCode);
         vo.setJrnRange(getRange(jrnNoList));
@@ -46,7 +47,7 @@ public class JournalCloseLogServiceImpl implements JournalCloseLogService {
         vo.setRemarks(remarks);
         vo.setStatus(status);
         System.out.println(vo);
-        // ✅ 기존 insert → MERGE 로 변경
+        
        if("reverse".equalsIgnoreCase(actionType)) {
     	   logMapper.insertJournalCloseLog(vo);
        } else {    	   
