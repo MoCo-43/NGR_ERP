@@ -490,7 +490,10 @@ document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async ()
     const our = companyData; // 우리 회사 정보
     const cus = header;      // 거래처 정보는 header 안에 있음
 
-    console.log(cus);
+    // ✅ 날짜 안전 변환 추가
+    const invoiceDateStr = normalizeDate(header.invoiceDate);
+    const invoiceDateObj = invoiceDateStr ? new Date(invoiceDateStr) : null;
+
     // 🧾 작성일자, 승인번호
     document.getElementById("tiApprovalNo").textContent = header.bizNo || "-";
     document.getElementById("tiWriteDate").value = header.invoiceDate?.substring(0, 10) || "";
@@ -551,9 +554,12 @@ document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async ()
     tbody.innerHTML = "";
     (lines || []).forEach(line => {
       const tr = document.createElement("tr");
+      const m = invoiceDateObj ? invoiceDateObj.getMonth() + 1 : "";
+      const d = invoiceDateObj ? invoiceDateObj.getDate() : "";
+      console.log(header);
       tr.innerHTML = `
-        <td class="center">${new Date(header.invoiceDate).getMonth() + 1}</td>
-        <td class="center">${new Date(header.invoiceDate).getDate()}</td>
+    	<td class="center">${m}</td>
+        <td class="center">${d}</td>
         <td>${line.productName || ""}</td>
         <td>${line.specification || "	"}</td>
         <td class="right"><input type="number" value="${line.qty || 0}" style="width:100%;border:none;text-align:right"></td>
@@ -578,7 +584,26 @@ document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async ()
   }
 });
 	
-	
+function normalizeDate(val) {
+	  if (!val) return null;
+
+	  // 숫자형 혹은 yyyymmdd 형태
+	  if (typeof val === "number" || /^[0-9]+$/.test(val)) {
+	    const str = String(val).padEnd(8, "0");
+	    const y = str.substring(0, 4);
+	    const m = str.substring(4, 6);
+	    const d = str.substring(6, 8);
+	    return `${y}-${m}-${d}`;
+	  }
+
+	  // Fri Oct 24 00:00:00 KST 2025 → yyyy-MM-dd
+	  const parsed = new Date(val);
+	  if (!isNaN(parsed)) {
+	    return parsed.toISOString().slice(0, 10);
+	  }
+
+	  return val;
+	}
 	// 초기화 버튼
 	function resetTaxInvoiceModal() {
 		  // 모든 input 초기화
