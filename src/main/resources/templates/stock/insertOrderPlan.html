@@ -397,11 +397,22 @@
           companyCode: Number(document.getElementById('compCode').value || 0),
           details
         };
-        
         if (hasEmptyFields(payload)) {
 			  toastr.warning("필수 항목이 비어 있습니다. 값을 확인해주세요.");
 			  return;
 			}
+        const res = await cuteAlert({
+        	type: "question",
+            title: "발주 계획 등록",
+            message: "정말 등록하시겠습니까?",
+            imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
+            confirmText: "네",
+            cancelText: "아니오"
+        });
+        console.log('cuteAlert result:', res);
+        if(res !== true) {
+            return; // 취소 시 함수 종료
+        }
 
         try {
           await axios.post('/api/v1/stock/orderPlanInsert', payload, {
@@ -410,7 +421,7 @@
           });
           toast.show();
           toastr.success('등록 성공');
-          form.reset();
+          // form.reset();
           tableBody.innerHTML = '';
         } catch (err) {
           console.error(err);

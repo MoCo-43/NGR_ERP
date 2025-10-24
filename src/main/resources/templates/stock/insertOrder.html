@@ -50,22 +50,22 @@
       <div class="d-flex justify-content-end mb-3">
       	<button type="button" class="btn btn-dark me-2" id="searchBtn">계획조회</button>
 	    <button type="button" class="btn btn-primary me-2" id="submitBtn">등록</button>
-	    <button type="reset" class="btn btn-danger" form="insertOrder">초기화</button>
+	    <button type="button" class="btn btn-danger" form="insertOrder" id="resetBtn">초기화</button>
        </div>
     </div>
     
       <form class="row g-3" id="insertOrder" enctype="application/x-www-form-urlencoded">
         <div class="col-md-4">
           <label for="xpCode" class="form-label">계획코드</label>
-          <input type="text" class="form-control" id="xpCode" name="xpCode" placeholder="등록한 계획 존재시 기입">
+          <input type="text" class="form-control fdata" id="xpCode" name="xpCode" placeholder="등록한 계획 존재시 기입">
         </div>
         <div class="col-md-4">
           <label for="businessPartner" class="form-label">거래처명</label>
-          <input type="text" class="form-control" id="businessPartnerInput" name="businessPartner">
+          <input type="text" class="form-control fdata" id="businessPartnerInput" name="businessPartner">
         </div>
         <div class="col-md-4">
           <label for="businessCode" class="form-label">거래처코드</label>
-          <input type="text" class="form-control" id="businessCodeInput" name="businessCode">
+          <input type="text" class="form-control fdata" id="businessCodeInput" name="businessCode">
         </div>
         <div class="col-md-4">
           <label for="compCode" class="form-label">회사코드</label>
@@ -166,6 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const tableBody = document.querySelector('#orderItemsTable tbody');
 	//const taxSelect = document.getElementById('taxType'); // 상단 세율 select
 	const searchBtn = document.getElementById('searchBtn'); // 발주계획 조회 버튼
+	const resetBtn = document.getElementById('resetBtn'); // 리셋 버튼
 	const productModalEl = document.getElementById("productModal");
 	const productModal = bootstrap.Modal.getOrCreateInstance(productModalEl);
 	const businessModalEl = document.getElementById("businessModal");
@@ -185,9 +186,16 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 	initToday();
  	
+	// 초기화 버튼 클릭시
+	resetBtn.addEventListener('click',()=>{
+		toastr['success']('기입된 데이터를 초기화합니다.');
+		document.querySelectorAll('.fdata').forEach(input => input.value='');
+		tableBody.innerHTML = '';
+	});
+	
  	
 	// 빈값 체크 공통 함수
-	function hasEmptyFields(obj) {
+	/* function hasEmptyFields(obj) {
 	  return Object.entries(obj).some(([key, value]) => {
 	    if (key === "details") {
 	      // details 배열 내부까지 검사
@@ -201,8 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	    }
 	    return value === null || value === undefined || value === "";
 	  });
-	}
-	
+	} */	
  	
  	function resetOrderFields() {
  		  ["xpCode" , "businessPartnerInput" , "businessCodeInput" , "dueDate"].forEach(id => {
@@ -676,7 +683,42 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 	}// end of loadModalData
 	
+	const fieldLabels = {
+			  empId: "담당자",
+			  businessPartner: "거래처명",
+			  cusCode: "거래처코드",
+			  dueDate: "납기일자",
+			  companyCode: "회사코드",
+			  details: "발주 상세내역",
+			  productCode: "제품코드",
+			  productName: "제품명",
+			  qty: "수량",
+			  orderPrice: "단가",
+			  note: "비고"
+			};
+	
+	function validateFormFields(payload) {
+		 if (!payload || typeof payload !== "object") {
+			    return { valid: false, emptyFields: ["payload"] };
+			  }
+		
+		  // xpCode 제외하고 검사
+		  const { xpCode, ...checkFields } = payload;
+		  
+		  const emptyFields = Object.entries(checkFields)
+		    .filter(([key, value]) => {
+		      if (Array.isArray(value)) return value.length === 0;
+		      if (typeof value === 'string') return value.trim() === ''; // ✅ 공백까지 제거
+		      return value === null || value === undefined;
+		    })
+		    .map(([key]) => key);
 
+		  if (emptyFields.length > 0) {
+		    return { valid: false, emptyFields };
+		  }
+
+		  return { valid: true };
+		}
 	
 	
 
@@ -735,10 +777,33 @@ document.addEventListener("DOMContentLoaded", () => {
 		  console.log("JSON.stringify: "+JSON.stringify(payload, null, 2));
 		  console.log("payload.dueDate: "+payload.dueDate);
 			// payload 구성 이후
-		  if (hasEmptyFields(payload)) {
+			
+		 /*  if (hasEmptyFields(payload)) {
 		    toastr.warning("필수 항목이 비어 있습니다. 값을 확인해주세요.");
 		    return;
-		  }
+		  } */
+		  const result = validateFormFields(payload);
+		  if (!result.valid) {
+			  // 한글 필드명 변환
+			  const translated = result.emptyFields.map((field) => {
+			    const match = field.match(/^row(\d+)\.(.+)$/);
+			    if (match) {
+			      const rowNum = match[1];
+			      const key = match[2];
+			      return `${rowNum}행 ${fieldLabels[key] || key}`;
+			    }
+			    return fieldLabels[field] || field;
+			  });
+
+			  cuteAlert({
+			    type: "warning",
+			    title: "입력 누락",
+			    imgUrl: 'https://img.icons8.com/?size=100&id=EggHJUeUuU6C&format=png&color=000000',
+			    message: `다음 항목이 비어 있습니다:\n${translated.join(", ")}`,
+			    buttonText: "확인"
+			  });
+			  return;
+			}
 		  try {
 			  	
 			    await axios.post('/api/v1/stock/orderInsert', payload, {

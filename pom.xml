@@ -182,6 +182,18 @@
 		</dependencies>
 	</dependencyManagement>
 	<build>
+	<!-- ✅ ① 리소스 설정 (여기 추가) -->
+	  <resources>
+	    <resource>
+	      <directory>src/main/resources</directory>
+	      <includes>
+	        <!-- .jasper만 포함할 때 -->
+	        <include>**/*.jasper</include>
+	        <!-- 개발 환경에서도 쓰려면 둘 다 -->
+	        <include>**/*.jrxml</include>
+	      </includes>
+	    </resource>
+	  </resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

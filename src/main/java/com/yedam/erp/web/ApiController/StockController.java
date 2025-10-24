@@ -63,6 +63,7 @@ import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import net.sf.jasperreports.engine.util.JRLoader;
 
 @RestController
 @RequiredArgsConstructor
@@ -229,9 +230,10 @@ public class StockController {
 	public void outboundListReport(@PathVariable String outbHeaderCode,@PathVariable String businessCode , @PathVariable String doCode ,HttpServletRequest request, HttpServletResponse response) throws Exception { 
 	 //Connection conn = datasource.getConnection();
 	 // 소스 컴파일 jrxml -> jasper
-	 InputStream stream = getClass().getResourceAsStream("/reports/deliveryNoteSheet.jrxml"); 
-	 JasperReport jasperReport = JasperCompileManager.compileReport(stream); // jrxml 용
-	 //JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream); // jasper 용
+	 //InputStream stream = getClass().getResourceAsStream("/reports/deliveryNoteSheet.jrxml");// jrxml 용
+	 InputStream stream = getClass().getResourceAsStream("/reports/deliveryNoteSheet.jasper"); // jasper 용
+	 //JasperReport jasperReport = JasperCompileManager.compileReport(stream); // jrxml 용
+	 JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream); // jasper 용
 	 
 	 // 상세 조회
 	 List<OutboundVO> detailList = service.selectOutboundByOutbHeaderCode(outbHeaderCode, doCode);
@@ -272,9 +274,10 @@ public class StockController {
 	public void orderListReport(@PathVariable String orderCode , @PathVariable String businessCode , HttpServletRequest request, HttpServletResponse response) throws Exception { 
 	 //Connection conn = datasource.getConnection();
 	 // 소스 컴파일 jrxml -> jasper
-	 InputStream stream = getClass().getResourceAsStream("/reports/orderListSheet.jrxml"); 
-	 JasperReport jasperReport = JasperCompileManager.compileReport(stream); // jrxml 용
-	 //JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream); // jasper 용
+	 //InputStream stream = getClass().getResourceAsStream("/reports/orderListSheet.jrxml");//jrxml 용
+	 InputStream stream = getClass().getResourceAsStream("/reports/orderListSheet.jasper"); // jasper 용
+	 //JasperReport jasperReport = JasperCompileManager.compileReport(stream); // jrxml 용
+	 JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream); // jasper 용
 	 
 	 // 상세 조회
 	 List<OrderDetailVO> detailList = service.getOrderDetailByOrderCode(orderCode);
@@ -314,9 +317,11 @@ public class StockController {
 	public void report(@PathVariable String xpCode ,@PathVariable String businessCode, HttpServletRequest request, HttpServletResponse response) throws Exception { 
 	 //Connection conn = datasource.getConnection();
 	 // 소스 컴파일 jrxml -> jasper
-	 InputStream stream = getClass().getResourceAsStream("/reports/orderSheet.jrxml"); 
-	 JasperReport jasperReport = JasperCompileManager.compileReport(stream); // jrxml 용
-	 //JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream); // jasper 용
+	 // InputStream stream = getClass().getResourceAsStream("/reports/orderSheet.jrxml"); // jrxml 용
+	 // JasperReport jasperReport = JasperCompileManager.compileReport(stream); // jrxml 용
+	 // ✅ .jasper 파일 로드
+	 InputStream stream = getClass().getResourceAsStream("/reports/orderSheet.jasper"); // jasper 용
+	 JasperReport jasperReport = (JasperReport) JRLoader.loadObject(stream); // jasper 용
 	 
 	 // 상세 조회
 	 List<OrderDetailVO> detailList = service.selectOrderDetailsByXpCode(xpCode);
