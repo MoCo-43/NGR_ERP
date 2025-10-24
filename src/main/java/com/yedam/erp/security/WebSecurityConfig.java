@@ -42,7 +42,7 @@ public class WebSecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(requests -> requests
-						.requestMatchers("/", "/api/**", "/*.css", "/*.js", "/img/**", "/prodimg/**", "/sign/**","/findpw","/subscribe","/sendSms","/pwngremail")
+						.requestMatchers("/", "/main/**","/api/**", "/*.css", "/*.js", "/img/**", "/prodimg/**", "/sign/**","/findpw","/subscribe","/sendSms","/pwngremail")
 						.permitAll()
 						.requestMatchers("/admin/**","/sub/admin/**").hasRole("ADMIN")
 		                // 관리자 전용 페이지
@@ -55,7 +55,7 @@ public class WebSecurityConfig {
 						.loginProcessingUrl("/login")// POST 로그인 처리
 						.usernameParameter("empId")// 로그인 폼 username 필드 이름
 						.passwordParameter("empPw")// 로그인 폼 password 필드 이름
-						.defaultSuccessUrl("/dashboard", true)// 로그인 성공 후 이동할 URL
+						.defaultSuccessUrl("/dashboard")// 로그인 성공 후 이동할 URL
 						.failureUrl("/login?error").permitAll()// 로그인 페이지는 인증 없이 접근 가능
 				)
 
@@ -75,15 +75,15 @@ public class WebSecurityConfig {
 	@Order(2)
 	public SecurityFilterChain salSecurityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
 	    http
-	        .securityMatcher("/salLogin", "/salLogin/**","/salLogout","/register","/checkId/**","/subDetails")
+	        .securityMatcher("/sallogin", "/sallogin/**","/sallogout","/register","/checkId/**","/subDetails")
 	        .csrf(csrf -> csrf.disable())
 	        .authorizeHttpRequests(auth -> auth
-	            .requestMatchers("/checkId/**","/salLogin", "/salLogin/**","/subDetails**","/register","/img/**", "/css/**","/subDetails").permitAll()
+	            .requestMatchers("/checkId/**","/sallogin", "/sallogin/**","/subdetails**","/register","/img/**", "/css/**","/subdetails").permitAll()
 	            .anyRequest().authenticated()
 	        )
 	        .formLogin(form -> form
-	            .loginPage("/salLogin")
-	            .loginProcessingUrl("/salLogin")
+	            .loginPage("/sallogin")
+	            .loginProcessingUrl("/sallogin")
 	            .usernameParameter("empId")
 	            .passwordParameter("empPw")
 	            .defaultSuccessUrl("/", true)
@@ -98,7 +98,7 @@ public class WebSecurityConfig {
 //	                } else {
 //	                    response.sendRedirect("/login?error");
 //	                }
-                response.sendRedirect("/salLogin?error");
+                response.sendRedirect("/sallogin?error");
 
 	            })
 	            // 로그인 성공 시 콘솔 출력
@@ -111,14 +111,14 @@ public class WebSecurityConfig {
 	        .rememberMe(remember -> remember
 	            .tokenRepository(tokenRepository(dataSource))
 	            .tokenValiditySeconds(60 * 60 * 24 * 3)
-	            .key("salLoginKey")
+	            .key("salloginKey")
 	            .userDetailsService(customUserDetailsService)
 	        )
 	        .logout(logout -> logout
-	            .logoutUrl("/salLogout")
+	            .logoutUrl("/sallogout")
 	            .logoutSuccessHandler((request, response, authentication) -> {
 	                System.out.println("로그아웃 성공: " + (authentication != null ? authentication.getName() : "익명"));
-	                response.sendRedirect("/salLogin?logout");
+	                response.sendRedirect("/sallogin?logout");
 	            })
 	            .deleteCookies("JSESSIONID")
 	        )

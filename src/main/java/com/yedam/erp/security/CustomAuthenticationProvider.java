@@ -137,8 +137,8 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 //        EmpLoginVO userVO;
 //        SallerVO salVO;
         
-        EmpLoginVO userVO = null;  // 🔹 밖에서 선언
-        SallerVO salVO = null;     // 🔹 밖에서 선언
+        EmpLoginVO userVO = null;  
+        SallerVO salVO = null;    
         UserDetails userDetails = null;
         // 2. 요청 URI에 따라 인증 로직 분기
         
