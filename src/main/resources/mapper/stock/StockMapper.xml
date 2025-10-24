@@ -587,6 +587,7 @@ FROM INVENTORY_CLOSING ic
 LEFT JOIN EMP_LOGIN emp 
 ON ic.emp_id = emp.emp_id 
 WHERE ic.COMPANY_CODE = #{companyCode}
+ORDER BY ic.IC_DATE 
 </select>
 
 <!-- 결산 조회 - 상세 -->
@@ -640,6 +641,7 @@ SELECT
        POSTED_FLAG
 FROM INBOUND 
 WHERE COMPANY_CODE = #{compCode}
+ORDER BY LOT_CODE DESC
 </select>
 
 <!-- 입고 상세 조회 -->
@@ -652,7 +654,7 @@ SELECT  LOT_CODE
        ,BUSINESS_PARTNER
        ,QTY
        ,DUE_DATE
-       ,PURCHASE_PRICE 	
+       ,PURCHASE_PRICE as orderPrice
 FROM INBOUND 
 WHERE LOT_CODE = #{lotCode}
 
@@ -771,7 +773,7 @@ ORDER BY d.product_code
 <select id="getDeliveryOrderList" resultType="ComOrderVO">
 select 
        deo.do_code AS do_code, 
-        SUM(dod.qty) AS amount,
+        SUM(dod.order_qty) AS amount,
        deo.cus_code AS cus_code,
        cu.cus_name AS cus_name,
        deo.ex_date AS due_date,
@@ -789,7 +791,7 @@ JOIN customer cu
 ON deo.cus_code = cu.cus_code
 WHERE deo.do_status = '작성완료'
 GROUP BY deo.do_code ,
-       dod.qty ,
+       dod.order_qty ,
        deo.cus_code ,
        cu.cus_name ,
        deo.ex_date 
@@ -802,7 +804,7 @@ SELECT
        ,dod.product_code AS product_code
        ,prd.product_name AS product_name
        ,prd.specification AS specification
-       ,dod.qty AS amount 
+       ,dod.order_qty AS amount 
        ,deo.ex_date AS due_date
 FROM do_detail dod
 JOIN product prd
@@ -1082,7 +1084,7 @@ SELECT DISTINCT
        CASE WHEN EXISTS(
                 SELECT 1 FROM do_detail d2 
                 WHERE d2.do_no = (SELECT do_no FROM delivery_order WHERE do_code = #{doCode} AND vat_amt > 0)
-            ) THEN 'VAT 포함'
+            ) THEN '과세'
             ELSE '면세'
        END AS taxType
 FROM outbound_header oh

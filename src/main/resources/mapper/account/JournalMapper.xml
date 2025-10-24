@@ -20,7 +20,7 @@
 		<result property="createdAt" column="CREATED_AT" />
 		<result property="createdBy" column="CREATED_BY" />
 		<result property="cusCode" column="CUS_CODE" />
-		<result property="closeNo" column="CLOSE_NO" />
+	
 	</resultMap>
 
 	<select id="selectJournalList" resultType="JournalNamesVO">
@@ -38,8 +38,7 @@
 		J.CREATED_AT,
 		J.CREATED_BY,
 		J.CUS_CODE,
-		C.CUS_NAME, -- 거래처명
-		J.CLOSE_NO
+		C.CUS_NAME -- 거래처명
 		FROM JOURNAL J
 		LEFT JOIN
 		ACCOUNT A
@@ -80,7 +79,6 @@
 		CREATED_AT,
 		CREATED_BY,
 		CUS_CODE,
-		CLOSE_NO,
 		COMPANY_CODE
 		)
 		VALUES (
@@ -96,7 +94,6 @@
 		SYSDATE,
 		#{createdBy},
 		#{cusCode},
-		#{closeNo},
 		#{companyCode}
 		)
 	</insert>
@@ -113,8 +110,6 @@
 		, REMARKS = #{remarks}
 		, STATUS = #{status}
 		, CUS_CODE = #{cusCode}
-		, CLOSE_NO =
-		#{closeNo}
 		, CREATED_BY = #{createdBy}  <!-- 필요하다면 유지 -->
 		WHERE JRN_CODE = #{jrnCode}
 		AND LINE_NO = #{lineNo}
@@ -146,7 +141,6 @@
 		CREATED_AT,
 		CREATED_BY,
 		CUS_CODE,
-		CLOSE_NO,
 		COMPANY_CODE
 
 		)
@@ -163,7 +157,6 @@
 		SYSDATE,
 		#{createdBy},
 		#{cusCode},
-		#{closeNo},
 		#{companyCode}
 		)
 	</insert>

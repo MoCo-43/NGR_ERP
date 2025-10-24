@@ -27,7 +27,6 @@ public class JournalVO {
     private Date createdAt;       // 생성일자
     private String createdBy;     // 생성자
     private String cusCode;       // 거래처 코드
-    private Long closeNo;         // 마감 번호
     private Long companyCode;
     
     

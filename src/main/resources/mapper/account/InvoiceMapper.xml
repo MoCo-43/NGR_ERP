@@ -96,6 +96,7 @@
       ih.POSTED_FLAG,
 
       -- 구매처
+      buyer.BIZ_NO       AS buyerbizNo,
       buyer.CEO_NAME     AS buyerCeoName,
       buyer.ADDR         AS buyerAddr,
       buyer.BIZ_TYPE     AS buyerBizType,
@@ -103,6 +104,7 @@
       buyer.EMAIL        AS buyerEmail,
 
       -- 판매처
+      seller.BIZ_NO      AS sellerBizno,
       seller.CEO_NAME     AS sellerCeoName,
       seller.ADDR         AS sellerAddr,
       seller.BIZ_TYPE     AS sellerBizType,
@@ -116,7 +118,8 @@
    AND buyer.GBN = '구매처'
   LEFT JOIN CUSTOMER seller
     ON ih.COMPANY_CODE = seller.COMPANY_CODE
-   AND seller.GBN = '공급자'
+   AND ih.CUS_CODE = seller.CUS_CODE
+   AND seller.GBN = '판매처'
   WHERE ih.INVOICE_CODE = #{invoiceCode}
     AND ih.COMPANY_CODE = #{companyCode}
   </select>

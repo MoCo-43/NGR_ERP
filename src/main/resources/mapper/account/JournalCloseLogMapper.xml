@@ -27,7 +27,7 @@
       #{creditSum},
       #{createdBy},
       #{remarks},
-      #{status},     <!-- ✅ 파라미터 그대로 전달 -->
+      'reverse',     <!-- ✅ 파라미터 그대로 전달 -->
       SYSDATE
   )
 </insert>
@@ -55,11 +55,11 @@
   WHEN NOT MATCHED THEN
     INSERT (
       log_id, company_code, jrn_range, action_type, debit_sum, credit_sum,
-      created_by, remarks, status,jrn_no, action_date
+      created_by, remarks, status, action_date
     )
     VALUES (
       seq_journal_close_log.NEXTVAL, #{companyCode}, #{jrnRange}, #{actionType},
-      #{debitSum}, #{creditSum}, #{createdBy}, #{remarks}, #{status}, #{jrnNo}, SYSDATE
+      #{debitSum}, #{creditSum}, #{createdBy}, #{remarks}, #{status}, SYSDATE
     )
 </insert>
 
@@ -90,7 +90,7 @@
       remarks
   FROM journal_close_log
   WHERE company_code = #{companyCode}
-  AND TRUNC(action_date) = TO_DATE(SUBSTR(#{jrnNo}, 3, 8), 'YYYY/MM/DD')
+  AND TRUNC(action_date) = TO_DATE(SUBSTR(#{jrnNo}, 3, 8), 'YY/MM/DD')
   <![CDATA[
     AND TO_NUMBER(SUBSTR(#{jrnNo}, -3)) BETWEEN 
         TO_NUMBER(SUBSTR(jrn_range, 1, INSTR(jrn_range, '~') - 1))

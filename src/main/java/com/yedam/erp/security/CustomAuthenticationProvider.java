@@ -137,8 +137,8 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 //        EmpLoginVO userVO;
 //        SallerVO salVO;
         
-        EmpLoginVO userVO = null;  // 🔹 밖에서 선언
-        SallerVO salVO = null;     // 🔹 밖에서 선언
+        EmpLoginVO userVO = null;  
+        SallerVO salVO = null;    
         UserDetails userDetails = null;
         // 2. 요청 URI에 따라 인증 로직 분기
         
@@ -162,7 +162,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         
         
-        else if (requestURI.startsWith("/salLogin")) {
+        else if (requestURI.startsWith("/sallogin")) {
             //'회사 코드'가 필요 없는 /salLogin 인증 처리 
 
             // 직원 ID로 사용자 정보 조회 (mat_no가 없는 사용자를 찾는 로직)

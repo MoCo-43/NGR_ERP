@@ -96,7 +96,7 @@ public class LoginController {
         // 관리자 버튼 클릭 시만 CAPTCHA 생성되므로 초기 로드 시 생성하지 않음
         return "main/login";
     }
-    @GetMapping("/salLogin")
+    @GetMapping("/sallogin")
     public String sallogin() {
         // 관리자 버튼 클릭 시만 CAPTCHA 생성되므로 초기 로드 시 생성하지 않음
         return "main/salLogin";
@@ -192,9 +192,9 @@ public class LoginController {
 //    }
     /**
      * ★ [1단계: SMS 발송 요청]
-     * forgotpasword.html의 1단계 fetch 요청을 받습니다.
-     * @RequestBody로 JSON 데이터를 받습니다.
-     * Map<String, Object>를 JSON으로 반환합니다.
+     * forgotpasword.html의 1단계 fetch 요청을 받는다.
+     * @RequestBody로 JSON 데이터를 받는다.
+     * Map<String, Object>를 JSON으로 반환한다
      */
     @PostMapping("/sendSms")
     @ResponseBody
@@ -236,7 +236,7 @@ public class LoginController {
         
         Map<String, Object> response = new HashMap<>();
         try {
-            // ★ UserService 2단계 호출 (성공 시 void, 실패 시 예외 발생)
+            //  UserService 2단계 호출 (성공 시 void, 실패 시 예외 발생)
             userService.verifySmsAndSendResetEmail(requestVO);
             
             // --- 성공 시 ---
@@ -279,7 +279,7 @@ public class LoginController {
         // 2. 토큰이 유효하면, 해당 토큰 값을 모델에 담아서
         //    새 비밀번호를 입력할 페이지로 이동
         model.addAttribute("token", token);
-        return "main/resetPasswordPage"; // ★ templates/main/resetPasswordPage.html
+        return "main/resetPasswordPage"; //  templates/main/resetPasswordPage.html
     }
     /**
      * [4단계: 비밀번호 최종 변경]

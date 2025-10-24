@@ -13,7 +13,7 @@ public class InvoiceHeaderVO {
     private Long invoiceCode;   // 전표코드
     private String invoiceNo;     // 전표번호
     private String type;          // 매출/매입 구분
-    @JsonFormat(pattern = "YYYYMMDD")
+    @JsonFormat(pattern = "yyyyMMdd")
     private Date invoiceDate;     // 전표일자
     private String orderCode;     // 주문서 코드
     private String deptName;      // 부서코드
@@ -42,11 +42,20 @@ public class InvoiceHeaderVO {
     private List<InvoiceLineVO> lines;
     
     // 거래처
+    private String buyerBizno;
     private String buyerCeoName;
     private String buyerAddr;
     private String buyerBizType;
     private String buyerBizCategory;
     private String buyerEmail;
+    
+    // 거래처
+    private String sellerBizno;
+    private String sellerCeoName;
+    private String sellerAddr;
+    private String sellerBizType;
+    private String sellerBizCategory;
+    private String sellerEmail;
 
 
     
