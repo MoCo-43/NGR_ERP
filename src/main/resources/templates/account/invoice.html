@@ -489,7 +489,7 @@ document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async ()
     const { header, lines } = invoiceData;
     const our = companyData; // 우리 회사 정보
     const cus = header;      // 거래처 정보는 header 안에 있음
-	console.log(our);
+
     console.log(cus);
     // 🧾 작성일자, 승인번호
     document.getElementById("tiApprovalNo").textContent = header.bizNo || "-";
