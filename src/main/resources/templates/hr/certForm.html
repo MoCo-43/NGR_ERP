@@ -113,7 +113,13 @@
         if (!(btn instanceof Element) || !btn.classList.contains('cert-del')) return;
         const no = btn.closest('tr')?.dataset.id; 
         if (!no) return;
-        if (!confirm('삭제하시겠습니까?')) return;
+    	const ok = await cuteAlert({
+    	    type: 'warning',
+    	    message: '삭제하시겠습니까?',
+    	    confirmText: '확인',
+    	    cancelText: '취소'
+    	  });
+    	  if (!ok) return;
         const res = await fetch('/api/hr/cert/' + no, { method:'DELETE' });
         if (!res.ok) return  toastr.error('삭제 실패');
         refresh(); // 삭제 후 재조회
