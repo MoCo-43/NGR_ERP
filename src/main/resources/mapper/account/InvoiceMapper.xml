@@ -155,7 +155,7 @@
 <update id="updateInboundP">
 	UPDATE INBOUND
 	SET POSTED_FLAG = '발행'
-	WHERE COMPANY_CODE = #{companyCode}
+	WHERE COMPANY_CODE = #{companyCode}	
 	AND LOT_CODE = #{lotCode}
 </update>
 
@@ -163,6 +163,6 @@
 	UPDATE OUTBOUND_HEADER	
 	SET POSTED_FLAG = '발행'
 	WHERE COMPANY_CODE = #{companyCode}
-	AND LOT_CODE = #{outbHedaerCode}
+	AND OUTB_HEADER_CODE = #{outbHeaderCode}
 	</update>
 </mapper>

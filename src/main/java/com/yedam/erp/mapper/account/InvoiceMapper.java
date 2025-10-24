@@ -40,5 +40,5 @@ public interface InvoiceMapper {
     //입, 출고 전표 발행 상태값
     void updateInboundP(Long companyCode, String lotCode);
     
-    void updateOutboundP(Long compnayCode, String outbHeaderCode);
+    void updateOutboundP(Long companyCode, String outbHeaderCode);
 }
