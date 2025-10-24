@@ -192,9 +192,9 @@ public class LoginController {
 //    }
     /**
      * ★ [1단계: SMS 발송 요청]
-     * forgotpasword.html의 1단계 fetch 요청을 받습니다.
-     * @RequestBody로 JSON 데이터를 받습니다.
-     * Map<String, Object>를 JSON으로 반환합니다.
+     * forgotpasword.html의 1단계 fetch 요청을 받는다.
+     * @RequestBody로 JSON 데이터를 받는다.
+     * Map<String, Object>를 JSON으로 반환한다
      */
     @PostMapping("/sendSms")
     @ResponseBody

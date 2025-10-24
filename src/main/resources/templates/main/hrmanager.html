@@ -14,47 +14,63 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <style>
-.container {
-  max-width: 1200px;
-  margin: auto;
+/* 툴바 스타일 */
+.toolbar {
+	padding: 1rem 1rem .25rem 1rem;
+}
+
+/* 폼 스타일 */
+.toolbar .form-control, .toolbar .form-select {
+	height: 38px;
+	font-size: 0.95rem;
+	line-height: 1.4;
+}
+
+/* 툴바 내 버튼 간격 */
+.toolbar .btn-group .btn {
+	margin-left: 0.25rem;
 }
 
 /* 로딩 오버레이 전체 */
 .custom-loader-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  z-index: 9999;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(255, 255, 255, 0.8);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	z-index: 9999;
 }
 
 /* 로딩 회전 스피너 */
 .custom-loader .spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
-  border-radius: 50%;
-  width: 45px;
-  height: 45px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 10px;
+	border: 4px solid #f3f3f3;
+	border-top: 4px solid #007bff;
+	border-radius: 50%;
+	width: 45px;
+	height: 45px;
+	animation: spin 1s linear infinite;
+	margin-bottom: 10px;
 }
 
 /* 회전 애니메이션 */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
 }
 
 /* 로딩 텍스트 */
 .custom-loader .loader-text {
-  font-size: 0.95rem;
-  color: #333;
+	font-size: 0.95rem;
+	color: #333;
 }
 </style>
 
@@ -62,39 +78,49 @@
 
 <body>
 	<th:block layout:fragment="content">
-		<div class="container">
-			<h4 class="mb-3">사원 계정 관리</h4>
+		<div class="card shadow mb-3">
+			<div class="card-header py-3">
+				<h6 class="m-0 font-weight-bold text-primary">사원 계정 관리</h6>
+			</div>
 
-			<div class="d-flex justify-content-between align-items-center mb-3">
-				<div>
-					<select id="dept-filter"
-						class="form-select d-inline-block w-auto me-2">
-						<option value="">전체 부서</option>
-						<option value="경영팀">경영팀</option>
-						<option value="재고팀">재고팀</option>
-						<option value="인사팀">인사팀</option>
-						<option value="회계팀">회계팀</option>
-						<option value="영업팀">영업팀</option>
-					</select> <select id="title-filter"
-						class="form-select d-inline-block w-auto">
-						<option value="">전체 직급</option>
-						<option value="팀원">팀원</option>
-						<option value="팀장">팀장</option>
-					</select>
-				</div>
-				<div>
-					<button id="search-btn" class="btn btn-dark btn-sm">조회</button>
-					<button id="role-update-btn" class="btn btn-outline-danger btn-sm">권한
-						변경</button>
-					<button id="create-btn" class="btn btn-outline-primary btn-sm">계정생성</button>
-					<button id="activate-default-btn"
-						class="btn btn-outline-success btn-sm">사원번호</button>
+			<div class="toolbar">
+				<div class="d-flex justify-content-between align-items-center">
+					<div>
+						<select id="dept-filter"
+							class="form-select d-inline-block w-auto me-2">
+							<option value="">전체 부서</option>
+							<option value="경영팀">경영팀</option>
+							<option value="재고팀">재고팀</option>
+							<option value="인사팀">인사팀</option>
+							<option value="회계팀">회계팀</option>
+							<option value="영업팀">영업팀</option>
+						</select> <select id="title-filter"
+							class="form-select d-inline-block w-auto">
+							<option value="">전체 직급</option>
+							<option value="팀원">팀원</option>
+							<option value="팀장">팀장</option>
+						</select>
+					</div>
+					<div class="btn-group">
+						<button id="search-btn" class="btn btn-dark btn-sm">조회</button>
+						<button id="role-update-btn" class="btn btn-outline-danger btn-sm">권한
+							변경</button>
+						<button id="create-btn" class="btn btn-outline-primary btn-sm">계정생성</button>
+						<button id="activate-default-btn"
+							class="btn btn-outline-success btn-sm">사원번호</button>
+					</div>
 				</div>
 			</div>
 
-			<div id="employee-grid" class="ag-theme-quartz"
-				style="height: 600px; position: relative;"></div>
-		</div>
+			<div class="card-body pt-3">
+				<div id="employee-grid-wrapper" style="position: relative;">
+					<div id="employee-grid" class="ag-theme-quartz"
+						style="height: 600px;"></div>
+				</div>
+			</div>
+
+			</div>
+
 
 		<script
 			src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
@@ -102,6 +128,7 @@
 			href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" />
 		<script src="/js/cuteAlert.js"></script>
 		<link rel="stylesheet" href="/style/confirm.css" />
+
 		<script>
 function showLoader(targetId, message = "데이터를 불러오는 중입니다...") {
   const target = document.getElementById(targetId);
@@ -124,6 +151,7 @@ function hideLoader(targetId) {
   if (loader) loader.remove();
 }
 </script>
+
 		<script>
 document.addEventListener('DOMContentLoaded', () => {
   const gridDiv = document.querySelector('#employee-grid');
@@ -214,7 +242,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const gridApi = agGrid.createGrid(gridDiv, gridOptions);
 
   async function loadEmployees(deptName = '', title = '') {
-	  showLoader("employee-grid", "사원 데이터를 불러오는 중입니다...");
+	  // 로더 타겟 ID는 'employee-grid-wrapper'를 유지
+	  showLoader("employee-grid-wrapper", "사원 데이터를 불러오는 중입니다...");
 	  try {
 	    const response = await axios.get(`/hrLists?deptName=${encodeURIComponent(deptName)}&title=${encodeURIComponent(title)}`);
 	    const data = response.data || [];
@@ -227,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	    console.error('사원 목록 로딩 오류:', error);
 	    toastr.error('데이터를 불러오는 중 오류가 발생했습니다.');
 	  } finally {
-	    hideLoader("employee-grid");
+	    hideLoader("employee-grid-wrapper");
 	  }
 	}
 

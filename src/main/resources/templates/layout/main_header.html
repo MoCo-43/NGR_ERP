@@ -64,7 +64,7 @@ nav a:hover {
 			</div>
 			<nav>
 				<span sec:authorize="isAnonymous()"> <!--<a href="#" th:href="@{/login}">로그인</a>-->
-					<a href="#" th:href="@{/salLogin}">로그인</a> <a href="#"
+					<a href="#" th:href="@{/sallogin}">로그인</a> <a href="#"
 					th:href="@{/register}">회원가입</a>
 				</span> <span sec:authorize="isAuthenticated()">
 					<form th:action="@{/sallogout}" method="post"
@@ -77,7 +77,7 @@ nav a:hover {
 					th:href="@{/ngrlogin}" class="settings-icon"
 					style="text-decoration: none; color: white;"> <span
 					class="material-icons">settings</span>
-				</a> <a th:href="@{/}" style="text-decoration: none; color: white";> 
+				</a> <a th:href="@{/}" class="settings-icon" style="text-decoration: none; color: white";> 
 				<span class="material-icons">home</span></a>
 			</nav>
 		</header>
