@@ -490,6 +490,7 @@ document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async ()
     const our = companyData; // 우리 회사 정보
     const cus = header;      // 거래처 정보는 header 안에 있음
 	console.log(our);
+    console.log(cus);
     // 🧾 작성일자, 승인번호
     document.getElementById("tiApprovalNo").textContent = header.bizNo || "-";
     document.getElementById("tiWriteDate").value = header.invoiceDate?.substring(0, 10) || "";
@@ -509,7 +510,7 @@ document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async ()
       document.getElementById("tiSuppEmail").value = our.matMail || "";
 
       // 공급받는자 (거래처)
-      document.getElementById("tiBuyerBizNo").value  = cus.cusBizNo || cus.bizNo || "";
+      document.getElementById("tiBuyerBizNo").value  = cus.buyerBizno||  "";
       document.getElementById("tiBuyerName").value   = cus.cusName || "";
       document.getElementById("tiBuyerCeo").value    = cus.buyerCeoName || "";
       document.getElementById("tiBuyerAddr").value   = cus.buyerAddr || "";
@@ -523,13 +524,13 @@ document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async ()
       // ===============================
 
       // 공급자 (거래처)
-      document.getElementById("tiSuppBizNo").value = cus.cusBizNo || cus.bizNo || "";
+      document.getElementById("tiSuppBizNo").value = cus.sellerBizno || "";
       document.getElementById("tiSuppName").value  = cus.cusName || "";
-      document.getElementById("tiSuppCeo").value   = cus.buyerCeoName || "";
-      document.getElementById("tiSuppAddr").value  = cus.buyerAddr || "";
-      document.getElementById("tiSuppType").value  = cus.buyerBizType || "";
-      document.getElementById("tiSuppBiz").value   = cus.buyerBizCategory || "";
-      document.getElementById("tiSuppEmail").value = cus.buyerEmail || "";
+      document.getElementById("tiSuppCeo").value   = cus.sellerCeoName || "";
+      document.getElementById("tiSuppAddr").value  = cus.sellerAddr || "";
+      document.getElementById("tiSuppType").value  = cus.sellerBizType || "";
+      document.getElementById("tiSuppBiz").value   = cus.sellerBizCategory || "";
+      document.getElementById("tiSuppEmail").value = cus.sellerEmail || "";
 
       // 공급받는자 (우리 회사)
       document.getElementById("tiBuyerBizNo").value  = our.matNo || "";
@@ -554,7 +555,7 @@ document.getElementById("openTaxInvoiceBtn")?.addEventListener("click", async ()
         <td class="center">${new Date(header.invoiceDate).getMonth() + 1}</td>
         <td class="center">${new Date(header.invoiceDate).getDate()}</td>
         <td>${line.productName || ""}</td>
-        <td>${line.specification || ""}</td>
+        <td>${line.specification || "	"}</td>
         <td class="right"><input type="number" value="${line.qty || 0}" style="width:100%;border:none;text-align:right"></td>
         <td class="right"><input type="number" value="${line.unitPrice || 0}" style="width:100%;border:none;text-align:right"></td>
         <td class="right ti-sup">${(line.supAmt || 0).toLocaleString()}</td>
