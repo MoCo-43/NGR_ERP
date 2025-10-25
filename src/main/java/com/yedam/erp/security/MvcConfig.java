@@ -20,8 +20,8 @@ public class MvcConfig implements WebMvcConfigurer {
 				 * System.getProperty("user.dir") + "/uploads/sign/");
 				 */
 		    // 재고부 - 결산페이지 - 전자서명 불러오기 (C:'\'upload/sign/)
-	        registry.addResourceHandler("/sign/**")
-		       .addResourceLocations("file:" + uploadDir + "/sign/");
+	        // registry.addResourceHandler("/sign/**")
+		    // .addResourceLocations("file:" + uploadDir + "/sign/");
 	        
 	        // 공통
 	        registry.addResourceHandler("/uploads/signatures/**")
