@@ -1,19 +1,39 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <body>
-  <div th:fragment="footerFragment">
-    <style>
-      footer {
-        text-align: center;
-        padding: 20px;
-        background: #2C3E50;
-        color: white;
-      }
-    </style>
-    
-    <footer>
-      <p>&copy; <b>주소</b> 대구 중구 중앙대로 403 5층 <br/> 이메일 askmail@gmail.com <br/> 대표자 서강중 </p>
-    </footer>
-  </div>
+	<div th:fragment="footerFragment">
+		<style>
+html, body {
+	height: 100%;
+	margin: 0;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh; /* 브라우저 높이에 맞게 */
+}
+
+main {
+	flex: 1;
+	background-color: #ffffff; /* 남는 부분 흰색 유지 */
+}
+
+footer {
+	text-align: center;
+	padding: 20px;
+	background: #2C3E50;
+	color: white;
+	margin-top: auto; /* 항상 하단에 붙도록 */
+}
+</style>
+
+		<footer>
+			<p>
+				&copy; <b>주소</b> 대구 중구 중앙대로 403 5층 <br /> 이메일 askmail@gmail.com <br />
+				대표자 서강중
+			</p>
+		</footer>
+	</div>
 </body>
 </html>
