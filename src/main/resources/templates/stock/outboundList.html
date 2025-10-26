@@ -455,17 +455,107 @@ document.addEventListener("DOMContentLoaded", () => {
 				timeout = setTimeout(() => func.apply(this, args), wait);
 		}
 	}
-
-	// view
-	/* document.getElementById("productCode").addEventListener("input", debounce(loadFilteredData,500));
-	document.getElementById("businessPartner").addEventListener("change", loadFilteredData);
-	document.getElementById("dueDate").addEventListener("change", loadFilteredData); */
 	
-	// 조회버튼 클릭시
-	/* document.querySelector('#submitBtn').addEventListener('click', async ()=>{
-		loadFilteredData();
-	}); */
-	// 초기화버튼 클릭시
+	// modal
+	// 제품 모달 - 필터링
+	 document.querySelector("#searchProdBtn").addEventListener("click", async () => {
+	    try {
+	    	showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
+	         const params = {
+		    	 companyCode : compCode,	  
+		    	 productName: document.getElementById("productkw").value || "",
+		    	 empName: document.getElementById("productEmpId").value || "",
+		    	 note: document.getElementById("note").value || ""
+	      	};
+	       console.log("검색 파라미터:", params);
+	      
+	      
+	      // ✅ 서버로 요청 (axios GET 또는 POST)
+	      const res = await axios.post("/api/v1/stock/product/search", params, { withCredentials: true });
+	      console.log("검색 결과:", res.data);
+	
+	      // ✅ ag-Grid에 데이터 반영
+	      productGrid.gridOptions.api.setRowData(res.data);
+	
+	      if (res.data.length === 0) {
+	        alert("검색 결과가 없습니다.");
+	      }
+	
+	    } catch (err) {
+	      console.error("조회 오류:", err);
+	      alert("데이터 조회 중 오류가 발생했습니다.");
+	    } finally{
+	    	 hideLoader("gridModalWrapper");
+	    }
+	  });
+	// 모달 - 제품 - 초기화
+	 document.querySelector("#resetProdBtn").addEventListener("click", async () =>{
+		 try{
+			 document.querySelectorAll('.fkw').forEach(el => el.value = '');
+			 showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
+			 const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
+			 productGrid.gridOptions.api.setRowData(res.data);
+		 }catch(err){
+			 console.log(err);
+		 }finally{
+			 hideLoader("gridModalWrapper");
+		 }
+	 });
+	
+		// modal
+	    // 거래처 모달 - 필터
+	    document.querySelector(".bsmSearchBtn").addEventListener("click", async ()=>{
+	    	 try {
+	    	    	showLoader("gridBsModalWrapper","데이터를 불러오는 중입니다...");
+	    	         const params = {
+	    	        	 compCode : compCode,
+	    		    	 cusKw: document.getElementById("keyword").value || "",
+	    		    	 empKw: document.getElementById("empId").value || "",
+	    		    	 btKw:  document.getElementById("bizType").value || "",
+	    		    	 bcKw:  document.getElementById("bizCategory").value || ""
+	    	      	};
+	    	       console.log("검색 파라미터:", params);
+	    	      
+	    	      
+	    	      // ✅ 서버로 요청 (axios GET 또는 POST)
+	    	      const res = await axios.post(`/api/v1/stock/filteredCustomerList`, params, { withCredentials: true });
+	    	      console.log("검색 결과:", res.data);
+
+	    	      // ✅ ag-Grid에 데이터 반영
+	    	      gridApi.setRowData(res.data);
+
+	    	      if (res.data.length === 0) {
+	    	        alert("검색 결과가 없습니다.");
+	    	      }
+
+	    	    } catch (err) {
+	    	      console.error("조회 오류:", err);
+	    	      alert("데이터 조회 중 오류가 발생했습니다.");
+	    	    } finally{
+	    	    	 hideLoader("gridBsModalWrapper");
+	    	    }
+	    });
+	    // ✅ 초기화 버튼 클릭 시
+		  document.querySelector(".bsmResetBtn").addEventListener("click", async () => {
+			  try{
+				  showLoader("gridBsModalWrapper","데이터를 불러오는 중입니다...");
+				  // gridApi.setRowData([]); // grid 비우기
+				  document.getElementById("keyword").value = "";
+				  document.getElementById("empId").value = "";
+				  document.getElementById("bizType").value = "";
+				  document.getElementById("bizCategory").value = "";
+				  await loadBusinessData();
+			  }catch(err){
+				  console.log(err);
+				  toastr.error(err);
+			  }finally{
+				  hideLoader("gridBsModalWrapper","데이터를 불러오는 중입니다...");
+			  }
+			 
+		  });
+	
+
+	// 뷰페이지 -  초기화버튼 클릭시
 	document.querySelector('#obResetBtn').addEventListener('click', async ()=>{
 		try{
 			 showLoader("gridWrapper","데이터를 불러오는 중입니다...");
@@ -493,6 +583,13 @@ document.addEventListener("DOMContentLoaded", () => {
 		}
 	});
 	
+	// view  
+	document.getElementById("productName").addEventListener("input", loadFilteredData);
+	document.getElementById("businessPartner").addEventListener("input", loadFilteredData);
+	document.getElementById("outboundDate").addEventListener("change", loadFilteredData);
+	document.getElementById("dueDate").addEventListener("change", loadFilteredData);
+  
+	
 	async function loadFilteredData() {
 		// view page filter
 	    try {
@@ -512,6 +609,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	        console.log("params:", params); // 👈 params 확인
 	        const res = await axios.post("/api/v1/stock/outboundList/search", params, {withCredentials: true });
 	        inListGrid.gridOptions.api.setRowData(res.data);
+	        //inListGrid.gridApi.setRowData(res.data);
 	    } catch (err) {
 	        console.error(err);
 	        toastr.error("조회 실패");

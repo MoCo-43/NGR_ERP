@@ -1,5 +1,7 @@
 package com.yedam.erp.security;
 
+import java.io.File;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -14,14 +16,20 @@ public class MvcConfig implements WebMvcConfigurer {
 	
 	 @Override
 	    public void addResourceHandlers(final ResourceHandlerRegistry registry) {
+		 // /upload/sign 경로가 없다면 생성
+		 File signDir = new File(uploadDir + "/sign");
+		    if (!signDir.exists()) {
+		        signDir.mkdirs();
+		        System.out.println("📂 [서명폴더 생성됨] " + signDir.getAbsolutePath());
+		    }
 		     // 이미지 불러오기
-				/*
-				 * registry.addResourceHandler("/sign/**") .addResourceLocations("file:" +
-				 * System.getProperty("user.dir") + "/uploads/sign/");
-				 */
+				
+//			registry.addResourceHandler("/sign/**") .addResourceLocations("file:" +
+//			System.getProperty("user.dir") + "/uploads/sign/");
+				 
 		    // 재고부 - 결산페이지 - 전자서명 불러오기 (C:'\'upload/sign/)
-	        // registry.addResourceHandler("/sign/**")
-		    // .addResourceLocations("file:" + uploadDir + "/sign/");
+	         registry.addResourceHandler("/sign/**")
+		     .addResourceLocations("file:" + uploadDir + "/sign/");
 	        
 	        // 공통
 	        registry.addResourceHandler("/uploads/signatures/**")
