@@ -6,7 +6,7 @@ import lombok.Data;
 public class DoDetailVO {
 
     private String dodNo;         // 출하지시 상세 번호 
-    private Long doNo;          // 출하지시 번호 
+    private Long doNo;          // 출하지시 번호
     private String productCode; // 제품 코드
     private Long orderQty;        // 수량
     private Long unitPrice;  // 단가

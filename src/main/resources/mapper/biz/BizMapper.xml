@@ -75,7 +75,7 @@ ORDER BY p.PO_START DESC
       #{poStart},
       #{exDate},
       #{poDate},
-      '작성완료',
+      '승인대기',
       #{payMethod},
       #{notes},
       #{creditActive}
@@ -118,16 +118,65 @@ ORDER BY p.PO_START DESC
 </insert>
 
 
-<!-- 주문서 상태 변경(승인, 입금완료) -->
-<update id="poStatusUpdate">
-UPDATE PURCHASE_ORDER
-SET PO_STATUS = #{poStatus}
-WHERE PO_CODE = #{poCode}
-</update>
+	<!-- 주문서 상태 변경(승인) -->
+	<update id="poStatusUpdateBulk" parameterType="map">
+	  UPDATE PURCHASE_ORDER
+	     SET PO_STATUS = #{poStatus}
+	   WHERE PO_CODE IN
+	  <foreach collection="poCodes" item="code" open="(" separator="," close=")">
+	    #{code}
+	  </foreach>
+	</update>
+
+
+	<!-- 주문서 상태변경(입금완료) -->
+	<!-- (1) 입금완료 처리 시 잔여여신(LEFT_PRICE) 가산 -->
+	<update id="increaseCreditByPoList" parameterType="map">
+	  UPDATE CREDIT_MASTER cm
+	     SET cm.LEFT_PRICE = NVL(cm.LEFT_PRICE, 0) + (
+	       SELECT NVL(SUM(pod.SUP_AMT), 0)
+	         FROM PURCHASE_ORDER po
+	         JOIN PO_DETAIL pod ON pod.PO_ID = po.PO_ID
+	        WHERE po.PO_CODE IN
+	        <foreach collection="poCodes" item="code" open="(" separator="," close=")">
+	          #{code}
+	        </foreach>
+	          AND po.PAY_METHOD   = 'BILL'
+	          AND po.PO_STATUS    = '출하완료'
+	          AND po.CUS_CODE     = cm.CUS_CODE
+	          AND po.COMPANY_CODE = cm.COMPANY_CODE
+	     )
+	   WHERE EXISTS (
+	       SELECT 1
+	         FROM PURCHASE_ORDER po2
+	        WHERE po2.PO_CODE IN
+	        <foreach collection="poCodes" item="code" open="(" separator="," close=")">
+	          #{code}
+	        </foreach>
+	          AND po2.PAY_METHOD   = 'BILL'
+	          AND po2.PO_STATUS    = '출하완료'
+	          AND po2.CUS_CODE     = cm.CUS_CODE
+	          AND po2.COMPANY_CODE = cm.COMPANY_CODE
+	   )
+	</update>
+	
+	<!-- (2) 상태를 '입금완료'로 변경 (이미 '출하완료'인 건만) -->
+	<update id="poStatusUpdateBulkToPaid" parameterType="map">
+	  UPDATE PURCHASE_ORDER
+	     SET PO_STATUS = '입금완료'
+	   WHERE PAY_METHOD = 'BILL'
+	     AND PO_STATUS  = '출하완료'
+	     AND PO_CODE IN
+	   <foreach collection="poCodes" item="code" open="(" separator="," close=")">
+	     #{code}
+	   </foreach>
+	</update>
+
+
 
 <!-- 주문서 조회(모달) -->
 <select id="getPoHistory" resultType="PoHistoryVO">
-SELECT po.PO_CODE, po.PO_START, po.CUS_CODE, po.CREATER, po.EX_DATE, po.PAY_METHOD,
+SELECT po.PO_CODE, po.PO_START, po.CUS_CODE, po.EMP_NAME, po.EX_DATE, po.PAY_METHOD,
        c.CUS_NAME, c.ADDR, c.ZIP_CODE, c.TEL,
        pd.PRODUCT_CODE, pd.PRODUCT_NAME, pd.ORDER_QTY, pd.UNIT_PRICE, pd.SUP_AMT
 FROM PURCHASE_ORDER po
@@ -155,7 +204,7 @@ FROM   PRODUCT
 <select id="getCustomers" resultType="CusModalVO">
   SELECT c.CUS_CODE, c.CUS_NAME, c.ADDR, c.ZIP_CODE, c.TEL,
          cm.CREDIT_GRADE, cm.LEFT_PRICE, 
-         cp.DISCOUNT_RATE, cp.MON_DISC_CNT
+         cp.DISCOUNT_RATE
   FROM CUSTOMER c
   JOIN CREDIT_MASTER cm ON c.CUS_CODE = cm.CUS_CODE
   JOIN CREDIT_POLICY cp ON cp.COMPANY_CODE = c.COMPANY_CODE 
@@ -209,23 +258,24 @@ FROM   PRODUCT
 
   INSERT INTO DELIVERY_ORDER (
     DO_NO, CUS_CODE, PO_CODE, DO_CODE,
-    NAME, DO_CREATED,
+    EMP_NAME, DO_CREATED,
     DO_STATUS, NOTES, COMPANY_CODE,
-    EX_DATE, ADDR, ZIP_CODE
+    EX_DATE, ADDR, ZIP_CODE,TEL
   )
   VALUES (
     #{doNo},
     #{cusCode},
     #{poCode},
     fn_generate_code('DO', ''),
-    #{name},
+    #{empName},
     #{doCreated},
     '작성완료',
     #{notes},
     #{companyCode},
     #{exDate},
     #{addr},
-    #{zipCode}
+    #{zipCode},
+    #{tel}
   )
 </insert>
 
@@ -250,7 +300,7 @@ FROM   PRODUCT
     <foreach collection="dodetails" item="d" separator=" UNION ALL ">
       SELECT
         #{d.productCode} AS productCode,
-        #{d.orderQty}          AS orderQty,
+        #{d.orderQty}     AS orderQty,
         #{d.unitPrice}    AS unitPrice,
         #{d.supAmt}      AS supAmt,
         #{d.vatAmt}      AS vatAmt,
@@ -399,6 +449,7 @@ FROM   PRODUCT
   
 
 <!-- 여신관리 페이지 -->
+
 <!-- 여신현황 조회 -->
   <select id="selectCrdMaster" parameterType="long" resultType="CustomerCreditVO">
   SELECT c.CUS_CODE, c.CUS_NAME, 
@@ -409,31 +460,39 @@ FROM   PRODUCT
   </select>
 
 
-  <!-- 여신 비활성화 -->
-  <update id="deactivateCredit">
-    UPDATE credit_master
-       SET active_status = 'N',
-           expire_date   = NVL(expire_date, SYSDATE)
-     WHERE company_code = #{companyCode}
-       AND cus_code     = #{cusCode}
-  </update>
-
-
 <!-- 여신 등급 정책 조회-->
 <select id="getCreditGrade" resultType="CreditGradeVO">
-SELECT GRADE, GRADE_NAME, MAX_LIMIT, DISCOUNT_RATE, MON_DISC_CNT
+SELECT GRADE, GRADE_NAME, MAX_LIMIT, DISCOUNT_RATE
 FROM CREDIT_POLICY
 WHERE COMPANY_CODE = #{companyCode}
 </select>
 
 
-
-<!-- 여신 등급 정책 추가 -->
-
 <!--  여신 등급 정책 업데이트 -->
 
+<!--  여신정책 resultMap -->
+  <resultMap id="CreditPolicyMap" type="CreditGradeVO">
+    <result property="companyCode" column="COMPANY_CODE"/>
+    <result property="grade"       column="GRADE"/>
+    <result property="gradeName"   column="GRADE_NAME"/>
+    <result property="maxLimit"    column="MAX_LIMIT"/>
+    <result property="discountRate" column="DISCOUNT_RATE"/>
+  </resultMap>
 
-<!-- 여신등급 정책 변경이력 쿼리-->
+  <update id="updateCreditPolicyByGrade" parameterType="CreditGradeVO">
+    UPDATE CREDIT_POLICY
+    <set>
+      <if test="gradeName != null"> GRADE_NAME = #{gradeName}, </if>
+      <if test="maxLimit != null">  MAX_LIMIT = #{maxLimit},   </if>
+      <if test="discountRate != null"> DISCOUNT_RATE = #{discountRate}, </if>
+    </set>
+    WHERE COMPANY_CODE = #{companyCode}
+      AND GRADE        = #{grade}
+  </update>
+
+
+
+<!-- (미구현)여신등급 정책 변경이력 쿼리-->
 <!-- <select id="getCreditHistory" resultType="CreditHistoryVO">
 SELECT c.CUS_NAME, cph.CHANGED_DATE, cph.OLD_GRADE, cph.OLD_LIMIT, cph.OLD_DISC, cph.OLD_MON_DISC
 FROM CREDIT_POLICY_HISTORY cph

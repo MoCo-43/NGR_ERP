@@ -64,8 +64,8 @@
               <div class="col-md-3">
                 <label class="form-label">거래처</label>
                 <div class="input-group">
-                  <input type="text" class="form-control" id="cusName" placeholder="거래처명" />
-                  <input type="text" class="form-control" id="cusCode" placeholder="거래처코드" />
+                  <input type="text" class="form-control" id="cusName" placeholder="거래처명" disabled/>
+                  <input type="text" class="form-control" id="cusCode" placeholder="거래처코드" disabled/>
                   <button type="button" class="btn btn-outline-secondary" id="btnFindCustomer" data-bs-toggle="modal" data-bs-target="#customermodal">
                     <i class="bi bi-search"></i>
                   </button>
@@ -75,7 +75,7 @@
               <div class="col-md-3">
                 <label class="form-label">담당자</label>
                 <div class="input-group">
-                  <span class="form-control" id="creater" th:text="${#authentication.principal.empLoginVO.name}"></span>
+                  <span class="form-control" id="empName" th:text="${#authentication.principal.empLoginVO.name}"></span>
                 </div>
               </div>
 
@@ -267,7 +267,7 @@
               width: 120,
               type: "rightAligned",
             },
-            { headerName: "비고", field: "note", editable: true, flex: 1 },
+            { headerName: "비고", field: "notes", editable: true, flex: 1 },
           ],
           rowData: [],
           rowSelection: "multiple",
@@ -377,23 +377,20 @@
           );
 
           // 금액계산
-          const lineItems = lineItemsRaw.map((d) => {
-            const qty = Number(d.qty) || 0;
-            const unitPrice = Number(d.unitPrice) || 0;
-            const supAmt = qty * unitPrice;
-            const vatAmt = Math.round(supAmt * 0.1);
-            return { ...d, qty, unitPrice, supAmt, vatAmt };
-          });
+		const lineItems = lineItemsRaw.map((d) => {
+		  const orderQty = Number(d.orderQty) || 0;
+		  const unitPrice = Number(d.unitPrice) || 0;
+		  const supAmt = orderQty * unitPrice;
+		  const vatAmt = Math.round(supAmt * 0.1);
+		  return { ...d, orderQty, unitPrice, supAmt, vatAmt };
+		});
 
           // 헤더
           const header = {
             writeDate: document.getElementById("writeDate").value,
             customerCode: document.getElementById("cusCode").value,
             customerName: document.getElementById("cusName").value,
-            creater:
-              document.getElementById("creater").textContent ||
-              document.getElementById("creater").value ||
-              "",
+            empName: loginName,
             tel: document.getElementById("tel").value,
             shipDate: document.getElementById("shipDate").value,
             addr: document.getElementById("sample4_roadAddress").value,
@@ -416,7 +413,7 @@
           const payload = {
             ...(poCodes.length > 0 ? { poCodes } : {}),
             cusCode: header.customerCode,
-            creater: loginName,
+            empName: loginName,
             doCreated: header.writeDate,
             exDate: header.shipDate,
             addr: header.addr,
@@ -434,7 +431,7 @@
               companyCode: header.companyCode,
               poCode: it.poCode || null, // 주문서 없이 등록 가능
               payMethod: it.payMethod,
-              note: it.note || "",
+              notes: it.notes || "",
             })),
           };
 
@@ -487,7 +484,13 @@
             { headerName: "", checkboxSelection: true, width: 50 },
             { headerName: "품목코드", field: "productCode", flex: 1 },
             { headerName: "품목명", field: "productName", flex: 1, minWidth: 160 },
-            { headerName: "판매단가", field: "salesPrice", width: 120, type: "rightAligned" },
+            {
+                headerName: "판매단가",
+                field: "salesPrice",
+                width: 120,
+                type: "rightAligned",
+                valueFormatter: (p) => (Number(p.value ?? 0)).toLocaleString("ko-KR"),
+            },
             { headerName: "부가세", field: "vatType", width: 100 },
           ],
           rowSelection: "multiple",
@@ -556,33 +559,40 @@
         }
 
         // 가져오기
-        document.getElementById("PrcImportBtn")?.addEventListener("click", () => {
-          const rows = productGridApi?.getSelectedRows?.() || [];
-          if (!rows.length) return toastr.warning("가져올 품목을 선택하세요.");
-
-          const items = rows.map((r) => ({
-            poCode: r.poCode,
-            productCode: r.productCode,
-            productName: r.productName,
-            vatType: r.vatType,
-            payMethod: r.payMethod,
-            // 주의: 기본 행 스키마와 컬럼명 일치 (orderQty vs qty 혼동 금지)
-            orderQty: r.qty ?? 1,
-            unitPrice: r.salesPrice || 0,
-            supAmt: (r.qty ?? 1) * (r.salesPrice || 0),
-            vatAmt: Math.round(((r.qty ?? 1) * (r.salesPrice || 0)) * 0.1),
-            note: r.note,
-          }));
-
-          itemGridApi.applyTransaction({ add: items });
-          updateSummary?.();
-
-          (bootstrap.Modal.getInstance(productModalEl) ||
-            bootstrap.Modal.getOrCreateInstance(productModalEl)
-          ).hide();
+		document.getElementById("PrcImportBtn")?.addEventListener("click", () => {
+		  const rows = productGridApi?.getSelectedRows?.() || [];
+		  if (!rows.length) return toastr.warning("가져올 품목을 선택하세요.");
+		
+		  const items = rows.map((r) => {
+		    const qty = Number(r.qty ?? 1);
+		    const price = Number(String(r.salesPrice ?? 0).replace(/,/g, "")) || 0; // ← 정규화
+		    const supAmt = qty * price;
+		    const vatAmt = Math.round(supAmt * 0.1);
+		
+		    return {
+		      poCode: r.poCode,
+		      productCode: r.productCode,
+		      productName: r.productName,
+		      vatType: r.vatType,
+		      payMethod: r.payMethod,
+		      orderQty: qty,
+		      unitPrice: price,
+		      supAmt,
+		      vatAmt,
+		      notes: r.notes,
+		    };
+		  });
+		
+		  itemGridApi.applyTransaction({ add: items });
+		  updateSummary?.();
+		
+		  (bootstrap.Modal.getInstance(productModalEl) ||
+		    bootstrap.Modal.getOrCreateInstance(productModalEl)
+		  ).hide();
+		
         // 주문서 기반으로 가져오면 품목코드 모달 비활성화(원래 로직 유지)
-        document.getElementById("btnFindOrder").disabled = true;
-        });
+		  document.getElementById("btnFindOrder").disabled = true;
+		});
         
 
 
@@ -639,8 +649,8 @@
             if (!sel.length) return toastr.warning("거래처를 선택하세요.");
             document.getElementById("cusName").value = sel[0].cusName ?? "";
             document.getElementById("cusCode").value = sel[0].cusCode ?? "";
-            document.getElementById("managerName").textContent =
-              sel[0].cempName ??
+            document.getElementById("empName").textContent =
+              sel[0].empName ??
               (document.getElementById("managerName").textContent || "");
             document.getElementById("tel").value = sel[0].tel ?? "";
             document.getElementById("sample4_roadAddress").value =
@@ -665,7 +675,7 @@
             },
             { headerName: "제품코드", field: "productCode", width: 120 },
             { headerName: "제품명", field: "productName", width: 150 },
-            { headerName: "담당자", field: "creater", width: 100 },
+            { headerName: "담당자", field: "empName", width: 100 },
             { headerName: "납기일자", field: "exDate", width: 120 },
             {
               headerName: "공급가액",
@@ -774,7 +784,7 @@
               vatAmt: Math.round(
                 (row.supAmt ?? (row.unitPrice || 0) * (row.orderQty || 1)) * 0.1
               ),
-              note: row.notes,
+              notes: row.notes,
               payMethod: row.payMethod,
             }));
 

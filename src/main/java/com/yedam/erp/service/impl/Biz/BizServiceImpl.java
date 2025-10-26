@@ -1,6 +1,8 @@
 package com.yedam.erp.service.impl.Biz;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -62,18 +64,24 @@ public class BizServiceImpl implements BizService {
         return bizMapper.getPoHistory(companyCode);
     }
 
-  // 주문서 상태변경
-  public int poStatusUpdate(List<String> poCodes, String poStatus) {
-    int cnt = 0;
-    for(int i=0; i<poCodes.size(); i++) {
-      
-      cnt += bizMapper.poStatusUpdate(poCodes.get(i), poStatus);
-      
+  // 주문서 상태변경(승인)
+    @Override
+    @Transactional
+    public int poStatusUpdate(List<String> poCodes, String poStatus) {
+        if (poCodes == null || poCodes.isEmpty()) return 0;
+        return bizMapper.poStatusUpdateBulk(poCodes, poStatus);
     }
-
-   return cnt;
-}
-
+  
+  // 주문서 상태변경(입금완료)
+  @Transactional
+  @Override
+  public int markPaidAndIncreaseCredit(List<String> poCodes) {
+      int a = bizMapper.increaseCreditByPoList(poCodes); // LEFT_PRICE 가산
+      int b = bizMapper.poStatusUpdateBulkToPaid(poCodes); // PO_STATUS '입금완료'
+      return b; // 상태 변경된 건수 리턴(원하면 a+b 리턴도 가능)
+  }
+  
+  
 
 	// 품목 조회
 	@Override
@@ -215,5 +223,26 @@ public class BizServiceImpl implements BizService {
   public 
   List<CreditGradeVO>getCreditGrade(Long companyCode) {
     return bizMapper.getCreditGrade(companyCode);
+  }
+
+  // 여신등급정책 업데이트
+  @Override
+  @Transactional
+  public int updateCreditPolicies(Long companyCode, List<CreditGradeVO> list) {
+      if (list == null || list.isEmpty()) return 0;
+
+      int affected = 0;
+      for (CreditGradeVO vo : list) {
+          if (vo == null) continue;
+
+          // 공통 세팅 & 정규화
+          vo.setCompanyCode(companyCode);
+          if (vo.getGrade() != null) {
+              vo.setGrade(vo.getGrade().trim().toUpperCase(Locale.ROOT));
+          }
+
+          affected += bizMapper.updateCreditPolicyByGrade(vo); // 존재하지 않으면 0 반환
+      }
+      return affected;
   }
 }

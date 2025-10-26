@@ -19,6 +19,37 @@
         href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
       />
       <style>
+      
+      /* 로딩 중일 때는 ag-Grid의 "No Rows" 오버레이 숨김 */
+	.loader-host.is-loading .ag-overlay-no-rows-center {
+	  display: none !important;
+	}
+
+
+      /* ag-Grid 기본 로딩 오버레이도 안 보이게 */
+		.loader-host.is-loading .ag-overlay-loading-center {
+		  display: none !important;
+		}
+      
+      
+      .ag-theme-quartz { height: 100%; width: 100%; }
+
+		/* 공용 로더 */
+		.loader-host { position: relative; }
+		.loader-overlay {
+		  position: absolute; inset: 0;
+		  display: none;             /* JS에서 flex로 토글 */
+		  align-items: center; justify-content: center;
+		  background: rgba(255,255,255,0.55);
+		  z-index: 1000;             /* 그리드 위로 확실히 */
+		  pointer-events: none;      /* 필요시 auto 로 바꾸면 클릭 차단 */
+		}
+		.loader-box { display: flex; gap: 8px; align-items: center; }
+		
+		/* 부모 컨테이너가 실제 높이를 가짐 (여기서 값 조절) */
+		.grid-box-520 { height: 520px; }
+      
+      
         .ag-theme-quartz {
           height: 520px;
           width: 100%;
@@ -35,465 +66,235 @@
   </head>
   <body>
     <section layout:fragment="content">
-<!-- 상단 탭 -->
-<ul class="nav nav-tabs mb-3" role="tablist">
-  <li class="nav-item">
-    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-manage" type="button" role="tab">
-      여신현황
-    </button>
-  </li>
-  <li class="nav-item">
-    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-policy" type="button" role="tab">
-      등급정책 관리
-    </button>
-  </li>
-  <!-- 필요 시 이력 탭 다시 열면 여기에 추가 -->
-</ul>
+      <!-- 상단 탭 -->
+      <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-manage" type="button" role="tab">
+            여신현황
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-policy" type="button" role="tab">
+            등급정책 관리
+          </button>
+        </li>
+      </ul>
 
-<!-- ✅ 탭 컨테이너는 하나만 -->
-<div class="tab-content">
-
-  <!-- ① 여신현황 -->
-  <div class="tab-pane fade show active" id="tab-manage" role="tabpanel">
-    <div class="card shadow mb-3">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">거래처 여신 현황</h6>
-      </div>
-      <div class="card-body">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-4">
-            <label class="form-label">거래처명</label>
-            <input id="qName" class="form-control" placeholder="상호/거래처명" />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">신용등급</label>
-            <select id="qGrade" class="form-control">
-              <option value="">전체</option>
-              <option>A</option>
-              <option>B</option>
-              <option selected>C</option>
-              <option>D</option>
-              <option>E</option>
-            </select>
-          </div>
-          <div class="col-md-4 d-flex gap-2">
-            <button id="btnReset" class="btn btn-danger mt-auto">초기화</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card shadow">
-      <div class="card-body">
-        <div id="gridManage" class="ag-theme-quartz"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ② 등급정책 관리 -->
-  <div class="tab-pane fade" id="tab-policy" role="tabpanel">
-    <div class="card shadow">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h6 class="m-0 font-weight-bold text-primary">등급별 정책</h6>
-        <div class="d-flex gap-2">
-          <button id="btnPolicyAdd" class="btn btn-primary btn-sm">정책 추가</button>
-          <button id="btnPolicySave" class="btn btn-success btn-sm">변경 저장</button>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="gridPolicy" class="ag-theme-quartz"></div>
-        <div class="muted mt-2">
-          A/B/C/D/E 등급의 최대한도 등 기준을 정의합니다. 관리 탭의 여신 등록/수정 시 자동 검증에 사용됩니다.
-        </div>
-      </div>
-    </div>
-  </div>
-
-        <!-- ③ 변경 이력 -->
-       <!--   <div class="tab-pane fade" id="tab-history" role="tabpanel">
-          <div class="card shadow">
-            <div class="card-header">
-              <h6 class="m-0 font-weight-bold text-primary">여신 변경 이력</h6>
+      <!-- 탭 컨테이너 -->
+      <div class="tab-content">
+        <!-- ① 여신현황 -->
+        <div class="tab-pane fade show active" id="tab-manage" role="tabpanel">
+          <div class="card shadow mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+              <h6 class="m-0 font-weight-bold text-primary">거래처 여신 현황</h6>
             </div>
             <div class="card-body">
-              <div id="gridHistory" class="ag-theme-quartz"></div>
-            </div>
-          </div>
-        </div> -->
-      </div>
-
-      <!-- === 여신 등록/수정 모달 === -->
-      <div class="modal fade" id="creditModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 id="creditModalTitle" class="modal-title">여신 등록</h5>
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-              ></button>
-            </div>
-            <div class="modal-body">
-              <form id="creditForm" class="row g-3">
-                <input type="hidden" id="creditNo" />
-                <div class="col-md-6">
-                  <label class="form-label">거래처코드</label>
-                  <input
-                    id="cusCode"
-                    class="form-control"
-                    placeholder="CUS-001 (신규는 코드 선택)"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
+              <div class="row g-3 align-items-end">
+                <div class="col-md-4">
                   <label class="form-label">거래처명</label>
-                  <input
-                    id="cusName"
-                    class="form-control"
-                    placeholder="조회용(선택 시 자동)"
-                    readonly
-                  />
+                  <input id="qName" class="form-control" placeholder="상호/거래처명" />
                 </div>
-
                 <div class="col-md-4">
                   <label class="form-label">신용등급</label>
-                  <select id="creditGrade" class="form-select">
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C" selected>C</option>
-                    <option value="D">D</option>
-                    <option value="E">E</option>
-                  </select>
-                  <div id="gradeHint" class="form-text">
-                    등급 C의 최대 한도는 정책을 따릅니다.
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">여신한도(원)</label>
-                  <input
-                    id="creditLimit"
-                    type="number"
-                    min="0"
-                    value="0"
-                    class="form-control text-end"
-                    required
-                  />
-                  <div id="limitHint" class="form-text">최대: -</div>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">상태</label>
-                  <select id="activeStatus" class="form-select">
-                    <option value="NORMAL">정상</option>
-                    <option value="WARN">경고</option>
-                    <option value="OVER">초과</option>
-                    <option value="SUSPEND">중지</option>
+                  <select id="qGrade" class="form-control">
+                    <option value="" selected>전체</option>
+                    <option>A</option>
+                    <option>B</option>
+                    <option>C</option>
+                    <option>D</option>
+                    <option>E</option>
                   </select>
                 </div>
-
-                <div class="col-md-6">
-                  <label class="form-label">적용시작일</label>
-                  <input id="startDate" type="date" class="form-control" />
+                <div class="col-md-4 d-flex gap-2">
+                  <button id="btnReset" class="btn btn-danger mt-auto">초기화</button>
+                  <button id="btnSearch" class="btn btn-dark mt-auto">조회</button>
                 </div>
-                <div class="col-md-6">
-                  <label class="form-label">적용만료일</label>
-                  <input id="expireDate" type="date" class="form-control" />
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label">결제방식</label>
-                  <select id="payMethod" class="form-select">
-                    <option value="">선택</option>
-                    <option value="CASH">현금</option>
-                    <option value="TRANSFER">계좌이체</option>
-                    <option value="CARD">카드</option>
-                    <option value="BILL">어음</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label d-block">수금예정일</label>
-                  <div class="d-flex gap-2">
-                    <select id="collectMonth" class="form-select">
-                      <option value="CUR">당월</option>
-                      <option value="M+3">3개월</option>
-                      <option value="M+6">6개월</option>
-                      <option value="EOM">월말</option>
-                    </select>
-                    <span class="align-self-center">개월 후</span>
-                    <select id="collectDay" class="form-select"></select>
-                    <span class="align-self-center">일</span>
-                  </div>
-                </div>
-                <div class="col-12">
-                  <label class="form-label">변경사유 / 메모</label>
-                  <input
-                    id="remark"
-                    class="form-control"
-                    placeholder="예: 거래 규모 증가에 따라 한도 상향"
-                  />
-                </div>
-              </form>
+              </div>
             </div>
-            <div class="modal-footer">
-              <button
-                id="btnDeleteCredit"
-                class="btn btn-outline-danger me-auto d-none"
-              >
-                삭제
-              </button>
-              <button class="btn btn-secondary" data-bs-dismiss="modal">
-                닫기
-              </button>
-              <button id="btnSaveCredit" class="btn btn-primary">저장</button>
+          </div>
+
+          <div class="card shadow">
+            <div class="card-body">
+            <!--  그리드 -->
+              <!-- 로딩바 구역 -->
+<div id="creditGridLoader" class="loader-host grid-box-520" style="width:100%;">
+  <div id="gridManage" class="ag-theme-quartz"></div>
+  <div class="loader-overlay">
+    <div class="loader-box">
+      <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+      <span class="ms-2">Loading...</span>
+    </div>
+  </div>
+</div>
+
+      </div>
+    </div>
+  </div>
+
+        <!-- ② 등급정책 관리 -->
+        <div class="tab-pane fade" id="tab-policy" role="tabpanel">
+          <div class="card shadow">
+            <div class="card-header d-flex align-items-center justify-content-between">
+              <h6 class="m-0 font-weight-bold text-primary">등급별 정책</h6>
+              <div class="d-flex gap-2">
+                <button id="btnPolicyUpdate" class="btn btn-primary btn-sm">정책 변경</button>
+              </div>
             </div>
+            
+            <!--  그리드 -->
+            <div class="card-body">
+            
+<div id="creditGradeGridLoader" class="loader-host grid-box-520">
+  <div id="gridPolicy" class="ag-theme-quartz"></div>
+  <div class="loader-overlay">
+    <div class="loader-box">
+      <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+      <span class="ms-2">Loading...</span>
+    </div>
+  </div>
+</div>
+            </div>
+            
+            
           </div>
         </div>
       </div>
     </section>
 
     <th:block layout:fragment="body_extra">
-      <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"
-      ></script>
-      <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
-      ></script>
+      <script defer src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+      <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
 
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
-          // 초기 로딩: 정책/이력도 미리 조회
-          fetchPolicy();
-          fetchHistory();
+        	
+        	// 조회: DB에서 다시 가져오고(최신화) -> 현재 입력값 기준으로 필터 적용
+        	document.getElementById("btnSearch")?.addEventListener("click", async () => {
+        	  await fetchManage();              // 내부에서 allManageRows 갱신
+        	  // fetchManage 끝나면 _applyFiltersManage()가 호출되도록 이미 구현돼 있으면 이 줄은 불필요
+        	  // _applyFiltersManage();          
+        	});
+        	
+          // -------------------- 공용 로더 유틸 --------------------
+		function showLoader(containerId) {
+		  const c = document.getElementById(containerId);
+		  const overlay = c?.querySelector?.('.loader-overlay');
+		  if (!c || !overlay) return;
+		  c.classList.add('is-loading');          // ← 추가
+		  overlay.style.display = 'flex';
+		}
+		
+		function hideLoader(containerId) {
+		  const c = document.getElementById(containerId);
+		  const overlay = c?.querySelector?.('.loader-overlay');
+		  if (!c || !overlay) return;
+		  overlay.style.display = 'none';
+		  c.classList.remove('is-loading');       // ← 추가
+		}
 
-          // ===== 공통 =====
+          // -------------------- 상태/헬퍼 --------------------
           const $ = (s) => document.querySelector(s);
+          let allManageRows = []; // 여신현황 원본 캐시
+          let policyMap = { A: 500000000, B: 100000000, C: 50000000, D: 10000000, E: 0 };
 
-          // 정책 캐시(등급별 최대한도) – 모달 검증에 사용
-          let policyMap = {
-            A: 500000000,
-            B: 100000000,
-            C: 50000000,
-            D: 10000000,
-            E: 0,
-          };
-
-          // ======= 거래처 현황 그리드 구성 ========
+          // -------------------- 그리드 컬럼 --------------------
           const manageCols = [
-            {
-              headerName: "거래처코드",
-              field: "cusCode",
-              width: 120,
-              pinned: "left",
-            },
-            {
-              headerName: "거래처명",
-              field: "cusName",
-              minWidth: 150,
-              flex: 1,
-            },
-            {
-              headerName: "신용등급",
-              field: "creditGrade",
-              width: 100,
-              cellClass: "text-center",
-            },
-            {
-              headerName: "여신한도",
-              field: "creditLimit",
-              width: 140,
-              valueFormatter: money,
-            },
+            { headerName: "거래처코드", field: "cusCode", width: 120, pinned: "left" },
+            { headerName: "거래처명", field: "cusName", minWidth: 150, flex: 1 },
+            { headerName: "신용등급", field: "creditGrade", width: 100, cellClass: "text-center" },
+            { headerName: "여신한도", field: "creditLimit", width: 140, valueFormatter: money },
             { headerName: "적용시작일", field: "startDate", width: 130 },
             { headerName: "적용만료일", field: "expireDate", width: 130 },
             { headerName: "상태", field: "activeStatus", width: 110 },
-            { headerName: "액션", width: 140, cellRenderer: actionBtns },
           ];
-          const gridManage = createGrid(
-            "#gridManage",
-            manageCols,
-            fetchManage,
-            {
-              onRowDoubleClicked: (e) => openCreditModal("edit", e.data),
-            }
-          );
-
-          // ====== 정책 탭 =======
           const policyCols = [
+            { headerName: "등급", field: "grade", flex: 1, editable: true },
+            { headerName: "등급이름", field: "gradeName", flex: 1, editable: true },
             {
-              headerName: "등급",
-              field: "grade",
-              flex: 1,
-              editable: true,
+              headerName: "최대한도", field: "maxLimit", flex: 1, editable: true,
+              valueFormatter: money, valueParser: (p) => Number(String(p.newValue).replaceAll(",", "") || 0),
             },
-            {
-              headerName: "등급이름",
-              field: "gradeName",
-              flex: 1,
-              editable: true,
-            },
-            {
-              headerName: "최대한도",
-              field: "maxLimit",
-              flex: 1,
-              editable: true,
-              valueFormatter: money,
-              valueParser: (p) =>
-                Number(String(p.newValue).replaceAll(",", "") || 0),
-            },
-            {
-              headerName: "할인율",
-              field: "discountRate",
-              flex: 1,
-              editable: true,
-            },
-            {
-              headerName: "월별할인횟수",
-              field: "monDiscCnt",
-              flex: 1,
-              editable: true,
-            },
+            { headerName: "할인율(%)", field: "discountRate", flex: 1, editable: true },
           ];
-          const gridPolicy = createGrid("#gridPolicy", policyCols, fetchPolicy);
 
-          // ======= 여신 변경 이력 탭 그리드 설정 ==========
-          const histCols = [
-            { headerName: "거래처명", field: "cusName", flex: 1 },
-            { headerName: "거래처코드", field: "cusCode", flex: 1 },
-            { headerName: "변경일", field: "changedDate", flex: 1 },
-            { headerName: "이전등급", field: "oldGrade", flex: 1 },
-            { headerName: "이전최대한도", field: "oldLimit", flex: 1 },
-            {
-              headerName: "할인율",
-              field: "oldDisc",
-              flex: 1,
-              valueFormatter: money,
-            },
-            {
-              headerName: "이전월별할인횟수",
-              field: "oldMonDisc",
-              flex: 1,
-              valueFormatter: money,
-            },
-          ];
-          const gridHistory = createGrid(
-            "#gridHistory",
-            histCols,
-            fetchHistory
-          );
+          // -------------------- 그리드 생성 --------------------
+          const gridManage = createGrid("#gridManage", manageCols, fetchManage);
+          const gridPolicy = createGrid("#gridPolicy", policyCols, fetchPolicy, { rowSelection: 'single' });
 
-          // ===== 검색필터 초기화 =====
-          $("#btnReset").addEventListener("click", () => {
-            $("#qName").value = "";
-            $("#qManage").value = "";
-            $("#qGrade").value = "";
-            fetchManage();
-          });
+          // -------------------- 필터 적용 (프론트 캐시 기반) --------------------
+          function _applyFiltersManage() {
+            const qName  = (document.getElementById("qName")?.value ?? "").trim().toLowerCase();
+            const qGrade = (document.getElementById("qGrade")?.value ?? "").trim();
 
+            const filtered = allManageRows.filter(r => {
+              if (qName && String(r.cusName ?? "").toLowerCase().indexOf(qName) === -1) return false;
+              if (qGrade && String(r.creditGrade ?? "") !== qGrade) return false;
+              return true;
+            });
 
-          $("#creditGrade").addEventListener("change", applyPolicyLimit);
-          $("#creditLimit").addEventListener("input", applyPolicyLimit);
-
-          function applyPolicyLimit() {
-            const g = $("#creditGrade").value || "C";
-            const max = Number(policyMap[g] ?? 0);
-            $("#limitHint").textContent = `최대: ${max.toLocaleString(
-              "ko-KR"
-            )}`;
-            const v = Number($("#creditLimit").value || 0);
-            if (v > max) {
-              $("#creditLimit").value = String(max);
-            }
-            $(
-              "#gradeHint"
-            ).textContent = `등급 ${g}의 최대 한도는 ${max.toLocaleString(
-              "ko-KR"
-            )}원입니다.`;
+            setRows(gridManage, filtered);
           }
 
-          $("#btnSaveCredit").addEventListener("click", async () => {
-            // 간단 검증
-            if (!$("#cusCode").value.trim()) {
-              alert("거래처코드를 입력하세요.");
-              return;
-            }
-            const payload = {
-              cusCode: $("#cusCode").value,
-              cusName: $("#cusName").value,
-              creditGrade: $("#creditGrade").value,
-              creditLimit: Number($("#creditLimit").value || 0),
-              startDate: $("#startDate").value || null,
-              expireDate: $("#expireDate").value || null,
-              activeStatus: $("#activeStatus").value || "NORMAL",
-            };
-            try {
-              if (payload.creditNo) {
-                // 수정
-                await axios.put(
-                  `/api/biz/${encodeURIComponent(payload.creditNo)}`,
-                  payload
-                );
-              } else {
-                // 등록
-                await axios.post("/api/biz/credit", payload);
-              }
-              bootstrap.Modal.getInstance(creditModalEl)?.hide();
-              fetchManage();
-              fetchHistory(); // 이력 리프레시
-            } catch (e) {
-              console.error(e);
-              alert("저장 실패");
-            }
+          // -------------------- 이벤트 (검색/초기화) --------------------
+		document.getElementById("btnReset")?.addEventListener("click", async () => {
+		  document.getElementById("qName").value  = "";
+		  document.getElementById("qGrade").value = "";
+		  // 방법 A) 캐시 그대로 전체 보여주기 (빠름)
+		  setRows(gridManage, allManageRows);
+          });
+          $("#qName").addEventListener("keydown", (e) => { if (e.key === "Enter") _applyFiltersManage(); });
+          $("#qGrade").addEventListener("change", _applyFiltersManage);
+          // 타이핑 디바운스
+          let _t;
+          $("#qName").addEventListener("input", () => {
+            clearTimeout(_t);
+            _t = setTimeout(_applyFiltersManage, 200);
           });
 
-          $("#btnDeleteCredit").addEventListener("click", async () => {
-            const no = $("#creditNo").value;
-            if (!no) return;
-            if (!confirm("삭제하시겠습니까?")) return;
-            try {
-              await axios.delete(`/api/biz/credit/${encodeURIComponent(no)}`);
-              bootstrap.Modal.getInstance(creditModalEl)?.hide();
-              fetchManage();
-              fetchHistory();
-            } catch (e) {
-              console.error(e);
-              alert("삭제 실패");
-            }
-          });
+          // -------------------- 데이터 조회 (현황) --------------------
+		async function fetchManage() {
+		  try {
+		    showLoader('creditGridLoader', "데이터 불러오는 중...");
+		    const res = await axios.get("/api/biz/crdlist", { withCredentials: true });
+		    const rows = (Array.isArray(res.data) ? res.data : []).map((r) => {
+		      // 날짜 포맷 함수
+		      const formatDate = (v) => {
+		        if (!v) return "";
+		        const d = new Date(v);
+		        if (isNaN(d)) return v; // 변환 불가하면 원본 반환
+		        const y = d.getFullYear();
+		        const m = String(d.getMonth() + 1).padStart(2, "0");
+		        const day = String(d.getDate()).padStart(2, "0");
+		        return `${y}-${m}-${day}`;
+		      };
+		
+		      return {
+		        cusCode: r.cusCode,
+		        cusName: r.cusName,
+		        creditGrade: r.creditGrade,
+		        creditLimit: Number(r.creditLimit ?? 0),
+		        startDate: formatDate(r.startDate),     // ✅ yyyy-mm-dd 형태로 변환
+		        expireDate: formatDate(r.expireDate),   // ✅ 동일 포맷으로 변환
+		        activeStatus: r.activeStatus,
+		        creditNo: r.creditNo ?? r.id ?? null,
+		      };
+		    });
+		
+		    allManageRows = rows;
+		    _applyFiltersManage();
+		  } catch (e) {
+		    console.error(e);
+		    allManageRows = [];
+		    setRows(gridManage, []);
+		  } finally {
+		    hideLoader('creditGridLoader');
+		  }
+		}
 
-          // ===== 데이터 조회 함수들 =====
-          async function fetchManage() {
-            try {
-              const res = await axios.get("/api/biz/crdlist", {
-                params: {
-                  name: $("#qName")?.value?.trim() || "",
-                  manager: $("#qManager")?.value?.trim() || "", // 존재 안 하면 ""
-                  grade: $("#qGrade")?.value || "",
-                },
-                withCredentials: true,
-              });
-              const rows = (Array.isArray(res.data) ? res.data : []).map(
-                (r) => ({
-                  cusCode: r.cusCode,
-                  cusName: r.cusName,
-                  creditGrade: r.creditGrade,
-                  creditLimit: Number(r.creditLimit ?? 0),
-                  startDate: r.startDate,
-                  expireDate: r.expireDate,
-                  activeStatus: r.activeStatus,
-                })
-              );
-              setRows(gridManage, rows);
-            } catch (e) {
-              console.error(e);
-              setRows(gridManage, []);
-            }
-          }
-
-          // 여신등급정책 가져오기
+          // -------------------- 데이터 조회 (정책) --------------------
           async function fetchPolicy() {
             try {
+              showLoader('creditGradeGridLoader', "데이터 불러오는 중...");
               const res = await axios.get("/api/biz/crdgradelist");
               const list = [];
 
@@ -503,77 +304,83 @@
                     grade: r.grade,
                     gradeName: (r.gradeName ?? "").toUpperCase(),
                     maxLimit: Number(r.maxLimit || 0),
-                    discountRate: r.discountRate ?? 0,
-                    monDiscCnt: r.monDiscCnt ?? 0,
+                    discountRate: Number(r.discountRate ?? 0),
                   });
                 }
               }
 
               setRows(gridPolicy, list);
               console.log("등급정책 데이터는 =>", res.data);
-              // 정책 캐시 갱신
+
+              // 캐시 갱신
               policyMap = {};
               for (const r of list) {
-                policyMap[r.gradeCode] = r.maxLimit;
+                policyMap[r.grade] = r.maxLimit;
               }
             } catch (e) {
               console.error(e);
               setRows(gridPolicy, []);
+            } finally {
+              hideLoader('creditGradeGridLoader');
             }
           }
 
-          // 여신변경이력
-          async function fetchHistory() {
-            try {
-              const res = await axios.get("/api/biz/credit-history", {
-                withCredentials: true,
-              });
-              const rows = (Array.isArray(res.data) ? res.data : []).map(
-                (r) => ({
-                  changedDate: r.changedDate ?? r.CHANGED_DATE ?? "",
-                  cusCode: r.cusCode ?? r.CUS_CODE ?? "",
-                  cusName: r.cusName ?? r.CUS_NAME ?? "",
-                  changedBy: r.changedBy ?? r.CHANGED_BY ?? "",
-                  oldLimit: Number(r.oldLimit ?? r.OLD_LIMIT ?? 0),
-                  newLimit: Number(r.newLimit ?? r.NEW_LIMIT ?? 0),
-                  oldGrade: r.oldGrade ?? r.OLD_GRADE ?? "",
-                  newGrade: r.newGrade ?? r.NEW_GRADE ?? "",
-                  reason: r.reason ?? r.REASON ?? "",
-                })
-              );
-              setRows(gridHistory, rows);
-            } catch (e) {
-              console.error(e);
-              setRows(gridHistory, []);
-            }
-          }
+       // -------------------- 정책 저장/업데이트 --------------------
 
-          // 여신 정책 저장/추가
-          $("#btnPolicySave").addEventListener("click", async () => {
-            const data = [];
-            gridPolicy.api.forEachNode((n) => data.push(n.data));
-            try {
-              await axios.put("/api/biz/credit-policy", data);
-              await fetchPolicy();
-              alert("정책이 저장되었습니다.");
-            } catch (e) {
-              console.error(e);
-              alert("정책 저장 실패");
-            }
-          });
-          $("#btnPolicyAdd").addEventListener("click", () => {
-            const grades = ["A", "B", "C", "D", "E"];
-            const exist = new Set();
-            gridPolicy.api.forEachNode((n) => exist.add(n.data.gradeCode));
-            const toAdd = grades.filter((g) => !exist.has(g));
-            toAdd.forEach((g) =>
-              gridPolicy.api.applyTransaction({
-                add: [{ gradeCode: g, limitMax: 0, description: "" }],
-              })
-            );
-          });
+       // 공통: payload 정규화
+       function normalizePolicyRow(d) {
+         return {
+           grade: (d.grade ?? '').toString().trim().toUpperCase(),
+           gradeName: (d.gradeName ?? '').toString().trim(),
+           maxLimit: Number(d.maxLimit ?? 0),
+           discountRate: Number(d.discountRate ?? 0),
+         };
+       }
 
-          // ===== 공통 유틸 =====
+       // 선택 행만 업데이트
+       (() => {
+         const btn = document.getElementById("btnPolicyUpdate");
+         if (!btn) return;
+
+         // 버튼 라벨 변경
+         btn.textContent = "선택행 업데이트";
+
+         btn.addEventListener("click", async () => {
+           const selected = gridPolicy.api.getSelectedRows?.() || [];
+           if (!selected.length) {
+             return toastr.warning("업데이트할 행을 하나 선택하세요.");
+           }
+           if (selected.length > 1) {
+             return toastr.warning("하나의 행만 선택하세요.");
+           }
+
+           const row = normalizePolicyRow(selected[0]);
+
+           try {
+             showLoader('creditGradeGridLoader');
+             const res = await cuteAlert({
+                 type: "question",
+                 title: "정책변경",
+                 message: "정책을 업데이트 하시겠습니까?",
+                 imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
+                 confirmText: "네",
+                 cancelText: "아니오"
+               });
+               if (res !== true) return;
+             // 단건도 같은 엔드포인트로 1건짜리 배열 전송(백엔드가 리스트 처리)
+             await axios.put("/api/biz/crdpolicy", [row]);
+             await fetchPolicy();
+             toast.success(`등급 ${row.grade} 정책이 업데이트되었습니다.`);
+           } catch (e) {
+             console.error(e);
+             toastr.error("선택행 업데이트 실패");
+           } finally {
+             hideLoader('creditGradeGridLoader');
+           }
+         });
+       })();
+
+          // -------------------- 공통 유틸 --------------------
           function createGrid(sel, columnDefs, fetchFn, extra = {}) {
             const el = document.querySelector(sel);
             const opts = {
@@ -583,7 +390,11 @@
               paginationPageSize: 12,
               defaultColDef: { sortable: true, resizable: true, filter: true },
               onGridReady: (p) => {
-                p.api && fetchFn?.();
+                try {
+                  p.api && fetchFn?.();
+                } catch (err) {
+                  console.error('[onGridReady fetch error]', err);
+                }
               },
               ...extra,
             };
@@ -604,28 +415,6 @@
           function money(p) {
             const v = Number(p.value ?? 0);
             return v ? v.toLocaleString("ko-KR") : "0";
-          }
-          function actionBtns(p) {
-            const e = document.createElement("div");
-            e.className = "d-flex gap-2";
-            e.innerHTML = `<button class="btn btn-sm btn-outline-warning">중지</button>`;
-            const [btnStop] = e.querySelectorAll("button");
-            btnStop.addEventListener("click", async () => {
-              if (!confirm("이 거래처 여신을 중지하시겠습니까?")) return;
-              try {
-                await axios.patch(
-                  `/api/biz/credit/${encodeURIComponent(
-                    p.data.creditNo
-                  )}/status`,
-                  { status: "SUSPEND" }
-                );
-                fetchManage();
-              } catch (e) {
-                console.error(e);
-                alert("상태 변경 실패");
-              }
-            });
-            return e;
           }
         });
       </script>

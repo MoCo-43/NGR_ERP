@@ -16,7 +16,7 @@ public class PoHistoryVO {
     private LocalDate poStart;
     private String cusCode;
     private String cusName;
-    private String creater;
+    private String empName;
     private String payMethod;
     private String productCode;
     private String productName;

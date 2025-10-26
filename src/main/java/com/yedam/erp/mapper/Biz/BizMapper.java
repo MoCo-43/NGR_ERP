@@ -1,6 +1,5 @@
 package com.yedam.erp.mapper.Biz;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -35,9 +34,17 @@ public interface BizMapper {
   // 주문서 이력 조회
   List<PoHistoryVO> getPoHistory(Long companyCode);
 
-  // 주문서 상태변경
-  int poStatusUpdate(String poCode, String poStatus);
-
+  
+  
+  // 주문서 상태변경(승인)
+  int poStatusUpdateBulk(@Param("poCodes") List<String> poCodes, @Param("poStatus") String poStatus);
+  
+  // 주문서 상태변경(입금완료)
+  /** (1) 입금완료 처리 대상( BILL & 출하완료 )의 SUP_AMT를 고객/회사별로 묶어 CREDIT_MASTER.LEFT_PRICE 가산 */
+  int increaseCreditByPoList(@Param("poCodes") List<String> poCodes);
+  /** (2) 출하완료 → 입금완료 상태 변경 (BILL & 출하완료 가드) */
+  int poStatusUpdateBulkToPaid(@Param("poCodes") List<String> poCodes);
+  
   // 품목 조회
   List<ProductCodeVO> getProducts(Long companyCode);
   // 거래처 조회
@@ -118,4 +125,7 @@ public interface BizMapper {
 
   // 여신등급정책조회
   List<CreditGradeVO>getCreditGrade(Long companyCode);
+  
+  // 여신등급정책 수정
+  public int updateCreditPolicyByGrade(CreditGradeVO vo);
 }

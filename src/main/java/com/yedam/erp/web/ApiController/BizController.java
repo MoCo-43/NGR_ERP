@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yedam.erp.security.SessionUtil;
@@ -25,10 +26,9 @@ import com.yedam.erp.vo.Biz.DoInsertVO;
 import com.yedam.erp.vo.Biz.JoinPoVO;
 import com.yedam.erp.vo.Biz.PoHistoryVO;
 import com.yedam.erp.vo.Biz.PoInsertVO;
+import com.yedam.erp.vo.Biz.PoStatusBulkRequest;
 import com.yedam.erp.vo.Biz.ProductCodeVO;
 import com.yedam.erp.vo.Biz.PurchaseOrderVO;
-
-import lombok.RequiredArgsConstructor;
 
 
 
@@ -81,14 +81,32 @@ public class BizController {
     }
 
 
-  // 주문서 상태변경
-  @PutMapping("/postatus")
-  public int poStatusUpdate(@RequestBody Map<String, Object> poMap) {
-      List<String> poCodes = (List<String>) poMap.get("poCodes");
-      String poStatus = poMap.get("poStatus").toString();
-      return service.poStatusUpdate(poCodes, poStatus);
-  }
-
+    // ============================================
+    // 승인 처리
+    // ============================================
+    @PutMapping("/postatus")
+    public int poStatusUpdate(@RequestBody PoStatusBulkRequest request) {
+        System.out.println("[승인] poCodes: " + request.getPoCodes());
+        System.out.println("[승인] poStatus: " + request.getPoStatus());
+        
+        return service.poStatusUpdate(request.getPoCodes(), request.getPoStatus());
+    }
+    
+    // ============================================
+    // 입금완료 처리
+    // ============================================
+    @PutMapping("/compostatus")
+    public int markPaid(@RequestBody PoStatusBulkRequest request) {
+        System.out.println("[입금완료] poCodes: " + request.getPoCodes());
+        System.out.println("[입금완료] poStatus: " + request.getPoStatus());
+        
+        if (!"입금완료".equals(request.getPoStatus())) {
+            throw new IllegalArgumentException("입금완료 상태만 지원합니다.");
+        }
+        
+        return service.markPaidAndIncreaseCredit(request.getPoCodes());
+    }
+  
   // 품목 조회
   @GetMapping("/productcode")
   public List<ProductCodeVO> getProducts() {
@@ -277,4 +295,12 @@ public class BizController {
     return service.getCreditGrade(companyCode);
   }
 
+  
+  // 여신등급정책 업데이트
+  @PutMapping("/crdpolicy")
+  public ResponseEntity<Integer> savePolicies(@RequestBody List<CreditGradeVO> list) {
+      Long companyCode = SessionUtil.companyId();
+      int affected = service.updateCreditPolicies(companyCode, list);
+      return ResponseEntity.ok(affected);
+  }
 }
