@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 데이터 필드,테이블 행
                     tr.innerHTML = `
                         <td>${sub.subCode}</td>
-                        <td>${sub.planName}</td>
+                        <td>${sub?.subPlan?.planName}</td>
                         <td>${startDate}</td>
                         <td>${endDate}</td>
                         <td>${sub.subStatus}</td>

@@ -1,211 +1,237 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/base}">
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/base}">
 
 <th:block layout:fragment="head_extra">
-    <title>마이페이지</title>
+	<title>마이페이지</title>
 
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/main.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/l10n/ko.css">
+	<link
+		href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/main.min.css"
+		rel="stylesheet" />
+	<link rel="stylesheet"
+		href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+	<link rel="stylesheet"
+		href="https://npmcdn.com/flatpickr/dist/l10n/ko.css">
 
-    <style>
+	<style>
 html, body {
-    height: 100%;
+	height: 100%;
 }
-#content-wrapper { min-height: 100vh; }
-#content { flex: 1 0 auto; }
-.schedule-container { display: flex; gap: 20px; }
-.schedule-main { flex: 3; }
+
+#content-wrapper {
+	min-height: 100vh;
+}
+
+#content {
+	flex: 1 0 auto;
+}
+
+.schedule-container {
+	display: flex;
+	gap: 20px;
+}
+
+.schedule-main {
+	flex: 3;
+}
+
 #calendar {
-    min-height: 700px;
-    max-width: 1100px;
-    margin: 0 auto;
+	min-height: 700px;
+	max-width: 1100px;
+	margin: 0 auto;
 }
 
 /* --- 프로필 이미지 관련 스타일 --- */
 .profile-image-wrap {
-    position: relative;
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 3px solid #eee;
-    margin: 0 auto;
-    cursor: pointer;
-    display: block;
+	position: relative;
+	width: 150px;
+	height: 150px;
+	border-radius: 50%;
+	overflow: hidden;
+	border: 3px solid #eee;
+	margin: 0 auto;
+	cursor: pointer;
+	display: block;
 }
+
 .profile-image-wrap #profileImage {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
 }
+
 .edit-icon {
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-    background-color: #007bff;
-    color: white;
-    border-radius: 50%;
-    width: 35px;
-    height: 35px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 16px;
-    cursor: pointer;
-    border: 2px solid white;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-    z-index: 10;
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
+	background-color: #007bff;
+	color: white;
+	border-radius: 50%;
+	width: 35px;
+	height: 35px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 16px;
+	cursor: pointer;
+	border: 2px solid white;
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+	z-index: 10;
 }
-.card-body{
+
+.card-body {
 	color: black;
 }
-    </style>
+</style>
 </th:block>
 
 <th:block layout:fragment="content">
-    <div class="container-fluid">
-        <div class="row">
-            <!-- 왼쪽: 프로필 및 사원 정보 -->
-            <div class="col-lg-5">
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">사원 정보</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="text-center mb-4 profile-image-container">
-                            <input type="file" id="imgFile" name="empImgFile"
-                                   style="display: none;" accept="image/*">
-                            <div class="profile-image-wrap" id="profileImageWrap">
-                                <img id="profileImage"
-                                     th:src="${emp?.empImg != null} ? @{/profileImage/{fileName}(fileName=${emp.empImg})} : @{/img/neogurume.png}"
-                                     onerror="this.src='/images/default-profile.png'"
-                                     alt="프로필 이미지">
-                                <span class="edit-icon" id="editIcon">
-                                    <i class="fas fa-camera"></i>
-                                </span>
-                            </div>
-                        </div>
+	<div class="container-fluid">
+		<div class="row">
+			<!-- 왼쪽: 프로필 및 사원 정보 -->
+			<div class="col-lg-5">
+				<div class="card shadow mb-4">
+					<div class="card-header py-3">
+						<h6 class="m-0 font-weight-bold text-primary">사원 정보</h6>
+					</div>
+					<div class="card-body">
+						<div class="text-center mb-4 profile-image-container">
+							<input type="file" id="imgFile" name="empImgFile"
+								style="display: none;" accept="image/*">
+							<div class="profile-image-wrap" id="profileImageWrap">
+								<img id="profileImage"
+									th:src="${emp?.empImg != null} ? @{/profileImage/{fileName}(fileName=${emp.empImg})} : @{/img/neogurume.png}"
+									onerror="this.src='/images/default-profile.png'" alt="프로필 이미지">
+								<span class="edit-icon" id="editIcon"> <i
+									class="fas fa-camera"></i>
+								</span>
+							</div>
+						</div>
 
-                        <div class="px-3">
-                            <div class="row mb-3 align-items-center">
-                                <div class="col-4 font-weight-bold text-dark">사원 이름:</div>
-                                <div class="col-8 d-flex justify-content-between align-items-center">
-                                    <p th:text="${emp?.name ?: 'Unknown'}">Employee Name</p>
-                                    <button class="btn btn-sm btn-primary">수정</button>
-                                </div>
-                            </div>
+						<div class="px-3">
+							<div class="row mb-3 align-items-center">
+								<div class="col-4 font-weight-bold text-dark">사원 이름:</div>
+								<div
+									class="col-8 d-flex justify-content-between align-items-center">
+									<p th:text="${emp?.name ?: 'Unknown'}">Employee Name</p>
+									<!--<button class="btn btn-sm btn-primary">수정</button>-->
+								</div>
+							</div>
 
-                            <div class="row mb-3">
-                                <div class="col-4 font-weight-bold text-dark">아이디:</div>
-                                <div class="col-8" th:text="${emp?.empId ?: '정보 없음'}">E001</div>
-                            </div>
+							<div class="row mb-3">
+								<div class="col-4 font-weight-bold text-dark">아이디:</div>
+								<div class="col-8" th:text="${emp?.empId ?: '정보 없음'}">E001</div>
+							</div>
 
-                            <!--  <div class="row mb-3">
-                                <div class="col-4 font-weight-bold text-dark">부서:</div>
-                                <div class="col-8" th:text="${emp?.deptName ?: '-'}">영업팀</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-4 font-weight-bold text-dark">직급:</div>
-                                <div class="col-8" th:text="${emp?.position ?: '-'}">사원</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-4 font-weight-bold text-dark">이메일:</div>
-                                <div class="col-8" th:text="${emp?.email ?: '-'}">example@email.com</div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-4 font-weight-bold text-dark">주소:</div>
-                                <div class="col-8" th:text="${emp?.address ?: '-'}">서울특별시</div>
-                            </div>-->
-                        </div>
-                    </div>
-                </div>
-            </div>
+							<div class="row mb-3">
+								<div class="col-4 font-weight-bold text-dark">부서:</div>
+								<div class="col-8" th:text="${emp?.empVO?.dept_name ?: '경영팀'}">영업팀</div>
+							</div>
+							<div class="row mb-3">
+								<div class="col-4 font-weight-bold text-dark">직책:</div>
+								<div class="col-8" th:text="${emp?.empVO?.position ?: '팀장'}">사원</div>
+							</div>
+							<div class="row mb-3">
+								<div class="col-4 font-weight-bold text-dark">직급:</div>
+								<div class="col-8" th:text="${emp?.empVO?.position ?: '과장'}">사원</div>
+							</div>
+							<div class="row mb-3">
+								<div class="col-4 font-weight-bold text-dark">주소:</div>
+								<div class="col-8" th:text="${emp?.empVO?.address ?: '-'}">서울특별시</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 
-            <!-- 오른쪽: 일정 관리 -->
-            <div class="col-lg-7">
-                <!-- 기존 일정관리 모달 유지 -->
-                <div class="modal fade" id="scheduleModal" tabindex="-1"
-                     aria-labelledby="scheduleModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <form id="addScheduleForm">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="scheduleModalLabel">일정 추가/수정</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="닫기"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <input type="hidden" id="plan-no">
-                                    <div class="mb-3">
-                                        <label for="schedule-title" class="form-label">제목</label>
-                                        <input type="text" class="form-control" id="schedule-title" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="schedule-type" class="form-label">일정유형</label>
-                                        <select class="form-select" id="schedule-type" required>
-                                            <option value="">선택</option>
-                                            <option value="회의">회의</option>
-                                            <option value="출장">출장</option>
-                                            <option value="프로젝트 마감">프로젝트 마감</option>
-                                            <option value="기타">기타</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3 row g-2">
-                                        <div class="col">
-                                            <label for="schedule-start" class="form-label">시작일</label>
-                                            <input type="text" class="form-control" id="schedule-start" required placeholder="YYYY-MM-DD">
-                                        </div>
-                                        <div class="col">
-                                            <label for="schedule-end" class="form-label">종료일</label>
-                                            <input type="text" class="form-control" id="schedule-end" required placeholder="YYYY-MM-DD">
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="schedule-details" class="form-label">내용</label>
-                                        <textarea class="form-control" id="schedule-details"></textarea>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-primary">저장</button>
-                                    <button type="button" class="btn btn-danger" id="delete-btn">삭제</button>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+			<!-- 오른쪽: 일정 관리 -->
+			<div class="col-lg-7">
+				<!-- 기존 일정관리 모달 유지 -->
+				<div class="modal fade" id="scheduleModal" tabindex="-1"
+					aria-labelledby="scheduleModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<form id="addScheduleForm">
+								<div class="modal-header">
+									<h5 class="modal-title" id="scheduleModalLabel">일정 추가/수정</h5>
+									<button type="button" class="btn-close" data-bs-dismiss="modal"
+										aria-label="닫기"></button>
+								</div>
+								<div class="modal-body">
+									<input type="hidden" id="plan-no">
+									<div class="mb-3">
+										<label for="schedule-title" class="form-label">제목</label> <input
+											type="text" class="form-control" id="schedule-title" required>
+									</div>
+									<div class="mb-3">
+										<label for="schedule-type" class="form-label">일정유형</label> <select
+											class="form-select" id="schedule-type" required>
+											<option value="">선택</option>
+											<option value="회의">회의</option>
+											<option value="출장">출장</option>
+											<option value="프로젝트 마감">프로젝트 마감</option>
+											<option value="기타">기타</option>
+										</select>
+									</div>
+									<div class="mb-3 row g-2">
+										<div class="col">
+											<label for="schedule-start" class="form-label">시작일</label> <input
+												type="text" class="form-control" id="schedule-start"
+												required placeholder="YYYY-MM-DD">
+										</div>
+										<div class="col">
+											<label for="schedule-end" class="form-label">종료일</label> <input
+												type="text" class="form-control" id="schedule-end" required
+												placeholder="YYYY-MM-DD">
+										</div>
+									</div>
+									<div class="mb-3">
+										<label for="schedule-details" class="form-label">내용</label>
+										<textarea class="form-control" id="schedule-details"></textarea>
+									</div>
+								</div>
+								<div class="modal-footer">
+									<button type="submit" class="btn btn-primary">저장</button>
+									<button type="button" class="btn btn-danger" id="delete-btn">삭제</button>
+									<button type="button" class="btn btn-secondary"
+										data-bs-dismiss="modal">취소</button>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
 
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">일정 관리</h6>
-                    </div>
-                    <div class="card-body">
-                        <div id="calendar"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+				<div class="card shadow mb-4">
+					<div class="card-header py-3">
+						<h6 class="m-0 font-weight-bold text-primary">일정 관리</h6>
+					</div>
+					<div class="card-body">
+						<div id="calendar"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </th:block>
 
 <th:block layout:fragment="body_extra">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+	<script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
 
-    <script th:inline="javascript">
-    const empIdNo = /*[[${session.emp != null ? session.emp.empIdNo : 0}]]*/ 0;
-    </script>
+	<script th:inline="javascript">
+		const empIdNo = /*[[${session.emp != null ? session.emp.empIdNo : 0}]]*/0;
+	</script>
 
-    <script type="module">
+	<script type="module">
     document.addEventListener('DOMContentLoaded', () => {
         // ================= 일정관리 기존 로직 =================
         const calendarEl = document.getElementById('calendar');

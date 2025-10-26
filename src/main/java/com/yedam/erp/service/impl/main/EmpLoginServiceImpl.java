@@ -183,7 +183,7 @@ public class EmpLoginServiceImpl implements EmpLoginService {
         return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
     }
 
-    // --- 기타 기존 메소드들 ---
+   //마이리스트
     @Override
     public EmpLoginVO mypageInfo(String empId) {
         return empLoginMapper.mypageInfo(empId);
@@ -206,7 +206,7 @@ public class EmpLoginServiceImpl implements EmpLoginService {
         return empLoginMapper.idChecks(empId) > 0;
     }
 
-    // --- 권한 변경 메소드 (구현 정확함) ---
+    // --- 권한 변경 메소드 ---
     @Override
     @Transactional 
     public void updateEmployeeRole(String empId, String newRoleName) {
@@ -217,7 +217,7 @@ public class EmpLoginServiceImpl implements EmpLoginService {
         empLoginMapper.updateEmployeeRole(loginVO);
     }
 
-    // --- 관리자가 권한 선택하여 계정 생성하는 메소드 (구현 정확함) ---
+    // --- 관리자가 권한 선택하여 계정 생성하는 메소드  ---
     @Override
     @Transactional
     public void activateCustomLoginWithRole(List<String> empIds, String roleName) {
