@@ -25,7 +25,8 @@
    />
    <!-- TOASTR -->
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.css" integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-   
+   <!-- CSS -->
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
    <!-- CSS(confirm alert + Quartz) -->
    <link rel="stylesheet" href="/style/confirm.css" />
    
@@ -116,6 +117,11 @@
 </section>
   
 <th:block layout:fragment="body_extra">
+<!-- 세션 정보 저장 -->
+<script th:inline="javascript">
+    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+    const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+</script>
  <!-- Axios 등록 -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
  <!-- Bootstrap JS -->
@@ -126,6 +132,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
  <!-- cuteAlert js -->
 <script src="/js/cuteAlert.js"></script>
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<!-- 한국어 locale -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
 
   <!-- 스크립트 -->
 <script th:inline="none">
@@ -144,6 +154,11 @@ document.addEventListener("DOMContentLoaded", () => {
 	const tableBody = document.querySelector('#orderItemsTable tbody');
 	const taxSelect = document.getElementById('taxType'); // 상단 세율 select
 	const searchBtn = document.getElementById('searchBtn'); // 발주계획 조회 버튼
+	const form = document.getElementById('insertList');
+	const submitBtn = document.getElementById('submitBtn');
+	const toastEl = document.getElementById('successToast');
+	const toast = new bootstrap.Toast(toastEl);
+	//
  	let gridApi = null;
  	let gridOptions = null;
  	let orderListGridApi = null;
@@ -194,34 +209,87 @@ document.addEventListener("DOMContentLoaded", () => {
  	    new agGrid.Grid(eGridDiv, gridOptions);
  	    return { gridApi: gridOptions.api, gridOptions };
 	}// END OF FUNCTION
+	
+	// 강제 딜레이 부여
+	function debounce(func, wait = 300) {
+		    let timeout;
+		    return function(...args) {
+		        clearTimeout(timeout);
+		        timeout = setTimeout(() => func.apply(this, args), wait);
+		}
+	}
+	
+	
+	/**
+ 	 * 한국어 flatpickr 공통 초기화 함수
+ 	 * @param {string} selector - input 요소 선택자 (ex: "#inboundDate")
+ 	 * @param {Object} options - flatpickr 옵션 추가 가능
+ 	 */
+ 	 // date picker 초기화
+    function initKoreanDatePicker(selector, options = {}) {
+	    flatpickr(selector, {
+	        locale: "ko",
+	        dateFormat: "Y-m-d",
+	        allowInput: true,
+	        enableTime: false,
+	        onReady: function(selectedDates, dateStr, instance) {
+	        	const btnWrapper = document.createElement("div");
+	            // 공통 스타일
+	            btnWrapper.style.cssText = `
+	            	 display: flex;
+	                justify-content: space-between; /* 좌우 끝 */
+	                width: 100%;                   /* 전체 너비 확보 */
+	                padding: 2px 6px;              /* 달력과 버튼 간 여백 */
+	                box-sizing: border-box;
+	                margin-top: 2px;
+	            `;
+	
+	            // 오늘 버튼
+	            const todayBtn = document.createElement("button");
+	            todayBtn.type = "button";
+	            todayBtn.textContent = "오늘";
+	            todayBtn.className = "btn btn-outline-primary btn-sm"; // 테두리 보이게
+	            todayBtn.style.cssText = "font-size: 0.65rem; padding: 2px 6px;";
+	            todayBtn.addEventListener("click", () => {
+	                instance.setDate(new Date());
+	                loadFilteredData(); 
+	                instance.close();
+	            });
+	
+	            // 초기화 버튼
+	            const clearBtn = document.createElement("button");
+	            clearBtn.type = "button";
+	            clearBtn.textContent = "초기화";
+	            clearBtn.className = "btn btn-outline-secondary btn-sm"; // 테두리 보이게
+	            clearBtn.style.cssText = "font-size: 0.65rem; padding: 2px 6px;";
+	            clearBtn.addEventListener("click", () => {
+	                instance.clear();
+	                loadOrderListData(); 
+	                instance.close();
+	            });
+	
+	            // 버튼 붙이기
+	            btnWrapper.appendChild(clearBtn);
+	            btnWrapper.appendChild(todayBtn);
+	
+	            instance.calendarContainer.appendChild(btnWrapper);
+	        },
+	        ...options
+	    });
+	}
+ 	initKoreanDatePicker('#insDate');
+	
  	
  	//let gridCreated = false;
  	// withCredentials: true를 추가해야 쿠키 기반 세션을 함께 보내서 로그인 상태를 유지
- 	/* axios.get("/api/v1/stock/getEmpName", { withCredentials: true })
-		  .then(res => {
-			  console.log(res.data);
-    			document.getElementById("empId").value = res.data;
-  			})
-  		  .catch(err => console.error(err)); */
-	
- 	axios.get("/api/v1/stock/getCompId", { withCredentials: true })
-	  .then(res => {
-			document.getElementById("compCode").value = res.data;
-		})
-	  .catch(err => console.error(err));
- 	
+	document.getElementById("compCode").value = compCode;
 	
 	// 발주 조회 버튼 클릭시 모달 호출
 	searchBtn.addEventListener('click', async () => {
 	    const orderListModalEl = document.getElementById('orderListModal');
 	    const orderListModal = bootstrap.Modal.getOrCreateInstance(orderListModalEl);
 	    orderListModal.show();
-	    
-	 //   setTimeout(() => {
-	   //     const eGridDiv = document.getElementById('orderListGrid');
-	     //   if (!eGridDiv) return console.error("orderListGrid div가 없습니다!");
-	      //  new agGrid.Grid(eGridDiv, gridOptions);
-	   // }, 100); // 100ms 정도 대기
+
 
 	    // Grid 초기화 (한 번만)
 	    if (!orderListGridApi) {
@@ -249,6 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	            },
 	            onGridReady: async (event) => {
 	            	try{
+	            		showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
 		                orderListGridApi = event.api;
 		                orderListGridApi.sizeColumnsToFit();
 		                // showLoader("gridWrapper", "데이터를 불러오는 중입니다...");
@@ -257,7 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	            		console.error(err);
 	                    toastr.error('데이터 로드 실패');
 	            	} finally{
-	            		// hideLoader("gridWrapper");
+	            		hideLoader("gridModalWrapper");
 	            	}
 	            },
 	            onRowDoubleClicked: async (event) => {
@@ -275,8 +344,54 @@ document.addEventListener("DOMContentLoaded", () => {
 	        new agGrid.Grid(eGridDiv, gridOptions);
 	    } else {
 	        orderListGridApi.sizeColumnsToFit();
-	        await loadOrderPlanData();
+	        await loadOrderListData();
 	    }
+	});
+	// modal filter
+	document.getElementById('keyword').addEventListener("input",debounce(loadFilteredData,500));
+	document.getElementById('productName').addEventListener("input",debounce(loadFilteredData,500));
+	document.getElementById('insDate').addEventListener("change",debounce(loadFilteredData,500));
+	
+	async function loadFilteredData() {
+		// modal page filter
+	    try {
+	        showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
+	        const businessPartner = document.getElementById("keyword").value || null;
+	        const productName = document.getElementById("productName").value || null;
+	        const dueDate = document.getElementById("insDate").value || null;
+			
+	        const params = {
+	        		 companyCode: compCode,
+	        		 productName: productName,
+	        		 businessPartner: businessPartner,
+	        		 dueDate: dueDate
+	        }
+	        console.log("params:", params); // 👈 params 확인
+	        const res = await axios.post("/api/v1/stock/orderList/search", params, {withCredentials: true });
+	        orderListGridApi.setRowData(res.data);
+	        //inListGrid.gridApi.setRowData(res.data);
+	    } catch (err) {
+	        console.error(err);
+	        toastr.error("조회 실패");
+	    } finally {
+	        hideLoader("gridModalWrapper");
+	    }
+	}
+	// modal - reset
+	document.getElementById("resetModalBtn").addEventListener('click', async ()=>{
+		try{
+			showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
+			document.getElementById("keyword").value = "";
+			document.getElementById("productName").value = "";
+			document.getElementById("insDate").value = "";
+			await loadOrderListData();
+		}catch(err){
+			console.log(err);
+			toastr.error(err);
+		}finally{
+			hideLoader("gridModalWrapper");
+		}
+		
 	});
 	
 	async function addDetailRow(rowData){
@@ -327,6 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	// 서버에서 발주 계획 데이터 가져오기
 	async function loadOrderListData() {
 	    try {
+	    	showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
 	        const res = await axios.get('/api/v1/stock/orderList', { withCredentials: true });
 	        if (orderListGridApi) {
 	            orderListGridApi.setRowData(res.data);
@@ -334,15 +450,12 @@ document.addEventListener("DOMContentLoaded", () => {
 	    } catch (err) {
 	        console.error(err);
 	        toastr.error('발주 계획 조회 실패');
+	    } finally{
+	    	hideLoader("gridModalWrapper");
 	    }
 	}
 
-  // Axios 등록 + Toast
-	const form = document.getElementById('insertList');
-	const submitBtn = document.getElementById('submitBtn');
-	const toastEl = document.getElementById('successToast');
-	const toast = new bootstrap.Toast(toastEl);
-	
+  	// Axios 등록 + Toast
 	submitBtn.addEventListener('click', async (event) => {
 		console.log(event.data);
 		event.preventDefault(); // 페이지 새로고침 방지
