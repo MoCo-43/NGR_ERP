@@ -74,6 +74,7 @@
             />
 
             <button id="btnSearch" class="btn btn-dark mb-2">조회</button>
+              <button id="btnReset" class="btn btn-danger mb-2"> 초기화</button>
 	      <!--  승인 및 입금완료 버튼 -->
 	<div class="d-flex justify-content-end gap-2 pb-0">
 	  <button id="btnPoConfirm" class="btn btn-primary mb-2">승인</button>
@@ -111,6 +112,80 @@
       <script th:inline="none">
         // gripApi 전역설정
         let gridApi;
+        
+     // 검색필터 전역 추가
+        let allRows = [];        // 서버에서 가져온 전체 데이터(원본)
+        let currentStatus = "";  // 상태 버튼으로 선택된 상태 저장 (없으면 빈 문자열)
+     
+        
+     // 검색필터 헬퍼
+        const byId  = (id) => document.getElementById(id);
+        const getVal= (id) => byId(id)?.value?.trim() ?? "";
+        const norm  = (s) => String(s ?? "").toLowerCase();
+        
+     // 검색필터 날짜 같은 날인지 비교 (YYYY-MM-DD만 비교)
+        function isSameDay(dateStr, ymdStr) {
+          if (!dateStr || !ymdStr) return true;             // 필터 미입력이면 통과
+          const d = new Date(dateStr);
+          const y = d.getFullYear(), m = (d.getMonth()+1+'').padStart(2,'0'), day=(d.getDate()+'').padStart(2,'0');
+          return `${y}-${m}-${day}` === ymdStr;
+        }
+
+        // 검색필터 그리드에 행 세팅(네가 쓰던 setRows 래핑)
+        function setGridRows(rows){
+          if (gridApi?.setGridOption) gridApi.setGridOption("rowData", rows);
+          else gridApi?.setRowData?.(rows);
+        }
+        
+        
+        
+        
+        
+     // ===== 공통 함수: 상태 변경 API 호출 =====
+        async function putPoStatusSingle(poCodes, poStatus) {
+          console.log('[PUT] /api/biz/postatus', {poCodes, poStatus});
+          const { data } = await axios.put('/api/biz/postatus', 
+            { poCodes, poStatus }, 
+            { withCredentials: true }
+          );
+          console.log('[RESULT] /api/biz/postatus', data);
+          return data; // 변경건수(int)
+        }
+
+        // ===== 공통 함수: 입금완료 API 호출 =====
+        async function putPaymentComplete(poCodes, poStatus) {
+          console.log('[PUT] /api/biz/compostatus', {poCodes, poStatus});
+          const { data } = await axios.put('/api/biz/compostatus', 
+            { poCodes, poStatus }, 
+            { withCredentials: true }
+          );
+          console.log('[RESULT] /api/biz/compostatus', data);
+          return data;
+        }
+
+        // ===== 선택된 주문서 가져오기 =====
+        function getSelectedPoCodes() {
+          if (!gridApi) return [];
+          const sel = gridApi.getSelectedRows?.() || [];
+          return sel.map((r) => r.poCode);
+        }
+
+        // ===== 버튼 로딩 상태 변경 =====
+        function setBusy(btn, busy, busyLabel) {
+          if (!btn) return;
+          btn.disabled = !!busy;
+          if (busy) {
+            btn.dataset.idleLabel ??= btn.textContent;
+            btn.textContent = busyLabel || btn.dataset.busyLabel || btn.textContent;
+          } else {
+            btn.textContent = btn.dataset.idleLabel || btn.textContent;
+          }
+        }
+        
+        
+        
+        
+        
         document.addEventListener("DOMContentLoaded", () => {
           // ===== ag-Grid 컬럼 (설계안 그대로) =====
           const columnDefs = [
@@ -214,272 +289,278 @@
           // ===== API 호출 =====
           // 그리드 showLoader 적용 
           async function search(override = {}) {
-            try {
-            	showLoader('orderGridLoader',"데이터를 불러오는 중입니다...");
-              const { data } = await axios.get("/api/biz/polist", {
-                params: override,
-              });
+       	  try {
+       		    showLoader('orderGridLoader',"데이터 불러오는 중...");
+       		    const { data } = await axios.get("/api/biz/polist", { params: {} }); // 전체
+       		    allRows = (Array.isArray(data) ? data : []).map(r => ({
+       		      poCode: r.poCode,
+       		      poStart: r.poStart,
+       		      cusName: r.cusName,
+       		      creater: r.creater,
+       		      productName: r.productName,
+       		      exDate: r.exDate,
+       		      supAmt: r.supAmt,
+       		      poStatus: r.poStatus,
+       		      payMethod: r.payMethod,
+       		    }));
+       		    applyFilters(); // 최초 표시
+       		  } catch (err) {
+       		    console.error(err);
+       		    allRows = [];
+       		    setGridRows([]);
+       		  } finally {
+       		    hideLoader('orderGridLoader');
+       		  }
+       		}
 
-              const rows = (Array.isArray(data) ? data : []).map((r) => ({
-                poCode: r.poCode,
-                poStart: r.poStart,
-                cusName: r.cusName,
-                creater: r.creater,
-                productName: r.productName,
-                exDate: r.exDate,
-                supAmt: r.supAmt,
-                poStatus: r.poStatus,
-              }));
+       // ==== 2) 프론트 필터링 본체 ====
+          function applyFilters() {
+            const dateYMD     = getVal("date");        // YYYY-MM-DD
+            const customerQ   = norm(getVal("customer"));
+            const productQ    = norm(getVal("productName"));
+            const statusQ     = (byId("status")?.value ?? currentStatus ?? "").trim(); // select or 버튼
 
-              console.log("EX_DATE 결과는 => :", rows);
-              setRows(rows);
-              updatePinnedTotals();
-            } catch (err) {
-              console.error(err);
-              setRows([]);
-              setPinnedBottom([{ productName: "에러", supAmt: 0 }]);
-            } finally{
-            	hideLoader('orderGridLoader');
-            }
-          }
+            // 원본에서 필터
+            const filtered = allRows.filter(r => {
+              // 날짜(작성일자 기준)
+              if (!isSameDay(r.poStart, dateYMD)) return false;
 
-          // ===== 이벤트 연결 =====
-          document
-            .querySelectorAll(".btn-filter-group [data-status]")
-            .forEach((btn) => {
-              btn.addEventListener("click", () => {
-                const status = btn.getAttribute("data-status") || "";
-                // 상태 셀렉트도 동기화
-                const sel = document.getElementById("status");
-                if (sel) sel.value = status;
-                search({ status });
-              });
+              // 거래처명 부분검색
+              if (customerQ && !norm(r.cusName).includes(customerQ)) return false;
+
+              // 제품명 부분검색(대표 품목명 문자열에 대해)
+              if (productQ && !norm(r.productName).includes(productQ)) return false;
+
+              // 상태 일치 (공백이면 패스)
+              if (statusQ && String(r.poStatus ?? "") !== statusQ) return false;
+
+              return true;
             });
-          document
-            .getElementById("btnSearch")
-            ?.addEventListener("click", () => search());
-          // Enter로 검색
-          ["customer", "productCode"].forEach((id) => {
-            const el = document.getElementById(id);
-            el?.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") search();
+
+            setGridRows(filtered);
+
+            // 합계/핀드 바텀 갱신(네 함수 그대로 호출)
+            if (typeof updatePinnedTotals === "function") updatePinnedTotals();
+          }
+        
+        
+       // 조회 버튼 → 프론트 필터
+          byId("btnSearch")?.addEventListener("click", () => applyFilters());
+
+          // 초기화 버튼 → 값 비우고 필터
+          byId("btnReset")?.addEventListener("click", () => {
+            ["date","customer","productName"].forEach(id => { if (byId(id)) byId(id).value = ""; });
+            if (byId("status")) byId("status").value = "";
+            currentStatus = "";
+            applyFilters();
+          });
+
+          // 엔터 검색
+          ["customer","productName"].forEach(id => {
+            byId(id)?.addEventListener("keydown", (e) => { if (e.key === "Enter") applyFilters(); });
+          });
+
+          // 상태 버튼 그룹 → currentStatus 세팅 후 필터
+          document.querySelectorAll(".btn-filter-group [data-status]")?.forEach(btn => {
+            btn.addEventListener("click", () => {
+              currentStatus = btn.getAttribute("data-status") || "";
+              if (byId("status")) byId("status").value = currentStatus; // select와 동기화
+              applyFilters();
             });
           });
-        });
-        /*
+          
+          
+       
 
-          ======================== 거래처 모달 ========================
+       // ===============================================
+       // 🟢 1. 승인 버튼 처리 (엄격한 검증 + 이미 처리된 건 안내)
+       // ===============================================
+       const btnPoConfirm = document.getElementById("btnPoConfirm");
 
+       btnPoConfirm?.addEventListener("click", async () => {
+         try {
+           if (!gridApi) {
+             console.warn('gridApi가 아직 없습니다.');
+             return toastr.info("그리드 준비 전입니다.");
+           }
 
-        */
-        document.addEventListener("DOMContentLoaded", () => {
-          const customerCodeModalEl = document.getElementById("customermodal");
-          let customerCodeGridApi;
-          const customerCodeColumnDefs = [
-            { headerName: "", checkboxSelection: true, width: 50 },
-            { headerName: "거래처코드", field: "cusCode", width: 140 },
-            {
-              headerName: "거래처명",
-              field: "cusName",
-              flex: 1,
-              minWidth: 160,
-            },
-            { headerName: "신용등급", field: "creditGrade", width: 140 },
-            { headerName: "미수금", field: "leftPrice", width: 140 },
-          ];
-          async function fetchCustomerCodeData() {
-            if (!customerCodeGridApi) return;
-            try {
-              const { data } = await axios.get("/api/biz/customercode");
-              customerCodeGridApi.setRowData(data || []);
-              customerCodeGridApi.sizeColumnsToFit?.();
-            } catch (err) {
-              console.error("거래처조회 실패:", err);
-              toastr.warning("거래처 불러오는 데 실패했습니다.");
-            }
-          }
-          if (customerCodeModalEl) {
-            customerCodeModalEl.addEventListener("shown.bs.modal", () => {
-              const gridDiv = document.getElementById("customerGrid");
-              if (!customerCodeGridApi) {
-                if (window.agGrid?.createGrid) {
-                  customerCodeGridApi = agGrid.createGrid(
-                    gridDiv,
-                    customerCodeGridOptions
-                  );
-                } else {
-                  customerCodeGridApi = customerCodeGridOptions.api;
-                }
-              }
-              fetchCustomerCodeData();
-            });
-          }
-          const customerCodeGridOptions = {
-            columnDefs: customerCodeColumnDefs,
-            rowSelection: "single",
-            rowData: [],
-            defaultColDef: { sortable: true, resizable: true, filter: true },
-            onGridReady: (p) => {
-              customerCodeGridApi = p.api;
-            },
-          };
+           const selected = gridApi.getSelectedRows?.() || [];
+           const poCodes = selected.map(r => r.poCode);
+           
+           console.log('[승인 클릭] 선택건수:', poCodes.length, poCodes);
 
-          // 1) 거래처 선택 시 코드/이름 모두 세팅
-          function assignCustomerToForm(row) {
-            const cusNameEl = document.getElementById("cusName");
-            const cusCodeEl = document.getElementById("cusCode");
-            if (cusNameEl) cusNameEl.value = row.cusName ?? "";
-            if (cusCodeEl) cusCodeEl.value = row.cusCode ?? "";
-          }
+           if (!poCodes.length) {
+             return toastr.warning("승인할 주문서를 선택하세요.");
+           }
 
-          // 거래처 모달의 선택 버튼 클릭 이벤트
-          const importCustomerCodeBtn = document.getElementById("CstImportBtn");
-          if (importCustomerCodeBtn) {
-            importCustomerCodeBtn.addEventListener("click", () => {
-              if (!customerCodeGridApi) return toastr.warning("목록을 먼저 불러오세요.");
-              const selected = customerCodeGridApi.getSelectedRows?.() || [];
-              if (!selected.length) return toastr.warning("거래처를 선택하세요.");
+           // 📊 상태별 분류
+           const alreadyCompleted = selected.filter(r => r.poStatus === "작성완료"); // 이미 처리됨
+           const canProcess = selected.filter(r => r.poStatus === "승인대기"); // 처리 가능
+           const invalid = selected.filter(r => r.poStatus !== "승인대기" && r.poStatus !== "작성완료"); // 불가능
 
-              assignCustomerToForm(selected[0]);
+           console.log('이미 작성완료:', alreadyCompleted.length);
+           console.log('승인대기:', canProcess.length);
+           console.log('처리 불가:', invalid.length);
 
-              const modal = bootstrap.Modal.getInstance(customerCodeModalEl);
-              modal?.hide();
-            });
-          } else {
-            console.warn(
-              "가져오기 버튼(#CstImportBtn)을 modal HTML에 추가해주세요."
-            );
-          }
-        });
+           // ✅ 이미 모두 작성완료인 경우
+           if (alreadyCompleted.length === selected.length) {
+             toastr.info(`선택된 ${selected.length}건이 이미 '작성완료' 상태입니다.`);
+             return;
+           }
 
-        // 승인, 입금완료 버튼 처리
-        // === 공통 유틸 ===
-        // 선택된 poCode 배열
-        function getSelectedPoCodes() {
-          if (!gridApi) return [];
-          const sel = gridApi.getSelectedRows?.() || [];
-          return sel.map((r) => r.poCode);
-        }
-        // 버튼 로딩/해제
-        function setBusy(btn, busy, busyLabel) {
-          if (!btn) return;
-          btn.disabled = !!busy;
-          if (busy) {
-            btn.dataset.idleLabel ??= btn.textContent;
-            btn.textContent =
-              busyLabel || btn.dataset.busyLabel || btn.textContent;
-          } else {
-            btn.textContent = btn.dataset.idleLabel || btn.textContent;
-          }
-        }
-        // 단건 업데이트 호출 (Mapper 단건)
-        async function putPoStatusSingle(poCodes, poStatus) {
-          return await axios.put("/api/biz/postatus", { poCodes, poStatus });
-        }
+           // ❌ 승인대기도 작성완료도 아닌 건이 있으면 에러
+           if (invalid.length > 0) {
+             console.error('[승인 불가] 처리할 수 없는 상태:', invalid);
+             toastr.error(`'승인대기' 상태만 승인할 수 있습니다.\n선택된 건 중 ${invalid.length}건은 처리할 수 없습니다.`);
+             return;
+           }
 
-     // ================= 승인 버튼 처리 =================
-        document.addEventListener("DOMContentLoaded", () => {
-          const btnConfirm = document.getElementById("btnPoConfirm");
+           // 🔔 일부는 이미 작성완료, 일부는 승인대기인 경우
+           if (alreadyCompleted.length > 0 && canProcess.length > 0) {
+             const res = await cuteAlert({
+               type: "question",
+               title: "주문 확인",
+               message: `${alreadyCompleted.length}건은 이미 '작성완료' 상태입니다.<br>${canProcess.length}건만 승인 처리하시겠습니까?`,
+               imgUrl: "https://img.icons8.com/?size=100&id=103807&format=png&color=000000",
+               confirmText: "네",
+               cancelText: "아니오",
+             });
+             
+             if (!(res === true || res === "confirm")) return;
 
-          btnConfirm?.addEventListener("click", async () => {
-            if (!gridApi) return toastr.info("그리드 준비 전입니다.");
-            const poCodes = getSelectedPoCodes();
-            if (!poCodes.length) return toastr.warning("승인할 주문서를 선택하세요.");
+             // 승인대기 건만 처리
+             const processPoCodes = canProcess.map(r => r.poCode);
+             setBusy(btnPoConfirm, true, "승인 처리중...");
+             const results = await putPoStatusSingle(processPoCodes, "작성완료");
+             
+             toastr.success(`${results}건 처리완료 (${alreadyCompleted.length}건은 이미 처리됨)`);
+             if (typeof search === "function") await search();
+             return;
+           }
 
-            const selected = gridApi.getSelectedRows?.() || [];
-            const invalid = selected.filter(
-              (r) => r.poStatus && r.poStatus !== "승인대기"
-            );
+           // ✅ 모든 선택 건이 승인대기 상태일 때만 최종 확인
+           const res = await cuteAlert({
+             type: "question",
+             title: "주문 확인",
+             message: `선택된 ${poCodes.length}건을 '작성완료'로 변경할까요?`,
+             imgUrl: "https://img.icons8.com/?size=100&id=103807&format=png&color=000000",
+             confirmText: "네",
+             cancelText: "아니오",
+           });
+           
+           if (!(res === true || res === "confirm")) return;
 
-            if (invalid.length) {
-              const warn = await cuteAlert({
-                type: "question",
-                title: "상태 확인",
-                message: `'승인대기'가 아닌 ${invalid.length}건이 포함되어 있습니다.<br>그래도 진행할까요?`,
-                imgUrl:
-                  "https://img.icons8.com/?size=100&id=103807&format=png&color=000000",
-                confirmText: "진행",
-                cancelText: "취소",
-              });
-              if (warn !== "confirm") return;
-            }
+           // API 호출
+           setBusy(btnPoConfirm, true, "승인 처리중...");
+           const results = await putPoStatusSingle(poCodes, "작성완료");
+           
+           toastr.success(`${results}건 처리완료`);
+           
+           // 그리드 새로고침
+           if (typeof search === "function") await search();
+           
+         } catch (e) {
+           console.error('[승인 에러]', e);
+           toastr.error("승인 처리 중 오류가 발생했습니다.");
+         } finally {
+           setBusy(btnPoConfirm, false);
+         }
+       });
 
-            // ✅ 승인 최종 확인
-            const res = await cuteAlert({
-              type: "question",
-              title: "주문 확인",
-              message: `선택된 ${poCodes.length}건을 '작성완료'로 변경할까요?`,
-              imgUrl:
-                "https://img.icons8.com/?size=100&id=103807&format=png&color=000000",
-              confirmText: "네",
-              cancelText: "아니오",
-            });
-            if (res !== "confirm") return; // 사용자가 '아니오' 누르면 종료
+       // ===============================================
+       // 🟢 2. 입금완료 버튼 처리 (엄격한 검증 + 이미 처리된 건 안내)
+       // ===============================================
+       const btnPaymentConfirm = document.getElementById("btnPaymentConfirm");
 
-            // 진행
-            setBusy(btnConfirm, true, "승인 처리중...");
-            try {
-              const results = await putPoStatusSingle(poCodes, "작성완료");
-              toastr.success(`${results}건 처리완료`);
-              if (typeof search === "function") await search();
-            } catch (e) {
-              console.error(e);
-              toastr.error("승인 처리 중 오류가 발생했습니다.");
-            } finally {
-              setBusy(btnConfirm, false);
-            }
-          });
-        });
+       btnPaymentConfirm?.addEventListener("click", async () => {
+         try {
+           if (!gridApi) {
+             console.warn('gridApi가 아직 없습니다.');
+             return toastr.info("그리드 준비 전입니다.");
+           }
 
+           const selected = gridApi.getSelectedRows?.() || [];
+           const poCodes = selected.map(r => r.poCode);
+           
+           console.log('[입금완료 클릭] 선택건수:', poCodes.length, poCodes);
 
-        // ================= 입금완료 버튼 처리 =================
-        document.addEventListener("DOMContentLoaded", () => {
-          const btnConfirm = document.getElementById("btnPaymentConfirm");
+           if (!poCodes.length) {
+             return toastr.warning("입금확인할 주문서를 선택하세요.");
+           }
 
-          btnConfirm?.addEventListener("click", async () => {
-            if (!gridApi) return toastr.info("그리드 준비 전입니다.");
-            const poCodes = getSelectedPoCodes();
-            if (!poCodes.length)
-              return toastr.warning("입금완료 처리할 주문서를 선택하세요.");
+           // 📊 상태별 분류
+           const alreadyPaid = selected.filter(r => r.poStatus === "입금완료"); // 이미 처리됨
+           const canProcess = selected.filter(r => r.poStatus === "출하완료"); // 처리 가능
+           const invalid = selected.filter(r => r.poStatus !== "출하완료" && r.poStatus !== "입금완료"); // 불가능
 
-            // (선택) 현재상태 가드: 출하완료만 입금완료
-            const selected = gridApi.getSelectedRows?.() || [];
-            const invalid = selected.filter(
-              (r) => r.poStatus && r.poStatus !== "출하완료"
-            );
+           console.log('이미 입금완료:', alreadyPaid.length);
+           console.log('출하완료:', canProcess.length);
+           console.log('처리 불가:', invalid.length);
 
-            if (invalid.length) {
-              toastr.error(
-                `'출하완료'가 아닌 ${invalid.length}건 포함. 진행할수 없습니다.`
-              );
-              return;
-            }
+           // ✅ 이미 모두 입금완료인 경우
+           if (alreadyPaid.length === selected.length) {
+             toastr.info(`선택된 ${selected.length}건이 이미 '입금완료' 상태입니다.`);
+             return;
+           }
 
-            const res = await cuteAlert({
-                type: "question",
-                title: "주문 확인",
-                message: `선택된 ${poCodes.length}건을 '입금완료'로 변경할까요?`,
-                imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
-                confirmText: "네",
-                cancelText: "아니오"
-              });
-            if (res !== true) {
-               return;
-            }
+           // ❌ 출하완료도 입금완료도 아닌 건이 있으면 에러
+           if (invalid.length > 0) {
+             console.error('[입금완료 불가] 처리할 수 없는 상태:', invalid);
+             toastr.error(`'출하완료' 상태만 입금완료 처리할 수 있습니다.\n선택된 건 중 ${invalid.length}건은 처리할 수 없습니다.`);
+             return;
+           }
 
-            setBusy(btnConfirm, true, "처리중...");
-            try {
-              const results = await putPoStatusSingle(poCodes, "입금완료");
-              toastr.success(`${results}건 처리완료`);
+           // 🔔 일부는 이미 입금완료, 일부는 출하완료인 경우
+           if (alreadyPaid.length > 0 && canProcess.length > 0) {
+             const res = await cuteAlert({
+               type: "question",
+               title: "입금 확인",
+               message: `${alreadyPaid.length}건은 이미 '입금완료' 상태입니다.<br>${canProcess.length}건만 입금완료 처리하시겠습니까?`,
+               imgUrl: "https://img.icons8.com/?size=100&id=103807&format=png&color=000000",
+               confirmText: "네",
+               cancelText: "아니오",
+             });
+             
+             if (!(res === true || res === "confirm")) return;
 
-              if (typeof search === "function") await search();
-            } catch (e) {
-              console.error(e);
-              toastr.error("입금완료 처리 중 오류가 발생했습니다.");
-            } finally {
-              setBusy(btnConfirm, false);
-            }
-          });
+             // 출하완료 건만 처리
+             const processPoCodes = canProcess.map(r => r.poCode);
+             setBusy(btnPaymentConfirm, true, "입금확인 처리중...");
+             const results = await putPaymentComplete(processPoCodes, "입금완료");
+             
+             toastr.success(`${results}건 처리완료 (${alreadyPaid.length}건은 이미 처리됨)`);
+             if (typeof search === "function") await search();
+             return;
+           }
+
+           // ✅ 모든 선택 건이 출하완료 상태일 때만 최종 확인
+           const res = await cuteAlert({
+             type: "question",
+             title: "입금 확인",
+             message: `선택된 ${poCodes.length}건을 '입금완료'로 변경할까요?`,
+             imgUrl: "https://img.icons8.com/?size=100&id=103807&format=png&color=000000",
+             confirmText: "네",
+             cancelText: "아니오",
+           });
+           
+           if (!(res === true || res === "confirm")) return;
+
+           // API 호출 (입금완료 전용 API)
+           setBusy(btnPaymentConfirm, true, "입금확인 처리중...");
+           const results = await putPaymentComplete(poCodes, "입금완료");
+           
+           toastr.success(`${results}건 처리완료`);
+           
+           // 그리드 새로고침
+           if (typeof search === "function") await search();
+           
+         } catch (e) {
+           console.error('[입금완료 에러]', e);
+           toastr.error("입금완료 처리 중 오류가 발생했습니다.");
+         } finally {
+           setBusy(btnPaymentConfirm, false);
+         }
+       });
         });
       </script>
     </th:block>

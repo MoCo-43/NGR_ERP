@@ -1,7 +1,8 @@
 package com.yedam.erp.service.Biz;
 
-import java.time.LocalDate;
 import java.util.List;
+
+import org.springframework.data.repository.query.Param;
 
 import com.yedam.erp.vo.Biz.CreditGradeVO;
 import com.yedam.erp.vo.Biz.CreditVO;
@@ -30,8 +31,13 @@ public interface BizService {
   List<PoHistoryVO> getPoHistory(Long companyCode);
 
 
-  // 주문서 상태변경
+  // 주문서 상태변경(승인)
   int poStatusUpdate(List<String> poCodes, String poStatus);
+  // 주문서 상태변경(입금완료)
+  /*
+   * 선택한 PO들에 대해'입금완료'로 변경된 건수
+  */
+  int markPaidAndIncreaseCredit(List<String> poCodes);
 
   // 품목 조회
   List<ProductCodeVO> getProducts(Long companyCode);
@@ -75,5 +81,9 @@ public interface BizService {
 
   // 여신등급정책조회
   List<CreditGradeVO>getCreditGrade(Long companyCode);
+  
+  // 여신등급정책 일괄 업데이트(행별 업데이트, 없으면 insert) */
+  int updateCreditPolicies(Long companyCode, List<CreditGradeVO> list);
+
 }
 

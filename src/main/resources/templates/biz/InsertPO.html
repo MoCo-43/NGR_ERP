@@ -116,12 +116,8 @@
               </div>
             </div>
 
-            <!-- 5행: 할인횟수 | 비고 -->
+            <!-- 5행: 비고 -->
             <div class="row g-3 align-items-end mb-2">
-              <div class="col-md-3">
-                <label for="monDiscCnt" class="form-label">할인횟수</label>
-                <input id="monDiscCnt" class="form-control" disabled />
-              </div>
               <div class="col-6">
                 <label for="notes" class="form-label">비고</label>
                 <input id="notes" class="form-control" />
@@ -175,8 +171,8 @@
       </script>
 
       <script th:inline="none">
-        // 여신관련 전역상태(할인율, 월별할인, 여신잔여)
-        let selectedCustomer = { discountRate: 0, leftPrice: 0, monDiscCnt: 0 };
+        // 여신관련 전역상태(할인율, 여신잔여)
+        let selectedCustomer = { discountRate: 0, leftPrice: 0};
 
         document.addEventListener("DOMContentLoaded", () => {
           // ------------------ DOM helpers ------------------
@@ -393,7 +389,7 @@
             setVal("cusCode", "");
             setVal("notes", "");
             setVal("discountRate", 0);
-            selectedCustomer = { discountRate: 0, leftPrice: 0, monDiscCnt: 0 };
+            selectedCustomer = { discountRate: 0, leftPrice: 0};
             const creditSel = byId("creditActive");
             if (creditSel) creditSel.value = "N";
             if (discountRateInput) discountRateInput.disabled = true;
@@ -550,7 +546,6 @@
             { headerName: "신용등급", field: "creditGrade", width: 140 },
             { headerName: "여신잔액", field: "leftPrice", width: 140, cellClass: "ag-right-aligned-cell" },
             { headerName: "할인율", field: "discountRate", width: 140, cellClass: "ag-right-aligned-cell" },
-            { headerName: "잔여할인(월)", field: "monDiscCnt", width: 140, cellClass: "ag-right-aligned-cell" },
           ];
           const customerCodeGridOptions = {
             columnDefs: customerCodeColumnDefs,
@@ -589,18 +584,15 @@ function assignCustomerToForm(row) {
   const cusCodeEl      = document.getElementById("cusCode");
   const cusDiscountEl  = document.getElementById("discountRate");
   const cusLeftPriceEl = document.getElementById("leftPrice");
-  const monDiscCntEl   = document.getElementById("monDiscCnt");
   const activeSel      = document.getElementById("creditActive");
 
   if (cusNameEl)      cusNameEl.value      = row.cusName ?? "";
   if (cusCodeEl)      cusCodeEl.value      = row.cusCode ?? "";
   if (cusLeftPriceEl) cusLeftPriceEl.value = row.leftPrice ?? "";
-  if (monDiscCntEl)   monDiscCntEl.value   = row.monDiscCnt ?? "";
 
   // 상태 저장
   selectedCustomer.discountRate = Number(row.discountRate ?? 0);
   selectedCustomer.leftPrice    = Number(row.leftPrice ?? 0);
-  selectedCustomer.monDiscCnt   = Number(row.monDiscCnt ?? 0);
 
   // 입력 값 보존 + 자동 적용 판정
   const hasDiscount = selectedCustomer.discountRate > 0;

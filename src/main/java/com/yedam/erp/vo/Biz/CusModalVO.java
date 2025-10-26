@@ -10,7 +10,6 @@ public class CusModalVO {
   private String creditGrade;  // 여신등급
   private Long leftPrice;  // 여신잔여금액
   private Long discountRate;  // 여신할인율
-  private Long monDiscCnt;  // 남은 월별 할인 횟수
 
   // 긴급출하용 거래처정보들고오기
   private String cempName; 

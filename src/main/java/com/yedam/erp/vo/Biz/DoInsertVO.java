@@ -13,7 +13,7 @@ public class DoInsertVO {
     private String poCode;           // 주문번호
     private String doCode;       // 지시서코드
     private Long empNo;       // 사원번호
-    private String name;         // 사원명
+    private String empName;         // 사원명
     private Date doCreated;    // 작성일자
     private Long totalQty;    // 총주문금액
     private String doStatus;     // 진행상태
@@ -22,6 +22,7 @@ public class DoInsertVO {
     private Date exDate;       // 납기일자
     private String addr;         // 주소
     private String zipCode;      // 우편번호
+    private String tel;   // 전화번호
 
     // 자식 테이블 매핑
     private List<DoDetailVO> dodetails;
