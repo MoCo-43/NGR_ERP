@@ -19,123 +19,63 @@
       />
 
       <style>
-        .form-label {
-          font-weight: 600;
-        }
-        .btn-slim {
-          padding: 0.375rem 0.75rem;
-        }
-        .btn-wide {
-          min-width: 110px;
-        }
-        .muted {
-          font-size: 12px;
-          color: #6b7280;
-        }
-        #itemGrid.ag-theme-quartz {
-          height: 380px;
-          width: 100%;
-        }
-        .rounded-box {
-          border: 1px solid #e5e7eb;
-          border-radius: 0.75rem;
-          padding: 1rem;
-        }
-        .ag-theme-quartz .ag-row-pinned {
-          font-weight: 700;
-          background: #fafafa;
-        }
+        .form-label { font-weight: 600; }
+        .btn-slim { padding: 0.375rem 0.75rem; }
+        .btn-wide { min-width: 110px; }
+        .muted { font-size: 12px; color: #6b7280; }
+        #itemGrid.ag-theme-quartz { height: 380px; width: 100%; }
+        .rounded-box { border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1rem; }
+        .ag-theme-quartz .ag-row-pinned { font-weight: 700; background: #fafafa; }
       </style>
     </th:block>
   </head>
   <body>
     <section layout:fragment="content">
-    <!-- 회사코드  -->
-    <input type="hidden" id="companyCode" th:value="${#authentication.principal.empLoginVO.matNo}" />
+      <!-- 회사코드(hidden)  -->
+      <input type="hidden" id="companyCode" th:value="${#authentication.principal.empLoginVO.matNo}" />
+
       <!-- 상단 툴바 -->
       <div class="card shadow mb-3">
-        <!-- 헤더: 제목 + 초기화/등록 -->
-      <div class="card shadow">
-        <div
-          class="card-header d-flex align-items-center justify-content-between"
-        >
-          <h6 class="m-0 font-weight-bold text-primary">주문서입력</h6>
-          <!-- 제품코드/주문서이력조회 모달 버튼 -->
-          <div class="card-body py-2">
-            <div class="d-flex justify-content-end">
-              <div class="btn-group">
-                <button
-                  id="btnOpenHistory"
-                  type="button"
-                  class="btn btn-outline-secondary btn-slim"
-                  data-bs-toggle="modal"
-                  data-bs-target="#PoHistoryModal"
-                >
-                  주문서이력조회
-                </button>
-                <button id="btnReset" type="button" class="btn btn-danger mr-3">
-                  초기화
-                </button>
-                <button
-                  id="btnSubmit"
-                  type="button"
-                  class="btn btn-primary mr-3"
-                >
-                  등록
-                </button>
-              </div>
-            </div>
+
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">주문서입력</h6>
+
+                <div class="btn-group">
+                  <button id="btnOpenHistory" type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#PoHistoryModal">
+                    주문서이력조회
+                  </button>
+                  <button id="btnReset" type="button" class="btn btn-danger">초기화</button>
+                  <button id="btnSubmit" type="button" class="btn btn-primary">등록</button>
+                </div>
           </div>
-        </div>
       </div>
 
-      <!-- 입력영역 (1~7,10) -->
+      <!-- 입력영역 -->
       <div class="card shadow mb-4">
         <div class="card-body">
           <div class="rounded-box">
             <!-- 1행: 작성일자 | 거래처 -->
             <div class="row g-3 align-items-end mb-2">
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label for="poStart" class="form-label">작성일자</label>
                 <input id="poStart" type="date" class="form-control" disabled />
               </div>
-
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label for="cusName" class="form-label">거래처</label>
                 <div class="input-group">
-                  <input
-                    id="cusName"
-                    class="form-control"
-                    placeholder="거래처 선택"
-                    disabled
-                  />
+                  <input id="cusName" class="form-control" placeholder="거래처 선택" disabled />
                   <input type="hidden" id="cusCode" />
-                  <button
-                    id="btnFindCustomer"
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#customermodal"
-                  >
+                  <button id="btnFindCustomer" type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#customermodal">
                     <i class="fa fa-magnifying-glass"></i>
                   </button>
                 </div>
               </div>
-            </div>
-
             <!-- 2행: 담당자 | 지불방식 -->
-            <div class="row g-3 align-items-end mb-2">
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label for="creater" class="form-label">담당자</label>
-                <!-- span을 유지해야 기존 JS의 textContent 읽기가 정상 동작합니다 -->
-                <span
-                  id="creater"
-                  class="form-control"
-                  th:text="${#authentication.principal.empLoginVO.name}"
-                ></span>
+                <span id="creater" class="form-control" th:text="${#authentication.principal.empLoginVO.name}"></span>
               </div>
-
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label for="payMethod" class="form-label">지불방식</label>
                 <select id="payMethod" class="form-control">
                   <option value="CASH">현금</option>
@@ -146,49 +86,39 @@
 
             <!-- 3행: 납기일자 | 결제예정일 -->
             <div class="row g-3 align-items-end mb-2">
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label for="exDate" class="form-label">납기일자</label>
                 <input id="exDate" type="date" class="form-control" />
               </div>
-
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label for="poDate" class="form-label">결제예정일</label>
                 <input id="poDate" type="date" class="form-control" />
               </div>
+
+
+            <!-- 4행: 할인율 | 여신잔액 -->
+
+              <!-- 할인율 + 할인여부 -->
+              <div class="col-md-3">
+                <label for="discountRate" class="form-label">할인율(%)</label>
+                <div class="input-group">
+                  <input id="discountRate" class="form-control" type="number" disabled />
+                  <select id="creditActive" class="form-control">
+                    <option value="N" selected>미적용</option>
+                    <option value="Y">적용</option>
+                  </select>
+                </div>
+              </div>
+              <!-- 여신잔액 -->
+              <div class="col-md-3">
+                <label for="leftPrice" class="form-label">여신잔액</label>
+                <input id="leftPrice" class="form-control" type="text" readonly />
+              </div>
             </div>
 
-			<!-- 4행: 할인율 | 여신잔액 -->
-			<div class="row g-3 align-items-end mb-2">
-			  <!-- 할인율 + 할인여부 -->
-			  <div class="col-md-6">
-			    <label for="discountRate" class="form-label">할인율(%)</label>
-			    <div class="input-group">
-			      <!-- 할인율 입력 -->
-			      <input
-			        id="discountRate"
-			        class="form-control"
-			        type="number"
-			        disabled
-			      />
-			      <!-- 할인여부 선택 -->
-			      <select id="creditActive" class="form-control" onchange="toggleDiscountRate()">
-			        <option value="N" selected>미적용</option>
-			        <option value="Y">적용</option>
-			      </select>
-			    </div>
-			  </div>
-			
-			  <!-- 여신잔액 -->
-			  <div class="col-md-6">
-			    <label for="leftPrice" class="form-label">여신잔액</label>
-			    <input id="leftPrice" class="form-control" type="text" readonly />
-			  </div>
-			</div>
-
-
-            <!-- 5행: 비고 (전폭) -->
+            <!-- 5행: 할인횟수 | 비고 -->
             <div class="row g-3 align-items-end mb-2">
-              <div class="col-md-6">
+              <div class="col-md-3">
                 <label for="monDiscCnt" class="form-label">할인횟수</label>
                 <input id="monDiscCnt" class="form-control" disabled />
               </div>
@@ -197,330 +127,217 @@
                 <input id="notes" class="form-control" />
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 제품 목록 그리드 -->
-        <div
-          class="card-header d-flex align-items-center justify-content-between"
-        >
-          <h6 class="m-0 font-weight-bold text-primary">제품 목록</h6>
-          <div class="btn-group">
-            <button
-              id="btnOpenProduct"
-              type="button"
-              class="btn btn-outline-secondary btn-slim"
-              data-bs-toggle="modal"
-              data-bs-target="#productcodeModal"
-            >
-              제품코드
-            </button>
-            <button
-              id="btnRemoveRow"
-              type="button"
-              class="btn btn-outline-danger btn-slim"
-            >
-              행 삭제
-            </button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div id="itemGrid" class="ag-theme-quartz"></div>
-        </div>
+		<!-- 제품 목록 그리드 헤더 -->
+		<div class="d-flex justify-content-end mb-2">
+		  <div class="btn-group">
+		    <button
+		      id="btnOpenProduct"
+		      type="button"
+		      class="btn btn-secondary"
+		      data-bs-toggle="modal"
+		      data-bs-target="#productcodeModal"
+		    >
+		      제품코드
+		    </button>
+		    <button id="btnRemoveRow" type="button" class="btn btn-danger">
+		      행 삭제
+		    </button>
+		  </div>
+		</div>
+		
+		<!-- 하단 품목 목록 그리드 -->
+		<div id="itemGridWrapper" style="position: relative;">
+		  <div id="itemGrid" class="ag-theme-quartz" style="height: 540px;"></div>
+		</div>
+    </div>
+   </div>      
+  </div>
 
 
-      <!-- 거래처 검색 모달 -->
+
+      <!-- 모달 replace -->
+      <!-- 거래처 모달 -->
       <div th:replace="~{biz/modals/PoCustomerModal :: customermodal}"></div>
-
       <!-- 제품코드 모달 -->
-      <div
-        th:replace="~{biz/modals/ProductcodeModal :: productcodeModal}"
-      ></div>
-
-      <!-- 주문서이력조회 모달 -->
+      <div th:replace="~{biz/modals/ProductCodeModal :: productcodeModal}"></div>
+      <!-- 주문이력조회 모달 -->
       <div th:replace="~{biz/modals/PoHistoryModal :: PoHistoryModal}"></div>
     </section>
 
     <th:block layout:fragment="body_extra">
-      <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"
-      ></script>
-      <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"
-      ></script>
+      <script defer src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.js"></script>
+      <script defer src="https://cdn.jsdelivr.net/npm/axios@1.7.7/dist/axios.min.js"></script>
+
       <!-- 세션 정보 저장 -->
-	<script th:inline="javascript">
-	    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
-	    const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
-	</script>
+      <script th:inline="javascript">
+        const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+        const compCode  = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+      </script>
 
       <script th:inline="none">
-      // 여신관련 전역설정(할인율, 월별할인, 여신잔여)
-      let selectedCustomer = {
-		  discountRate: 0,   // DB의 할인율 (%)
-		  leftPrice: 0,
-		  monDiscCnt: 0,
-		};
-      
-      
+        // 여신관련 전역상태(할인율, 월별할인, 여신잔여)
+        let selectedCustomer = { discountRate: 0, leftPrice: 0, monDiscCnt: 0 };
+
         document.addEventListener("DOMContentLoaded", () => {
-          // DOM helpers
-
-          function byId(id) {
-            return document.getElementById(id);
-          }
-
-          function getVal(id) {
-            return byId(id)?.value ?? "";
-          }
-
-          function setVal(id, v) {
-            const el = byId(id);
-            if (el) el.value = v ?? "";
-          }
-
+          // ------------------ DOM helpers ------------------
+          const byId = (id) => document.getElementById(id);
+          const getVal = (id) => byId(id)?.value ?? "";
+          const setVal = (id, v) => { const el = byId(id); if (el) el.value = v ?? ""; };
           const toNum = (v) => Number(String(v ?? 0).replace(/[, ]/g, "")) || 0;
-   
-          
-          // 여신 적용할지에 대한 function
-          window.toggleDiscountRate = function () {
-        	    const select = document.getElementById("creditActive");
-        	    const input = document.getElementById("discountRate");
 
-        	    if (select.value === "Y") {
-        	      input.focus();
-        	      if (input.value === 0) input.value = 0;
-        	    } else {
-        	      input.value = 0;
-        	    }
-        	  };
-          
-          
-          
-          // ===== 기본값 세팅 =====
+          // ------------------ 날짜 기본값 ------------------
           const today = new Date().toISOString().slice(0, 10);
           setVal("poStart", today);
           setVal("exDate", today);
-          setVal("settleDue", today);
+          setVal("poDate", today);
 
-          // 지불방식 토글
-          byId("payMethod").addEventListener("change", () => {
-            const show = ["BILL", "CASH"].includes(getVal("payMethod"));
-            byId("billDates").classList.toggle("d-none", !show);
-          });
+          // ------------------ 지불방식 토글) ------------------
+          const payMethodEl = byId("payMethod");
+          if (payMethodEl) {
+            payMethodEl.addEventListener("change", () => {
+              const billDates = byId("billDates"); // 페이지에 없으면 무시
+              if (!billDates) return;
+              const show = ["BILL", "CASH"].includes(getVal("payMethod"));
+              billDates.classList.toggle("d-none", !show);
+            });
+          }
 
-          // ===== Main Grid (itemGrid) =====
+          // ------------------ 할인율 적용 토글 ------------------
+		const creditActiveSel   = document.getElementById("creditActive");
+		const discountRateInput = document.getElementById("discountRate");
+		     
+	
+		// 할인율 토글 계산
+		window.toggleDiscountRate = function () {
+
+			// '적용(Y)'일 때만 할인율 반영, '미적용(N)'이면 0%
+			const currentDiscountRate = () => {
+			  const active = creditActiveSel?.value === "Y";
+			  const v = Number(String(discountRateInput?.value ?? 0).replace(/[, ]/g, "")) || 0;
+			  return active ? v / 100 : 0;
+			};
+		
+			// 할인금액 (총금액 * 할인율)
+			function calcDcAmt(row = {}) {
+			  const gross = calcGross(row);
+			  return Math.round(gross * currentDiscountRate());
+			}
+			       
+			
+			  const select = document.getElementById("creditActive");
+			  const input  = document.getElementById("discountRate");
+			  if (!select || !input) return;
+		
+			  const active = select.value === "Y";
+		
+			  // 값은 건드리지 말고, 입력창 활성/비활성만 바꾼다
+			  input.disabled = !active;
+		
+			  // 활성화인데 값이 비어있으면 고객 기본 할인율 복원
+			  if (active && (input.value === "" || input.value == null)) {
+			    const fallback = Number(selectedCustomer.discountRate || 0);
+			    input.value = fallback > 0 ? fallback : 0;
+			  }
+		
+			  // 계산 반영
+			  if (window.gridApi) {
+			    gridApi.refreshCells({ force: true });
+			  }
+			  if (typeof updatePinned === "function") updatePinned();
+			};
+		          creditActiveSel?.addEventListener("change", toggleDiscountRate);
+
+
+          // ------------------ AG Grid 설정 ------------------
           let gridApi;
           const VAT_RATE = 0.1; // 10%
+          const currentDiscountRate = () => toNum(getVal("discountRate")) / 100;
 
-          function calcSupply(r) {
-            // 할인율
-            const price = toNum(r.unitPrice),
-              qty = toNum(r.orderQty),
-              dcRate = toNum(getVal("discountRate")) / 100;
-            // 총금액
-            const gross = price * qty;
-            //할인금액
-            const dc = gross * dcRate;
-
+          function calcGross(row = {}) {
+            const price = toNum(row.unitPrice);
+            const qty   = toNum(row.orderQty);
+            return price * qty;
+          }
+          function calcDcAmt(row = {}) { return Math.round(calcGross(row) * currentDiscountRate()); }
+          function calcSupply(row = {}) {
+            const gross = calcGross(row);
+            const dc    = calcDcAmt(row);
             return Math.max(gross - dc, 0);
           }
+          function calcVat(row = {}) { return row.vatType === "과세" ? Math.round(calcSupply(row) * VAT_RATE) : 0; }
+          function numberParser(p) { const n = Number(String(p.newValue || "").replace(/[, ]/g, "")); return isNaN(n) ? null : n; }
 
-          // 부가세 계산
-          function calcVat(r) {
-            console.log("p.data 값은 ", r);
-            const applyVat = r.vatType === "과세";
-            return applyVat ? Math.round(calcSupply(r) * VAT_RATE) : 0;
-          }
-
-          // 행별 계산
-          function recalcRow(data) {
-            const price = toNum(data.unitPrice);
-            const qty = toNum(data.orderQty);
-            const dcRate = toNum(getVal("discountRate")) / 100;
-
-            // 1. 할인전 공급가액
-            const gross = price * qty; // (단가 * 수량)
-
-            // 2. 할인금액
-            const dcAmt = gross * dcRate;
-
-            // 3. 공급가액
-            const supAmt = gross - dcAmt;
-            // 4. 부가세
-            const vatAmt =
-              data.vatType === "과세" ? Math.round(supAmt * VAT_RATE) : 0; // 부가세(적용 시만)
-
-            return { supAmt, vatAmt, dcAmt };
-          }
-
-          // 숫자에 천 단위마다 쉼표
-          function numberParser(p) {
-            const n = Number(String(p.newValue || "").replace(/[, ]/g, ""));
-            return isNaN(n) ? null : n;
-          }
-
-          //
           function updatePinned() {
             if (!gridApi) return;
-            let sumSupply = 0,
-              sumVat = 0,
-              sumDc = 0,
-              totalQty = 0,
-              cnt = 0;
+            let sumSupply = 0, sumVat = 0, sumDc = 0, totalQty = 0, cnt = 0;
             gridApi.forEachNodeAfterFilterAndSort((n) => {
               const r = n.data || {};
-              sumSupply += r.supAmt;
-              sumVat += r.vatAmt;
-              sumDc += r.dcAmt;
-              totalQty += r.orderQty;
+              sumSupply += calcSupply(r);
+              sumVat    += calcVat(r);
+              sumDc     += calcDcAmt(r);
+              totalQty  += toNum(r.orderQty);
               cnt++;
             });
-            const pinned = [
-              {
-                productName: `합계 (행 ${cnt}건)`,
-                supAmt: sumSupply,
-                vatAmt: sumVat,
-                dcAmt: sumDc,
-                orderQty: totalQty,
-              },
-            ];
-            gridApi.setPinnedBottomRowData
-              ? gridApi.setPinnedBottomRowData(pinned)
-              : gridApi.setGridOption("pinnedBottomRowData", pinned);
+            gridApi.setGridOption("pinnedBottomRowData", [{
+              productName: `합계 (행 ${cnt}건)`,
+              supAmt: sumSupply,
+              vatAmt: sumVat,
+              dcAmt: sumDc,
+              orderQty: totalQty,
+            }]);
           }
 
           const columnDefs = [
-            {
-              headerName: "제품코드",
-              field: "productCode",
-              editable: true,
-              width: 120,
-            },
-            {
-              headerName: "제품명",
-              field: "productName",
-              editable: true,
-              flex: 1,
-              minWidth: 160,
-            },
-            {
-              headerName: "단가",
-              field: "unitPrice",
-              editable: true,
-              width: 110,
-              type: "rightAligned",
-              valueParser: numberParser,
-            },
-            {
-              headerName: "수량",
-              field: "orderQty",
-              editable: true,
-              width: 100,
-              type: "rightAligned",
-              valueParser: numberParser,
-            },
-            {
-              headerName: "공급가액",
-              field: "supAmt",
-              width: 120,
-              type: "rightAligned",
-              valueParser: numberParser,
-              valueGetter: (p) => calcSupply(p.data),
-            },
-            {
-              headerName: "부가세",
-              field: "vatAmt",
-              width: 120,
-              type: "rightAligned",
-              valueParser: numberParser,
-               valueGetter: (p) => calcVat(p.data),
-            },
-            {
-              headerName: "과세여부",
-              field: "vatType",
-              width: 120,
-              editable: true, // 수정 가능하게
-              cellEditor: "agSelectCellEditor", // 셀렉트박스 표시
-              cellEditorParams: {
-                values: ["과세", "면세"], // 드롭다운 옵션
-              },
-            },
-            {
-              headerName: "할인금액",
-              field: "dcAmt",
-              editable: false,
-              width: 120,
-              type: "rightAligned",
-              valueParser: (p) => numberParser(calcSupply(p.data.dc)),
-            },
-            { headerName: "비고", field: "notes", editable: true, width: 160 },
+            { headerName: "제품코드", field: "productCode", editable: true, width: 120 },
+            { headerName: "제품명",   field: "productName", editable: true, flex: 1, minWidth: 160 },
+            { headerName: "단가",     field: "unitPrice",  editable: true, width: 110, cellClass: "ag-right-aligned-cell", valueParser: numberParser },
+            { headerName: "수량",     field: "orderQty",   editable: true, width: 100, cellClass: "ag-right-aligned-cell", valueParser: numberParser },
+            { headerName: "공급가액", field: "supAmt",     width: 120,     cellClass: "ag-right-aligned-cell", valueGetter: (p) => calcSupply(p?.data ?? {}) },
+            { headerName: "부가세",   field: "vatAmt",     width: 120,     cellClass: "ag-right-aligned-cell", valueGetter: (p) => calcVat(p?.data ?? {}) },
+            { headerName: "과세여부", field: "vatType",    width: 120,     editable: true, cellEditor: "agSelectCellEditor", cellEditorParams: { values: ["과세", "면세"] } },
+            { headerName: "할인금액", field: "dcAmt",      editable: false, width: 120, cellClass: "ag-right-aligned-cell", valueGetter: (p) => calcDcAmt(p?.data ?? {}) },
+            { headerName: "비고",     field: "notes",      editable: true, width: 160 },
           ];
 
           const gridOptions = {
             columnDefs,
             rowSelection: "multiple",
             rowMultiSelectWithClick: true,
+            localeText: { noRowsToShow: "제품코드를 눌러주세요" },
             rowData: [],
             defaultColDef: { sortable: true, resizable: true, filter: true },
-            onGridReady: (p) => {
-              gridApi = p.api;
-              updatePinned();
-            },
+            onGridReady: (p) => { gridApi = p.api; updatePinned(); },
             onModelUpdated: updatePinned,
-            onCellValueChanged: (p) => {
-              const f = p.colDef.field;
-              if (["orderQty"].includes(f)) {
-                const { supAmt, vatAmt, dcAmt, orderQty } = recalcRow(p.data);
-
-                // 이 행의 계산 컬럼 값을 갱신
-                p.node.setDataValue("supAmt", supAmt);
-                p.node.setDataValue("vatAmt", vatAmt);
-                p.node.setDataValue("dcAmt", dcAmt);
-                p.node.setDataValue("totalQty", orderQty);
-
-                // 합계(고정 하단행)도 다시 합산
-                updatePinned();
-              }
-            },
+            onCellValueChanged: () => { updatePinned(); },
           };
 
           const gridDiv = byId("itemGrid");
           if (window.agGrid?.createGrid) {
             gridApi = agGrid.createGrid(gridDiv, gridOptions);
-          } else {
-            gridApi = gridOptions.api;
           }
-
 
           // 행 삭제
           byId("btnRemoveRow").addEventListener("click", () => {
             const sel = gridApi.getSelectedRows?.() || [];
-            if (!sel.length) return alert("삭제할 행을 선택하세요.");
+            if (!sel.length) return toastr.warning("삭제할 행을 선택하세요.");
             gridApi.applyTransaction({ remove: sel });
             updatePinned();
           });
 
-          // ===== 등록버튼 =====
+          // ------------------ 등록 버튼 ------------------
           const submit = async () => {
             try {
-              // 1) 제품 상세행 수집
               const details = [];
               gridApi.forEachNodeAfterFilterAndSort((n) => {
                 const r = n.data || {};
-                if (!r.productCode) return; // 제품코드 필수
-
-                const supAmt = calcSupply(r); // 공급가액(할인 반영)
-                const vatAmt = calcVat(r); // 부가세(과세/면세는 bizType 기준)
-
+                if (!r.productCode) return; // 필수
+                const supAmt = calcSupply(r);
+                const vatAmt = calcVat(r);
                 details.push({
                   productCode: r.productCode,
                   orderQty: toNum(r.orderQty),
                   unitPrice: toNum(r.unitPrice),
-                  dcAmt: toNum(r.dcAmt ?? 0),
+                  dcAmt: toNum(calcDcAmt(r)),
                   supAmt,
                   vatAmt,
                   vatType: vatAmt > 0 ? "과세" : "면세",
@@ -528,119 +345,77 @@
                 });
               });
 
-              if (!details.length) {
-                alert("상세 제품을 1건 이상 입력하세요.");
-                return;
-              }
+              if (!details.length) { toastr.warning("상세 제품을 1건 이상 입력하세요."); return; }
 
               const cusCode = getVal("cusCode");
-              if (!cusCode) {
-                alert("거래처를 선택해 주세요.");
-                return;
-              }
-
+              if (!cusCode) { toastr.warning("거래처를 선택해 주세요."); return; }
 
               const payload = {
                 companyCode: compCode,
-                cusCode: getVal("cusCode"),
+                cusCode: cusCode,
                 creater: loginName,
                 poStart: getVal("poStart") || undefined,
                 exDate: getVal("exDate") || undefined,
                 poDate: getVal("poDate") || undefined,
                 payMethod: getVal("payMethod"),
                 notes: getVal("notes") || undefined,
-                // 여신활성(Y/N) : 상세행 중 할인액>0 이 하나라도 있으면 Y
-                creditActive: details.some((d) => (d.dcAmt || 0) > 0)
-                  ? "Y"
-                  : "N",
-
+                creditActive: details.some((d) => (d.dcAmt || 0) > 0) ? "Y" : "N",
                 poDetails: details,
               };
 
-              console.log("vatType 은 ", payload.vatType);
               const res = await cuteAlert({
-  	        	type: "question",
-  	            title: "주문 확인",
-  	            message: "주문서를 등록하시겠습니까?",
-  	            imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
-  	            confirmText: "네",
-  	            cancelText: "아니오"
-  	        });
-              if (res != true) {
-            	  return;
-              }
-              await axios.post("/api/biz/poinsert", payload, {
-                headers: { "Content-Type": "application/json" },
+                type: "question",
+                title: "주문 확인",
+                message: "주문서를 등록하시겠습니까?",
+                imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
+                confirmText: "네",
+                cancelText: "아니오"
               });
+              if (res !== true) return;
 
+              await axios.post("/api/biz/poinsert", payload, { headers: { "Content-Type": "application/json" } });
               toastr.success("등록되었습니다.");
               resetAll();
             } catch (e) {
               console.error(e);
-              const msg =
-                e?.response?.data?.message ||
-                e.message ||
-                "등록 중 오류가 발생했습니다.";
-              alert(msg);
+              const msg = e?.response?.data?.message || e.message || "등록 중 오류가 발생했습니다.";
+              toastr.err(msg);
             }
           };
           byId("btnSubmit").addEventListener("click", submit);
 
-          // ===== 초기화 =====
-          // 임시로 거래유형, 부가세유형을 하드코딩
+          // ------------------ 초기화 ------------------
           function resetAll() {
             setVal("poStart", today);
             setVal("exDate", today);
-            setVal("settleDue", today);
+            setVal("poDate", today);
             setVal("cusName", "");
-            setVal("creater", "");
-            setVal("vatDocType", "세금계산서");
-            setVal("payMethod", "현금");
-            setVal("poStatus", "주문승인");
+            setVal("cusCode", "");
             setVal("notes", "");
-            gridApi.setRowData([
-              {
-                productCode: "",
-                productName: "",
-                unitPrice: null,
-                orderQty: null,
-                dcAmt: null,
-              },
-            ]);
+            setVal("discountRate", 0);
+            selectedCustomer = { discountRate: 0, leftPrice: 0, monDiscCnt: 0 };
+            const creditSel = byId("creditActive");
+            if (creditSel) creditSel.value = "N";
+            if (discountRateInput) discountRateInput.disabled = true;
+
+            gridApi.setGridOption("rowData", []);
             updatePinned();
           }
           byId("btnReset").addEventListener("click", resetAll);
 
-          /*
-
-                        ======================== 주문서조회 모달 ========================
-
-
-                        */
+          // ======================== 주문서조회 모달 ========================
           const poHistoryModalEl = document.getElementById("PoHistoryModal");
           let poHistoryGridApi;
           const poHistoryColumnDefs = [
             { headerName: "작성일자", field: "poStart", width: 120 },
-            {
-              headerName: "거래처명",
-              field: "cusName",
-              flex: 1,
-              minWidth: 150,
-            },
+            { headerName: "거래처명", field: "cusName", flex: 1, minWidth: 150 },
             { headerName: "제품코드", field: "productCode", width: 120 },
             { headerName: "제품명", field: "productName", width: 150 },
             { headerName: "수량", field: "orderQty", width: 150 },
             { headerName: "단가", field: "unitPrice", width: 150 },
             { headerName: "담당자", field: "creater", width: 100 },
             { headerName: "납기일자", field: "exDate", width: 120 },
-            {
-              headerName: "공급가액",
-              field: "supAmt",
-              width: 150,
-              type: "rightAligned",
-              // valueFormatter: (p) =>
-              //   p.value ? p.value.toLocaleString("ko-KR") : "",
-            },
+            { headerName: "공급가액", field: "supAmt", width: 150, cellClass: "ag-right-aligned-cell" },
           ];
           const poHistoryGridOptions = {
             columnDefs: poHistoryColumnDefs,
@@ -648,138 +423,107 @@
             rowMultiSelectWithClick: true,
             rowData: [],
             defaultColDef: { sortable: true, resizable: true, filter: true },
-            onGridReady: (params) => {
-              poHistoryGridApi = params.api;
-            },
+            onGridReady: (params) => { poHistoryGridApi = params.api; },
           };
           async function fetchPoHistoryData() {
             if (!poHistoryGridApi) return;
             try {
+            	showLoader('poHistoryGridGridLoader',"데이터를 불러오는 중입니다...");
               const response = await axios.get("/api/biz/pohistory");
               poHistoryGridApi.setRowData(response.data);
-              poHistoryGridApi.sizeColumnsToFit();
+              poHistoryGridApi.sizeColumnsToFit?.();
             } catch (error) {
               console.error("주문 이력 조회 실패:", error);
-              alert("데이터를 불러오는 데 실패했습니다.");
+              toastr.error("데이터를 불러오는 데 실패했습니다.");
+            } finally {
+            	hideLoader('poHistoryGridGridLoader');
             }
+            
+            
           }
           if (poHistoryModalEl) {
             poHistoryModalEl.addEventListener("shown.bs.modal", () => {
               if (!poHistoryGridApi) {
                 const gridDiv = document.getElementById("poHistoryGrid");
                 if (window.agGrid?.createGrid) {
-                  poHistoryGridApi = agGrid.createGrid(
-                    gridDiv,
-                    poHistoryGridOptions
-                  );
-                } else {
-                  poHistoryGridApi = poHistoryGridOptions.api;
+                  poHistoryGridApi = agGrid.createGrid(gridDiv, poHistoryGridOptions);
                 }
               }
               fetchPoHistoryData();
             });
 
-            
-            // 주문서 가져오기 버튼
             const importBtn = document.getElementById("PohImportBtn");
             if (importBtn) {
               importBtn.addEventListener("click", () => {
-                const selectedRows = poHistoryGridApi.getSelectedRows();
-                if (!selectedRows || selectedRows.length === 0) {
-                  return alert("가져올 주문서의 행을 선택하세요.");
-                }
-
+                const selectedRows = poHistoryGridApi.getSelectedRows?.() || [];
+                if (!selectedRows.length) return toastr.warning("가져올 주문서의 행을 선택하세요.");
                 const newItems = selectedRows.map((row) => ({
-                  poStart: row.poStart, // 작성일자
-                  cusName: row.cusName || "", // 거래처명
-                  productCode: row.productCode || "", // 제품코드
-                  productName: row.productName || "", // 제품명
-                  unitPrice: row.unitPrice || null, // 단가
-                  creater: row.creater || "", // 담당자
-                  exDate: row.exDate, // 납기일자
-                  supAmt: row.supAmt || null, // 공급가액
+                  poStart: row.poStart,
+                  cusName: row.cusName || "",
+                  productCode: row.productCode || "",
+                  productName: row.productName || "",
+                  unitPrice: row.unitPrice || null,
+                  creater: row.creater || "",
+                  exDate: row.exDate,
+                  supAmt: row.supAmt || null,
                 }));
-
                 gridApi.applyTransaction({ add: newItems });
                 updatePinned();
-
                 const modal = bootstrap.Modal.getInstance(poHistoryModalEl);
                 modal?.hide();
               });
             } else {
-              console.warn(
-                "가져오기 버튼(#PohImportBtn)을 modal HTML에 추가해주세요."
-              );
+              console.warn("가져오기 버튼(#PohImportBtn)을 modal HTML에 추가해주세요.");
             }
           }
-          /*
 
-          ======================== 제품코드 모달 ========================
-
-
-                  */
+          // ======================== 제품코드 모달 ========================
           const productModalEl = document.getElementById("productcodeModal");
           let productGridApi;
           const productColumnDefs = [
             { headerName: "", checkboxSelection: true, width: 50 },
             { headerName: "제품코드", field: "productCode", width: 140 },
-            {
-              headerName: "제품명",
-              field: "productName",
-              flex: 1,
-              minWidth: 160,
-            },
-            { headerName: "판매단가", field: "salesPrice", width: 140 },
+            { headerName: "제품명", field: "productName", flex: 1, minWidth: 160 },
+            { headerName: "판매단가", field: "salesPrice", width: 140, cellClass: "ag-right-aligned-cell" },
             { headerName: "과세여부", field: "vatType", width: 140 },
           ];
-          if (productModalEl) {
-            productModalEl.addEventListener("shown.bs.modal", () => {
-              const gridDiv = document.getElementById("productGrid");
-              if (!productGridApi) {
-                if (window.agGrid?.createGrid) {
-                  productGridApi = agGrid.createGrid(
-                    gridDiv,
-                    productGridOptions
-                  );
-                } else {
-                  productGridApi = productGridOptions.api;
-                }
-              }
-              fetchProductData();
-            });
-          }
-
           const productGridOptions = {
             columnDefs: productColumnDefs,
             rowSelection: "multiple",
             rowMultiSelectWithClick: true,
             rowData: [],
             defaultColDef: { sortable: true, resizable: true, filter: true },
-            onGridReady: (p) => {
-              productGridApi = p.api;
-            },
+            onGridReady: (p) => { productGridApi = p.api; },
           };
-
           async function fetchProductData() {
             if (!productGridApi) return;
             try {
+           	showLoader('productGridLoader',"데이터를 불러오는 중입니다...");
               const { data } = await axios.get("/api/biz/productcode");
               productGridApi.setRowData(data || []);
             } catch (err) {
               console.error("제품 데이터 조회 실패:", err);
-              alert("제품 데이터를 불러오는 데 실패했습니다.");
+              toastr.error("제품 데이터를 불러오는 데 실패했습니다.");
+            } finally {
+            	hideLoader('productGridLoader');
             }
           }
-
-          // 제품코드 모달의 가져오기 버튼 클릭 이벤트
+          if (productModalEl) {
+            productModalEl.addEventListener("shown.bs.modal", () => {
+              const gridDiv = document.getElementById("productGrid");
+              if (!productGridApi) {
+                if (window.agGrid?.createGrid) {
+                  productGridApi = agGrid.createGrid(gridDiv, productGridOptions);
+                }
+              }
+              fetchProductData();
+            });
+          }
           const importProductBtn = document.getElementById("PrcImportBtn");
           if (importProductBtn) {
             importProductBtn.addEventListener("click", () => {
-              const selectedRows = productGridApi.getSelectedRows();
-              if (!selectedRows || selectedRows.length === 0) {
-                return alert("가져올 제품을 선택하세요.");
-              }
-
+              const selectedRows = productGridApi.getSelectedRows?.() || [];
+              if (!selectedRows.length) return toastr.warning("가져올 제품을 선택하세요.");
               const newItems = selectedRows.map((row) => ({
                 productCode: row.productCode,
                 productName: row.productName,
@@ -787,152 +531,116 @@
                 orderQty: row.orderQty,
                 vatType: row.vatType,
               }));
-
               gridApi.applyTransaction({ add: newItems });
               updatePinned();
-
               const modal = bootstrap.Modal.getInstance(productModalEl);
               modal?.hide();
             });
           } else {
-            console.warn(
-              "가져오기 버튼(#PrcImportBtn)을 modal HTML에 추가해주세요."
-            );
+            console.warn("가져오기 버튼(#PrcImportBtn)을 modal HTML에 추가해주세요.");
           }
-        });
 
-        /*
-
-                        ======================== 거래처 모달 ========================
-
-
-                */
-        document.addEventListener("DOMContentLoaded", () => {
+          // ======================== 거래처 모달 ========================
           const customerCodeModalEl = document.getElementById("customermodal");
           let customerCodeGridApi;
           const customerCodeColumnDefs = [
             { headerName: "", checkboxSelection: true, width: 50 },
             { headerName: "거래처코드", field: "cusCode", width: 140 },
-            {
-              headerName: "거래처명",
-              field: "cusName",
-              flex: 1,
-              minWidth: 160,
-            },
+            { headerName: "거래처명", field: "cusName", flex: 1, minWidth: 160 },
             { headerName: "신용등급", field: "creditGrade", width: 140 },
-            { headerName: "여신잔액", field: "leftPrice", width: 140 },
-            { headerName: "할인율", field: "discountRate", width: 140 },
-            { headerName: "잔여할인(월)", field: "monDiscCnt", width: 140 },
+            { headerName: "여신잔액", field: "leftPrice", width: 140, cellClass: "ag-right-aligned-cell" },
+            { headerName: "할인율", field: "discountRate", width: 140, cellClass: "ag-right-aligned-cell" },
+            { headerName: "잔여할인(월)", field: "monDiscCnt", width: 140, cellClass: "ag-right-aligned-cell" },
           ];
-          async function fetchCustomerCodeData() {
-            if (!customerCodeGridApi) return;
-            try {
-              const { data } = await axios.get("/api/biz/customercode");
-              customerCodeGridApi.setRowData(data || []);
-              customerCodeGridApi.sizeColumnsToFit?.();
-            } catch (err) {
-              console.error("거래처조회 실패:", err);
-              alert("거래처 불러오는 데 실패했습니다.");
-            }
-          }
-          if (customerCodeModalEl) {
-            customerCodeModalEl.addEventListener("shown.bs.modal", () => {
-              const gridDiv = document.getElementById("customerGrid");
-              if (!customerCodeGridApi) {
-                if (window.agGrid?.createGrid) {
-                  customerCodeGridApi = agGrid.createGrid(
-                    gridDiv,
-                    customerCodeGridOptions
-                  );
-                } else {
-                  customerCodeGridApi = customerCodeGridOptions.api;
-                }
-              }
-              fetchCustomerCodeData();
-            });
-          }
           const customerCodeGridOptions = {
             columnDefs: customerCodeColumnDefs,
             rowSelection: "single",
             rowData: [],
             defaultColDef: { sortable: true, resizable: true, filter: true },
-            onGridReady: (p) => {
-              customerCodeGridApi = p.api;
-            },
+            onGridReady: (p) => { customerCodeGridApi = p.api; },
           };
-
-          // 1) 거래처 선택 시 코드/이름 모두 세팅
-          function assignCustomerToForm(row) {
-            const cusNameEl = document.getElementById("cusName");
-            const cusCodeEl = document.getElementById("cusCode");
-            const cusDiscountEl = document.getElementById("discountRate");
-            const cusLeftPriceEl = document.getElementById("leftPrice");
-            const monDiscCntEl = document.getElementById("monDiscCnt");
-            if (cusNameEl) cusNameEl.value = row.cusName ?? "";
-            if (cusCodeEl) cusCodeEl.value = row.cusCode ?? "";
-            if (cusDiscountEl) cusDiscountEl.value = row.discountRate ?? "";
-            if (cusLeftPriceEl) cusLeftPriceEl.value = row.leftPrice ?? "";
-            if (monDiscCntEl) monDiscCntEl.value = row.monDiscCnt ?? "";
-            
-            // 상태에 DB값 보관
-            selectedCustomer.discountRate = Number(row.discountRate ?? 0);
-            selectedCustomer.leftPrice    = Number(row.leftPrice ?? 0);
-            selectedCustomer.monDiscCnt   = Number(row.monDiscCnt ?? 0);
-
-            // 화면 표시는 그대로
-            if (cusDiscountEl) cusDiscountEl.value = 0;               // 기본은 미적용이므로 0
-            if (cusLeftPriceEl) cusLeftPriceEl.value = row.leftPrice ?? "";
-            if (monDiscCntEl) monDiscCntEl.value = row.monDiscCnt ?? "";
-
-            // 선택 시 미적용으로 초기화
-            const creditActiveSel = document.getElementById("creditActive");
-            if (creditActiveSel) {
-              creditActiveSel.value = "N";
-              document.getElementById("discountRate").disabled = true;
-          }
-            
-            // 고객 바뀌면 합계도 다시 계산(필요시)
-            if (gridApi) { 
-            	updatePinned(); 
-            	}
+          async function fetchCustomerCodeData() {
+            if (!customerCodeGridApi) return;
+            try {
+             showLoader('customerGridLoader',"데이터를 불러오는 중입니다...");
+              const { data } = await axios.get("/api/biz/customercode");
+              customerCodeGridApi.setRowData(data || []);
+              customerCodeGridApi.sizeColumnsToFit?.();
+            } catch (err) {
+              console.error("거래처조회 실패:", err);
+              toastr.err("거래처 불러오는 데 실패했습니다.");
+            } finally {
+            	hideLoader('customerGridLoader');
             }
-            
-            
-          // 거래처 모달의 선택 버튼 클릭 이벤트
+          }
+          if (customerCodeModalEl) {
+            customerCodeModalEl.addEventListener("shown.bs.modal", () => {
+              const gridDiv = document.getElementById("customerGrid");
+              if (!customerCodeGridApi && window.agGrid?.createGrid) {
+                customerCodeGridApi = agGrid.createGrid(gridDiv, customerCodeGridOptions);
+              }
+              fetchCustomerCodeData();
+            });
+          }
+
+       // 거래처 선택 시 할인율에 따른 적용여부 자동설정
+function assignCustomerToForm(row) {
+  const cusNameEl      = document.getElementById("cusName");
+  const cusCodeEl      = document.getElementById("cusCode");
+  const cusDiscountEl  = document.getElementById("discountRate");
+  const cusLeftPriceEl = document.getElementById("leftPrice");
+  const monDiscCntEl   = document.getElementById("monDiscCnt");
+  const activeSel      = document.getElementById("creditActive");
+
+  if (cusNameEl)      cusNameEl.value      = row.cusName ?? "";
+  if (cusCodeEl)      cusCodeEl.value      = row.cusCode ?? "";
+  if (cusLeftPriceEl) cusLeftPriceEl.value = row.leftPrice ?? "";
+  if (monDiscCntEl)   monDiscCntEl.value   = row.monDiscCnt ?? "";
+
+  // 상태 저장
+  selectedCustomer.discountRate = Number(row.discountRate ?? 0);
+  selectedCustomer.leftPrice    = Number(row.leftPrice ?? 0);
+  selectedCustomer.monDiscCnt   = Number(row.monDiscCnt ?? 0);
+
+  // 입력 값 보존 + 자동 적용 판정
+  const hasDiscount = selectedCustomer.discountRate > 0;
+
+  if (cusDiscountEl) {
+    // 고객 할인율 표시(0 이라도 그대로 표시, 이후 토글로 제어)
+    // 필요하면 '0이면 0'로, '있으면 그대로' 표시
+    cusDiscountEl.value = hasDiscount ? selectedCustomer.discountRate : 0;
+  }
+
+  if (activeSel) activeSel.value = hasDiscount ? "Y" : "N";
+  if (cusDiscountEl) cusDiscountEl.disabled = !hasDiscount;
+
+  // 계산 반영
+  if (window.gridApi) {
+    gridApi.refreshCells({ force: true });
+  }
+  if (typeof updatePinned === "function") updatePinned();
+}
+
           const importCustomerCodeBtn = document.getElementById("CstImportBtn");
           if (importCustomerCodeBtn) {
             importCustomerCodeBtn.addEventListener("click", () => {
-              if (!customerCodeGridApi) return alert("목록을 먼저 불러오세요.");
+              if (!customerCodeGridApi) return toastr.warning("목록을 먼저 불러오세요.");
               const selected = customerCodeGridApi.getSelectedRows?.() || [];
-              if (!selected.length) return alert("거래처를 선택하세요.");
-
+              if (!selected.length) return toastr.warning("거래처를 선택하세요.");
               assignCustomerToForm(selected[0]);
-
               const modal = bootstrap.Modal.getInstance(customerCodeModalEl);
               modal?.hide();
             });
           } else {
-            console.warn(
-              "가져오기 버튼(#CstImportBtn)을 modal HTML에 추가해주세요."
-            );
+            console.warn("가져오기 버튼(#CstImportBtn)을 modal HTML에 추가해주세요.");
           }
-        });
 
-        /*
-        ======= ======= =======
-        ======= 임시조치 =======
-        ======= ======= =======
-                */
-
-        // body에 강제 표시(z-index 문제 회피)
-        ["productcodeModal", "customermodal", "PoHistoryModal"].forEach(
-          (id) => {
+          // ======= 임시조치: 모달을 body로 이동(z-index 문제 회피) =======
+          ["productcodeModal", "customermodal", "PoHistoryModal"].forEach((id) => {
             const el = document.getElementById(id);
-            if (el && el.parentElement !== document.body) {
-              document.body.appendChild(el);
-            }
-          }
-        );
+            if (el && el.parentElement !== document.body) document.body.appendChild(el);
+          });
+        });
       </script>
     </th:block>
   </body>

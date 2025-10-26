@@ -67,71 +67,74 @@
           font-size: 12px;
           color: #6b7280;
         }
+        #grid.ag-theme-quartz { height: 420px; width: 100%; } /* 원하는 높이로 */
       </style>
     </th:block>
   </head>
 
   <body>
     <section layout:fragment="content">
-      <div class="card shadow">
+      <div class="card shadow mb-4">
         <!-- 헤더 -->
-        <div
-          class="card-header d-flex align-items-center justify-content-between"
-        >
-          <h5 class="mb-0">출하지시서 조회</h5>
-          <div class="d-flex gap-2">
-            <button
-              type="button"
-              class="btn btn-outline-secondary btn-reset"
-              id="btnReset"
-            >
-              <i class="bi bi-arrow-counterclockwise me-1"></i>초기화
-            </button>
-            <button type="button" class="btn btn-primary" id="btnSearch">
-              <i class="bi bi-search me-1"></i>검색
-            </button>
-          </div>
-        </div>
+	<div class="card-header py-3 d-flex align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">출하지시서 조회</h6>
+     </div>
+        
+<div class="card-body">
+  <!-- 검색 영역 -->
+  <div class="form-inline flex-wrap gap-2 align-items-end">
+    <label class="form-label mb-2 me-2">작성일자</label>
+    <input
+      type="date"
+      class="form-control"
+      id="writeDateStart"
+    />
 
-        <div class="card-body">
-          <!-- 검색 영역 -->
-          <div class="card filter-card p-3 mb-2">
-            <div class="row g-3 align-items-end">
-              <div class="col-md-3">
-                <label class="form-label seg-title">작성일자</label>
-                <div class="d-flex gap-2">
-                  <input type="date" class="form-control" id="writeDateStart" />
-                  <input type="date" class="form-control" id="writeDateEnd" />
-                </div>
-              </div>
+    <label class="form-label mb-2 me-2">납기일자</label>
+    <input
+      type="date"
+      class="form-control"
+      id="exDateStart"
+    />
 
-              <div class="col-md-3">
-                <label class="form-label seg-title">납기일자</label>
-                <div class="d-flex gap-2">
-                  <input type="date" class="form-control" id="exDateStart" />
-                  <input type="date" class="form-control" id="exDateEnd" />
-                </div>
-              </div>
+    <label class="form-label mb-2 me-2">거래처</label>
+    <input
+      type="text"
+      class="form-control"
+      id="customer"
+      placeholder="거래처명"
+    />
 
-              <div class="col-md-4">
-                <label class="form-label seg-title">거래처</label>
-                <div class="input-group">
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="customer"
-                    placeholder="거래처명 또는 코드"
-                  />
-                  <span class="input-group-text"
-                    ><i class="bi bi-search"></i
-                  ></span>
-                </div>
-              </div>
+    <button
+      type="button"
+      class="btn btn-danger"
+      id="btnReset"
+    >
+      초기화
+    </button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      id="btnSearch"
+    >
+      조회
+    </button>
+  </div>
+</div>
+
+          <!-- 3) 목록 그리드 -->
+    <div class="card-body pt-3">
+        <!--  로딩바 구역 -->
+        <div id="DoGridLoader" style="position: relative; width: 100%; max-height: 500px;">          
+          <div id="grid" class="ag-theme-quartz"></div>
+        <!-- 로딩 스피너 -->
+          <div id="loaderBsModal" class="loader-overlay" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
             </div>
           </div>
-          <!-- 3) 목록 그리드 -->
-          <div id="grid" class="ag-theme-quartz"></div>
-        </div>
+          </div>
+ 	</div>
       </div>
 
       <!-- Toast 알람 -->
@@ -149,66 +152,58 @@
     </section>
 
     <th:block layout:fragment="body_extra">
-      <script
-        src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"
-      ></script>
-      <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      ></script>
-      <script
-        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"
-      ></script>
-      <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-      ></script>
+      <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
       <script th:inline="none">
         document.addEventListener("DOMContentLoaded", () => {
-          // === DOM ===
-          const btnSearch = document.getElementById("btnSearch"); // 검색 버튼
-          const btnReset = document.getElementById("btnReset"); // 초기화 버튼
-          const statusBtns = document.querySelectorAll(".status-tabs .btn"); // 처리상태 버튼
-          const writeDateStart = document.getElementById("writeDateStart"); // 작성일자 시작
-          const writeDateEnd = document.getElementById("writeDateEnd"); // 작성일자 종료
-          const exDateStart = document.getElementById("exDateStart"); // 납기일자 시작
-          const exDateEnd = document.getElementById("exDateEnd"); // 납기일자 종료
-          const customer = document.getElementById("customer"); // 거래처
-          const status = document.getElementById("status"); // 진행상태
+          const btnSearch = document.getElementById("btnSearch");
+          const btnReset = document.getElementById("btnReset");
+          const writeDateStart = document.getElementById("writeDateStart");
+          const exDateStart = document.getElementById("exDateStart");
+          const customer = document.getElementById("customer");
 
-          // === 전체 상태값 초기화 ===
-          let currentStatus = "";
+          // 로더 유틸 (없으면 자동 생성)
+          if (typeof window.showLoader !== "function") {
+            window.showLoader = (id) => {
+              const root = document.getElementById(id);
+              const overlay = root?.querySelector?.(".loader-overlay");
+              if (overlay) overlay.style.display = "flex";
+            };
+          }
+          if (typeof window.hideLoader !== "function") {
+            window.hideLoader = (id) => {
+              const root = document.getElementById(id);
+              const overlay = root?.querySelector?.(".loader-overlay");
+              if (overlay) overlay.style.display = "none";
+            };
+          }
 
-          // === Grid 설정 ===
+          // === Grid ===
           const columnDefs = [
-            {
-              headerName: "지시서번호",
-              field: "orderCode",
-              width: 120,
-              // cellRenderer: (p) =>
-              //  `<a href="/biz/ship/dispatch/${p.value}" class="link-primary">${p.value}</a>`,
-            },
+            { headerName: "지시서번호", field: "orderCode", width: 120 },
             {
               headerName: "작성일자",
               field: "insertDate",
               width: 120,
               valueFormatter: (p) =>
-                p.value ? new Date(p.value).toLocaleDateString("ko-KR") : "",
+                p.value
+                  ? new Date(p.value).toLocaleDateString("ko-KR")
+                  : "",
             },
             { headerName: "거래처명", field: "customerName", minWidth: 140 },
             { headerName: "품목명", field: "productName", minWidth: 180 },
-            {
-              headerName: "주소",
-              field: "addr",
-              flex: 1,
-            },
+            { headerName: "주소", field: "addr", flex: 1 },
             {
               headerName: "납기일자",
               field: "exDate",
               width: 120,
               valueFormatter: (p) =>
-                p.value ? new Date(p.value).toLocaleDateString("ko-KR") : "",
+                p.value
+                  ? new Date(p.value).toLocaleDateString("ko-KR")
+                  : "",
             },
             { headerName: "진행상태", field: "status", width: 110 },
           ];
@@ -219,54 +214,54 @@
             rowSelection: "single",
             animateRows: true,
             defaultColDef: { sortable: true, resizable: true },
-            //onRowDoubleClicked: (e) => {
-            // if (!e.data?.orderCode) return;
-            //  location.href = `/biz/ship/dispatch/${e.data.orderCode}`;
-            //},
           };
 
           new agGrid.Grid(document.getElementById("grid"), gridOptions);
 
-          // === 이벤트 ===
-          statusBtns.forEach((btn) => {
-            btn.addEventListener("click", () => {
-              statusBtns.forEach((b) =>
-                b.classList.replace("btn-primary", "btn-outline-primary")
-              );
-              statusBtns.forEach((b) => b.classList.remove("active"));
-              btn.classList.add("active");
-              btn.classList.replace("btn-outline-primary", "btn-primary");
-              currentStatus = btn.dataset.status ?? "";
-              fetchList();
-            });
-          });
-
-          btnSearch.addEventListener("click", fetchList);
-
-          btnReset.addEventListener("click", () => {
-            currentStatus = "";
-            statusBtns.forEach((b, i) => {
-              b.classList.remove("active");
-              b.classList.replace("btn-primary", "btn-outline-primary");
-              if (i === 0) {
-                b.classList.add("active");
-                b.classList.replace("btn-outline-primary", "btn-primary");
-              }
-            });
-            insFrom.value = "";
-            insTo.value = "";
-            dueFrom.value = "";
-            dueTo.value = "";
-            customer.value = "";
-            fetchList();
-          });
-
-          // === 데이터 로드 ===
+          // === 조회 함수 ===
           async function fetchList() {
+            const params = {
+              writeDateStart: writeDateStart.value || "",
+              exDateStart: exDateStart.value || "",
+              customer: customer.value.trim() || "",
+            };
+
             try {
-              const res = await axios.get("/api/biz/dolist");
-              const mapped = res.data.map((d) => ({
-                // 컬럼명 : 실 db 컬럼명
+              showLoader("DoGridLoader");
+              const res = await axios.get("/api/biz/dolist", {
+                params,
+                timeout: 15000,
+              });
+
+              let rows = Array.isArray(res.data) ? res.data : [];
+
+              // --- 클라이언트 필터 폴백 ---
+              if (params.writeDateStart) {
+                const ws = new Date(params.writeDateStart).setHours(0, 0, 0, 0);
+                rows = rows.filter(
+                  (d) =>
+                    d.doCreated &&
+                    new Date(d.doCreated).setHours(0, 0, 0, 0) >= ws
+                );
+              }
+              if (params.exDateStart) {
+                const es = new Date(params.exDateStart).setHours(0, 0, 0, 0);
+                rows = rows.filter(
+                  (d) =>
+                    d.exDate &&
+                    new Date(d.exDate).setHours(0, 0, 0, 0) >= es
+                );
+              }
+              if (params.customer) {
+                const kw = params.customer.toLowerCase();
+                rows = rows.filter((d) =>
+                  String(d.cusName || "")
+                    .toLowerCase()
+                    .includes(kw)
+                );
+              }
+
+              const mapped = rows.map((d) => ({
                 orderCode: d.doCode,
                 insertDate: d.doCreated,
                 customerName: d.cusName,
@@ -275,16 +270,34 @@
                 exDate: d.exDate,
                 status: d.doStatus,
               }));
-              gridOptions.api.setRowData(mapped);
 
-              console.log("db에서가져온 데이터는 => ", res.data);
-              // 응답 키가 columnDefs와 일치한다면 이 한 줄로 끝
+              gridOptions.api.setRowData(mapped);
               gridOptions.api.sizeColumnsToFit();
             } catch (e) {
               console.error(e);
               toastr.error("목록 조회 실패");
+            } finally {
+              hideLoader("DoGridLoader");
             }
           }
+
+          // === 이벤트 바인딩 ===
+          btnSearch.addEventListener("click", fetchList);
+          [writeDateStart, exDateStart, customer].forEach((el) => {
+            el.addEventListener("keydown", (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                fetchList();
+              }
+            });
+          });
+
+          btnReset.addEventListener("click", () => {
+            writeDateStart.value = "";
+            exDateStart.value = "";
+            customer.value = "";
+            fetchList();
+          });
 
           // 초기 로드
           fetchList();

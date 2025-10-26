@@ -19,18 +19,32 @@
           <div class="modal-content">
             <div class="modal-header">
               <h5 class="modal-title">주문서조회</h5>
+            <button type="button" class="btn btn-light btn-sm border-0" data-bs-dismiss="modal" aria-label="닫기">
+            <i class="fas fa-times"></i>
+          </button>
             </div>
 
             <!-- 모달 바디 시작 -->
             <div class="modal-body">
               <!-- 검색 결과 ag-Grid -->
+        <!--  로딩바 구역 -->
+        <div id="poHistoryGridGridLoader" style="position: relative; width: 100%; max-height: 500px;">
               <div
                 id="poHistoryGrid"
                 class="ag-theme-quartz"
                 style="height: 400px; width: 100%"
               ></div>
-
+       <!-- 로딩 스피너 -->
+          <div id="loaderBsModal" class="loader-overlay" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
               <!-- 모달 바디 종료 -->
+            </div>
+
+            <!-- 모달 푸터 시작-->
+            <div class="modal-footer">
               <button
                 type="button"
                 id="PohImportBtn"
@@ -40,10 +54,6 @@
               >
                 가져오기
               </button>
-            </div>
-
-            <!-- 모달 푸터 시작-->
-            <div class="modal-footer">
               <!-- 모달 푸터 종료-->
             </div>
           </div>
