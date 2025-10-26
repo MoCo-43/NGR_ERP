@@ -25,41 +25,21 @@
             </div>
             <!-- 모달 바디 시작 -->
             <div class="modal-body">
-              <!-- 버튼 영역: 카드 밖, 오른쪽 상단 고정 -->
-              <div class="d-flex justify-content-end mb-2 gap-2">
-                <button type="reset" form="searchForm" class="btn btn-danger">
-                  초기화
-                </button>
-              </div>
 
-              <!-- 검색폼 카드 -->
-              <form
-                th:action="@{/list}"
-                method="get"
-                id="searchForm"
-                class="card p-3 mb-3"
-              >
-                <div class="d-flex align-items-end gap-3">
-                  <!-- 거래처명 -->
-                  <div>
-                    <label for="keyword" class="form-label">거래처명</label>
-                    <input
-                      type="text"
-                      id="keyword"
-                      name="keyword"
-                      class="form-control"
-                      placeholder="검색어 입력"
-                    />
-                  </div>
-                </div>
-              </form>
               <!-- 검색 결과 ag-Grid -->
+         <!--  로딩바 구역 -->
+        <div id="customerGridLoader" style="position: relative; width: 100%; max-height: 500px;">
               <div
                 id="customerGrid"
                 class="ag-theme-quartz"
                 style="height: 400px; width: 100%"
               ></div>
-                
+          <!-- 로딩 스피너 -->
+          <div id="loaderBsModal" class="loader-overlay" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
                 <!-- 모달 바디 종료 -->
 
                 <!-- 모달 푸터 -->
@@ -80,4 +60,5 @@
       </div>
     </div>
   </body>
+
 </html>

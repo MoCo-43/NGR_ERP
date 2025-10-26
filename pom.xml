@@ -183,23 +183,17 @@
 	</dependencyManagement>
 	<build>
 	<!-- ✅ ① 리소스 설정 (여기 추가) -->
-	  <resources>
+	  <!--<resources>
 	    <resource>
 	      <directory>src/main/resources</directory>
 	      <includes>
-	        <!-- .jasper만 포함할 때 -->
-	        <!--어플리케이션프롬퍼티파일이 빌드 및 부트대시보드 실행시에러,
-	         .jasper확장자 파일만 target/classes에 빌드 결과물을 포함하라는 의미로 
-	         어플리케이션 프롬퍼티를 읽어오지 못하는 문제가 발생하여 빌드 시 프롬퍼티부분이 빠져있었던 원인.-->
-	        <!--모든 리소스를 포함하라는 의미인 아래구성을 사용하거나 만약 꼭 .jasper만 필터링하려면 **/*.properties 등도 포함시켜주어야 가능하다. -->
-	        <!--**/*설정하면 전체-->
-	        <!--<include>**/*</include>-->
+	         .jasper만 포함할 때 
 	        <include>**/*.jasper</include>
-	        <!-- 개발 환경에서도 쓰려면 둘 다 -->
-	        <!--<include>**/*.jrxml</include>-->
+	         개발 환경에서도 쓰려면 둘 다 
+	        <include>**/*.jrxml</include>
 	      </includes>
 	    </resource>
-	  </resources>
+	  </resources>-->
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

@@ -10,75 +10,44 @@
     <title layout:fragment="title">출하지시서 입력</title>
 
     <th:block layout:fragment="head_extra">
-      <!-- Bootstrap -->
-      <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-        crossorigin="anonymous"
-      />
-      <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-        rel="stylesheet"
-      />
+      <!-- Bootstrap CSS -->
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous" />
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
-      <!-- AG Grid -->
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css"
-      />
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css"
-      />
+      <!-- AG Grid CSS -->
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-grid.css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/styles/ag-theme-quartz.css" />
+
+      <!-- Toastr CSS (⚠️ CSS만 head에) -->
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+      <!-- cuteAlert CSS -->
+      <link rel="stylesheet" href="https://unpkg.com/cute-alert@1.3.0/style.css" />
 
       <style>
-        .form-label {
-          font-weight: 600;
-        }
-        .btn-slim {
-          padding: 0.375rem 0.75rem;
-        }
-        .filter-card {
-          border: 1px solid #e5e7eb;
-        }
-        .toolbar .btn {
-          min-width: 96px;
-        }
-        #itemGrid.ag-theme-quartz {
-          height: 360px;
-          width: 100%;
-        }
-        #poHistoryGrid.ag-theme-quartz,
-        #productGrid.ag-theme-quartz,
-        #customerGrid.ag-theme-quartz {
-          height: 360px;
-          width: 100%;
-        }
-        .summary-bar {
-          font-weight: 600;
-        }
+        .form-label { font-weight: 600; }
+        .btn-slim { padding: 0.375rem 0.75rem; }
+        .filter-card { border: 1px solid #e5e7eb; }
+        .toolbar .btn { min-width: 96px; }
+        #itemGrid.ag-theme-quartz { height: 360px; width: 100%; }
+        #poHistoryGrid.ag-theme-quartz, #productGrid.ag-theme-quartz, #customerGrid.ag-theme-quartz { height: 360px; width: 100%; }
+        .summary-bar { font-weight: 600; }
       </style>
     </th:block>
   </head>
 
   <body>
     <section layout:fragment="content">
-      <div class="card shadow">
+      <div class="card shadow mb-4">
         <!-- 헤더 -->
-        <div
-          class="card-header d-flex align-items-center justify-content-between"
-        >
-          <h5 class="mb-0">출하지시서 입력</h5>
-          <div class="d-flex gap-2">
-            <button
-              type="button"
-              class="btn btn-outline-secondary btn-slim"
-              id="btnReset"
-            >
-              <i class="bi bi-arrow-counterclockwise me-1"></i>초기화
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h6 class="m-0 font-weight-bold text-primary">출하지시서 입력</h6>
+          <div class="btn-group">
+            <button type="button" class="btn btn-danger" id="btnReset">
+              초기화
             </button>
-            <button type="button" class="btn btn-primary btn-slim" id="btnSave">
-              <i class="bi bi-check2 me-1"></i>등록
+            <button type="button" class="btn btn-primary" id="btnSave">
+             등록
             </button>
           </div>
         </div>
@@ -95,25 +64,9 @@
               <div class="col-md-3">
                 <label class="form-label">거래처</label>
                 <div class="input-group">
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="cusName"
-                    placeholder="거래처명"
-                  />
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="cusCode"
-                    placeholder="거래처코드"
-                  />
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    id="btnFindCustomer"
-                    data-bs-toggle="modal"
-                    data-bs-target="#customermodal"
-                  >
+                  <input type="text" class="form-control" id="cusName" placeholder="거래처명" />
+                  <input type="text" class="form-control" id="cusCode" placeholder="거래처코드" />
+                  <button type="button" class="btn btn-outline-secondary" id="btnFindCustomer" data-bs-toggle="modal" data-bs-target="#customermodal">
                     <i class="bi bi-search"></i>
                   </button>
                 </div>
@@ -122,22 +75,13 @@
               <div class="col-md-3">
                 <label class="form-label">담당자</label>
                 <div class="input-group">
-                  <span
-                    class="form-control"
-                    id="creater"
-                    th:text="${#authentication.principal.empLoginVO.name}"
-                  ></span>
+                  <span class="form-control" id="creater" th:text="${#authentication.principal.empLoginVO.name}"></span>
                 </div>
               </div>
 
               <div class="col-md-3">
                 <label class="form-label">연락처</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="tel"
-                  placeholder="연락처"
-                />
+                <input type="text" class="form-control" id="tel" placeholder="연락처" />
               </div>
             </div>
 
@@ -150,18 +94,8 @@
               <div class="col-md-3">
                 <label class="form-label">도로명주소</label>
                 <div class="input-group">
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="sample4_roadAddress"
-                    placeholder="주소"
-                  />
-                  <button
-                    type="button"
-                    onclick="sample4_execDaumPostcode()"
-                    class="btn btn-outline-secondary"
-                    id="btnf"
-                  >
+                  <input type="text" class="form-control" id="sample4_roadAddress" placeholder="주소" />
+                  <button type="button" onclick="sample4_execDaumPostcode()" class="btn btn-outline-secondary" id="btnf">
                     <i class="bi bi-search"></i>
                   </button>
                 </div>
@@ -170,12 +104,7 @@
               <div class="col-md-3">
                 <label class="form-label">우편번호</label>
                 <div class="input-group">
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="sample4_postcode"
-                    placeholder="우편번호"
-                  />
+                  <input type="text" class="form-control" id="sample4_postcode" placeholder="우편번호" />
                 </div>
               </div>
 
@@ -184,10 +113,8 @@
                 function sample4_execDaumPostcode() {
                   new daum.Postcode({
                     oncomplete: function (data) {
-                      document.getElementById("sample4_postcode").value =
-                        data.zonecode;
-                      document.getElementById("sample4_roadAddress").value =
-                        data.roadAddress;
+                      document.getElementById("sample4_postcode").value = data.zonecode;
+                      document.getElementById("sample4_roadAddress").value = data.roadAddress;
                     },
                   }).open();
                 }
@@ -195,25 +122,15 @@
             </div>
 
             <!-- 조회 버튼 그룹 -->
-            <div class="toolbar d-flex gap-2 mt-3">
-              <button
-                type="button"
-                class="btn btn-outline-secondary btn-slim"
-                id="btnFindProduct"
-                data-bs-toggle="modal"
-                data-bs-target="#productcodeModal"
-              >
-                품목코드
-              </button>
-              <button
-                type="button"
-                class="btn btn-outline-secondary btn-slim"
-                id="btnFindOrder"
-                data-bs-toggle="modal"
-                data-bs-target="#PoHistoryModal"
-              >
-                주문서조회
-              </button>
+            <div class="d-flex justify-content-between mt-3 mb-2">
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-secondary btn-slim" id="btnFindProduct" data-bs-toggle="modal" data-bs-target="#productcodeModal">
+                  품목코드
+                </button>
+                <button type="button" class="btn btn-secondary btn-slim" id="btnFindOrder" data-bs-toggle="modal" data-bs-target="#PoHistoryModal">
+                  주문서조회
+                </button>
+              </div>
             </div>
           </div>
 
@@ -223,32 +140,15 @@
           <!-- 하단 합계/행조작 -->
           <div class="d-flex justify-content-between align-items-center mt-2">
             <div class="d-flex gap-2">
-              <button
-                type="button"
-                class="btn btn-outline-primary btn-slim"
-                id="btnAddRow"
-              >
-                <i class="bi bi-plus-circle me-1"></i>행 추가
+              <button type="button" class="btn btn-secondary" id="btnDelRow">
+                선택 삭제
               </button>
-              <button
-                type="button"
-                class="btn btn-outline-danger btn-slim"
-                id="btnDelRow"
-              >
-                <i class="bi bi-dash-circle me-1"></i>선택 삭제
-              </button>
-              <button
-                type="button"
-                class="btn btn-outline-secondary btn-slim"
-                id="btnClearRows"
-              >
-                <i class="bi bi-trash me-1"></i>전체 비우기
+              <button type="button" class="btn btn-danger" id="btnClearRows">
+               전체 비우기
               </button>
             </div>
             <div class="summary-bar">
-              총 수량: <span id="sumQty">0</span> | 총 공급가액:
-              <span id="sumSupply">0</span> | 총 부가세:
-              <span id="sumVat">0</span>
+              총 수량: <span id="sumQty">0</span> | 총 공급가액: <span id="sumSupply">0</span> | 총 부가세: <span id="sumVat">0</span>
             </div>
           </div>
         </div>
@@ -256,9 +156,7 @@
 
       <!-- 모달 모음 -->
       <div th:replace="~{biz/modals/PoCustomerModal :: customermodal}"></div>
-      <div
-        th:replace="~{biz/modals/ProductCodeModal :: productcodeModal}"
-      ></div>
+      <div th:replace="~{biz/modals/ProductCodeModal :: productcodeModal}"></div>
       <div th:replace="~{biz/modals/PoHistoryModal :: PoHistoryModal}"></div>
     </section>
 
@@ -268,6 +166,7 @@
     const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
     const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
 </script>
+
       <script
         src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"
       ></script>
@@ -277,9 +176,6 @@
       <script
         src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"
       ></script>
- <!-- toastr -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer">
-</script>
 
       <script th:inline="none">
       console.log("loginName : "+loginName);
@@ -377,6 +273,7 @@
           rowSelection: "multiple",
           rowMultiSelectWithClick: true,
           animateRows: true,
+          localeText: { noRowsToShow: "출하지시 할 품목 혹은 주문서를 넣어주세요"},
           defaultColDef: {
             sortable: true,
             resizable: true,
@@ -410,34 +307,32 @@
         }
         window.updateSummary = updateSummary;
 
-        // 행 추가/삭제/비우기
-        document.getElementById("btnAddRow").onclick = () => {
-          itemGridApi.applyTransaction({
-            add: [
-              {
-                productCode: "",
-                productName: "",
-                payMethod: "현금",
-                orderQty: 0,
-                unitPrice: 0,
-                vatAmt: 0,
-                supAmt: 0,
-                note: "",
-              },
-            ],
-          });
-        };
+     // 행 삭제 버튼
         document.getElementById("btnDelRow").onclick = () => {
           const sel = itemGridApi.getSelectedRows();
-          if (!sel.length) return alert("삭제할 행을 선택하세요");
+          if (!sel.length) return toastr.warning("삭제할 행을 선택하세요");
           itemGridApi.applyTransaction({ remove: sel });
           updateSummary();
-          document.getElementById("btnFindProduct").disabled = false;
+
+          // ▼ 그리드가 비면 버튼 전부 활성화 (품목코드/주문서조회/거래처/도로명주소)
+          if (itemGridApi.getDisplayedRowCount() === 0) {
+            document.getElementById("btnFindProduct").disabled   = false;
+            document.getElementById("btnFindOrder").disabled     = false;
+            document.getElementById("btnFindCustomer").disabled  = false;
+            document.getElementById("btnf").disabled             = false; // 도로명주소 버튼
+          }
         };
+
+        // 행 전체비우기 버튼
         document.getElementById("btnClearRows").onclick = () => {
           itemGridApi.setRowData([]);
           updateSummary();
-          document.getElementById("btnFindProduct").disabled = false;
+
+          // ▼ 전체 비우면 즉시 전부 활성화
+          document.getElementById("btnFindProduct").disabled   = false;
+          document.getElementById("btnFindOrder").disabled     = false;
+          document.getElementById("btnFindCustomer").disabled  = false;
+          document.getElementById("btnf").disabled             = false; // 도로명주소 버튼
         };
 
         // 초기화
@@ -453,12 +348,17 @@
           ].forEach((id) => (document.getElementById(id).value = ""));
           itemGridApi.setRowData([]);
           updateSummary();
-          document.getElementById("btnFindProduct").disabled = false;
+
+          // ▼ 초기화 시에도 전부 활성화
+          document.getElementById("btnFindProduct").disabled   = false;
+          document.getElementById("btnFindOrder").disabled     = false;
+          document.getElementById("btnFindCustomer").disabled  = false;
+          document.getElementById("btnf").disabled             = false; // 도로명주소 버튼
         };
 
         // 저장 (주문서번호 없어도 허용)
         document.getElementById("btnSave").onclick = async () => {
-          if (!itemGridApi) return alert("그리드가 아직 준비되지 않았습니다.");
+          if (!itemGridApi) return toastr.info("그리드가 아직 준비되지 않았습니다.");
 
           // 라인 수집
           const lineItemsRaw = [];
@@ -468,7 +368,7 @@
           if (!lineItemsRaw.length)
             return (
               window.toastr?.error?.("품목을 1개 이상 추가하세요") ||
-              alert("품목을 1개 이상 추가하세요")
+              toastr.warning("품목을 1개 이상 추가하세요")
             );
 
           // poCodes (optional)
@@ -504,12 +404,12 @@
           if (!header.customerName)
             return (
               window.toastr?.error?.("거래처를 입력하세요") ||
-              alert("거래처를 입력하세요")
+              toastr.warning("거래처를 입력하세요")
             );
           if (!header.shipDate)
             return (
               window.toastr?.error?.("출하예정일을 입력하세요") ||
-              alert("출하예정일을 입력하세요")
+              toastr.warning("출하예정일을 입력하세요")
             );
 
           // payload (poCodes는 있을 때만 포함)
@@ -540,88 +440,151 @@
 
           console.log("[btnSave] payload:", payload);
           try {
+              const res = await cuteAlert({
+                  type: "question",
+                  title: "주문 확인",
+                  message: "출하지시를 하시겠습니까?",
+                  imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
+                  confirmText: "네",
+                  cancelText: "아니오"
+                });
+                if (res !== true) return;
             await axios.post("/api/biz/doinsert", payload);
-            alert("등록되었습니다");
+            toastr.success("등록되었습니다");
           } catch (e) {
             console.error(e);
             window.toastr?.error?.("등록 실패 (서버 로그 확인)") ||
-              alert("등록 실패 (서버 로그 확인)");
+              toastr.error("등록 실패 (서버 로그 확인)");
           }
         };
 
         /* --------- 품목코드 모달 --------- */
         const productModalEl = document.getElementById("productcodeModal");
         let productGridApi;
+        let productLoading = false; // 중복 로딩 가드
+
+        // 로더 유틸 폴백 (없어도 동작하도록)
+        const _ensureLoaderFns = () => {
+          if (typeof window.showLoader !== "function") {
+            window.showLoader = function (containerId) {
+              const root = document.getElementById(containerId) || document.querySelector(containerId);
+              const overlay = root?.querySelector?.(".loader-overlay") || root;
+              if (overlay) overlay.style.display = "flex";
+            };
+          }
+          if (typeof window.hideLoader !== "function") {
+            window.hideLoader = function (containerId) {
+              const root = document.getElementById(containerId) || document.querySelector(containerId);
+              const overlay = root?.querySelector?.(".loader-overlay") || root;
+              if (overlay) overlay.style.display = "none";
+            };
+          }
+        };
+        _ensureLoaderFns();
+
         const productGridOptions = {
           columnDefs: [
             { headerName: "", checkboxSelection: true, width: 50 },
             { headerName: "품목코드", field: "productCode", flex: 1 },
-            {
-              headerName: "품목명",
-              field: "productName",
-              flex: 1,
-              minWidth: 160,
-            },
-            { headerName: "판매단가", field: "salesPrice", flex: 1 },
-            { headerName: "부가세", field: "vatType", flex: 1 },
+            { headerName: "품목명", field: "productName", flex: 1, minWidth: 160 },
+            { headerName: "판매단가", field: "salesPrice", width: 120, type: "rightAligned" },
+            { headerName: "부가세", field: "vatType", width: 100 },
           ],
           rowSelection: "multiple",
           rowMultiSelectWithClick: true,
           rowData: [],
-          defaultColDef: { sortable: true, resizable: true, filter: true },
+          defaultColDef: { sortable: true, resizable: true, filter: true, minWidth: 90 },
           onGridReady: (p) => {
             productGridApi = p.api;
+            p.api.sizeColumnsToFit?.();
           },
         };
+
         function ensureProductGrid() {
           const gridDiv = document.getElementById("productGrid");
-          if (!gridDiv) return;
+          if (!gridDiv) return null;
+
           if (!gridDiv.__api) {
-            if (window.agGrid?.createGrid)
+            if (window.agGrid?.createGrid) {
+              // v31 권장 방식: 반환값이 Grid API
               gridDiv.__api = agGrid.createGrid(gridDiv, productGridOptions);
-            else {
+            } else {
+              // 구방식 fallback
               new agGrid.Grid(gridDiv, productGridOptions);
               gridDiv.__api = productGridOptions.api;
             }
           }
           productGridApi = gridDiv.__api;
+          return productGridApi;
         }
+
+        // 데이터 로딩
         async function fetchProductData() {
-          if (!productGridApi) return;
-          const { data } = await axios.get("/api/biz/productcode");
-          productGridApi.setRowData(Array.isArray(data) ? data : []);
-          requestAnimationFrame(() => productGridApi.sizeColumnsToFit?.());
+          const containerId = "productGridLoader";
+          const api = productGridApi || ensureProductGrid();
+
+          if (!api) {
+            // API가 아직 없더라도 로더는 반드시 꺼준다 (무한 로딩 방지)
+            window.hideLoader(containerId);
+            return;
+          }
+
+          if (productLoading) return; // 중복 호출 방지
+          productLoading = true;
+
+          try {
+            window.showLoader(containerId, "데이터를 불러오는 중입니다...");
+            const { data } = await axios.get("/api/biz/productcode", { timeout: 15000 });
+            api.setRowData(Array.isArray(data) ? data : []);
+            requestAnimationFrame(() => api.sizeColumnsToFit?.());
+          } catch (err) {
+            console.error("[Product] 조회 실패:", err);
+            window.toastr?.error?.("제품코드 조회 실패");
+          } finally {
+            window.hideLoader(containerId);
+            productLoading = false;
+          }
         }
-        productModalEl?.addEventListener("shown.bs.modal", async () => {
-          ensureProductGrid();
-          await fetchProductData();
-        });
-        document
-          .getElementById("PrcImportBtn")
-          ?.addEventListener("click", () => {
-            const rows = productGridApi?.getSelectedRows?.() || [];
-            if (!rows.length) return alert("가져올 품목을 선택하세요.");
-            const items = rows.map((r) => ({
-              poCode: r.poCode,
-              productCode: r.productCode,
-              productName: r.productName,
-              vatType: r.vatType,
-              payMethod: r.payMethod,
-              qty: r.qty,
-              unitPrice: r.salesPrice || 0,
-              supAmt: (r.qty || 1) * (r.unitPrice || r.salesPrice || 0),
-              vatAmt: Math.round(
-                (r.qty || 1) * (r.unitPrice || r.salesPrice || 0) * 0.1
-              ),
-              note: r.note,
-            }));
-            itemGridApi.applyTransaction({ add: items });
-            updateSummary();
-            (
-              bootstrap.Modal.getInstance(productModalEl) ||
-              bootstrap.Modal.getOrCreateInstance(productModalEl)
-            ).hide();
+
+        // 모달 오픈 시 1회 바인딩 (중복 방지)
+        if (productModalEl && !productModalEl.__bound) {
+          productModalEl.addEventListener("shown.bs.modal", async () => {
+            ensureProductGrid();
+            await fetchProductData();
           });
+          productModalEl.__bound = true;
+        }
+
+        // 가져오기
+        document.getElementById("PrcImportBtn")?.addEventListener("click", () => {
+          const rows = productGridApi?.getSelectedRows?.() || [];
+          if (!rows.length) return toastr.warning("가져올 품목을 선택하세요.");
+
+          const items = rows.map((r) => ({
+            poCode: r.poCode,
+            productCode: r.productCode,
+            productName: r.productName,
+            vatType: r.vatType,
+            payMethod: r.payMethod,
+            // 주의: 기본 행 스키마와 컬럼명 일치 (orderQty vs qty 혼동 금지)
+            orderQty: r.qty ?? 1,
+            unitPrice: r.salesPrice || 0,
+            supAmt: (r.qty ?? 1) * (r.salesPrice || 0),
+            vatAmt: Math.round(((r.qty ?? 1) * (r.salesPrice || 0)) * 0.1),
+            note: r.note,
+          }));
+
+          itemGridApi.applyTransaction({ add: items });
+          updateSummary?.();
+
+          (bootstrap.Modal.getInstance(productModalEl) ||
+            bootstrap.Modal.getOrCreateInstance(productModalEl)
+          ).hide();
+        // 주문서 기반으로 가져오면 품목코드 모달 비활성화(원래 로직 유지)
+        document.getElementById("btnFindOrder").disabled = true;
+        });
+        
+
 
         /* --------- 거래처 모달 --------- */
         const customerModalEl = document.getElementById("customermodal");
@@ -673,7 +636,7 @@
           .getElementById("CstImportBtn")
           ?.addEventListener("click", () => {
             const sel = customerGridApi?.getSelectedRows?.() || [];
-            if (!sel.length) return alert("거래처를 선택하세요.");
+            if (!sel.length) return toastr.warning("거래처를 선택하세요.");
             document.getElementById("cusName").value = sel[0].cusName ?? "";
             document.getElementById("cusCode").value = sel[0].cusCode ?? "";
             document.getElementById("managerName").textContent =
@@ -786,10 +749,10 @@
           .getElementById("PohImportBtn")
           ?.addEventListener("click", () => {
             if (!poHistoryGridApi)
-              return alert("그리드가 아직 준비되지 않았습니다.");
+              return toastr.info("그리드가 아직 준비되지 않았습니다.");
             const selectedRows = poHistoryGridApi.getSelectedRows?.() || [];
             if (!selectedRows.length)
-              return alert("가져올 주문서의 행을 선택하세요.");
+              return toastr.warning("가져올 주문서의 행을 선택하세요.");
 
             document.getElementById("cusCode").value = selectedRows[0].cusCode;
             document.getElementById("cusName").value = selectedRows[0].cusName;
@@ -826,6 +789,10 @@
 
             // 주문서 기반으로 가져오면 품목코드 모달 비활성화(원래 로직 유지)
             document.getElementById("btnFindProduct").disabled = true;
+         // 주문서로 가져왔을 때 추가 잠금
+            document.getElementById("btnFindProduct").disabled  = true;  // 기존 로직 유지
+            document.getElementById("btnFindCustomer").disabled = true;  // 거래처 잠금
+            document.getElementById("btnf").disabled            = true;  // 도로명주소 잠금
           });
       </script>
     </th:block>

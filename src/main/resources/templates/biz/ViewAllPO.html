@@ -48,13 +48,11 @@
     <section layout:fragment="content">
       <!--검색/필터 카드 -->
       <div class="card shadow mb-4">
-        <div
-          class="card-header py-3 d-flex align-items-center justify-content-between"
-        >
+        <div class="card-header py-3 d-flex align-items-center justify-content-between">
           <h6 class="m-0 font-weight-bold text-primary">주문서 조회</h6>
         </div>
 
-        <div class="card-body">
+        <div class="card-body pt-3">
           <!-- 2~6. 검색 조건 -->
           <div class="form-inline flex-wrap gap-2">
             <label class="mr-2 mb-2">작성일자</label>
@@ -76,16 +74,15 @@
             />
 
             <button id="btnSearch" class="btn btn-dark mb-2">조회</button>
+	      <!--  승인 및 입금완료 버튼 -->
+	<div class="d-flex justify-content-end gap-2 pb-0">
+	  <button id="btnPoConfirm" class="btn btn-primary mb-2">승인</button>
+	  <button id="btnPaymentConfirm" class="btn btn-success mb-2">입금완료</button>
+	</div>
           </div>
         </div>
       <!-- *************** 주문서 리스트(ag-Grid) *************** -->
-      <!--  승인 및 입금완료 버튼 -->
-        <div class="card-header py-3">
-          <button id="btnPoConfirm" class="btn btn-dark mb-2">승인</button>
-          <button id="btnPaymentConfirm" class="btn btn-dark mb-2">
-            입금완료
-          </button>
-        </div>
+
         <!--  로딩바 구역 -->
         <div id="orderGridLoader" style="position: relative; width: 100%; max-height: 500px;">
           <div id="orderGrid" class="ag-theme-quartz"></div>
@@ -95,11 +92,9 @@
               <span class="visually-hidden">Loading...</span>
             </div>
           </div>
+
          </div>
       </div>
-
-      <!-- 거래처 모달 -->
-      <div th:replace="~{biz/modals/PoCustomerModal :: customermodal}"></div>
     </section>
 
     <th:block layout:fragment="body_extra">
@@ -300,7 +295,7 @@
               customerCodeGridApi.sizeColumnsToFit?.();
             } catch (err) {
               console.error("거래처조회 실패:", err);
-              alert("거래처 불러오는 데 실패했습니다.");
+              toastr.warning("거래처 불러오는 데 실패했습니다.");
             }
           }
           if (customerCodeModalEl) {
@@ -341,9 +336,9 @@
           const importCustomerCodeBtn = document.getElementById("CstImportBtn");
           if (importCustomerCodeBtn) {
             importCustomerCodeBtn.addEventListener("click", () => {
-              if (!customerCodeGridApi) return alert("목록을 먼저 불러오세요.");
+              if (!customerCodeGridApi) return toastr.warning("목록을 먼저 불러오세요.");
               const selected = customerCodeGridApi.getSelectedRows?.() || [];
-              if (!selected.length) return alert("거래처를 선택하세요.");
+              if (!selected.length) return toastr.warning("거래처를 선택하세요.");
 
               assignCustomerToForm(selected[0]);
 
@@ -382,57 +377,70 @@
           return await axios.put("/api/biz/postatus", { poCodes, poStatus });
         }
 
-        // ================= 승인 버튼 처리 =================
+     // ================= 승인 버튼 처리 =================
         document.addEventListener("DOMContentLoaded", () => {
           const btnConfirm = document.getElementById("btnPoConfirm");
 
           btnConfirm?.addEventListener("click", async () => {
-            if (!gridApi) return alert("그리드 준비 전입니다.");
+            if (!gridApi) return toastr.info("그리드 준비 전입니다.");
             const poCodes = getSelectedPoCodes();
-            if (!poCodes.length) return alert("승인할 주문서를 선택하세요.");
+            if (!poCodes.length) return toastr.warning("승인할 주문서를 선택하세요.");
 
-            // (선택) 현재상태 가드: 승인대기만 승인
             const selected = gridApi.getSelectedRows?.() || [];
             const invalid = selected.filter(
               (r) => r.poStatus && r.poStatus !== "승인대기"
             );
-            if (
-              invalid.length &&
-              !confirm(
-                `'승인대기'가 아닌 ${invalid.length}건 포함. 그래도 진행할까요?`
-              )
-            )
-              return;
 
-            if (
-              !confirm(`선택된 ${poCodes.length}건을 '작성완료'로 변경할까요?`)
-            )
-              return;
+            if (invalid.length) {
+              const warn = await cuteAlert({
+                type: "question",
+                title: "상태 확인",
+                message: `'승인대기'가 아닌 ${invalid.length}건이 포함되어 있습니다.<br>그래도 진행할까요?`,
+                imgUrl:
+                  "https://img.icons8.com/?size=100&id=103807&format=png&color=000000",
+                confirmText: "진행",
+                cancelText: "취소",
+              });
+              if (warn !== "confirm") return;
+            }
 
+            // ✅ 승인 최종 확인
+            const res = await cuteAlert({
+              type: "question",
+              title: "주문 확인",
+              message: `선택된 ${poCodes.length}건을 '작성완료'로 변경할까요?`,
+              imgUrl:
+                "https://img.icons8.com/?size=100&id=103807&format=png&color=000000",
+              confirmText: "네",
+              cancelText: "아니오",
+            });
+            if (res !== "confirm") return; // 사용자가 '아니오' 누르면 종료
+
+            // 진행
             setBusy(btnConfirm, true, "승인 처리중...");
             try {
               const results = await putPoStatusSingle(poCodes, "작성완료");
-              alert(`${results}건 처리완료`);
-              // 재조회 (search 함수가 이미 위에 정의되어 있음)
+              toastr.success(`${results}건 처리완료`);
               if (typeof search === "function") await search();
             } catch (e) {
               console.error(e);
-              alert("승인 처리 중 오류가 발생했습니다.");
+              toastr.error("승인 처리 중 오류가 발생했습니다.");
             } finally {
               setBusy(btnConfirm, false);
             }
           });
         });
 
+
         // ================= 입금완료 버튼 처리 =================
         document.addEventListener("DOMContentLoaded", () => {
           const btnConfirm = document.getElementById("btnPaymentConfirm");
 
           btnConfirm?.addEventListener("click", async () => {
-            if (!gridApi) return alert("그리드 준비 전입니다.");
+            if (!gridApi) return toastr.info("그리드 준비 전입니다.");
             const poCodes = getSelectedPoCodes();
             if (!poCodes.length)
-              return alert("입금완료 처리할 주문서를 선택하세요.");
+              return toastr.warning("입금완료 처리할 주문서를 선택하세요.");
 
             // (선택) 현재상태 가드: 출하완료만 입금완료
             const selected = gridApi.getSelectedRows?.() || [];
@@ -441,26 +449,33 @@
             );
 
             if (invalid.length) {
-              alert(
+              toastr.error(
                 `'출하완료'가 아닌 ${invalid.length}건 포함. 진행할수 없습니다.`
               );
               return;
             }
 
-            if (
-              !confirm(`선택된 ${poCodes.length}건을 '입금완료'로 변경할까요?`)
-            )
-              return;
+            const res = await cuteAlert({
+                type: "question",
+                title: "주문 확인",
+                message: `선택된 ${poCodes.length}건을 '입금완료'로 변경할까요?`,
+                imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
+                confirmText: "네",
+                cancelText: "아니오"
+              });
+            if (res !== true) {
+               return;
+            }
 
             setBusy(btnConfirm, true, "처리중...");
             try {
               const results = await putPoStatusSingle(poCodes, "입금완료");
-              alert(`${results}건 처리완료`);
+              toastr.success(`${results}건 처리완료`);
 
               if (typeof search === "function") await search();
             } catch (e) {
               console.error(e);
-              alert("입금완료 처리 중 오류가 발생했습니다.");
+              toastr.error("입금완료 처리 중 오류가 발생했습니다.");
             } finally {
               setBusy(btnConfirm, false);
             }

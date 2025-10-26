@@ -246,12 +246,6 @@ document.addEventListener("DOMContentLoaded", () => {
 	const modalEl = document.getElementById("businessModal");
 	const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
  	
- 	resetBtn.addEventListener('click' , ()=>{
- 		document.querySelectorAll('.form-control').forEach(input => input.value = '');
- 		loadOrderPlans();
- 	});
- 	
- 	
  	
  	// 공통 모달 호출 함수
  	function initGrid(config) {
@@ -369,6 +363,106 @@ function debounce(func, wait = 300) {
 }
 console.log("compCode : "+compCode);
 
+
+//modal
+// 제품 모달 - 필터링
+ document.querySelector("#searchProdBtn").addEventListener("click", async () => {
+    try {
+    	showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
+         const params = {
+	    	 companyCode : compCode,	  
+	    	 productName: document.getElementById("productkw").value || "",
+	    	 empName: document.getElementById("productEmpId").value || "",
+	    	 note: document.getElementById("note").value || ""
+      	};
+       console.log("검색 파라미터:", params);
+      
+      
+      // ✅ 서버로 요청 (axios GET 또는 POST)
+      const res = await axios.post("/api/v1/stock/product/search", params, { withCredentials: true });
+      console.log("검색 결과:", res.data);
+
+      // ✅ ag-Grid에 데이터 반영
+      productGrid.gridOptions.api.setRowData(res.data);
+
+      if (res.data.length === 0) {
+        alert("검색 결과가 없습니다.");
+      }
+
+    } catch (err) {
+      console.error("조회 오류:", err);
+      alert("데이터 조회 중 오류가 발생했습니다.");
+    } finally{
+    	 hideLoader("gridModalWrapper");
+    }
+  });
+// 모달 - 제품 - 초기화
+ document.querySelector("#resetProdBtn").addEventListener("click", async () =>{
+	 try{
+		 document.querySelectorAll('.fkw').forEach(el => el.value = '');
+		 showLoader("gridModalWrapper","데이터를 불러오는 중입니다...");
+		 const res = await axios.get(`/api/v1/stock/productList/${compCode}`);
+		 productGrid.gridOptions.api.setRowData(res.data);
+	 }catch(err){
+		 console.log(err);
+	 }finally{
+		 hideLoader("gridModalWrapper");
+	 }
+ });
+
+	// modal
+    // 거래처 모달 - 필터
+    document.querySelector(".bsmSearchBtn").addEventListener("click", async ()=>{
+    	 try {
+    	    	showLoader("gridBsModalWrapper","데이터를 불러오는 중입니다...");
+    	         const params = {
+    	        	 compCode : compCode,
+    		    	 cusKw: document.getElementById("keyword").value || "",
+    		    	 empKw: document.getElementById("empId").value || "",
+    		    	 btKw:  document.getElementById("bizType").value || "",
+    		    	 bcKw:  document.getElementById("bizCategory").value || ""
+    	      	};
+    	       console.log("검색 파라미터:", params);
+    	      
+    	      
+    	      // ✅ 서버로 요청 (axios GET 또는 POST)
+    	      const res = await axios.post(`/api/v1/stock/filteredCustomerList`, params, { withCredentials: true });
+    	      console.log("검색 결과:", res.data);
+
+    	      // ✅ ag-Grid에 데이터 반영
+    	      gridApi.setRowData(res.data);
+
+    	      if (res.data.length === 0) {
+    	        alert("검색 결과가 없습니다.");
+    	      }
+
+    	    } catch (err) {
+    	      console.error("조회 오류:", err);
+    	      alert("데이터 조회 중 오류가 발생했습니다.");
+    	    } finally{
+    	    	 hideLoader("gridBsModalWrapper");
+    	    }
+    });
+    // ✅ 초기화 버튼 클릭 시
+	  document.querySelector(".bsmResetBtn").addEventListener("click", async () => {
+		  try{
+			  showLoader("gridBsModalWrapper","데이터를 불러오는 중입니다...");
+			  // gridApi.setRowData([]); // grid 비우기
+			  document.getElementById("keyword").value = "";
+			  document.getElementById("empId").value = "";
+			  document.getElementById("bizType").value = "";
+			  document.getElementById("bizCategory").value = "";
+			  await loadBusinessData();
+		  }catch(err){
+			  console.log(err);
+			  toastr.error(err);
+		  }finally{
+			  hideLoader("gridBsModalWrapper","데이터를 불러오는 중입니다...");
+		  }
+		 
+	  });
+
+
 // view 
 document.getElementById("productName").addEventListener("input", loadFilteredData);
 document.getElementById("businessPartner").addEventListener("input", loadFilteredData);
@@ -382,17 +476,16 @@ async function loadFilteredData() {
         const businessPartner = document.getElementById("businessPartner").value;
         const insDate = document.getElementById("insDate").value;
         
-        
         const params = {
         		 companyCode: compCode,
         		 productName: document.getElementById("productName").value,
         		 businessPartner: document.getElementById("businessPartner").value,
-        		 insDate: document.getElementById("insDate").value,
+        		 insDate: document.getElementById("insDate").value
         }
         console.log("params:", params); // 👈 params 확인
         const res = await axios.post("/api/v1/stock/orderPlans", params, {withCredentials: true });
         orderPlansGrid.gridOptions.api.setRowData(res.data);
-        orderPlansGrid.gridOptions.api.sizeColumnsToFit();
+        // orderPlansGrid.gridOptions.api.sizeColumnsToFit();
     } catch (err) {
         console.error(err);
         toastr.error("조회 실패");
@@ -400,7 +493,11 @@ async function loadFilteredData() {
         hideLoader("gridWrapper");
     }
 }
-
+   // 뷰 - 초기화 버튼 클릭시
+   resetBtn.addEventListener('click' , ()=>{
+ 		document.querySelectorAll('.form-control').forEach(input => input.value = '');
+ 		loadOrderPlans();
+ 	});
 
 // 발주 계획 리스트 
 const plansDiv = document.getElementById('orderPlansGrid');
@@ -492,6 +589,7 @@ async function openProductModal() {
 	                // 모달 안에서 선택한 행의 제품명만 가져오기
 	                document.getElementById("productName").value = event.data.productName;
 	                productModal.hide();
+	                loadFilteredData(); // ✅ 추가
 	            }
 	        });
 	  } else {
@@ -552,6 +650,7 @@ async function openProductModal() {
 	        onRowDoubleClicked: (event) => {
 	        	document.getElementById("businessPartner").value = event.data.cusName;
 	            bootstrap.Modal.getOrCreateInstance(document.getElementById("businessModal")).hide();
+	            loadFilteredData(); // ✅ 추가
 	        }
 	    };
 	    new agGrid.Grid(eGridDiv, gridOptions);
