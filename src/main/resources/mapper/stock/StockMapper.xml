@@ -215,10 +215,10 @@ JOIN explain_detail d
     ON m.xp_code = d.xp_code 
 WHERE m.company_code = #{companyCode} 
 <if test="productName != null and productName != ''">   
- AND d.product_name LIKE '%' || #{productName} || '%'  
+ AND d.product_name = #{productName} 
 </if>
 <if test="businessPartner != null and businessPartner != ''">
- AND d.business_partner LIKE '%' || #{businessPartner} || '%'  
+ AND d.business_partner = #{businessPartner} 
 </if>
 <if test="insDate != null and insDate != ''">
  AND TRUNC(m.ins_date) = TO_DATE(#{insDate},'yyyy-MM-dd') 
@@ -388,6 +388,7 @@ ORDER BY orr.order_code DESC
 
 </select>
 <!-- 발주 조회 - 필터 -->
+<!-- ORDER BY TO_NUMBER(REGEXP_SUBSTR(orr.order_code, '\d+')) DESC -->
 <!-- 발주 조회 -->
 <select id="getFilteredOrderList" resultMap="orderListResultMap">
 SELECT
@@ -399,7 +400,7 @@ SELECT
          WHEN COUNT(ord.od_no) > 1 
              THEN MIN(ord.product_name) || ' 외 ' || (COUNT(ord.od_no) - 1) || '건' 
          ELSE MIN(ord.product_name) 
-       END as "product_name",
+       END product_name,
        SUM(ord.qty) AS qty,
        orr.due_date AS due_date,
        orr.vat_type AS vat_type,
@@ -409,11 +410,17 @@ FROM order_req orr
 JOIN order_detail ord
 ON orr.order_code = ord.order_code 
 WHERE  orr.company_code = #{companyCode} 
-<if test="businessPartner != null and businessPartner != ''">
- AND orr.business_partner LIKE '%' || #{businessPartner} || '%'  
+<if test="productName != null and productName != ''">
+ AND ord.product_name = #{productName} 
 </if>
-<if test="dueDate != null and dueDate != ''">
- AND orr.due_date = #{dueDate} 
+<if test="businessPartner != null and businessPartner != ''">
+ AND orr.business_partner = #{businessPartner} 
+</if>
+ <if test="dueDate != null and dueDate != ''">
+  <![CDATA[
+    AND TRUNC(orr.due_date) >= TO_DATE(#{dueDate}, 'YYYY-MM-DD')
+  	AND TRUNC(orr.due_date) < TO_DATE(#{dueDate}, 'YYYY-MM-DD') + 1
+  ]]>
 </if>
 GROUP BY 
     orr.order_code,
@@ -424,10 +431,9 @@ GROUP BY
     orr.vat_type,
     orr.xp_code
     
-<!-- ORDER BY TO_NUMBER(REGEXP_SUBSTR(orr.order_code, '\d+')) DESC -->
 ORDER BY orr.order_code DESC
-
 </select>
+
 <resultMap id="orderListResultMap" type="OrderVO">
     <id property="orderCode" column="order_code"/>
     <result property="businessPartner" column="business_partner"/>
@@ -1019,16 +1025,22 @@ FROM outbound_header oh
 JOIN outbound o ON oh.outb_header_code = o.outb_header_code 
 WHERE oh.company_code = #{compCode} 
 <if test="productName != null and productName != ''">
- AND o.product_name LIKE '%' || #{productName} || '%' 
+ AND o.product_name = #{productName}  
 </if>
 <if test="businessPartner != null and businessPartner != ''">
- AND oh.business_partner LIKE '%' || #{businessPartner} || '%' 
+ AND oh.business_partner = #{businessPartner}  
 </if>
 <if test="outboundDate != null and outboundDate != ''">
- AND oh.outbound_date = TO_DATE(#{outboundDate} , 'YYYY-MM-DD')  
+      <![CDATA[
+    	AND oh.outbound_date >= TO_DATE(#{outboundDate}, 'YY/MM/DD')
+  		AND oh.outbound_date < TO_DATE(#{outboundDate}, 'YY/MM/DD') + 1
+      ]]>
 </if>
 <if test="dueDate != null and dueDate != ''">
- AND oh.due_date = TO_DATE(#{dueDate} , 'YYYY-MM-DD')  
+      <![CDATA[
+    	AND oh.due_date >= TO_DATE(#{dueDate}, 'YY/MM/DD')
+  		AND oh.due_date < TO_DATE(#{dueDate}, 'YY/MM/DD') + 1
+      ]]>
 </if>
 GROUP BY oh.outb_header_code, oh.outbound_date, oh.business_code,
          oh.business_partner, oh.due_date, oh.do_code 
