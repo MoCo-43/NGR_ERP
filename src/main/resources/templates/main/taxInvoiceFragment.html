@@ -9,26 +9,33 @@ table {
 	width: 100%;
 	font-size: 14px;
 }
+
 th, td {
 	border: 1px solid #ccc;
 	padding: 6px;
 }
+
 th {
 	background-color: #f3f3f3;
 }
+
 .section-title {
 	background-color: #f8f9fa;
 	font-weight: bold;
 }
+
 .supplier {
 	background-color: #ffecec;
 }
+
 .customer {
 	background-color: #e8f0ff;
 }
+
 tfoot th {
 	background-color: #f1f1f1;
 }
+
 h2 {
 	text-align: center;
 	margin-bottom: 12px;
@@ -66,10 +73,9 @@ h2 {
 			<td>주소</td>
 			<td th:text="${saller.salAddress}">서울특별시 성동구 상원1길 25</td>
 			<td>주소</td>
-			<td>
-				<span th:text="${customer.compAddr}">서울특별시 강남구 테헤란로 123</span>
-				<span th:if="${customer.compDelAddr != null}" th:text="' ' + ${customer.compDelAddr}"></span>
-			</td>
+			<td><span th:text="${customer.compAddr}">서울특별시 강남구 테헤란로
+					123</span> <span th:if="${customer.compDelAddr != null}"
+				th:text="' ' + ${customer.compDelAddr}"></span></td>
 		</tr>
 		<tr>
 			<td>이메일</td>
@@ -96,14 +102,13 @@ h2 {
 			<td>구독코드</td>
 			<td th:text="${sub.subCode}">SUB20251020-001</td>
 			<td>플랜명</td>
-			<!-- <td th:text="${plan.planName}">Standard Plan</td> -->
-			<td>플랜 정보 없음</td>
+			<td th:text="${sub?.subPlan?.planName}">플랜 정보 없음</td>
 		</tr>
 		<tr>
 			<td>구독기간</td>
-			<td th:text="${#dates.format(sub.startDate, 'yyyy-MM-dd')} + ' ~ ' + ${#dates.format(sub.endDate, 'yyyy-MM-dd')}">
-				2025-10-01 ~ 2025-10-31
-			</td>
+			<td
+				th:text="${#dates.format(sub.startDate, 'yyyy-MM-dd')} + ' ~ ' + ${#dates.format(sub.endDate, 'yyyy-MM-dd')}">
+				2025-10-01 ~ 2025-10-31</td>
 			<td>사용자 수</td>
 			<td th:text="${sub.totalUsers}">15</td>
 		</tr>
@@ -129,16 +134,18 @@ h2 {
 		</thead>
 		<tbody>
 			<tr>
-				<td>Standard</td>
-				<td>100,000</td>
+			<td th:text="${sub?.subPlan?.planName}">베이직</td>
+			<td th:text="${sub?.subPlan?.baseSalary}">10000</td>
 				<td th:text="${sub.totalUsers}">10</td>
-				<td th:text="${#numbers.formatInteger(sub.totalPay != null ? sub.totalPay : 0, 0, 'COMMA')}">1,000,000</td>
+				<td
+					th:text="${#numbers.formatInteger(sub.totalPay != null ? sub.totalPay : 0, 0, 'COMMA')}">1,000,000</td>
 			</tr>
 		</tbody>
 		<tfoot>
 			<tr>
 				<th colspan="3">합계</th>
-				<td th:text="${#numbers.formatInteger(sub.totalPay != null ? sub.totalPay : 0, 0, 'COMMA')}">1,000,000</td>
+				<td
+					th:text="${#numbers.formatInteger(sub.totalPay != null ? sub.totalPay : 0, 0, 'COMMA')}">1,000,000</td>
 			</tr>
 		</tfoot>
 	</table>
@@ -152,9 +159,9 @@ h2 {
 		</tr>
 		<tr>
 			<td>청구금액(공급가액 기준)</td>
-			<td colspan="3" th:text="${#numbers.formatInteger(sub.totalPay != null ? sub.totalPay : 0, 0, 'COMMA')}">
-				1,000,000
-			</td>
+			<td colspan="3"
+				th:text="${#numbers.formatInteger(sub.totalPay != null ? sub.totalPay : 0, 0, 'COMMA')}">
+				1,000,000</td>
 		</tr>
 		<tr>
 			<td>청구일자</td>

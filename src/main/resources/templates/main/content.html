@@ -88,6 +88,21 @@
 					공지합니다.</li>
 			</ol>
 		</article>
+		<article>
+			<h3>제5조의2 (여신 및 구독 이용조건)</h3>
+			<ol>
+				<li>여신(결제 및 구독) 계약의 기간은 1년으로 한정하며, 계약 만료 시 고객은 재계약 절차를 통해 서비스를
+					계속 이용할 수 있습니다.</li>
+				<li>고객이 구독 취소를 요청할 경우, 이미 결제된 기간의 종료일까지 서비스 이용이 가능합니다. 결제일 이후의
+					요금은 환불되지 않습니다.</li>
+				<li>고객이 구독을 취소하지 않은 경우, 이용자가 선택한 구독 개월 수에 따라 동일 조건으로 결제가 자동
+					진행됩니다.</li>
+				<li>회사는 자동 결제에 대한 별도의 알림을 제공하지 않으며, 구독 내역 및 결제 현황은 “구독내역” 메뉴를
+					통해 고객이 직접 확인할 수 있습니다.</li>
+				<li>구독 미취소로 인한 요금 발생에 대한 책임은 전적으로 고객에게 있으며, 회사는 이에 대한 환불 또는 취소
+					책임을 지지 않습니다.</li>
+			</ol>
+		</article>
 		<h2>제3장 당사자의 의무</h2>
 		<article>
 			<h3>제6조 (회사의 의무)</h3>
@@ -135,19 +150,18 @@
 				<li>회사는 고객의 귀책사유로 인한 서비스 이용의 장애에 대하여는 책임을 지지 않습니다.</li>
 			</ol>
 		</article>
-<!-- 서명 이미지 영역 -->
-<div style="margin-top: 40px; text-align: right;">
-  <p style="font-weight: bold;">전자서명</p>
+		<!-- 서명 이미지 영역 -->
+		<div style="margin-top: 40px; text-align: right;">
+			<p style="font-weight: bold;">전자서명</p>
 
-  <!-- signPath가 존재하고 비어있지 않을 때만 표시 -->
-<img th:if="${signPath != null and !#strings.isEmpty(signPath)}"
-     th:src="@{'/signature/' + ${matNo}}"
-     alt="전자서명"
-     style="width:200px; border:1px solid #ccc; padding:5px;" />
+			<!-- signPath가 존재하고 비어있지 않을 때만 표시 -->
+			<img th:if="${signPath != null and !#strings.isEmpty(signPath)}"
+				th:src="@{'/signature/' + ${matNo}}" alt="전자서명"
+				style="width: 200px; border: 1px solid #ccc; padding: 5px;" />
 
-<p th:if="${signPath == null or #strings.isEmpty(signPath)}"
-   style="color:#999;">서명 정보가 없습니다.</p>
-</div>
+			<p th:if="${signPath == null or #strings.isEmpty(signPath)}"
+				style="color: #999;">서명 정보가 없습니다.</p>
+		</div>
 </body>
 </html>
 

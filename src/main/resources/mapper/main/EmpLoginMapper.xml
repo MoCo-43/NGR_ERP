@@ -148,7 +148,8 @@
             EMP_ID,             
             EMP_PW,             
             EMP_NO,            
-            MAT_NO,            
+            MAT_NO,
+            name,           
             CREATE_AT,          
             IS_USED,            
             IS_LOCKED,          
@@ -162,6 +163,7 @@
             #{empPw},
             #{empNo},
             #{matNo},
+            #{name},
             SYSDATE,
             'Y',
             'N',
@@ -182,7 +184,7 @@
     </update>
 
   <select id="findEmployeeById" parameterType="String" resultMap="EmpVOResultMap">
-    SELECT
+   <!--   SELECT
         EMP_ID,
         NAME,
         DEPT_CODE,
@@ -191,9 +193,40 @@
     FROM
         EMP
     WHERE
-        EMP_ID = #{empId}
+        EMP_ID = #{empId}-->
+        SELECT 
+        l.emp_id_no,
+        l.emp_id,
+        l.emp_img,
+        l.emp_mobile,
+        l.name,
+        d.dept_name,
+        e.position,
+        e.email,
+        l.com_name
+    FROM emp_login l
+    LEFT JOIN emp e ON l.emp_no = TO_NUMBER(REGEXP_SUBSTR(e.emp_id, '[0-9]+$'))
+    LEFT JOIN dept d ON e.dept_code = d.dept_code
+    WHERE l.emp_id = #{empId}
 </select>
-<select id="mypageInfo" resultType="com.yedam.erp.vo.main.EmpLoginVO">
+<resultMap id="MypageInfoResultMap" type="com.yedam.erp.vo.main.EmpLoginVO">
+    <id property="empIdNo" column="emp_id_no"/>
+    <result property="empId" column="emp_id"/>
+    <result property="empImg" column="emp_img"/>
+    <result property="empMobile" column="emp_mobile"/>
+    <result property="name" column="name"/>
+    <result property="email" column="email"/>
+    <result property="comName" column="com_name"/>
+    
+    <association property="empVO" javaType="com.yedam.erp.vo.hr.EmpVO">
+        <result property="dept_name" column="dept_name"/>
+        <result property="position" column="position"/>
+        <result property="email" column="email"/>
+    </association>
+</resultMap>
+
+
+<select id="mypageInfo" resultMap="MypageInfoResultMap">
     SELECT 
         l.emp_id_no,
         l.emp_id,

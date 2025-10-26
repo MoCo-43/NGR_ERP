@@ -16,9 +16,8 @@ public class SubscriptionVO {
 	private Long matNo;
 	private Long mon;
 	private String comCode;
-	private SubPlanVO subPlan; 
+	private SubPlanVO subPlan;
 	private String customerKey;
 	private String billingKey;
 	private String status;
 }
-
