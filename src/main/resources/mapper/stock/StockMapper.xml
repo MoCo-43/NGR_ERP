@@ -355,6 +355,7 @@ WHERE CUS_CODE = #{businessCode}
 </select>
 
 <!-- 발주 조회 -->
+<!-- ORDER BY TO_NUMBER(REGEXP_SUBSTR(orr.order_code, '\d+')) DESC -->
 <select id="getOrderList" resultMap="orderListResultMap">
 SELECT
        orr.order_code AS order_code,
@@ -383,7 +384,6 @@ GROUP BY
     orr.vat_type,
     orr.xp_code
     
-<!-- ORDER BY TO_NUMBER(REGEXP_SUBSTR(orr.order_code, '\d+')) DESC -->
 ORDER BY orr.order_code DESC
 
 </select>

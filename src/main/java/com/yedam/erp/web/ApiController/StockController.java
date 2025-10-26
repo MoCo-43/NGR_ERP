@@ -364,7 +364,7 @@ public class StockController {
 	
 	@PostMapping("/orderList/search") // 발주 조회
 	public List<OrderVO> getFilterdOrderList(@RequestBody Map<String, Object> params){
-		System.out.println("sysout >> params : "+params.get("dueDate"));
+		System.out.println("sysout >> params : "+params);
 		return service.getFilteredOrderList(params);
 	}
 
