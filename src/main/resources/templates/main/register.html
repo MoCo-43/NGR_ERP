@@ -7,41 +7,167 @@
   <th:block layout:fragment="head_extra">
    <!-- CSS(confirm alert + Quartz) -->
    <link rel="stylesheet" href="/style/confirm.css" />
-    <style>
-      .auth-forms { width: 100%; }
-      .auth-forms h2 { text-align: center; margin-bottom: 2.5rem; color: #1f2937; font-weight: 700; font-size: 2rem; }
-      .form-group { border: none; padding: 0; margin: 0 0 2.5rem 0; }
-      .form-group:last-of-type { margin-bottom: 0; }
-      .form-group-title { width: 100%; font-size: 1.5rem; font-weight: 600; color: #374151; padding-bottom: 0.75rem; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; }
-      .form-row { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 1.5rem; }
-      .form-row .input-field { flex: 1 1 calc(50% - 0.75rem); margin-bottom: 0; }
-      .auth-forms .input-field { width: 100%; position: relative; }
-      .input-field label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151; font-size: 0.9rem; }
-      .auth-forms .input-field input, .auth-forms .input-field select { width: 100%; padding: 14px 16px; border: 1px solid #d1d5db; border-radius: 8px; background-color: #f9fafb; outline: none; font-size: 1rem; color: #374151; transition: border-color 0.2s, box-shadow 0.2s; }
-      .auth-forms .input-field input::placeholder { color: #9ca3af; }
-      .auth-forms .input-field input:focus, .auth-forms .input-field select:focus { border-color: #4d341e; background-color: #fff; box-shadow: 0 0 0 3px rgba(77, 52, 30, 0.15); }
-      .auth-forms .input-field input[readonly] { background-color: #e5e7eb; cursor: not-allowed; }
-      .input-field.has-button input { padding-right: 120px; }
-      .btn-check-username, .btn-find-address { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); height: 38px; width: 105px; background-color: #e5e7eb; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: #4b5563; transition: background-color 0.2s; }
-      .btn-check-username:hover, .btn-find-address:hover { background-color: #d1d5db; }
-      .form-buttons { display: flex; gap: 1rem; margin-top: 2.5rem; }
-      .form-buttons button { flex: 1; padding: 14px; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; border-radius: 8px; transition: all 0.2s ease-in-out; }
-      .btn-primary { background: #4d341e; color: #fff; }
-      .btn-primary:hover { background: #3c2a1a; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
-      .btn-secondary { background: #fff; color: #374151; border: 1px solid #d1d5db; }
-      .btn-secondary:hover { background: #f9fafb; border-color: #9ca3af; }
-      .link-small { font-size: 0.9rem; text-align: center; margin-top: 1.5rem; }
-      .link-small a { color: #4d341e; text-decoration: none; font-weight: 500; }
-      .link-small a:hover { text-decoration: underline; }
-      .form-step { display: none; }
-      .form-step.active { display: block; }
-      .error-message { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; display: none; }
-      .error-message.show { display: block; }
-      input.invalid { border-color: #ef4444; }
-      .email-container { display: flex; align-items: center; gap: 0.5rem; }
-      .email-container .at-symbol { color: #6b7280; font-weight: 600; }
-      .email-container input, .email-container select { flex: 1; }
-    </style>
+<style>
+  .auth-forms { width: 100%; }
+  .auth-forms h2 {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    color: #1f2937;
+    font-weight: 700;
+    font-size: 2rem;
+  }
+  .form-group { border: none; padding: 0; margin: 0 0 2.5rem 0; }
+  .form-group:last-of-type { margin-bottom: 0; }
+  .form-group-title {
+    width: 100%;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #374151;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .form-row .input-field { flex: 1 1 calc(50% - 0.75rem); margin-bottom: 0; }
+  .auth-forms .input-field { width: 100%; position: relative; }
+  .input-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.9rem;
+  }
+
+  /* 기본 인풋 스타일 */
+  .auth-forms .input-field input,
+  .auth-forms .input-field select {
+    width: 100%;
+    height: 44px;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    outline: none;
+    font-size: 1rem;
+    color: #374151;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .auth-forms .input-field input::placeholder { color: #9ca3af; }
+  .auth-forms .input-field input:focus,
+  .auth-forms .input-field select:focus {
+    border-color: #4d341e;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(77, 52, 30, 0.15);
+  }
+  .auth-forms .input-field input[readonly] {
+    background-color: #e5e7eb;
+    cursor: not-allowed;
+  }
+
+  /* 버튼 포함 인풋 - 일체형 스타일 */
+  .input-field.has-button {
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
+  .input-field.has-button input {
+    flex: 1;
+    height: 44px;
+    border: 1px solid #d1d5db;
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    background-color: #f9fafb;
+    padding: 12px 16px;
+    font-size: 1rem;
+    color: #374151;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .btn-find-address,
+  .btn-check-username {
+    height: 44px;
+    padding: 0 16px;
+    border: 1px solid #d1d5db;
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    background-color: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .btn-find-address:hover,
+  .btn-check-username:hover {
+    background-color: #e5e7eb;
+  }
+
+  .btn-find-address:active,
+  .btn-check-username:active {
+    background-color: #d1d5db;
+    transform: scale(0.98);
+  }
+
+  /* 폼 버튼 영역 */
+  .form-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+  }
+  .form-buttons button {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+  }
+  .btn-primary {
+    background: #4d341e;
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: #3c2a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  .btn-secondary {
+    background: #fff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+  }
+  .btn-secondary:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+  }
+
+  .link-small { font-size: 0.9rem; text-align: center; margin-top: 1.5rem; }
+  .link-small a { color: #4d341e; text-decoration: none; font-weight: 500; }
+  .link-small a:hover { text-decoration: underline; }
+  .form-step { display: none; }
+  .form-step.active { display: block; }
+  .error-message {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    display: none;
+  }
+  .error-message.show { display: block; }
+  input.invalid { border-color: #ef4444; }
+  .email-container { display: flex; align-items: center; gap: 0.5rem; }
+  .email-container .at-symbol { color: #6b7280; font-weight: 600; }
+  .email-container input, .email-container select { flex: 1; }
+</style>
   </th:block>
 </head>
 <body>
@@ -91,8 +217,8 @@
             </div>
           </div>
           <div class="form-row" style="margin-bottom: 0.5rem;">
-            <div class="input-field has-button" style="flex-basis: 100%;">
               <label for="zipode">회사 주소</label>
+            <div class="input-field has-button" style="flex-basis: 100%;">
               <input type="text" id="zip_code" name="zipCode" placeholder="우편번호" readonly required>
               <button type="button" onclick="execDaumPostcode()" class="btn-find-address">우편번호 찾기</button>
             </div>
@@ -126,8 +252,8 @@
         <fieldset class="form-group">
           <legend class="form-group-title">2. 관리자 계정 정보</legend>
           <div class="form-row">
-            <div class="input-field has-button">
               <label for="emp_id">아이디</label>
+            <div class="input-field has-button">
               <input type="text" id="emp_id" name="empId" placeholder="사용할 아이디를 입력하세요" required>
               <button type="button" class="btn-check-username">중복확인</button>
             </div>
@@ -290,7 +416,7 @@
           else { emailDomainInput.value=''; emailDomainInput.readOnly=false; emailDomainInput.focus(); }
         });
 
-        // ✅ 폼 제출 → cuteAlert 확인 후 Ajax + JSON
+        // 폼 제출 → cuteAlert 확인 후 Ajax + JSON
         registerForm.addEventListener('submit', async function(event){
           event.preventDefault();
 
@@ -318,7 +444,7 @@
           }
           if(!valid) return;
 
-          // ✅ cuteAlert로 가입 확인
+          // cuteAlert로 가입 확인
           const res = await cuteAlert({
             type: "question",
             title: "회원가입 확인",
@@ -330,7 +456,7 @@
 
           if (res !== true) return; // ❌ “아니오” 선택 시 중단
 
-          // ✅ “네” 선택 시 실제 회원가입 요청
+          //  “네” 선택 시 실제 회원가입 요청
           const formData = new FormData(registerForm);
           const jsonData = {};
           formData.forEach((value,key)=>{jsonData[key]=value;});
@@ -345,7 +471,7 @@
             cuteAlert({
               type: "success",
               title: "가입 완료!",
-              message: "회원가입이 성공적으로 완료되었습니다 🎉",
+              message: "회원가입이 성공적으로 완료되었습니다 ",
               confirmText: "확인"
             }).then(()=> window.location.href='/sallogin');
           })
