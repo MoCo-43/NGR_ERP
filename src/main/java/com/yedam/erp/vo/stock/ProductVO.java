@@ -25,7 +25,8 @@ public class ProductVO {
 	@NumberFormat(pattern = "#,###")
 	private int salesPrice;
 	private String note;
-	@JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "yyyy-MM-dd")
+	@DateTimeFormat(pattern = "yyyy-MM-dd") // ✅ form-data 변환용
+	@JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "yyyy-MM-dd")  // ✅ JSON 변환용
 	private Date insertDate;
 	private int leadTime;
 	private Long companyCode;

@@ -575,14 +575,14 @@ document.addEventListener("DOMContentLoaded", () => {
 	        // 값이 없으면 "-"로 표시, 값이 있으면 천 단위 콤마
 	        return params.value != null && params.value !== "" 
 	            ? Number(params.value).toLocaleString() 
-	            : "-";
+	            : 0;
 	    },cellStyle: { textAlign: "right" },   // ✅ 우측 정렬
 	    },
 	    { headerName: "구매단가", field: "purchasePrice",valueFormatter: (params) => {
 	        // 값이 없으면 "-"로 표시, 값이 있으면 천 단위 콤마
 	        return params.value != null && params.value !== "" 
 	            ? Number(params.value).toLocaleString() 
-	            : "-";
+	            : 0;
 	    },cellStyle: { textAlign: "right" },   // ✅ 우측 정렬
 	    },
 	    { headerName: "공급가액", field: "totalAmount", valueGetter: (params) => {
@@ -596,7 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	        // 값이 없으면 "-"로 표시, 값이 있으면 천 단위 콤마
 	        return params.value != null && params.value !== "" 
 	            ? Number(params.value).toLocaleString() 
-	            : "-";
+	            : 0;
 	     },
 	       cellStyle: { textAlign: "right" },   // ✅ 우측 정렬
 	    },
