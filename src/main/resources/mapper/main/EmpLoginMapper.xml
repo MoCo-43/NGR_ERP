@@ -194,20 +194,17 @@
         EMP
     WHERE
         EMP_ID = #{empId}-->
-        SELECT 
-        l.emp_id_no,
-        l.emp_id,
-        l.emp_img,
-        l.emp_mobile,
-        l.name,
-        d.dept_name,
-        e.position,
+      SELECT 
+        e.emp_id,
+        e.name,
+        e.dept_code,
         e.email,
-        l.com_name
-    FROM emp_login l
-    LEFT JOIN emp e ON l.emp_no = TO_NUMBER(REGEXP_SUBSTR(e.emp_id, '[0-9]+$'))
+        e.position,
+        e.company_code,
+        d.dept_name
+    FROM emp e
     LEFT JOIN dept d ON e.dept_code = d.dept_code
-    WHERE l.emp_id = #{empId}
+    WHERE e.emp_id = #{empId}
 </select>
 <resultMap id="MypageInfoResultMap" type="com.yedam.erp.vo.main.EmpLoginVO">
     <id property="empIdNo" column="emp_id_no"/>

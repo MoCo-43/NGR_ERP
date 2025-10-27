@@ -169,7 +169,9 @@ function renderSidebar(key) {
     grp.items.forEach(([label, href]) => {
       if (auth === "ROLE_USER") {
         const restricted = ["/accountList",
-        					"/payroll"];
+        					"/payroll",
+        					"/sub/admin/subList",
+        					"/admin/hrmanager"];
         if (restricted.includes(href)) return;
       }
 
