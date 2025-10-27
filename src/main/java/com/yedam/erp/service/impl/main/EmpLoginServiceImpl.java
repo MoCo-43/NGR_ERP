@@ -149,9 +149,14 @@ public class EmpLoginServiceImpl implements EmpLoginService {
 
         // 파라미터로 전달받은 roleName 설정
         loginVO.setComName(roleName); 
+        loginVO.setName(emp.getName());
+        loginVO.setEmpMobile(emp.getPhone());
+        loginVO.setEmail(emp.getEmail());
+      
 
         // DB에 INSERT
         empLoginMapper.insertNewEmployeeLogin(loginVO);
+        
 
         // 안내 이메일 발송
         sendInitialPasswordEmail(emp, loginId, tempPassword);

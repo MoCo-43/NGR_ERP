@@ -270,14 +270,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 계정 활성화 (confirm → cuteAlert)
   document.getElementById('activate-default-btn').addEventListener('click', async () => {
+	 
     const selectedNodes = gridApi.getSelectedNodes();
     if (selectedNodes.length === 0) {
       toastr.warning('계정을 활성화할 사원을 선택해주세요.');
       return;
     }
-
+    
     const selectedEmpIds = selectedNodes.map(node => node.data.empId);
-
+	console.log(selectedNodes[0].data.comName);
+	if(selectedNodes[0].data.comName){
+		toastr.warning("이미 등록된 사원입니다.")
+		return;
+	}
     const res = await cuteAlert({
       type: "question",
       title: "계정 활성화 확인",
@@ -318,10 +323,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if(selectedNodes[0].data.comName){
+		toastr.warning("이미 등록된 사원입니다.")
+		return;
+	}
+    
     const payload = {
       empIds: selectedNodes.map(node => node.data.empId),
       role: 'ROLE_USER'
     };
+      console.log(payload);
 
     const res = await cuteAlert({
       type: "question",
