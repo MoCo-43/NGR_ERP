@@ -5,7 +5,7 @@
 
 <mapper namespace="com.yedam.erp.mapper.hr.EmpPayFixMapper">
 
-  <!-- ResultMap: 컬럼 → EmpPayFixVO 필드 매핑 -->
+  <!-- ResultMap -->
   <resultMap id="EmpPayFixMap" type="com.yedam.erp.vo.hr.EmpPayFixVO">
     <id     property="payFixNo"      column="pay_fix_no"/>
     <result property="empId"         column="emp_id"/>
@@ -17,7 +17,7 @@
     <result property="payType"       column="pay_type"/>
   </resultMap>
 
-  <!-- 활성 수당 목록 + 사원 저장값(없으면 0/라벨은 기본명) -->
+  <!-- 활성 수당 목록  -->
   <select id="selectAllowList" resultMap="EmpPayFixMap">
     SELECT
         e.pay_fix_no,
@@ -32,13 +32,13 @@
       ON e.company_code   = a.company_code
      AND e.emp_id         = #{empId}
      AND e.emp_allow_code = a.allow_code
-     AND e.pay_type       = 'ALLOW'        <!-- LEFT JOIN에 타입 조건 포함 -->
+     AND e.pay_type       = 'ALLOW'       
     WHERE a.use_yn = 'Y'
       AND a.company_code = #{companyCode}
     ORDER BY a.allow_code
   </select>
 
-  <!-- ★ 신규: 활성 공제 목록 + 사원 저장값(없으면 0/라벨은 기본명) -->
+  <!-- 신규: 활성 공제 목록  -->
   <select id="selectDeductList" resultMap="EmpPayFixMap">
     SELECT
         e.pay_fix_no,
@@ -53,7 +53,7 @@
       ON e.company_code   = d.company_code
      AND e.emp_id         = #{empId}
      AND e.emp_allow_code = d.deduct_code
-     AND e.pay_type       = 'DEDUCT'       <!-- 공제 타입 -->
+     AND e.pay_type       = 'DEDUCT'       
     WHERE d.use_yn = 'Y'
       AND d.company_code = #{companyCode}
     ORDER BY d.deduct_code
@@ -68,7 +68,7 @@
         emp_allow_label,
         emp_allow_pay,
         company_code,
-        pay_type              <!-- ★ 추가 -->
+        pay_type              
     ) VALUES (
         SEQ_EMP_PAY_FIX.NEXTVAL,
         #{empId},
@@ -88,7 +88,7 @@
      WHERE emp_id          = #{empId}
        AND emp_allow_code  = #{empAllowCode}
        AND company_code    = #{companyCode}
-       AND pay_type        = #{payType}   <!-- ★ 추가 -->
+       AND pay_type        = #{payType}   
   </update>
 
 </mapper>
