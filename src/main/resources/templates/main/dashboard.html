@@ -569,9 +569,99 @@ canvas {
   }
   //✅ 입출고 차트 렌더링 (Chart.js)
   async function renderInOutChart() {
+  const data = await fetchInOutData();
+  if (!data || data.length === 0) return;
+
+  const labels = data.map(d => d.month);
+  const inbound = data.map(d => d.inCnt);
+  const outbound = data.map(d => d.outCnt);
+  const avg = data.map(d => (d.inCnt + d.outCnt) / 2);
+
+  // ✅ 최대값
+  const maxValue = Math.max(...inbound, ...outbound);
+
+  // ✅ 자동 눈금 계산 (100건 이하와 이상 구분)
+  let stepSize;
+  if (maxValue <= 100) {
+    stepSize = Math.ceil(maxValue / 5 / 10) * 10 || 10;
+  } else {
+    stepSize = Math.ceil((maxValue / 5) / 100) * 100 || 100;
+  }
+
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        type: 'bar',
+        label: '입고 건수',
+        data: inbound,
+        backgroundColor: 'rgba(54, 162, 235, 0.6)'
+      },
+      {
+        type: 'bar',
+        label: '출고 건수',
+        data: outbound,
+        backgroundColor: 'rgba(255, 99, 132, 0.6)'
+      },
+      {
+        type: 'line',
+        label: '입출고 평균',
+        data: avg,
+        borderColor: 'rgba(255, 206, 86, 1)',
+        borderWidth: 2,
+        fill: false,
+        tension: 0.3,
+        yAxisID: 'y'
+      }
+    ]
+  };
+
+  // ✅ Chart 옵션 강제 적용 (scales 포함)
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: {
+        display: true,
+        text: '최근 6개월 입·출고 현황 (평균 포함)',
+        font: { size: 14 }
+      },
+      legend: { position: 'top' }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        suggestedMax: maxValue * 1.2,
+        ticks: {
+          stepSize: stepSize,
+          callback: value => value.toLocaleString('ko-KR'), // 천단위 콤마
+          font: { size: 12 }
+        },
+        grid: { color: 'rgba(0,0,0,0.1)' }
+      },
+      x: {
+        ticks: { font: { size: 12 } },
+        grid: { color: 'rgba(0,0,0,0.05)' }
+      }
+    }
+  };
+
+  // ✅ 기존 차트 제거 후 재생성 (덮어쓰기 방지)
+  const ctx = document.getElementById('invenChart');
+  if (window.invenChartInstance) {
+    window.invenChartInstance.destroy();
+  }
+  window.invenChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: chartData,
+    options: chartOptions
+  });
+}
+/*   async function renderInOutChart() {
+	// 눈금 단위 자종 조절 (max에 딱맞춰짐)
     const data = await fetchInOutData();
     if (!data || data.length === 0) return;
-
+    
     const labels = data.map(d => d.month);
     const inbound = data.map(d => d.inCnt);
     const outbound = data.map(d => d.outCnt);
@@ -613,7 +703,7 @@ canvas {
       },
       noWon: true
     });
-  }
+  } */
 
 
   // --- 1. 영업 모듈 ---

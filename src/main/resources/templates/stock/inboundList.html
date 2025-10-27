@@ -4,7 +4,7 @@
 	 layout:decorate="~{layout/base}">
 <head>
   <meta charset="UTF-8">
-  <title layout:fragment="title">너 구 름(Your Cloud)</title>
+  <title layout:fragment="title">입고 조회</title>
   <th:block layout:fragment="head_extra">
      <!-- Bootstrap CSS -->
   	<!--  base에 있는 버전과 달라서 강제 주입 --> 
@@ -143,180 +143,10 @@
   </div><!-- /card -->
 
 
- <!--  <div class="card shadow mb-3" >
-    <div class="card-header py-3 d-flex align-items-center justify-content-between">
-		<h6 class="m-0 font-weight-bold text-primary">입고 조회 페이지</h6>
-	</div>
-
-    <div class="card-body">
-      버튼 영역
-      <div class="btn-bar">
-      검색 조건 + 버튼 영역 GPT 수정 코드
-		<div class="btn-bar d-flex align-items-center gap-2 mb-3">
-		    <input type="text" class="form-control form-control-sm" id="productCode" name="productCode" 
-		           placeholder="제품코드" style="max-width: 180px;" />
-		    <input type="text" class="form-control form-control-sm" id="businessPartner" name="businessPartner" 
-		           placeholder="공급처명" style="max-width: 180px;" />
-		    <input type="text" id="inboundDate" name="inboundDate" placeholder="입고일자" class="form-control form-control-sm" style="max-width: 180px;">
-		    <input type="text" id="dueDate" name="dueDate" placeholder="입고예정일자" class="form-control form-control-sm" style="max-width: 180px;">
-		    <input type="date" class="form-control form-control-sm" id="inboundDate" name="inboundDate" 
-		           style="max-width: 180px;" />
-		    <input type="date" class="form-control form-control-sm" id="dueDate" name="dueDate" 
-		           style="max-width: 180px;" />
-		    <button class="btn btn-dark btn-sm" type="button" id="submitBtn">조회</button>
-		    <button class="btn btn-danger btn-sm" type="button" id="resetBtn">초기화</button>
-		</div>
-	</div>
-	버튼 영역 끝
-	
-      좌우 2단 그리드
-      <div class="row mt-4">
-        입고 목록
-        <div class="col-md-6">
-          <div style="position: relative; width: 100%; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); border-radius: 0.25rem;">
-           로딩바
-			<div class="section-title">입고목록</div>
-			<div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
-            <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
-            로딩 스피너
-            <div id="loader" class="loader-overlay" style="display: none;">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-            </div>
-            </div>
-          </div>
-        </div>
-		입고 목록 끝
-		
-        입고 상세
-      <div class="col-md-6">
-          <div style="position: relative; width: 100%; max-height: 500px; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); border-radius: 0.25rem;">
-          <div class="section-title">입고상세</div>
-          <div id="gridDetailWrapper" style="position: relative; width: 100%; max-height: 500px;">
-            <div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%; height: 100%;"></div>
-            로딩 스피너
-            <div id="loaderDetail" class="loader-overlay" style="display: none;">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-              </div>
-            </div>
-            </div>
-          </div>
-        </div>
-        입고 상세 끝
-      </div>
-      좌우 2단 그리드 끝
-    </div>
-  </div> -->
-
   <!-- 모달 include -->
   <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
   <div th:replace="~{stock/modals/productModal :: productModal}"></div>
 </section>
-<!-- <section layout:fragment="content">
-컨테이너 시작
-<div class="card shadow">
-  마스터 카드
-  <div class="card shadow-sm mb-4">
-    <div class="card-header py-3 d-flex align-items-center justify-content-between">
-      <h6 class="mb-0 font-weight-bold text-primary">입고 조회 페이지</h6>
-    </div>
-  </div> 
-
-  폼 카드
-  <div class="card shadow-sm"> 
-    <div class="card-body">
-    <div class="btn-bar">
-    	 버튼 영역 (폼 전체 최상단 오른쪽)
-      <div class="d-flex justify-content-end mb-3">
-	    <button type="submit" class="btn btn-dark me-2" id="submitBtn">조회</button>
-	    <button type="reset" class="btn btn-danger" form="searchOrderPlan">초기화</button>
-       </div>
-    </div>
-    
-      <form class="row g-3" id="searchList" enctype="application/x-www-form-urlencoded">
-        <div class="col-md-3">
-         <label for="productCode" class="form-label">제품코드</label>
-         <input type="text" class="form-control" id="productCode" name="productCode">
-        </div>
-        <div class="col-md-3">
-         <label for="businessPartner" class="form-label">공급처명</label>
-         <input type="text" class="form-control" id="businessPartner" name="businessPartner">
-        </div>
-      	<div class="col-md-3">
-         <label for="inboundDate" class="form-label">입고일자</label>
-         <input type="date" class="form-control" id="inboundDate" name="inboundDate">
-        </div>
-        <div class="col-md-3">
-         <label for="dueDate" class="form-label">입고예정일자</label>
-         <input type="date" class="form-control" id="dueDate" name="dueDate">
-        </div>
-      </form>
-    </div>
-  </div> 
-  
-<div class="shadow-sm mt-4">
-  <div class="card-body">
-    <div class="row">
-      입고 목록
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0">입고 목록</h5>
-          </div>
-
-          <div class="card-body p-0">
-            로딩바
-			<div id="gridWrapper" style="position: relative; width: 100%; height: 500px;">
-            <div id="inListGrid" class="ag-theme-quartz" style="width: 100%; height: 500px;"></div>
-			     로딩 스피너
-			  <div id="loader" class="loader-overlay" style="display: none;">
-			    <div class="spinner-border text-primary" role="status">
-			      <span class="visually-hidden">Loading...</span>
-			    </div>
-			  </div>
-			</div>
-			
-          </div>
-        </div>
-      </div>
-
-      입고 상세
-      <div class="col-md-6">
-        <div class="card">
-          <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0">입고 상세</h5>
-          </div>
-          <div class="card-body p-0">
-            로딩바 + Grid Start
-			<div id="gridDetailWrapper" style="position: relative; width: 100%; height: 500px;">
-            		<div id="inDetailGrid" class="ag-theme-quartz" style="width: 100%;"></div>
-             로딩 스피너
-				<div id="loader" class="loader-overlay" style="display: none;">
-					<div class="spinner-border text-primary" role="status">
-					    <span class="visually-hidden">Loading...</span>
-					</div>
-				</div>
-			</div>
-            로딩바 + Grid End		
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-  
-  컨테이너 종료
-</div>
-  모달 include              경로             ::  div id 부분    
-  <div th:replace="~{stock/modals/businessModal :: businessModal}"></div>
-   모달 include              경로             ::  div id 부분    
-  <div th:replace="~{stock/modals/productModal :: productModal}"></div>
-  
-</section> -->
-
 
 
 <th:block layout:fragment="body_extra">
