@@ -159,6 +159,8 @@
       <script th:inline="javascript">
         const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
         const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+        
+        console.log("세션유저이름 => " + loginName);
       </script>
 
       <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -287,9 +289,22 @@
         byId("btnSave").onclick = async () => {
           if (!itemGridApi) return toastr.info("그리드가 아직 준비되지 않았습니다.");
 
+          // 라인 수집
           const lineItemsRaw = [];
           itemGridApi.forEachNode((n) => { if (n.data) lineItemsRaw.push({ ...n.data }); });
-          if (!lineItemsRaw.length) return (toastr.error("품목을 1개 이상 추가하세요"));
+          if (!lineItemsRaw.length) return toastr.error("품목을 1개 이상 추가하세요");
+          
+          
+          // 주문서번호(PO_CODE)가 없는건은 긴급출하지시로 처리하는 cuteAlert 알람 
+          const hasMissingPoCode = lineItemsRaw.some(r => !r.poCode);
+          if (hasMissingPoCode) {
+            await cuteAlert({
+              type: "warning",
+              title: "긴급출하지시",
+              message: "주문서번호가 없는 품목이 포함되어 있어\n긴급출하지시서를 작성합니다.",
+              buttonText: "확인"
+            });
+          }
 
           const poCodes = Array.from(new Set(lineItemsRaw.map((r) => r.poCode).filter(Boolean)));
 
@@ -509,7 +524,6 @@
           if (!sel.length) return toastr.warning("거래처를 선택하세요.");
           byId("cusName").value = sel[0].cusName ?? "";
           byId("cusCode").value = sel[0].cusCode ?? "";
-          byId("empName").textContent = sel[0].empName ?? (byId("managerName")?.textContent || "");
           byId("tel").value = sel[0].tel ?? "";
           byId("sample4_roadAddress").value = sel[0].addr ?? "";
           byId("sample4_postcode").value = sel[0].zipCode ?? "";
