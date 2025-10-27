@@ -42,7 +42,7 @@ public class WebSecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(requests -> requests
-						.requestMatchers("/", "/main/**","/api/**", "/*.css", "/*.js", "/img/**", "/prodimg/**", "/sign/**","/findpw","/subscribe","/sendSms","/pwngremail","/refreshCaptcha")
+						.requestMatchers("/", "/main/**","/api/**", "/*.css", "/*.js", "/img/**", "/prodimg/**", "/sign/**","/findpw","/subscribe","/sendSms","/pwngremail","/refreshCaptcha","/reset-password/**", "/reset-password" )
 						.permitAll()
 						.requestMatchers("/admin/**","/sub/admin/**").hasRole("ADMIN")
 		                // 관리자 전용 페이지
