@@ -746,17 +746,6 @@ ORDER BY d.product_code
 
 <!-- 입고 등록 - LOT 재사용 -->
 <update id="insertInbound" parameterType="InboundVO">
-<!-- 
- MERGE INTO INBOUND t
-    USING (SELECT #{orderCode} AS orderCode, #{businessCode} AS businessCode, #{productCode} AS productCode FROM dual) src
-    ON (t.orderCode = src.orderCode AND t.productCode = src.productCode AND t.businessCode = src.businessCode)
-    WHEN MATCHED THEN
-        UPDATE SET
-            t.qty = t.qty + #{qty}
-    WHEN NOT MATCHED THEN
-        INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, due_date, company_code, business_partner, cus_code)
-        VALUES (#{lotCode}, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode});
- -->
 
     DECLARE
         v_lotCode VARCHAR2(30);
@@ -771,8 +760,10 @@ ORDER BY d.product_code
         WHEN MATCHED THEN
             UPDATE SET t.qty = t.qty + #{qty} , t.remain_qty = t.remain_qty + #{qty} 
         WHEN NOT MATCHED THEN
-            INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, due_date, company_code, business_partner, business_code,purchase_price, remain_qty)
-            VALUES (v_lotCode, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode}, #{orderPrice}, #{qty});
+            INSERT (lot_code, product_code, product_name, specification, qty, inbound_date, note, 
+                    due_date, company_code, business_partner, business_code,purchase_price, remain_qty)
+            VALUES (v_lotCode, #{productCode}, #{productName}, #{specification}, #{qty}, sysdate, #{note}, 
+                    #{dueDate}, #{companyCode}, #{businessPartner}, #{businessCode}, #{orderPrice}, #{qty});
     END;
 </update>
 
@@ -912,91 +903,6 @@ VALUES
 )
 
 </insert>
-<!-- 
-     거래명세서 조회용 쿼리
-<select id="getDeliveryNote" resultMap = "deliveryResultMap">
-SELECT 
-       oh.outb_header_code AS outb_header_code,
-       oh.outbound_date AS outbound_date,
-       oh.do_code AS do_code,
-       oh.business_code AS business_code,
-       oh.business_partner AS business_partner,
-       oh.due_date AS due_date,
-       case
-        when count(o.outbound_no) > 1 
-            then min(o.product_name) || ' 외 ' || (count(o.outbound_no) - 1) || '건' 
-        else min(o.product_name) 
-    end AS product_name,
-    sum(o.qty) AS qty,
-    case 
-        when exists (
-            select 1
-            FROM delivery_order do
-            JOIN do_detail dod
-            ON do.do_no = dod.do_no
-            WHERE do.do_code = oh.do_code
-        ) then 'Y'
-        else 'N'
-    end AS has_sheet  
-FROM outbound_header oh 
-JOIN outbound o
-ON oh.outb_header_code = o.outb_header_code
-GROUP BY oh.outb_header_code ,
-       oh.outbound_date ,
-       o.product_name ,
-       oh.business_code ,
-       oh.business_partner ,
-       oh.due_date,
-       oh.do_code 
-ORDER BY oh.outb_header_code DESC
-
-</select>
-
-<resultMap id="deliveryResultMap" type="OutboundHeaderVO">
-    <id property="outbHeaderCode" column="outb_header_code"/>
-    <result property="doCode" column="do_code"/>
-    <result property="outboundDate" column="outbound_date"/>
-    <result property="businessPartner" column="business_partner"/>
-    <result property="productName" column="product_name"/>
-    <result property="businessPartner" column="business_partner"/>
-    <result property="qty" column="qty"/>
-    <result property="dueDate" column="due_date"/>
-    <result property="hasSheet" column="has_sheet"/>
-
-    <collection property="details" ofType="OutboundVO" 
-        select="selectOutboundByOutbHeaderCode" column="outb_header_code"/>
-</resultMap>
-
-<select id="selectOutboundByOutbHeaderCode">
-SELECT DISTINCT 
-       o.product_code AS productCode,
-       o.product_name AS productName,
-       o.specification AS specification, 
-       oh.business_code AS businessCode,
-       oh.business_partner AS businessPartner,
-       oh.do_code AS do_code,
-       o.qty AS qty,
-       oh.due_date AS dueDate,
-       dod.vat_amt AS vatAmt,
-       dod.sup_amt AS supAmt,
-       dod.unit_price AS orderPrice,
-       CASE WHEN EXISTS(select vat_amt from do_detail where do_no = (select do_no
-                                                                     FROM delivery_order
-                                                                     where do_code = #{doCode})
-                        ) THEN 'VAT 포함'
-            ELSE '면세' 
-       END AS taxType
-FROM outbound_header oh 
-JOIN outbound o
-ON oh.outb_header_code = o.outb_header_code
-JOIN delivery_order do
-ON do.do_code = oh.do_code
-JOIN do_detail dod
-ON do.do_no = dod.do_no
-WHERE oh.outb_header_code = #{outCode}
-
-</select>
- -->
  
  <!-- 출고조회 - 필터 -->
  <select id="filteredOutboundList" parameterType="map" resultType="OutboundHeaderVO">
@@ -1126,13 +1032,6 @@ SELECT CASE WHEN EXISTS (
 <!-- 결산 마스터(헤더) 생성 -->
 <insert id="insertInvenClosing">
 <selectKey keyProperty="icCode" resultType="String" order="AFTER">
-<!-- 
-        SELECT ic_code
-        FROM inventory_closing
-        WHERE company_code = #{companyCode}
-          AND ic_status = 'T' 
-        ORDER BY ic_date DESC
--->
 SELECT ic_code
 FROM (
     SELECT ic_code
@@ -1209,20 +1108,6 @@ LEFT JOIN INVENTORY_CLOSING_DETAIL prev
   </set>
   WHERE ic_code = #{icCode}
   AND company_code = #{companyCode}
-
-
-<!--   UPDATE INVENTORY_CLOSING
-  <set>
-    <if test="finalSign == '' or finalSign == null">
-      ic_status = 'W',
-      emp_sign = #{empSign},
-    </if>
-    <if test="finalSign != null and finalSign != ''">
-      final_sign = #{finalSign},
-      emp_sign = #{empSign},
-    </if>
-  </set>
-  WHERE ic_code = #{icCode} -->
 
 </update>
 
