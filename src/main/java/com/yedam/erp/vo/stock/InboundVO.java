@@ -33,7 +33,7 @@ public class InboundVO {
 	@NumberFormat(pattern = "#,###")
 	private Long orderPrice; // 제품 단가
 	private String orderCode; // 발주 코드
-	
+	private Long purchasePrice; // 제품 단가
 
 	
 	// 조회용 필드

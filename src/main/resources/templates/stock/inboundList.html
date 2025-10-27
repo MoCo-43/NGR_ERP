@@ -507,7 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
                  title: { text: "입고 수량" },
                  nice: false,                   // 자동 눈금 계산 끄기
                  domain: [0, undefined],        // 최소값 강제 0 (원한다면)
-                 interval: { step },  // 원하는 눈금 간격
+                 interval: 5000,  // 원하는 눈금 간격
                  label: {
                      formatter: (params) => params.value.toLocaleString(),
                  },
