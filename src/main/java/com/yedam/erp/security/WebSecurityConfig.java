@@ -67,7 +67,7 @@ public class WebSecurityConfig {
 						.deleteCookies("JSESSIONID")
                .deleteCookies("JSESSIONID", "remember-me")// 로그아웃 시 쿠키 삭제
 				).headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()) // PDF 시큐리티 허가(모달로 띄우려면 무조건 필요)
-				);
+				); 
 		return http.build();
 	}
 	//구독결제전 order 우선순위 지정,마스터관리자만
@@ -75,10 +75,25 @@ public class WebSecurityConfig {
 	@Order(2)
 	public SecurityFilterChain salSecurityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
 	    http
-	        .securityMatcher("/sallogin", "/sallogin/**","/sallogout","/register","/checkId/**","/subDetails")
+	        .securityMatcher("/sallogin", "/sallogin/**", "/sallogout",
+	                         "/register", "/checkId/**", "/subDetails", "/subdetails",
+	                         "/js/**", "/style/**") // ✅ 추가
 	        .csrf(csrf -> csrf.disable())
 	        .authorizeHttpRequests(auth -> auth
-	            .requestMatchers("/checkId/**","/sallogin", "/sallogin/**","/subdetails**","/register","/img/**", "/css/**","/subdetails").permitAll()
+	            .requestMatchers(
+	                "/js/**",              // ✅ 추가
+	                "/style/**",           // ✅ 추가
+	                "/css/**",
+	                "/img/**",
+	                "/favicon.ico",
+	                "/register",
+	                "/checkId/**",
+	                "/sallogin",
+	                "/sallogin/**",
+	                "/sallogout",
+	                "/subDetails",
+	                "/subdetails"
+	            ).permitAll()
 	            .anyRequest().authenticated()
 	        )
 	        .formLogin(form -> form
@@ -87,21 +102,10 @@ public class WebSecurityConfig {
 	            .usernameParameter("empId")
 	            .passwordParameter("empPw")
 	            .defaultSuccessUrl("/", true)
-	            // 로그인 실패 시 콘솔 출력
 	            .failureHandler((request, response, exception) -> {
-//	                System.out.println("로그인 실패: " + exception.getMessage());
-//	                //response.sendRedirect("/salLogin?error");
-//	                if (exception instanceof LockedException) {
-//	                    response.sendRedirect("/login?locked");
-//	                } else if (exception instanceof BadCredentialsException) {
-//	                    response.sendRedirect("/login?error");
-//	                } else {
-//	                    response.sendRedirect("/login?error");
-//	                }
-                response.sendRedirect("/sallogin?error");
-
+	                System.out.println("로그인 실패: " + exception.getMessage());
+	                response.sendRedirect("/sallogin?error");
 	            })
-	            // 로그인 성공 시 콘솔 출력
 	            .successHandler((request, response, authentication) -> {
 	                System.out.println("로그인 성공: " + authentication.getName());
 	                response.sendRedirect("/");
@@ -126,6 +130,118 @@ public class WebSecurityConfig {
 
 	    return http.build();
 	}
+//	@Bean
+//	@Order(2)
+//	public SecurityFilterChain salSecurityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
+//	    http
+//	        .securityMatcher("/sallogin", "/sallogin/**", "/sallogout", "/register", "/checkId/**", "/subDetails", "/subdetails","/js/**","/style/**")
+//	        .csrf(csrf -> csrf.disable())
+//	        .authorizeHttpRequests(auth -> auth
+//	            .requestMatchers(
+//	                "/js/**",
+//	                "/style/**",
+//	                "/css/**",
+//	                "/img/**",
+//	                "/favicon.ico",
+//	                "/register",
+//	                "/checkId/**",
+//	                "/sallogin",
+//	                "/sallogin/**",
+//	                "/sallogout",
+//	                "/subDetails",
+//	                "/subdetails"
+//	            ).permitAll()
+//	            .anyRequest().authenticated()
+//	        )
+//	        .formLogin(form -> form
+//	            .loginPage("/sallogin")
+//	            .loginProcessingUrl("/sallogin")
+//	            .usernameParameter("empId")
+//	            .passwordParameter("empPw")
+//	            .defaultSuccessUrl("/", true)
+//	            .failureHandler((request, response, exception) -> {
+//	                System.out.println("로그인 실패: " + exception.getMessage());
+//	                response.sendRedirect("/sallogin?error");
+//	            })
+//	            .successHandler((request, response, authentication) -> {
+//	                System.out.println("로그인 성공: " + authentication.getName());
+//	                response.sendRedirect("/");
+//	            })
+//	            .permitAll()
+//	        )
+//	        .rememberMe(remember -> remember
+//	            .tokenRepository(tokenRepository(dataSource))
+//	            .tokenValiditySeconds(60 * 60 * 24 * 3)
+//	            .key("salloginKey")
+//	            .userDetailsService(customUserDetailsService)
+//	        )
+//	        .logout(logout -> logout
+//	            .logoutUrl("/sallogout")
+//	            .logoutSuccessHandler((request, response, authentication) -> {
+//	                System.out.println("로그아웃 성공: " + (authentication != null ? authentication.getName() : "익명"));
+//	                response.sendRedirect("/sallogin?logout");
+//	            })
+//	            .deleteCookies("JSESSIONID")
+//	        )
+//	        .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+//
+//	    return http.build();
+//	}
+//	@Bean
+//	@Order(2)
+//	public SecurityFilterChain salSecurityFilterChain(HttpSecurity http, DataSource dataSource) throws Exception {
+//	    http
+//	        .securityMatcher( "/sallogin", "/sallogin/**","/sallogout","/register","/checkId/**","/subDetails")
+//	        .csrf(csrf -> csrf.disable())
+//	        .authorizeHttpRequests(auth -> auth
+//	            .requestMatchers("/js/**","/style/**","/checkId/**","/sallogin", "/sallogin/**","/subdetails**","/register","/img/**", "/css/**","/subdetails").permitAll()
+//	            .anyRequest().authenticated()
+//	        )
+//	        .formLogin(form -> form
+//	            .loginPage("/sallogin")
+//	            .loginProcessingUrl("/sallogin")
+//	            .usernameParameter("empId")
+//	            .passwordParameter("empPw")
+//	            .defaultSuccessUrl("/", true)
+//	            // 로그인 실패 시 콘솔 출력
+//	            .failureHandler((request, response, exception) -> {
+////	                System.out.println("로그인 실패: " + exception.getMessage());
+////	                //response.sendRedirect("/salLogin?error");
+////	                if (exception instanceof LockedException) {
+////	                    response.sendRedirect("/login?locked");
+////	                } else if (exception instanceof BadCredentialsException) {
+////	                    response.sendRedirect("/login?error");
+////	                } else {
+////	                    response.sendRedirect("/login?error");
+////	                }
+//                response.sendRedirect("/sallogin?error");
+//
+//	            })
+//	            // 로그인 성공 시 콘솔 출력
+//	            .successHandler((request, response, authentication) -> {
+//	                System.out.println("로그인 성공: " + authentication.getName());
+//	                response.sendRedirect("/");
+//	            })
+//	            .permitAll()
+//	        )
+//	        .rememberMe(remember -> remember
+//	            .tokenRepository(tokenRepository(dataSource))
+//	            .tokenValiditySeconds(60 * 60 * 24 * 3)
+//	            .key("salloginKey")
+//	            .userDetailsService(customUserDetailsService)
+//	        )
+//	        .logout(logout -> logout
+//	            .logoutUrl("/sallogout")
+//	            .logoutSuccessHandler((request, response, authentication) -> {
+//	                System.out.println("로그아웃 성공: " + (authentication != null ? authentication.getName() : "익명"));
+//	                response.sendRedirect("/sallogin?logout");
+//	            })
+//	            .deleteCookies("JSESSIONID")
+//	        )
+//	        .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+//
+//	    return http.build();
+//	}
 	//판매자
 	@Bean
 	@Order(1)
