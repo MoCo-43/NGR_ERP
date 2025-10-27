@@ -112,7 +112,8 @@ SELECT PRODUCT_CODE
        ,VAT_TYPE 
        ,INSERT_DATE 
 FROM PRODUCT 
-WHERE COMPANY_CODE = #{companyCode}
+WHERE COMPANY_CODE = #{companyCode} 
+ORDER BY insert_date DESC
 </select>
 
 <select id="getProductFileNameByProductCodeAndCompCode" resultType="String">
@@ -133,7 +134,7 @@ SELECT
      ,PRODUCT_CODE
      ,PURCHASE_PRICE
      ,REMAIN_QTY
- 
+     ,QTY 
 FROM INBOUND 
 WHERE COMPANY_CODE = #{companyCode} 
 AND PRODUCT_CODE = #{productCode}
@@ -1164,7 +1165,8 @@ GROUP BY TO_CHAR(po_start,'YYYY')
 SELECT 
        TO_CHAR(po.po_start,'YYYY-MM-DD') as "poDate", 
        po.emp_name AS "creater", 
-       po.pay_method AS "payMethod",
+       CASE WHEN po.pay_method = 'CASH' THEN '현금'
+            ELSE '어음' END AS "payMethod",
        po.po_code AS "poCode",
        cu.cus_name AS "cusName"   
 FROM PURCHASE_ORDER po 
@@ -1186,7 +1188,8 @@ GROUP BY TO_CHAR(po.po_start,'YYYY-MM-DD'),
 SELECT 
        TO_CHAR(po.po_start,'YYYY-MM-DD') as "poDate", 
        po.emp_name AS "creater", 
-       po.pay_method AS "payMethod",
+       CASE WHEN po.pay_method = 'CASH' THEN '현금'
+            ELSE '어음' END AS "payMethod",
        po.po_code AS "poCode",
        cu.cus_name AS "cusName"   
 FROM PURCHASE_ORDER po 
