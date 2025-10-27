@@ -30,7 +30,9 @@
         .filter-card { border: 1px solid #e5e7eb; }
         .toolbar .btn { min-width: 96px; }
         #itemGrid.ag-theme-quartz { height: 360px; width: 100%; }
-        #poHistoryGrid.ag-theme-quartz, #productGrid.ag-theme-quartz, #customerGrid.ag-theme-quartz { height: 360px; width: 100%; }
+        #poHistoryGrid.ag-theme-quartz,
+        #productGrid.ag-theme-quartz,
+        #customerGrid.ag-theme-quartz { height: 360px; width: 100%; }
         .summary-bar { font-weight: 600; }
       </style>
     </th:block>
@@ -43,12 +45,8 @@
         <div class="card-header d-flex align-items-center justify-content-between">
           <h6 class="m-0 font-weight-bold text-primary">출하지시서 입력</h6>
           <div class="btn-group">
-            <button type="button" class="btn btn-danger" id="btnReset">
-              초기화
-            </button>
-            <button type="button" class="btn btn-primary" id="btnSave">
-             등록
-            </button>
+            <button type="button" class="btn btn-danger" id="btnReset">초기화</button>
+            <button type="button" class="btn btn-primary" id="btnSave">등록</button>
           </div>
         </div>
 
@@ -140,12 +138,8 @@
           <!-- 하단 합계/행조작 -->
           <div class="d-flex justify-content-between align-items-center mt-2">
             <div class="d-flex gap-2">
-              <button type="button" class="btn btn-secondary" id="btnDelRow">
-                선택 삭제
-              </button>
-              <button type="button" class="btn btn-danger" id="btnClearRows">
-               전체 비우기
-              </button>
+              <button type="button" class="btn btn-secondary" id="btnDelRow">선택 삭제</button>
+              <button type="button" class="btn btn-danger" id="btnClearRows">전체 비우기</button>
             </div>
             <div class="summary-bar">
               총 수량: <span id="sumQty">0</span> | 총 공급가액: <span id="sumSupply">0</span> | 총 부가세: <span id="sumVat">0</span>
@@ -161,31 +155,31 @@
     </section>
 
     <th:block layout:fragment="body_extra">
-    <!-- 세션 정보 저장 -->
-<script th:inline="javascript">
-    const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
-    const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
-</script>
+      <!-- 세션 정보 저장 -->
+      <script th:inline="javascript">
+        const loginName = /*[[${#authentication.principal.empLoginVO.name}]]*/ "";
+        const compCode = /*[[${#authentication.principal.empLoginVO.matNo}]]*/ "";
+      </script>
 
-      <script
-        src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"
-      ></script>
-      <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-      ></script>
-      <script
-        src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"
-      ></script>
+      <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.1/dist/ag-grid-community.min.noStyle.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+      <script src="https://unpkg.com/cute-alert@1.3.0/cute-alert.js"></script>
 
       <script th:inline="none">
-      console.log("loginName : "+loginName);
-      console.log("compCode : "+compCode);
+        console.log("loginName : " + loginName);
+        console.log("compCode : " + compCode);
+
         let _selectGuard = false;
 
         // ---------- 유틸 ----------
-        const parseNum = (v) => Number(String(v ?? "").replace(/,/g, "")) || 0;
+        const byId = (id) => document.getElementById(id);
+        const parseNum = (v) => Number(String(v ?? "").replace(/[, ]/g, "")) || 0;
         const computeRow = (d) => {
-          d.supAmt = (Number(d.orderQty) || 0) * (Number(d.unitPrice) || 0);
+          d.orderQty = Number(d.orderQty) || 0;
+          d.unitPrice = Number(d.unitPrice) || 0;
+          d.supAmt = d.orderQty * d.unitPrice;
           d.vatAmt = Math.round((d.supAmt || 0) * 0.1);
           return d;
         };
@@ -195,38 +189,18 @@
         const itemGridOptions = {
           columnDefs: [
             { headerName: "", checkboxSelection: true, width: 50 },
+            { headerName: "주문서번호", field: "poCode", editable: true, width: 120 },
+            { headerName: "품목코드", field: "productCode", editable: true, width: 120 },
+            { headerName: "품목명", field: "productName", editable: true, flex: 1 },
             {
-              headerName: "주문서번호",
-              field: "poCode",
+              headerName: "지불방식",
+              field: "payMethod",
               editable: true,
               width: 120,
+              cellEditor: "agSelectCellEditor",
+              cellEditorParams: { values: ["CASH", "BILL"] },
+              valueFormatter: (p) => (p.value === "CASH" ? "현금" : p.value === "BILL" ? "어음" : (p.value || "")),
             },
-            {
-              headerName: "품목코드",
-              field: "productCode",
-              editable: true,
-              width: 120,
-            },
-            {
-              headerName: "품목명",
-              field: "productName",
-              editable: true,
-              flex: 1,
-            },
-            {
-            	  headerName: "지불방식",
-            	  field: "payMethod",
-            	  editable: true,
-            	  width: 120,
-            	  cellEditor: "agSelectCellEditor",
-            	  cellEditorParams: { values: ["CASH", "BILL"] },
-            	  // 화면 표시용 포매터
-            	  valueFormatter: (params) => {
-            	    if (params.value === "CASH") return "현금";
-            	    if (params.value === "BILL") return "어음";
-            	    return params.value || "";
-            	  },
-            	},
             {
               headerName: "수량",
               field: "orderQty",
@@ -234,12 +208,8 @@
               width: 100,
               type: "rightAligned",
               valueParser: (p) => parseNum(p.newValue),
-              valueFormatter: (p) => (p.value ?? 0).toLocaleString(),
-              onCellValueChanged: (p) => {
-                computeRow(p.data);
-                p.api.refreshCells({ force: true });
-                updateSummary();
-              },
+              valueFormatter: (p) => (p.value ?? 0).toLocaleString("ko-KR"),
+              onCellValueChanged: (p) => { computeRow(p.data); p.api.refreshCells({ force: true }); updateSummary(); },
             },
             {
               headerName: "단가",
@@ -248,168 +218,109 @@
               width: 120,
               type: "rightAligned",
               valueParser: (p) => parseNum(p.newValue),
-              valueFormatter: (p) => (p.value ?? 0).toLocaleString(),
-              onCellValueChanged: (p) => {
-                computeRow(p.data);
-                p.api.refreshCells({ force: true });
-                updateSummary();
-              },
+              valueFormatter: (p) => (p.value ?? 0).toLocaleString("ko-KR"),
+              onCellValueChanged: (p) => { computeRow(p.data); p.api.refreshCells({ force: true }); updateSummary(); },
             },
-            {
-              headerName: "부가세",
-              field: "vatAmt",
-              width: 100,
-              type: "rightAligned",
-            },
-            {
-              headerName: "공급가액",
-              field: "supAmt",
-              width: 120,
-              type: "rightAligned",
-            },
+            { headerName: "부가세", field: "vatAmt", width: 100, type: "rightAligned", valueFormatter: (p) => (p.value ?? 0).toLocaleString("ko-KR") },
+            { headerName: "공급가액", field: "supAmt", width: 120, type: "rightAligned", valueFormatter: (p) => (p.value ?? 0).toLocaleString("ko-KR") },
             { headerName: "비고", field: "notes", editable: true, flex: 1 },
           ],
           rowData: [],
           rowSelection: "multiple",
           rowMultiSelectWithClick: true,
           animateRows: true,
-          localeText: { noRowsToShow: "출하지시 할 품목 혹은 주문서를 넣어주세요"},
-          defaultColDef: {
-            sortable: true,
-            resizable: true,
-            filter: false,
-            minWidth: 90,
-          },
-          onGridReady: (e) => {
-            itemGridApi = e.api;
-            e.api.sizeColumnsToFit();
-          },
+          localeText: { noRowsToShow: "출하지시 할 품목 혹은 주문서를 넣어주세요" },
+          defaultColDef: { sortable: true, resizable: true, filter: false, minWidth: 90 },
+          onGridReady: (e) => { itemGridApi = e.api; e.api.sizeColumnsToFit(); },
         };
-        new agGrid.Grid(document.getElementById("itemGrid"), itemGridOptions);
+        new agGrid.Grid(byId("itemGrid"), itemGridOptions);
 
-        // 합계(최신 필드만 사용)
-        const sumQty = document.getElementById("sumQty");
-        const sumSupply = document.getElementById("sumSupply");
-        const sumVat = document.getElementById("sumVat");
+        // 합계
+        const sumQty = byId("sumQty");
+        const sumSupply = byId("sumSupply");
+        const sumVat = byId("sumVat");
         function updateSummary() {
           if (!itemGridApi) return;
-          let tQty = 0,
-            tSup = 0,
-            tVat = 0;
+          let tQty = 0, tSup = 0, tVat = 0;
           itemGridApi.forEachNode((n) => {
             tQty += Number(n.data?.orderQty || 0);
             tSup += Number(n.data?.supAmt || 0);
             tVat += Number(n.data?.vatAmt || 0);
           });
-          sumQty.textContent = tQty.toLocaleString();
-          sumSupply.textContent = tSup.toLocaleString();
-          sumVat.textContent = tVat.toLocaleString();
+          sumQty.textContent = tQty.toLocaleString("ko-KR");
+          sumSupply.textContent = tSup.toLocaleString("ko-KR");
+          sumVat.textContent = tVat.toLocaleString("ko-KR");
         }
         window.updateSummary = updateSummary;
 
-     // 행 삭제 버튼
-        document.getElementById("btnDelRow").onclick = () => {
+        // 행 삭제
+        byId("btnDelRow").onclick = () => {
           const sel = itemGridApi.getSelectedRows();
           if (!sel.length) return toastr.warning("삭제할 행을 선택하세요");
           itemGridApi.applyTransaction({ remove: sel });
           updateSummary();
-
-          // ▼ 그리드가 비면 버튼 전부 활성화 (품목코드/주문서조회/거래처/도로명주소)
-          if (itemGridApi.getDisplayedRowCount() === 0) {
-            document.getElementById("btnFindProduct").disabled   = false;
-            document.getElementById("btnFindOrder").disabled     = false;
-            document.getElementById("btnFindCustomer").disabled  = false;
-            document.getElementById("btnf").disabled             = false; // 도로명주소 버튼
-          }
+          if (itemGridApi.getDisplayedRowCount() === 0) enableAllPickers();
         };
 
-        // 행 전체비우기 버튼
-        document.getElementById("btnClearRows").onclick = () => {
-          itemGridApi.setRowData([]);
-          updateSummary();
-
-          // ▼ 전체 비우면 즉시 전부 활성화
-          document.getElementById("btnFindProduct").disabled   = false;
-          document.getElementById("btnFindOrder").disabled     = false;
-          document.getElementById("btnFindCustomer").disabled  = false;
-          document.getElementById("btnf").disabled             = false; // 도로명주소 버튼
-        };
+        // 전체 비우기
+        byId("btnClearRows").onclick = () => { itemGridApi.setRowData([]); updateSummary(); enableAllPickers(); };
 
         // 초기화
-        document.getElementById("btnReset").onclick = () => {
-          [
-            "writeDate",
-            "cusCode",
-            "cusName",
-            "tel",
-            "shipDate",
-            "sample4_roadAddress",
-            "sample4_postcode",
-          ].forEach((id) => (document.getElementById(id).value = ""));
-          itemGridApi.setRowData([]);
-          updateSummary();
-
-          // ▼ 초기화 시에도 전부 활성화
-          document.getElementById("btnFindProduct").disabled   = false;
-          document.getElementById("btnFindOrder").disabled     = false;
-          document.getElementById("btnFindCustomer").disabled  = false;
-          document.getElementById("btnf").disabled             = false; // 도로명주소 버튼
+        byId("btnReset").onclick = () => {
+          ["writeDate","cusCode","cusName","tel","shipDate","sample4_roadAddress","sample4_postcode"].forEach((id) => (byId(id).value = ""));
+          itemGridApi.setRowData([]); updateSummary(); enableAllPickers();
         };
 
-        // 저장 (주문서번호 없어도 허용)
-        document.getElementById("btnSave").onclick = async () => {
+        function enableAllPickers() {
+          byId("btnFindProduct").disabled = false;
+          byId("btnFindOrder").disabled = false;
+          byId("btnFindCustomer").disabled = false;
+          byId("btnf").disabled = false;
+        }
+        function lockAfterImportFromOrder() {
+          byId("btnFindProduct").disabled = true;
+          byId("btnFindCustomer").disabled = true;
+          byId("btnf").disabled = true;
+        }
+
+        // 저장
+        byId("btnSave").onclick = async () => {
           if (!itemGridApi) return toastr.info("그리드가 아직 준비되지 않았습니다.");
 
-          // 라인 수집
           const lineItemsRaw = [];
-          itemGridApi.forEachNode((n) => {
-            if (n.data) lineItemsRaw.push({ ...n.data });
+          itemGridApi.forEachNode((n) => { if (n.data) lineItemsRaw.push({ ...n.data }); });
+          if (!lineItemsRaw.length) return (toastr.error("품목을 1개 이상 추가하세요"));
+
+          const poCodes = Array.from(new Set(lineItemsRaw.map((r) => r.poCode).filter(Boolean)));
+
+          const lineItems = lineItemsRaw.map((d) => {
+            const orderQty = Number(d.orderQty) || 0;
+            const unitPrice = Number(d.unitPrice) || 0;
+            const supAmt = orderQty * unitPrice;
+            const vatAmt = Math.round(supAmt * 0.1);
+            return {
+              ...d,
+              orderQty, unitPrice, supAmt, vatAmt,
+              dcAmt: Number(d.dcAmt || 0),
+              payMethod: d.payMethod || "CASH",
+            };
           });
-          if (!lineItemsRaw.length)
-            return (
-              window.toastr?.error?.("품목을 1개 이상 추가하세요") ||
-              toastr.warning("품목을 1개 이상 추가하세요")
-            );
 
-          // poCodes (optional)
-          const poCodes = Array.from(
-            new Set(lineItemsRaw.map((r) => r.poCode).filter(Boolean))
-          );
-
-          // 금액계산
-		const lineItems = lineItemsRaw.map((d) => {
-		  const orderQty = Number(d.orderQty) || 0;
-		  const unitPrice = Number(d.unitPrice) || 0;
-		  const supAmt = orderQty * unitPrice;
-		  const vatAmt = Math.round(supAmt * 0.1);
-		  return { ...d, orderQty, unitPrice, supAmt, vatAmt };
-		});
-
-          // 헤더
           const header = {
-            writeDate: document.getElementById("writeDate").value,
-            customerCode: document.getElementById("cusCode").value,
-            customerName: document.getElementById("cusName").value,
+            writeDate: byId("writeDate").value,
+            customerCode: byId("cusCode").value,
+            customerName: byId("cusName").value,
             empName: loginName,
-            tel: document.getElementById("tel").value,
-            shipDate: document.getElementById("shipDate").value,
-            addr: document.getElementById("sample4_roadAddress").value,
-            zipCode: document.getElementById("sample4_postcode").value,
-            notes: document.getElementById("notes")?.value || "",
+            tel: byId("tel").value,
+            shipDate: byId("shipDate").value,
+            addr: byId("sample4_roadAddress").value,
+            zipCode: byId("sample4_postcode").value,
+            notes: byId("notes")?.value || "",
           };
 
-          if (!header.customerName)
-            return (
-              window.toastr?.error?.("거래처를 입력하세요") ||
-              toastr.warning("거래처를 입력하세요")
-            );
-          if (!header.shipDate)
-            return (
-              window.toastr?.error?.("출하예정일을 입력하세요") ||
-              toastr.warning("출하예정일을 입력하세요")
-            );
+          if (!header.customerName) return toastr.warning("거래처를 입력하세요");
+          if (!header.shipDate) return toastr.warning("출하예정일을 입력하세요");
 
-          // payload (poCodes는 있을 때만 포함)
           const payload = {
             ...(poCodes.length > 0 ? { poCodes } : {}),
             cusCode: header.customerCode,
@@ -420,7 +331,7 @@
             zipCode: header.zipCode,
             tel: header.tel,
             notes: header.notes ?? "",
-            companyCode: compCode,
+            companyCode: compCode, // ✅ header.companyCode 대신 compCode 사용
             dodetails: lineItems.map((it) => ({
               productCode: it.productCode,
               orderQty: it.orderQty ?? 0,
@@ -428,50 +339,48 @@
               supAmt: it.supAmt ?? 0,
               vatAmt: it.vatAmt ?? 0,
               dcAmt: Number(it.dcAmt || 0),
-              companyCode: header.companyCode,
+              companyCode: compCode,
               poCode: it.poCode || null, // 주문서 없이 등록 가능
-              payMethod: it.payMethod,
+              payMethod: it.payMethod || "CASH",
               notes: it.notes || "",
             })),
           };
 
           console.log("[btnSave] payload:", payload);
           try {
-              const res = await cuteAlert({
-                  type: "question",
-                  title: "주문 확인",
-                  message: "출하지시를 하시겠습니까?",
-                  imgUrl: 'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
-                  confirmText: "네",
-                  cancelText: "아니오"
-                });
-                if (res !== true) return;
+            const res = await cuteAlert({
+              type: "question",
+              title: "주문 확인",
+              message: "출하지시를 하시겠습니까?",
+              imgUrl: "https://img.icons8.com/?size=100&id=103807&format=png&color=000000",
+              confirmText: "네",
+              cancelText: "아니오",
+            });
+            if (res !== true) return;
             await axios.post("/api/biz/doinsert", payload);
             toastr.success("등록되었습니다");
           } catch (e) {
             console.error(e);
-            window.toastr?.error?.("등록 실패 (서버 로그 확인)") ||
-              toastr.error("등록 실패 (서버 로그 확인)");
+            toastr.error("등록 실패 (서버 로그 확인)");
           }
         };
 
         /* --------- 품목코드 모달 --------- */
-        const productModalEl = document.getElementById("productcodeModal");
+        const productModalEl = byId("productcodeModal");
         let productGridApi;
-        let productLoading = false; // 중복 로딩 가드
+        let productLoading = false;
 
-        // 로더 유틸 폴백 (없어도 동작하도록)
         const _ensureLoaderFns = () => {
           if (typeof window.showLoader !== "function") {
             window.showLoader = function (containerId) {
-              const root = document.getElementById(containerId) || document.querySelector(containerId);
+              const root = byId(containerId) || document.querySelector(containerId);
               const overlay = root?.querySelector?.(".loader-overlay") || root;
               if (overlay) overlay.style.display = "flex";
             };
           }
           if (typeof window.hideLoader !== "function") {
             window.hideLoader = function (containerId) {
-              const root = document.getElementById(containerId) || document.querySelector(containerId);
+              const root = byId(containerId) || document.querySelector(containerId);
               const overlay = root?.querySelector?.(".loader-overlay") || root;
               if (overlay) overlay.style.display = "none";
             };
@@ -484,55 +393,32 @@
             { headerName: "", checkboxSelection: true, width: 50 },
             { headerName: "품목코드", field: "productCode", flex: 1 },
             { headerName: "품목명", field: "productName", flex: 1, minWidth: 160 },
-            {
-                headerName: "판매단가",
-                field: "salesPrice",
-                width: 120,
-                type: "rightAligned",
-                valueFormatter: (p) => (Number(p.value ?? 0)).toLocaleString("ko-KR"),
-            },
+            { headerName: "판매단가", field: "salesPrice", width: 120, type: "rightAligned", valueFormatter: (p) => (Number(p.value ?? 0)).toLocaleString("ko-KR") },
             { headerName: "부가세", field: "vatType", width: 100 },
           ],
           rowSelection: "multiple",
           rowMultiSelectWithClick: true,
           rowData: [],
           defaultColDef: { sortable: true, resizable: true, filter: true, minWidth: 90 },
-          onGridReady: (p) => {
-            productGridApi = p.api;
-            p.api.sizeColumnsToFit?.();
-          },
+          onGridReady: (p) => { productGridApi = p.api; p.api.sizeColumnsToFit?.(); },
         };
 
         function ensureProductGrid() {
-          const gridDiv = document.getElementById("productGrid");
+          const gridDiv = byId("productGrid");
           if (!gridDiv) return null;
-
           if (!gridDiv.__api) {
-            if (window.agGrid?.createGrid) {
-              // v31 권장 방식: 반환값이 Grid API
-              gridDiv.__api = agGrid.createGrid(gridDiv, productGridOptions);
-            } else {
-              // 구방식 fallback
-              new agGrid.Grid(gridDiv, productGridOptions);
-              gridDiv.__api = productGridOptions.api;
-            }
+            if (window.agGrid?.createGrid) gridDiv.__api = agGrid.createGrid(gridDiv, productGridOptions);
+            else { new agGrid.Grid(gridDiv, productGridOptions); gridDiv.__api = productGridOptions.api; }
           }
           productGridApi = gridDiv.__api;
           return productGridApi;
         }
 
-        // 데이터 로딩
         async function fetchProductData() {
           const containerId = "productGridLoader";
           const api = productGridApi || ensureProductGrid();
-
-          if (!api) {
-            // API가 아직 없더라도 로더는 반드시 꺼준다 (무한 로딩 방지)
-            window.hideLoader(containerId);
-            return;
-          }
-
-          if (productLoading) return; // 중복 호출 방지
+          if (!api) { window.hideLoader(containerId); return; }
+          if (productLoading) return;
           productLoading = true;
 
           try {
@@ -542,93 +428,72 @@
             requestAnimationFrame(() => api.sizeColumnsToFit?.());
           } catch (err) {
             console.error("[Product] 조회 실패:", err);
-            window.toastr?.error?.("제품코드 조회 실패");
+            toastr.error("제품코드 조회 실패");
           } finally {
             window.hideLoader(containerId);
             productLoading = false;
           }
         }
 
-        // 모달 오픈 시 1회 바인딩 (중복 방지)
         if (productModalEl && !productModalEl.__bound) {
-          productModalEl.addEventListener("shown.bs.modal", async () => {
-            ensureProductGrid();
-            await fetchProductData();
-          });
+          productModalEl.addEventListener("shown.bs.modal", async () => { ensureProductGrid(); await fetchProductData(); });
           productModalEl.__bound = true;
         }
 
-        // 가져오기
-		document.getElementById("PrcImportBtn")?.addEventListener("click", () => {
-		  const rows = productGridApi?.getSelectedRows?.() || [];
-		  if (!rows.length) return toastr.warning("가져올 품목을 선택하세요.");
-		
-		  const items = rows.map((r) => {
-		    const qty = Number(r.qty ?? 1);
-		    const price = Number(String(r.salesPrice ?? 0).replace(/,/g, "")) || 0; // ← 정규화
-		    const supAmt = qty * price;
-		    const vatAmt = Math.round(supAmt * 0.1);
-		
-		    return {
-		      poCode: r.poCode,
-		      productCode: r.productCode,
-		      productName: r.productName,
-		      vatType: r.vatType,
-		      payMethod: r.payMethod,
-		      orderQty: qty,
-		      unitPrice: price,
-		      supAmt,
-		      vatAmt,
-		      notes: r.notes,
-		    };
-		  });
-		
-		  itemGridApi.applyTransaction({ add: items });
-		  updateSummary?.();
-		
-		  (bootstrap.Modal.getInstance(productModalEl) ||
-		    bootstrap.Modal.getOrCreateInstance(productModalEl)
-		  ).hide();
-		
-        // 주문서 기반으로 가져오면 품목코드 모달 비활성화(원래 로직 유지)
-		  document.getElementById("btnFindOrder").disabled = true;
-		});
-        
+        byId("PrcImportBtn")?.addEventListener("click", () => {
+          const rows = productGridApi?.getSelectedRows?.() || [];
+          if (!rows.length) return toastr.warning("가져올 품목을 선택하세요.");
 
+          const items = rows.map((r) => {
+            const qty = Number(r.qty ?? 1) || 1;
+            const price = Number(String(r.salesPrice ?? 0).replace(/[, ]/g, "")) || 0;
+            const supAmt = qty * price;
+            const vatAmt = Math.round(supAmt * 0.1);
+            return {
+              poCode: r.poCode ?? null,
+              productCode: r.productCode,
+              productName: r.productName,
+              vatType: r.vatType,
+              payMethod: r.payMethod || "CASH",
+              orderQty: qty,
+              unitPrice: price,
+              supAmt,
+              vatAmt,
+              notes: r.notes || "",
+            };
+          });
+
+          itemGridApi.applyTransaction({ add: items });
+          updateSummary?.();
+
+          (bootstrap.Modal.getInstance(productModalEl) || bootstrap.Modal.getOrCreateInstance(productModalEl)).hide();
+
+          // 품목코드로 가져오면 '주문서조회'만 비활성화 (서로 배타적 사용을 원한다면 유지)
+          byId("btnFindOrder").disabled = true;
+        });
 
         /* --------- 거래처 모달 --------- */
-        const customerModalEl = document.getElementById("customermodal");
+        const customerModalEl = byId("customermodal");
         let customerGridApi;
         const customerGridOptions = {
           columnDefs: [
             { headerName: "", checkboxSelection: true, width: 50 },
             { headerName: "거래처코드", field: "cusCode", width: 140 },
-            {
-              headerName: "거래처명",
-              field: "cusName",
-              flex: 1,
-              minWidth: 160,
-            },
+            { headerName: "거래처명", field: "cusName", flex: 1, minWidth: 160 },
             { headerName: "신용등급", field: "creditGrade", width: 140 },
-            { headerName: "미수금", field: "leftPrice", width: 140 },
+            { headerName: "미수금", field: "leftPrice", width: 140, type: "rightAligned", valueFormatter: (p)=> (Number(p.value||0)).toLocaleString("ko-KR") },
           ],
           rowSelection: "single",
           rowData: [],
           defaultColDef: { sortable: true, resizable: true, filter: true },
-          onGridReady: (p) => {
-            customerGridApi = p.api;
-          },
+          onGridReady: (p) => { customerGridApi = p.api; },
         };
         function ensureCustomerGrid() {
-          const gridDiv = document.getElementById("customerGrid");
+          const gridDiv = byId("customerGrid");
           if (!gridDiv) return;
           if (!gridDiv.__api) {
-            if (window.agGrid?.createGrid)
-              gridDiv.__api = agGrid.createGrid(gridDiv, customerGridOptions);
-            else {
-              new agGrid.Grid(gridDiv, customerGridOptions);
-              gridDiv.__api = customerGridOptions.api;
-            }
+            if (window.agGrid?.createGrid) gridDiv.__api = agGrid.createGrid(gridDiv, customerGridOptions);
+            else { new agGrid.Grid(gridDiv, customerGridOptions); gridDiv.__api = customerGridOptions.api; }
           }
           customerGridApi = gridDiv.__api;
         }
@@ -638,172 +503,140 @@
           customerGridApi.setRowData(Array.isArray(data) ? data : []);
           requestAnimationFrame(() => customerGridApi.sizeColumnsToFit?.());
         }
-        customerModalEl?.addEventListener("shown.bs.modal", async () => {
-          ensureCustomerGrid();
-          await fetchCustomerData();
+        customerModalEl?.addEventListener("shown.bs.modal", async () => { ensureCustomerGrid(); await fetchCustomerData(); });
+        byId("CstImportBtn")?.addEventListener("click", () => {
+          const sel = customerGridApi?.getSelectedRows?.() || [];
+          if (!sel.length) return toastr.warning("거래처를 선택하세요.");
+          byId("cusName").value = sel[0].cusName ?? "";
+          byId("cusCode").value = sel[0].cusCode ?? "";
+          byId("empName").textContent = sel[0].empName ?? (byId("managerName")?.textContent || "");
+          byId("tel").value = sel[0].tel ?? "";
+          byId("sample4_roadAddress").value = sel[0].addr ?? "";
+          byId("sample4_postcode").value = sel[0].zipCode ?? "";
         });
-        document
-          .getElementById("CstImportBtn")
-          ?.addEventListener("click", () => {
-            const sel = customerGridApi?.getSelectedRows?.() || [];
-            if (!sel.length) return toastr.warning("거래처를 선택하세요.");
-            document.getElementById("cusName").value = sel[0].cusName ?? "";
-            document.getElementById("cusCode").value = sel[0].cusCode ?? "";
-            document.getElementById("empName").textContent =
-              sel[0].empName ??
-              (document.getElementById("managerName").textContent || "");
-            document.getElementById("tel").value = sel[0].tel ?? "";
-            document.getElementById("sample4_roadAddress").value =
-              sel[0].addr ?? "";
-            document.getElementById("sample4_postcode").value =
-              sel[0].zipCode ?? "";
-          });
 
         /* --------- 주문서조회 모달 --------- */
-        const poHistoryModalEl = document.getElementById("PoHistoryModal");
+        const poHistoryModalEl = byId("PoHistoryModal");
         let poHistoryGridApi;
+
+        // ✅ 같은 주문 묶음을 안정적으로 식별
+        function groupKey(row) {
+          return row?.poId ?? row?.poCode ?? row?.altPoCode ?? null;
+        }
+
         const poHistoryGridOptions = {
           columnDefs: [
             { headerName: "", checkboxSelection: true, width: 50 },
             { headerName: "주문서번호", field: "poCode", width: 120 },
             { headerName: "작성일자", field: "poStart", width: 120 },
-            {
-              headerName: "거래처명",
-              field: "cusName",
-              flex: 1,
-              minWidth: 150,
-            },
+            { headerName: "거래처명", field: "cusName", flex: 1, minWidth: 150 },
             { headerName: "제품코드", field: "productCode", width: 120 },
             { headerName: "제품명", field: "productName", width: 150 },
             { headerName: "담당자", field: "empName", width: 100 },
             { headerName: "납기일자", field: "exDate", width: 120 },
-            {
-              headerName: "공급가액",
-              field: "supAmt",
-              width: 150,
-              type: "rightAligned",
-              valueFormatter: (p) =>
-                p.value ? Number(p.value).toLocaleString("ko-KR") : "",
-            },
+            { headerName: "공급가액", field: "supAmt", width: 150, type: "rightAligned", valueFormatter: (p) => (Number(p.value||0)).toLocaleString("ko-KR") },
           ],
           rowSelection: "multiple",
           rowMultiSelectWithClick: true,
           rowData: [],
           defaultColDef: { sortable: true, resizable: true, filter: true },
-          onGridReady: (p) => {
-            poHistoryGridApi = p.api;
-          },
+          onGridReady: (p) => { poHistoryGridApi = p.api; },
           onRowSelected: (event) => {
-            const row = event.data;
-            if (!row || !row.poCode) return;
+            const row = event.data; if (!row) return;
+            const gk = groupKey(row); if (!gk) { console.warn("[PoHistory] groupKey 없음", row); return; }
             if (_selectGuard) return;
             _selectGuard = true;
             if (event.node.isSelected()) {
-              poHistoryGridApi.forEachNode((n) =>
-                n.setSelected(n.data && n.data.poCode === row.poCode)
-              );
+              poHistoryGridApi.forEachNode((n) => n.setSelected(groupKey(n.data) === gk));
             } else {
-              poHistoryGridApi.forEachNode((n) => {
-                if (n.data && n.data.poCode === row.poCode)
-                  n.setSelected(false);
-              });
+              poHistoryGridApi.forEachNode((n) => { if (groupKey(n.data) === gk) n.setSelected(false); });
             }
             _selectGuard = false;
           },
         };
+
         function ensurePoHistoryGrid(modalRoot) {
-          let gridDiv =
-            document.getElementById("poHistoryGrid") ||
-            modalRoot?.querySelector("#poHistoryGrid");
+          const gridDiv = byId("poHistoryGrid") || modalRoot?.querySelector("#poHistoryGrid");
           if (!gridDiv) return null;
           if (!gridDiv.__api) {
-            if (!gridDiv.style.height) {
-              gridDiv.style.height = "360px";
-              gridDiv.style.width = "100%";
-            }
-            if (window.agGrid?.createGrid)
-              gridDiv.__api = agGrid.createGrid(gridDiv, poHistoryGridOptions);
-            else {
-              new agGrid.Grid(gridDiv, poHistoryGridOptions);
-              gridDiv.__api = poHistoryGridOptions.api;
-            }
+            if (!gridDiv.style.height) { gridDiv.style.height = "360px"; gridDiv.style.width = "100%"; }
+            if (window.agGrid?.createGrid) gridDiv.__api = agGrid.createGrid(gridDiv, poHistoryGridOptions);
+            else { new agGrid.Grid(gridDiv, poHistoryGridOptions); gridDiv.__api = poHistoryGridOptions.api; }
           }
           poHistoryGridApi = gridDiv.__api;
           return gridDiv;
         }
+
         async function fetchPoHistoryData() {
           if (!poHistoryGridApi) return;
           try {
             const { data } = await axios.get("/api/biz/pohistory");
             const rows = Array.isArray(data) ? data : [];
+            // ✅ 키 정규화: 백엔드 필드명이 달라도 안전하게 매핑
+            for (const r of rows) {
+              if (r.poId == null && r.headerPoId != null) r.poId = r.headerPoId;
+              if (!r.poCode && r.headerPoCode) r.poCode = r.headerPoCode;
+              if (!r.poCode && r.detailPoCode) r.poCode = r.detailPoCode;
+            }
             poHistoryGridApi.setRowData(rows);
             requestAnimationFrame(() => poHistoryGridApi.sizeColumnsToFit?.());
           } catch (err) {
             console.error("[PoHistory] 조회 실패", err);
-            window.toastr?.error?.("주문 이력 조회 실패");
+            toastr.error("주문 이력 조회 실패");
           }
         }
+
         document.addEventListener("shown.bs.modal", (ev) => {
           const modal = ev.target;
           if (!modal || modal.id !== "PoHistoryModal") return;
           const gridDiv = ensurePoHistoryGrid(modal);
-          if (!gridDiv) {
-            console.warn("[PoHistory] poHistoryGrid 요소 없음");
-            return;
-          }
+          if (!gridDiv) { console.warn("[PoHistory] poHistoryGrid 요소 없음"); return; }
           fetchPoHistoryData();
         });
 
-        // 주문서 가져오기
-        document
-          .getElementById("PohImportBtn")
-          ?.addEventListener("click", () => {
-            if (!poHistoryGridApi)
-              return toastr.info("그리드가 아직 준비되지 않았습니다.");
-            const selectedRows = poHistoryGridApi.getSelectedRows?.() || [];
-            if (!selectedRows.length)
-              return toastr.warning("가져올 주문서의 행을 선택하세요.");
+        // 주문서 → 라인 가져오기
+        byId("PohImportBtn")?.addEventListener("click", () => {
+          if (!poHistoryGridApi) return toastr.info("그리드가 아직 준비되지 않았습니다.");
+          const selectedRows = poHistoryGridApi.getSelectedRows?.() || [];
+          if (!selectedRows.length) return toastr.warning("가져올 주문서의 행을 선택하세요.");
 
-            document.getElementById("cusCode").value = selectedRows[0].cusCode;
-            document.getElementById("cusName").value = selectedRows[0].cusName;
-            document.getElementById("sample4_roadAddress").value =
-              selectedRows[0].addr;
-            document.getElementById("sample4_postcode").value =
-              selectedRows[0].zipCode;
-            document.getElementById("shipDate").value = selectedRows[0].exDate;
-            document.getElementById("tel").value = selectedRows[0].tel;
+          const first = selectedRows[0];
+          byId("cusCode").value = first.cusCode ?? "";
+          byId("cusName").value = first.cusName ?? "";
+          byId("sample4_roadAddress").value = first.addr ?? "";
+          byId("sample4_postcode").value = first.zipCode ?? "";
+          byId("shipDate").value = first.exDate ?? "";
+          byId("tel").value = first.tel ?? "";
 
-            const newItems = selectedRows.map((row) => ({
-              poCode: row.poCode ?? "",
+          const newItems = selectedRows.map((row) => {
+            const qty = Number(row.orderQty ?? row.qty ?? 0) || 0;
+            const unit = Number(row.unitPrice ?? 0) || 0;
+            const sup = Number(row.supAmt ?? unit * qty) || 0;
+            const vat = Math.round(sup * 0.1);
+            return {
+              poCode: row.poCode ?? null, // 디테일에 내려간 poCode도 보존
               productCode: row.productCode ?? "",
               productName: row.productName ?? "",
               cusCode: row.cusCode ?? "",
-              orderQty: row.orderQty,
-              unitPrice: row.unitPrice ?? 0,
-              supAmt: row.supAmt ?? (row.unitPrice || 0) * (row.orderQty || 1),
-              vatAmt: Math.round(
-                (row.supAmt ?? (row.unitPrice || 0) * (row.orderQty || 1)) * 0.1
-              ),
-              notes: row.notes,
-              payMethod: row.payMethod,
-            }));
-
-            itemGridApi.setRowData([]);
-            itemGridApi.applyTransaction({ add: newItems });
-            updateSummary?.();
-
-            (
-              bootstrap.Modal.getInstance(poHistoryModalEl) ||
-              bootstrap.Modal.getOrCreateInstance(poHistoryModalEl)
-            ).hide();
-
-            // 주문서 기반으로 가져오면 품목코드 모달 비활성화(원래 로직 유지)
-            document.getElementById("btnFindProduct").disabled = true;
-         // 주문서로 가져왔을 때 추가 잠금
-            document.getElementById("btnFindProduct").disabled  = true;  // 기존 로직 유지
-            document.getElementById("btnFindCustomer").disabled = true;  // 거래처 잠금
-            document.getElementById("btnf").disabled            = true;  // 도로명주소 잠금
+              orderQty: qty,
+              unitPrice: unit,
+              supAmt: sup,
+              vatAmt: vat,
+              notes: row.notes ?? "",
+              payMethod: row.payMethod || "CASH",
+            };
           });
+
+          console.log("선택 주문 그룹키:", groupKey(first));
+          itemGridApi.setRowData([]);
+          itemGridApi.applyTransaction({ add: newItems });
+          updateSummary?.();
+
+          (bootstrap.Modal.getInstance(poHistoryModalEl) || bootstrap.Modal.getOrCreateInstance(poHistoryModalEl)).hide();
+
+          // 주문서 기반 가져오기 → 입력 보호
+          lockAfterImportFromOrder();
+        });
       </script>
     </th:block>
   </body>
