@@ -77,12 +77,12 @@ public class WebSecurityConfig {
 	    http
 	        .securityMatcher("/sallogin", "/sallogin/**", "/sallogout",
 	                         "/register", "/checkId/**", "/subDetails", "/subdetails",
-	                         "/js/**", "/style/**") // ✅ 추가
+	                         "/js/**", "/style/**") 
 	        .csrf(csrf -> csrf.disable())
 	        .authorizeHttpRequests(auth -> auth
 	            .requestMatchers(
-	                "/js/**",              // ✅ 추가
-	                "/style/**",           // ✅ 추가
+	                "/js/**",             
+	                "/style/**",          
 	                "/css/**",
 	                "/img/**",
 	                "/favicon.ico",

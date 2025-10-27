@@ -115,7 +115,7 @@
 			<div class="card-body pt-3">
 				<div id="employee-grid-wrapper" style="position: relative;">
 					<div id="employee-grid" class="ag-theme-quartz"
-						style="height: 600px;"></div>
+						style="height: 600px; width:100%;"></div>
 				</div>
 			</div>
 
@@ -169,10 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const columnDefs = [
     { headerName: '', checkboxSelection: true, headerCheckboxSelection: true, maxWidth: 50 },
     { field: 'name', headerName: '사원이름' },
-    { field: 'empId', headerName: '사번 (로그인ID)' },
+    { field: 'empId', headerName: '사번 (로그인ID)'},
     { field: 'title', headerName:'직책' },
     { field: 'deptName', headerName: '부서이름' },
-    { field: 'email', headerName: '이메일' },
+    { field: 'email', headerName: '이메일', flex: 1 },
     {
       field: 'comName',
       headerName: '권한',
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     defaultColDef: { sortable: true, filter: true, resizable: true },
     pagination: true,
     paginationPageSize: 20,
-
+    suppressAutoColumns: true,
     onCellValueChanged: (event) => {
       const field = event.colDef.field;
 
