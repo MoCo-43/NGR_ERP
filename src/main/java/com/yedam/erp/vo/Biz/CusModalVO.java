@@ -16,5 +16,12 @@ public class CusModalVO {
   private String tel;
   private String addr;
   private String zipCode;
+  
+  // 거래처 정보
+  private String bizNo;
+  private String ceoName;
+  private String empName;
+  private String bizType;
+  private String bizCategory;
 
 }

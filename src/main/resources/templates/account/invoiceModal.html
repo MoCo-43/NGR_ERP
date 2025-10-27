@@ -227,6 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	});
   // 토글 변경될 때마다 실행
   toggle.addEventListener("change", updateCustomerFields);
+  console.log(toggle);
   // 페이지 로드 시 초기 실행
   updateCustomerFields();
   modalEl.addEventListener('shown.bs.modal', () => {
@@ -551,13 +552,12 @@ function getVatRate() {
 		<script th:inline="none">
 let businessGridApi = null;
 
-
 async function loadBusinessData() {
-	  const type = document.getElementById("voucherTypeSwitch").checked ? "S" : "P";
-
+	 
+const type = document.getElementById("voucherTypeSwitch").checked ? "S" : "P";
 	  let url;
 	  if (type === "S") {
-	    url = `/api/v1/stock/cusList/${compaCode}`;  // 고객 목록 API
+	    url ="/api/biz/customercode";  // 고객 목록 API
 	  } else {
 	    url = `/api/v1/stock/cusList/${compaCode}`;  // 공급자 목록 API
 	  }
