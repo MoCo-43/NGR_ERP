@@ -1276,7 +1276,7 @@ GROUP BY TO_CHAR(po_start,'YYYY')
 <select id="getAnnualOrderDetail" resultType="map" parameterType="Long">
 SELECT 
        TO_CHAR(po.po_start,'YYYY-MM-DD') as "poDate", 
-       po.creater AS "creater", 
+       po.emp_name AS "creater", 
        po.pay_method AS "payMethod",
        po.po_code AS "poCode",
        cu.cus_name AS "cusName"   
@@ -1286,7 +1286,7 @@ ON po.cus_code = cu.cus_code
 WHERE TO_CHAR(po.po_start,'YYYY') = TO_CHAR(sysdate,'YYYY') 
 AND po.COMPANY_CODE = #{companyCode} 
 GROUP BY TO_CHAR(po.po_start,'YYYY-MM-DD'),
-         po.creater,
+         po.emp_name,
          po.pay_method,
          po.po_code,
          cu.cus_name 
@@ -1298,7 +1298,7 @@ GROUP BY TO_CHAR(po.po_start,'YYYY-MM-DD'),
 <select id="getAnnualOrderDetailByParam" resultType="map" parameterType="map">
 SELECT 
        TO_CHAR(po.po_start,'YYYY-MM-DD') as "poDate", 
-       po.creater AS "creater", 
+       po.emp_name AS "creater", 
        po.pay_method AS "payMethod",
        po.po_code AS "poCode",
        cu.cus_name AS "cusName"   
@@ -1314,7 +1314,7 @@ AND po.COMPANY_CODE = #{companyCode}
  AND po.pay_method = #{payMethod} 
 </if>
 GROUP BY TO_CHAR(po.po_start,'YYYY-MM-DD'),
-         po.creater,
+         po.emp_name,
          po.pay_method,
          po.po_code,
          cu.cus_name 
