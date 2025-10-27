@@ -45,8 +45,8 @@
         <div class="card-header d-flex align-items-center justify-content-between">
           <h6 class="m-0 font-weight-bold text-primary">출하지시서 입력</h6>
           <div class="btn-group">
-            <button type="button" class="btn btn-danger" id="btnReset">초기화</button>
-            <button type="button" class="btn btn-primary" id="btnSave">등록</button>
+            <button type="button" class="btn btn-danger mr-2" id="btnReset">초기화</button>
+            <button type="button" class="btn btn-primary mr-2" id="btnSave">등록</button>
           </div>
         </div>
 
@@ -120,12 +120,12 @@
             </div>
 
             <!-- 조회 버튼 그룹 -->
-            <div class="d-flex justify-content-between mt-3 mb-2">
+            <div class="d-flex justify-content-end mr-2">
               <div class="d-flex gap-2">
-                <button type="button" class="btn btn-secondary btn-slim" id="btnFindProduct" data-bs-toggle="modal" data-bs-target="#productcodeModal">
+                <button type="button" class="btn btn-secondary " id="btnFindProduct" data-bs-toggle="modal" data-bs-target="#productcodeModal">
                   품목코드
                 </button>
-                <button type="button" class="btn btn-secondary btn-slim" id="btnFindOrder" data-bs-toggle="modal" data-bs-target="#PoHistoryModal">
+                <button type="button" class="btn btn-secondary " id="btnFindOrder" data-bs-toggle="modal" data-bs-target="#PoHistoryModal">
                   주문서조회
                 </button>
               </div>
@@ -138,8 +138,8 @@
           <!-- 하단 합계/행조작 -->
           <div class="d-flex justify-content-between align-items-center mt-2">
             <div class="d-flex gap-2">
-              <button type="button" class="btn btn-secondary" id="btnDelRow">선택 삭제</button>
-              <button type="button" class="btn btn-danger" id="btnClearRows">전체 비우기</button>
+              <button type="button" class="btn btn-secondary mr-2" id="btnDelRow">선택 삭제</button>
+              <button type="button" class="btn btn-danger mr-2" id="btnClearRows">전체 비우기</button>
             </div>
             <div class="summary-bar">
               총 수량: <span id="sumQty">0</span> | 총 공급가액: <span id="sumSupply">0</span> | 총 부가세: <span id="sumVat">0</span>

@@ -41,11 +41,11 @@
         <h6 class="m-0 font-weight-bold text-primary">주문서입력</h6>
 
                 <div class="btn-group">
-                  <button id="btnOpenHistory" type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#PoHistoryModal">
+                  <button id="btnOpenHistory" type="button" class="btn btn-secondary mr-2" data-bs-toggle="modal" data-bs-target="#PoHistoryModal">
                     주문서이력조회
                   </button>
-                  <button id="btnReset" type="button" class="btn btn-danger">초기화</button>
-                  <button id="btnSubmit" type="button" class="btn btn-primary">등록</button>
+                  <button id="btnReset" type="button" class="btn btn-danger mr-2">초기화</button>
+                  <button id="btnSubmit" type="button" class="btn btn-primary mr-2">등록</button>
                 </div>
           </div>
       </div>
@@ -72,8 +72,8 @@
               </div>
             <!-- 2행: 담당자 | 지불방식 -->
               <div class="col-md-3">
-                <label for="creater" class="form-label">담당자</label>
-                <span id="creater" class="form-control" th:text="${#authentication.principal.empLoginVO.name}"></span>
+                <label for="empName" class="form-label">담당자</label>
+                <span id="empName" class="form-control" th:text="${#authentication.principal.empLoginVO.name}"></span>
               </div>
               <div class="col-md-3">
                 <label for="payMethod" class="form-label">지불방식</label>
@@ -129,13 +129,13 @@
 		    <button
 		      id="btnOpenProduct"
 		      type="button"
-		      class="btn btn-secondary"
+		      class="btn btn-secondary mr-2"
 		      data-bs-toggle="modal"
 		      data-bs-target="#productcodeModal"
 		    >
 		      제품코드
 		    </button>
-		    <button id="btnRemoveRow" type="button" class="btn btn-danger">
+		    <button id="btnRemoveRow" type="button" class="btn btn-danger mr-2">
 		      행 삭제
 		    </button>
 		  </div>
@@ -299,7 +299,7 @@
             columnDefs,
             rowSelection: "multiple",
             rowMultiSelectWithClick: true,
-            localeText: { noRowsToShow: "제품코드를 눌러주세요" },
+            localeText: { noRowsToShow: "제품코드를 추가해주세요" },
             rowData: [],
             defaultColDef: { sortable: true, resizable: true, filter: true },
             onGridReady: (p) => { gridApi = p.api; updatePinned(); },
@@ -349,7 +349,7 @@
               const payload = {
                 companyCode: compCode,
                 cusCode: cusCode,
-                creater: loginName,
+                empName: loginName,
                 poStart: getVal("poStart") || undefined,
                 exDate: getVal("exDate") || undefined,
                 poDate: getVal("poDate") || undefined,
@@ -409,7 +409,7 @@
             { headerName: "제품명", field: "productName", width: 150 },
             { headerName: "수량", field: "orderQty", width: 150 },
             { headerName: "단가", field: "unitPrice", width: 150 },
-            { headerName: "담당자", field: "creater", width: 100 },
+            { headerName: "담당자", field: "empName", width: 100 },
             { headerName: "납기일자", field: "exDate", width: 120 },
             { headerName: "공급가액", field: "supAmt", width: 150, cellClass: "ag-right-aligned-cell" },
           ];
@@ -459,7 +459,7 @@
                   productCode: row.productCode || "",
                   productName: row.productName || "",
                   unitPrice: row.unitPrice || null,
-                  creater: row.creater || "",
+                  empName: row.empName || "",
                   exDate: row.exDate,
                   supAmt: row.supAmt || null,
                 }));
