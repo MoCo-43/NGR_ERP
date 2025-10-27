@@ -202,7 +202,9 @@ FROM   PRODUCT
 
 <!-- 거래처 조회(모달) 판매처만 조회-->
 <select id="getCustomers" resultType="CusModalVO">
-  SELECT c.CUS_CODE, c.CUS_NAME, c.ADDR, c.ZIP_CODE, c.TEL,
+  SELECT c.CUS_CODE, c.CUS_NAME, c.ADDR, c.ZIP_CODE,
+  		 c.TEL,c.BIZ_NO,c.CEO_NAME, c.BIZ_TYPE,
+  		 c.BIZ_CATEGORY,c.EMP_NAME,
          cm.CREDIT_GRADE, cm.LEFT_PRICE, 
          cp.DISCOUNT_RATE
   FROM CUSTOMER c
