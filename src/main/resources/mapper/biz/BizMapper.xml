@@ -456,7 +456,7 @@ FROM   PRODUCT
 <!-- 여신현황 조회 -->
   <select id="selectCrdMaster" parameterType="long" resultType="CustomerCreditVO">
   SELECT c.CUS_CODE, c.CUS_NAME, 
-        cm.CREDIT_GRADE, cm.CREDIT_LIMIT, cm.START_DATE, cm.EXPIRE_DATE, cm.ACTIVE_STATUS
+        cm.CREDIT_GRADE, cm.CREDIT_LIMIT, cm.START_DATE, cm.EXPIRE_DATE, cm.ACTIVE_STATUS, cm.LEFT_PRICE
   FROM CREDIT_MASTER cm
   JOIN CUSTOMER c ON cm.CUS_CODE = c.CUS_CODE
   WHERE c.COMPANY_CODE = #{companyCode}
@@ -465,7 +465,7 @@ FROM   PRODUCT
 
 <!-- 여신 등급 정책 조회-->
 <select id="getCreditGrade" resultType="CreditGradeVO">
-SELECT GRADE, GRADE_NAME, MAX_LIMIT, DISCOUNT_RATE, LEFT_PRICE
+SELECT GRADE, GRADE_NAME, MAX_LIMIT, DISCOUNT_RATE
 FROM CREDIT_POLICY
 WHERE COMPANY_CODE = #{companyCode}
 </select>
