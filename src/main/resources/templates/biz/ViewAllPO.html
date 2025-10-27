@@ -56,13 +56,13 @@
           <!-- 2~6. 검색 조건 -->
           <div class="form-inline flex-wrap gap-2">
             <label class="mr-2 mb-2">작성일자</label>
-            <input id="date" type="date" class="form-control mr-3 mb-2" />
+            <input id="date" type="date" class="form-control mr-2 mb-2" />
 
             <label class="mr-2 mb-2">거래처</label>
             <input
               id="customer"
               type="text"
-              class="form-control mr-3 mb-2"
+              class="form-control mr-2 mb-2"
               placeholder="거래처 검색"
             />
 
@@ -70,15 +70,14 @@
             <input
               id="productName"
               type="text"
-              class="form-control mr-3 mb-2"
-            />
-
-            <button id="btnSearch" class="btn btn-dark mb-2">조회</button>
-              <button id="btnReset" class="btn btn-danger mb-2"> 초기화</button>
-	      <!--  승인 및 입금완료 버튼 -->
+              class="form-control mr-2 mb-2"/>
 	<div class="d-flex justify-content-end gap-2 pb-0">
-	  <button id="btnPoConfirm" class="btn btn-primary mb-2">승인</button>
-	  <button id="btnPaymentConfirm" class="btn btn-success mb-2">입금완료</button>
+		  <!--  검색 조회 초기화 버튼 -->
+            <button id="btnSearch" class="btn btn-dark mr-2">조회</button>
+            <button id="btnReset" class="btn btn-danger mr-2"> 초기화</button>
+	      <!--  승인 및 입금완료 버튼 -->
+	  <button id="btnPoConfirm" class="btn btn-primary mr-2">승인</button>
+	  <button id="btnPaymentConfirm" class="btn btn-success mr-2">입금완료</button>
 	</div>
           </div>
         </div>
@@ -207,7 +206,7 @@
                 p.value ? new Date(p.value).toLocaleDateString("ko-KR") : "",
             },
             { headerName: "거래처명", field: "cusName", width: 140 },
-            { headerName: "담당자", field: "creater", width: 110 },
+            { headerName: "담당자", field: "empName", width: 110 },
             {
               headerName: "제품명",
               field: "productName",
@@ -296,7 +295,7 @@
        		      poCode: r.poCode,
        		      poStart: r.poStart,
        		      cusName: r.cusName,
-       		      creater: r.creater,
+       		      empName: r.empName,
        		      productName: r.productName,
        		      exDate: r.exDate,
        		      supAmt: r.supAmt,
