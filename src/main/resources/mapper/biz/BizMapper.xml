@@ -17,7 +17,7 @@ SELECT
     p.PO_CODE,
     p.PO_START,
     c.CUS_NAME,
-    p.CREATER,
+    p.EMP_NAME,
     CASE
         WHEN s.PROD_CNT > 1
           THEN s.REP_NAME || ' 외 ' || (s.PROD_CNT - 1) || '건'
@@ -63,7 +63,7 @@ ORDER BY p.PO_START DESC
     </selectKey>
 
     INSERT INTO purchase_order (
-      PO_ID, COMPANY_CODE, PO_CODE, CUS_CODE, CREATER, PO_START, EX_DATE, PO_DATE,
+      PO_ID, COMPANY_CODE, PO_CODE, CUS_CODE, EMP_NAME, PO_START, EX_DATE, PO_DATE,
       PO_STATUS, PAY_METHOD, NOTES, CREDIT_ACTIVE
     )
     VALUES (
@@ -71,7 +71,7 @@ ORDER BY p.PO_START DESC
       #{companyCode},
       fn_generate_code('PO', ''),
       #{cusCode},
-      #{creater},
+      #{empName},
       #{poStart},
       #{exDate},
       #{poDate},
