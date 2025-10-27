@@ -91,10 +91,6 @@ const MENUS = {
           ["여신관리", "/biz/mngcredit"],
         ],
       },
-      {
-        title: "영업관리현황",
-        items: [["거래명세서", "/biz/saleinvoice"]],
-      },
     ],
   },
   accounting: {
