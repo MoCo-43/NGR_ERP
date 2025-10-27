@@ -1099,10 +1099,11 @@ SELECT DISTINCT
             ) THEN '과세'
             ELSE '면세'
        END AS taxType
-FROM outbound_header oh
-JOIN outbound o ON oh.outb_header_code = o.outb_header_code
-JOIN delivery_order do ON do.do_code = oh.do_code
-JOIN do_detail dod ON do.do_no = dod.do_no
+FROM outbound_header oh 
+JOIN outbound o ON oh.outb_header_code = o.outb_header_code 
+JOIN delivery_order do ON do.do_code = oh.do_code 
+JOIN do_detail dod ON do.do_no = dod.do_no 
+AND o.product_code = dod.product_code 
 WHERE oh.outb_header_code = #{outCode}
 </select>
 

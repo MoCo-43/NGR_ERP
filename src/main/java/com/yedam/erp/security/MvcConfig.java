@@ -23,6 +23,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		        System.out.println("📂 [서명폴더 생성됨] " + signDir.getAbsolutePath());
 		    }
 		     // 이미지 불러오기
+		    
 				
 //			registry.addResourceHandler("/sign/**") .addResourceLocations("file:" +
 //			System.getProperty("user.dir") + "/uploads/sign/");
@@ -30,6 +31,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		    // 재고부 - 결산페이지 - 전자서명 불러오기 (C:'\'upload/sign/)
 	         registry.addResourceHandler("/sign/**")
 		     .addResourceLocations("file:" + uploadDir + "/sign/");
+	         System.out.println("✅ [Sign Path Mapping 완료] /sign/** → " + uploadDir + "/sign/");
 	        
 	        // 공통
 	        registry.addResourceHandler("/uploads/signatures/**")
