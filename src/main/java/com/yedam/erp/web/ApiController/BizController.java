@@ -64,7 +64,7 @@ public class BizController {
 
     // 회사코드적용
     pvo.setCompanyCode(companyCode);
-    // 작성자적용
+    // vo에 담당자 적용
     pvo.setEmpName(empName);
     // 디테일 poId전달
     pvo.setPoId(poId);
