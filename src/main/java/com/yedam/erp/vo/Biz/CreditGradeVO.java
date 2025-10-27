@@ -10,6 +10,5 @@ public class CreditGradeVO {
   private String gradeName;
   private Long maxLimit;
   private Long discountRate;
-  private String allowCredit;
-  private String prepayRequired; 
+  private Long leftPrice;
 }

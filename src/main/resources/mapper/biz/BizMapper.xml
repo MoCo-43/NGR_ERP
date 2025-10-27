@@ -463,7 +463,7 @@ FROM   PRODUCT
 
 <!-- 여신 등급 정책 조회-->
 <select id="getCreditGrade" resultType="CreditGradeVO">
-SELECT GRADE, GRADE_NAME, MAX_LIMIT, DISCOUNT_RATE
+SELECT GRADE, GRADE_NAME, MAX_LIMIT, DISCOUNT_RATE, LEFT_PRICE
 FROM CREDIT_POLICY
 WHERE COMPANY_CODE = #{companyCode}
 </select>

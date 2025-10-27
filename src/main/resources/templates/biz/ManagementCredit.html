@@ -203,6 +203,7 @@
             { headerName: "거래처명", field: "cusName", minWidth: 150, flex: 1 },
             { headerName: "신용등급", field: "creditGrade", width: 100, cellClass: "text-center" },
             { headerName: "여신한도", field: "creditLimit", width: 140, valueFormatter: money },
+            { headerName: "여신잔여", field: "leftPrice", width: 140, valueFormatter: money },
             { headerName: "적용시작일", field: "startDate", width: 130 },
             { headerName: "적용만료일", field: "expireDate", width: 130 },
             { headerName: "상태", field: "activeStatus", width: 110 },
@@ -275,6 +276,7 @@
 		        creditLimit: Number(r.creditLimit ?? 0),
 		        startDate: formatDate(r.startDate),     // ✅ yyyy-mm-dd 형태로 변환
 		        expireDate: formatDate(r.expireDate),   // ✅ 동일 포맷으로 변환
+		        leftPrice: r.leftPrice,
 		        activeStatus: r.activeStatus,
 		        creditNo: r.creditNo ?? r.id ?? null,
 		      };
