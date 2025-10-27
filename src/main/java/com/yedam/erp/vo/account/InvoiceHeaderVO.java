@@ -41,7 +41,7 @@ public class InvoiceHeaderVO {
     // 1:N 매핑
     private List<InvoiceLineVO> lines;
     
-    // 거래처
+    // 구매처
     private String buyerBizno;
     private String buyerCeoName;
     private String buyerAddr;
@@ -49,7 +49,7 @@ public class InvoiceHeaderVO {
     private String buyerBizCategory;
     private String buyerEmail;
     
-    // 거래처
+    // 판매처
     private String sellerBizno;
     private String sellerCeoName;
     private String sellerAddr;
