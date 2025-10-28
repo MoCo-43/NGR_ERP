@@ -182,18 +182,37 @@ function newInputRow(){
 }
 
 // 목록 로드 + 차액행 처리
+let isFirstLoad = true; // ✅ 첫 로드 여부 플래그
+
 async function loadList() {
-	
-	const today = todayStr();
-    document.getElementById("fromDate").value = today;
-    document.getElementById("toDate").value = today;
-    
+  const fromInput = document.getElementById("fromDate");
+  const toInput   = document.getElementById("toDate");
+  let fromDate = fromInput.value;
+  let toDate   = toInput.value;
+
+  const today = todayStr();
+
+  // ✅ 첫 로드시만 오늘 날짜로 자동 세팅
+  if (isFirstLoad) {
+    fromDate = today;
+    toDate   = today;
+    fromInput.value = today;
+    toInput.value   = today;
+  }
+
   const { data } = await axios.get("/api/account/journal");
   let rows = Array.isArray(data) ? data : [];
 
-  // 오늘 날짜만 필터
-  rows = rows.filter(r => r.jrnDate.substring(0,10) === today);
-  
+  // ✅ 날짜 필터 적용 (입력값 기준)
+  if (fromDate) {
+    const from = new Date(fromDate);
+    rows = rows.filter(r => new Date(r.jrnDate) >= from);
+  }
+  if (toDate) {
+    const to = new Date(toDate);
+    rows = rows.filter(r => new Date(r.jrnDate) <= to);
+  }
+
   // === 전표별 차변/대변 합계 계산 ===
   const grouped = {};
   rows.forEach(r => {
@@ -203,11 +222,11 @@ async function loadList() {
     if (r.dcType === "C") grouped[r.jrnNo].credit += toNumber(r.amount) || 0;
   });
 
-  // === 전표별 마지막 뒤에 차액행 추가 ===
-   let finalRows = [];
+  // === 차액행 추가 ===
+  let finalRows = [];
   Object.entries(grouped).forEach(([jrnNo, g]) => {
-    finalRows = finalRows.concat(g.rows); // 원래 행들 넣고
-    if (showDiffRows) {   // ✅ 버튼 상태에 따라 보이기/숨기기
+    finalRows = finalRows.concat(g.rows);
+    if (showDiffRows) {
       const diff = g.debit - g.credit;
       const seq = jrnNo.substring(jrnNo.lastIndexOf("-") + 1);
       if (diff !== 0) {
@@ -229,12 +248,19 @@ async function loadList() {
 
   gvApi.setGridOption("rowData", finalRows);
   gvApi.refreshClientSideRowModel('sort');
-  // ✅ 입력행 추가 보장
-  gvApi.applyTransaction({ 
-    add: [ newInputRow() ], 
-    addIndex: gvApi.getDisplayedRowCount() 
+
+  // ✅ 입력행 추가
+  gvApi.applyTransaction({
+    add: [newInputRow()],
+    addIndex: gvApi.getDisplayedRowCount()
   });
+
+  // ✅ 첫 로드 완료 플래그 해제
+  isFirstLoad = false;
 }
+
+
+
 // 기간 필터링
 async function loadFilteredList() {
   try {
