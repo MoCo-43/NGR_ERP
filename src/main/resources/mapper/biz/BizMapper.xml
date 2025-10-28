@@ -17,7 +17,7 @@ SELECT
     p.PO_CODE,
     p.PO_START,
     c.CUS_NAME,
-    p.CREATER,
+    p.EMP_NAME,
     CASE
         WHEN s.PROD_CNT > 1
           THEN s.REP_NAME || ' 외 ' || (s.PROD_CNT - 1) || '건'
@@ -63,15 +63,15 @@ ORDER BY p.PO_START DESC
     </selectKey>
 
     INSERT INTO purchase_order (
-      PO_ID, COMPANY_CODE, PO_CODE, CUS_CODE, CREATER, PO_START, EX_DATE, PO_DATE,
+      PO_ID, COMPANY_CODE, PO_CODE, CUS_CODE, EMP_NAME, PO_START, EX_DATE, PO_DATE,
       PO_STATUS, PAY_METHOD, NOTES, CREDIT_ACTIVE
     )
     VALUES (
       #{poId},
       #{companyCode},
-      fn_generate_code('PO', ''),
+      fn_generate_code('PO', NULL),
       #{cusCode},
-      #{creater},
+      #{empName},
       #{poStart},
       #{exDate},
       #{poDate},
@@ -183,7 +183,6 @@ FROM PURCHASE_ORDER po
 JOIN PO_DETAIL pd ON po.PO_ID = pd.PO_ID
 JOIN CUSTOMER c ON po.CUS_CODE = c.CUS_CODE
 WHERE po.COMPANY_CODE = #{companyCode}
-  AND po.PO_STATUS = '작성완료'
 ORDER BY po.PO_CODE DESC
 </select>
 
@@ -202,7 +201,9 @@ FROM   PRODUCT
 
 <!-- 거래처 조회(모달) 판매처만 조회-->
 <select id="getCustomers" resultType="CusModalVO">
-  SELECT c.CUS_CODE, c.CUS_NAME, c.ADDR, c.ZIP_CODE, c.TEL,
+  SELECT c.CUS_CODE, c.CUS_NAME, c.ADDR, c.ZIP_CODE,
+  		 c.TEL,c.BIZ_NO,c.CEO_NAME, c.BIZ_TYPE,
+  		 c.BIZ_CATEGORY,c.EMP_NAME,
          cm.CREDIT_GRADE, cm.LEFT_PRICE, 
          cp.DISCOUNT_RATE
   FROM CUSTOMER c
@@ -257,7 +258,7 @@ FROM   PRODUCT
   </selectKey>
 
   INSERT INTO DELIVERY_ORDER (
-    DO_NO, CUS_CODE, PO_CODE, DO_CODE,
+    DO_NO, CUS_CODE, DO_CODE,
     EMP_NAME, DO_CREATED,
     DO_STATUS, NOTES, COMPANY_CODE,
     EX_DATE, ADDR, ZIP_CODE,TEL
@@ -265,8 +266,7 @@ FROM   PRODUCT
   VALUES (
     #{doNo},
     #{cusCode},
-    #{poCode},
-    fn_generate_code('DO', ''),
+    fn_generate_code('DO', NULL),
     #{empName},
     #{doCreated},
     '작성완료',
@@ -282,7 +282,7 @@ FROM   PRODUCT
 <!-- 출하지시서 상세 INSERT (UNION ALL + t 별칭 방식) -->
 <insert id="insertDODetails" parameterType="DoInsertVO">
   INSERT INTO DO_DETAIL (
-    DOD_NO, DO_NO, PRODUCT_CODE,
+    DOD_NO, DO_NO, PRODUCT_CODE, PO_CODE,
     ORDER_QTY, UNIT_PRICE, SUP_AMT,
     VAT_AMT, DC_AMT, COMPANY_CODE
   )
@@ -290,6 +290,7 @@ FROM   PRODUCT
     fn_generate_code('DOD', ''),
     #{doNo},
     t.productCode,
+    t.poCode,
     t.orderQty,
     t.unitPrice,
     t.supAmt,
@@ -300,8 +301,9 @@ FROM   PRODUCT
     <foreach collection="dodetails" item="d" separator=" UNION ALL ">
       SELECT
         #{d.productCode} AS productCode,
-        #{d.orderQty}     AS orderQty,
-        #{d.unitPrice}    AS unitPrice,
+        #{d.poCode}      AS poCode,
+        #{d.orderQty}    AS orderQty,
+        #{d.unitPrice}   AS unitPrice,
         #{d.supAmt}      AS supAmt,
         #{d.vatAmt}      AS vatAmt,
         #{d.dcAmt}       AS dcAmt
@@ -453,7 +455,7 @@ FROM   PRODUCT
 <!-- 여신현황 조회 -->
   <select id="selectCrdMaster" parameterType="long" resultType="CustomerCreditVO">
   SELECT c.CUS_CODE, c.CUS_NAME, 
-        cm.CREDIT_GRADE, cm.CREDIT_LIMIT, cm.START_DATE, cm.EXPIRE_DATE, cm.ACTIVE_STATUS
+        cm.CREDIT_GRADE, cm.CREDIT_LIMIT, cm.START_DATE, cm.EXPIRE_DATE, cm.ACTIVE_STATUS, cm.LEFT_PRICE
   FROM CREDIT_MASTER cm
   JOIN CUSTOMER c ON cm.CUS_CODE = c.CUS_CODE
   WHERE c.COMPANY_CODE = #{companyCode}

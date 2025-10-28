@@ -31,7 +31,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		    // 재고부 - 결산페이지 - 전자서명 불러오기 (C:'\'upload/sign/)
 	         registry.addResourceHandler("/sign/**")
 		     .addResourceLocations("file:" + uploadDir + "/sign/");
-	         System.out.println("✅ [Sign Path Mapping 완료] /sign/** → " + uploadDir + "/sign/");
+	         // System.out.println("✅ [Sign Path Mapping 완료] /sign/** → " + uploadDir + "/sign/");
 	        
 	        // 공통
 	        registry.addResourceHandler("/uploads/signatures/**")
@@ -87,7 +87,7 @@ public class MvcConfig implements WebMvcConfigurer {
 		// 영업-여신관리 페이지
 		registry.addViewController("/biz/mngcredit").setViewName("biz/ManagementCredit");
 		// 영업-거래명세서 페이지
-		registry.addViewController("/biz/saleinvoice").setViewName("biz/SaleInvoice");
+//		registry.addViewController("/biz/saleinvoice").setViewName("biz/SaleInvoice");
 
 		// 회계
 		registry.addViewController("/vouchers").setViewName("account/list");

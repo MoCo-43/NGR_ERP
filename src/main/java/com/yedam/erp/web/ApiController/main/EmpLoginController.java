@@ -273,8 +273,8 @@ public class EmpLoginController {
         List<Map<String, Object>> result = new ArrayList<>();
         // (System.out.println 로그는 문제 없음)
         for (EmpVO emp : empList) {
-            System.out.println("emp_id=" + emp.getEmp_id() + ", name=" + emp.getName() +",title="+emp.getTitle() 
-                + ", dept_code=" + emp.getDept_code() + ", email=" + emp.getEmail() + ", dept_name=" + emp.getDept_name());
+//            System.out.println("emp_id=" + emp.getEmp_id() + ", name=" + emp.getName() +",title="+emp.getTitle() 
+//                + ", dept_code=" + emp.getDept_code() + ", email=" + emp.getEmail() + ", dept_name=" + emp.getDept_name());
         }
         for (EmpVO emp : empList) {
             Map<String, Object> map = new HashMap<>();
@@ -283,6 +283,7 @@ public class EmpLoginController {
             map.put("title", emp.getTitle());
             map.put("deptName", emp.getDept_name()); // deptName이 정상적으로 매핑됨
             map.put("email", emp.getEmail());
+            map.put("position", emp.getPosition());
             map.put("comName", emp.getComName());
             map.put("isUsed", emp.getIsUsed()); 
             result.add(map);

@@ -91,10 +91,6 @@ const MENUS = {
           ["여신관리", "/biz/mngcredit"],
         ],
       },
-      {
-        title: "영업관리현황",
-        items: [["거래명세서", "/biz/saleinvoice"]],
-      },
     ],
   },
   accounting: {
@@ -169,7 +165,9 @@ function renderSidebar(key) {
     grp.items.forEach(([label, href]) => {
       if (auth === "ROLE_USER") {
         const restricted = ["/accountList",
-        					"/payroll"];
+        					"/payroll",
+        					"/sub/admin/subList",
+        					"/admin/hrmanager"];
         if (restricted.includes(href)) return;
       }
 

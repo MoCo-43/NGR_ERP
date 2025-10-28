@@ -46,5 +46,12 @@ public class SessionUtil {
 	    CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
 	    return principal.getEmpLoginVO().getEmpIdNo(); 
 	}
+	public static String name() {
+		SecurityContext context = SecurityContextHolder.getContext(); 
+		// 인증 객체를 얻습니다. 
+		Authentication authentication = context.getAuthentication(); 
+		CustomUserDetails principal =(CustomUserDetails) authentication.getPrincipal(); 
+		return principal.getEmpVO().getName();
+	}
 
 }

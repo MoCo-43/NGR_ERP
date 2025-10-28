@@ -4,7 +4,7 @@
 	 layout:decorate="~{layout/base}">
 <head>
   <meta charset="UTF-8">
-  <title layout:fragment="title">너 구 름(Your Cloud)</title>
+  <title layout:fragment="title">제품 조회</title>
   <th:block layout:fragment="head_extra">
      <!-- Bootstrap CSS -->
   	<!--  base에 있는 버전과 달라서 강제 주입 --> 
@@ -632,7 +632,8 @@ document.addEventListener("DOMContentLoaded", () => {
 			         	  // 합계 계산: pinnedBottomRowData 사용
 			         	   // ✅ 총 공급가액 = 각 행의 remainQty * purchasePrice 합
 							const totalAmount = resDetail.data.reduce(
-							    (sum, r) => sum + ((r.remainQty || 0) * (r.purchasePrice || 0)), 0 );
+							    (sum, r) => sum + ((r.remainQty || 0) * (r.purchasePrice || 0)), 0 ); // 잔여수량 * 구매단가
+							//  (sum, r) => sum + ((r.qty || 0) * (r.purchasePrice || 0)), 0 ); // 입고누적수량 * 구매단가
 					      const totalRow = {
 					        no: '합계',
 					        remainQty: resDetail.data.reduce((sum, r) => sum + r.remainQty, 0),

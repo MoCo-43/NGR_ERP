@@ -59,13 +59,13 @@ public class BizController {
 
     // 세션에서 회사코드 꺼내오기
     Long companyCode = SessionUtil.companyId();
-    String creater = SessionUtil.empName();
+    String empName = SessionUtil.empName();
     Long poId = service.createPo(pvo);
 
     // 회사코드적용
     pvo.setCompanyCode(companyCode);
-    // 작성자적용
-    pvo.setCreater(creater);
+    // vo에 담당자 적용
+    pvo.setEmpName(empName);
     // 디테일 poId전달
     pvo.setPoId(poId);
 

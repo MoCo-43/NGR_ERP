@@ -56,36 +56,36 @@
         <div class="card-body pt-3">
           <!-- 검색필터: 상호 / 대표자명 / 구분(구매처·판매처) -->
           <div class="form-inline flex-wrap gap-2">
-            <label class="mr-2 mb-2" for="qName">상호</label>
+            <label class="mr-2" for="qName">상호</label>
             <input
               id="qName"
               type="text"
-              class="form-control mr-3 mb-2"
+              class="form-control mr-3"
               placeholder="거래처명(상호)"
             />
 
-            <label class="mr-2 mb-2" for="qRep">대표자명</label>
+            <label class="mr-2" for="qRep">대표자명</label>
             <input
               id="qRep"
               type="text"
-              class="form-control mr-3 mb-2"
+              class="form-control mr-3"
               placeholder="대표자명"
             />
 
-            <label class="mr-2 mb-2" for="qGbn">구분</label>
-            <select id="qGbn" class="form-select mr-3 mb-2">
+            <label class="mr-2" for="qGbn">구분</label>
+            <select id="qGbn" class="form-control mr-4">
               <option value="">전체</option>
               <option value="구매처">구매처</option>
               <option value="판매처">판매처</option>
             </select>
 
-            <button id="btnSearch" class="btn btn-dark mb-2">조회</button>
-            <button id="btnResetFilter" class="btn btn-danger mb-2">초기화</button>
-            <div class="btn-group ml-2">
+            <button id="btnSearch" class="btn btn-dark mr-2">조회</button>
+            <button id="btnResetFilter" class="btn btn-danger mr-2">초기화</button>
+            <div class="d-flex justify-content-end mr-2">
               <button
                 id="btnCusRegister"
                 type="button"
-                class="btn btn-primary mb-2"
+                class="btn btn-primary mr-2"
               >
                 거래처 등록
               </button>
@@ -96,10 +96,8 @@
 
       <!-- 그리드 리스트 -->
       <!-- 로딩바 구역 -->
-      <div
-        id="customerGridLoader"
-        style="position: relative; width: 100%; max-height: 500px"
-      >
+      <div id="customerGridLoader"
+        style="position: relative; width: 100%; max-height: 500px">
         <div id="customerGrid" class="ag-theme-quartz"></div>
         <!-- 로딩 스피너 -->
         <div id="loaderBsModal" class="loader-overlay" style="display: none">

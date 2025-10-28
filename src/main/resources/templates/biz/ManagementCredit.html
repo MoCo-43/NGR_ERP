@@ -106,8 +106,8 @@
                   </select>
                 </div>
                 <div class="col-md-4 d-flex gap-2">
-                  <button id="btnReset" class="btn btn-danger mt-auto">초기화</button>
-                  <button id="btnSearch" class="btn btn-dark mt-auto">조회</button>
+                  <button id="btnReset" class="btn btn-danger mr-2">초기화</button>
+                  <button id="btnSearch" class="btn btn-dark mr-2">조회</button>
                 </div>
               </div>
             </div>
@@ -141,21 +141,18 @@
               </div>
             </div>
             
-            <!--  그리드 -->
-            <div class="card-body">
-            
-<div id="creditGradeGridLoader" class="loader-host grid-box-520">
-  <div id="gridPolicy" class="ag-theme-quartz"></div>
-  <div class="loader-overlay">
-    <div class="loader-box">
-      <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
-      <span class="ms-2">Loading...</span>
-    </div>
-  </div>
-</div>
-            </div>
-            
-            
+            <!--  여신현황 그리드 -->
+    <div class="card-body">
+		<div id="creditGradeGridLoader" class="loader-host grid-box-520">
+		  <div id="gridPolicy" class="ag-theme-quartz"></div>
+		  <div class="loader-overlay">
+		    <div class="loader-box">
+		      <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+		      <span class="ms-2">Loading...</span>
+		    </div>
+		  </div>
+		</div>
+	</div> 
           </div>
         </div>
       </div>
@@ -203,6 +200,7 @@
             { headerName: "거래처명", field: "cusName", minWidth: 150, flex: 1 },
             { headerName: "신용등급", field: "creditGrade", width: 100, cellClass: "text-center" },
             { headerName: "여신한도", field: "creditLimit", width: 140, valueFormatter: money },
+            { headerName: "여신잔여", field: "leftPrice", width: 140, valueFormatter: money },
             { headerName: "적용시작일", field: "startDate", width: 130 },
             { headerName: "적용만료일", field: "expireDate", width: 130 },
             { headerName: "상태", field: "activeStatus", width: 110 },
@@ -275,6 +273,7 @@
 		        creditLimit: Number(r.creditLimit ?? 0),
 		        startDate: formatDate(r.startDate),     // ✅ yyyy-mm-dd 형태로 변환
 		        expireDate: formatDate(r.expireDate),   // ✅ 동일 포맷으로 변환
+		        leftPrice: r.leftPrice,
 		        activeStatus: r.activeStatus,
 		        creditNo: r.creditNo ?? r.id ?? null,
 		      };

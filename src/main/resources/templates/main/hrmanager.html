@@ -115,7 +115,7 @@
 			<div class="card-body pt-3">
 				<div id="employee-grid-wrapper" style="position: relative;">
 					<div id="employee-grid" class="ag-theme-quartz"
-						style="height: 600px;"></div>
+						style="height: 600px; width:100%;"></div>
 				</div>
 			</div>
 
@@ -169,10 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const columnDefs = [
     { headerName: '', checkboxSelection: true, headerCheckboxSelection: true, maxWidth: 50 },
     { field: 'name', headerName: '사원이름' },
-    { field: 'empId', headerName: '사번 (로그인ID)' },
+    { field: 'empId', headerName: '사번 (로그인ID)'},
     { field: 'title', headerName:'직책' },
     { field: 'deptName', headerName: '부서이름' },
-    { field: 'email', headerName: '이메일' },
+    { field: 'email', headerName: '이메일', flex: 1 },
     {
       field: 'comName',
       headerName: '권한',
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
     defaultColDef: { sortable: true, filter: true, resizable: true },
     pagination: true,
     paginationPageSize: 20,
-
+    suppressAutoColumns: true,
     onCellValueChanged: (event) => {
       const field = event.colDef.field;
 
@@ -212,6 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         axios.post('/admin/update-role', { empId, newRole })
           .then(() => {
             toastr.success(`[${name}]님의 권한이 [${newRole}]로 변경되었습니다.`);
+            loadEmployees(deptName = '', title = '');
           })
           .catch(err => {
             console.error('권한 변경 오류:', err);
@@ -270,14 +271,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 계정 활성화 (confirm → cuteAlert)
   document.getElementById('activate-default-btn').addEventListener('click', async () => {
+	 
     const selectedNodes = gridApi.getSelectedNodes();
     if (selectedNodes.length === 0) {
       toastr.warning('계정을 활성화할 사원을 선택해주세요.');
       return;
     }
-
+    
     const selectedEmpIds = selectedNodes.map(node => node.data.empId);
-
+	console.log(selectedNodes[0].data.comName);
+	if(selectedNodes[0].data.comName){
+		toastr.warning("이미 등록된 사원입니다.")
+		return;
+	}
     const res = await cuteAlert({
       type: "question",
       title: "계정 활성화 확인",
@@ -292,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await axios.post('/activate-default', selectedEmpIds);
       toastr.success(response.data);
-      gridApi.deselectAll();
+      await loadEmployees(deptName = '', title = '');
     } catch (error) {
       console.error('초기 비밀번호 전송 오류:', error);
       toastr.error('오류가 발생했습니다: ' + (error.response?.data?.message || error.message));
@@ -318,10 +324,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if(selectedNodes[0].data.comName){
+		toastr.warning("이미 등록된 사원입니다.")
+		return;
+	}
+    
     const payload = {
       empIds: selectedNodes.map(node => node.data.empId),
       role: 'ROLE_USER'
     };
+      console.log(payload);
 
     const res = await cuteAlert({
       type: "question",
@@ -337,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await axios.post('/activate-custom-with-role', payload);
       toastr.success(response.data.message);
-      gridApi.deselectAll();
+      await loadEmployees(deptName = '', title = '')
     } catch (error) {
       console.error('신규 계정 생성 오류:', error);
       toastr.error('오류가 발생했습니다: ' + (error.response?.data?.message || error.message));

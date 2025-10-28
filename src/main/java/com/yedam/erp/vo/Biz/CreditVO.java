@@ -11,7 +11,6 @@ public class CreditVO {
   private String creditGrade;
   private Date startDate;
   private Date expireDate;
-  private Long leftPrice;
   private String cActiveStatus;
   private Long companyCode;
 }

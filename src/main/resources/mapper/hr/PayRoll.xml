@@ -67,7 +67,7 @@
       AND p.company_code = #{companyCode}
   </select>
 
-  <!-- 급여대장 등록 (해당 연월 기준 재직자가 있는 부서만 생성) -->
+  <!-- 급여대장 등록 -->
   <insert id="insertPayroll" parameterType="com.yedam.erp.vo.hr.PayrollVO">
     INSERT INTO payroll (
       payroll_no, company_code, year_month, dept_code, title, pay_date, status

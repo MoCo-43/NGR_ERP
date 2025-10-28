@@ -9,6 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
 
+import com.yedam.erp.vo.hr.EmpVO;
 import com.yedam.erp.vo.main.EmpLoginVO;
 import com.yedam.erp.vo.main.SallerVO;
 
@@ -27,6 +28,9 @@ public class CustomUserDetails implements UserDetails {
 
     // 판매자 로그인용 VO
     private SallerVO sallerVO;
+    
+    //직원이름VO
+    private EmpVO empVO;
 
     /** 직원 로그인용 생성자 */
     public CustomUserDetails(EmpLoginVO empLoginVO) {
@@ -47,7 +51,9 @@ public class CustomUserDetails implements UserDetails {
     public SallerVO getSallerVO() {
         return sallerVO;
     }
-
+    public EmpVO getEmpVO() {
+        return empVO;
+    }
     /**
      * Spring Security가 접근 권한을 판단할 때 사용하는 메소드
      */

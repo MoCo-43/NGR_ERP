@@ -31,18 +31,6 @@ public class Scheduler {
 	        return; // → 중복 생성 방지
 	    }
 	    
-	    // ✅ 없으면 신규 생성
-		/*
-		 * InvenVO instance = new InvenVO(); instance.setCompanyCode(compCode);
-		 * instance.setEmpId(empId); mapper.insertInvenClosing(instance);// 마스터 처리
-		 * 
-		 * InvenDetailVO instDatail = new InvenDetailVO();
-		 * instDatail.setCompanyCode(compCode); instDatail.setEmpId(empId);
-		 * instDatail.setIcCode(instance.getIcCode());
-		 * 
-		 * mapper.insertInvenClosingDetail(instDatail); // 상세 처리
-		 * System.out.println("월말 재고결산 자동 생성 완료 ✅");
-		 */
 	    createSettlement(compCode,empId);
     }
 	

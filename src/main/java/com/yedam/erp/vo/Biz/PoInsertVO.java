@@ -15,7 +15,7 @@ public class PoInsertVO{
     private String productCode;
     private String poCode;  // 주문코드
     private String cusCode;  // 거래처코드
-    private String creater;  // 작성일자
+    private String empName;  // 작성일자
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate poStart;  // 작성일자
