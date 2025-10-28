@@ -202,16 +202,37 @@
 		const creditActiveSel   = document.getElementById("creditActive");
 		const discountRateInput = document.getElementById("discountRate");
 		     
-	
-		// 할인율 토글 계산
-		window.toggleDiscountRate = function () {
 
-			// '적용(Y)'일 때만 할인율 반영, '미적용(N)'이면 0%
-			const currentDiscountRate = () => {
-			  const active = creditActiveSel?.value === "Y";
-			  const v = Number(String(discountRateInput?.value ?? 0).replace(/[, ]/g, "")) || 0;
-			  return active ? v / 100 : 0;
-			};
+		// 여신할인 적용(Y/N) 변경 시
+		creditActiveSel?.addEventListener("change", () => {
+		  const active = creditActiveSel.value === "Y";
+		  discountRateInput.disabled = !active;
+
+		  // 활성화인데 값이 비어 있으면 고객 기본 할인율로 복원
+		  if (active && (discountRateInput.value === "" || discountRateInput.value == null)) {
+		    const fallback = Number(selectedCustomer.discountRate || 0);
+		    discountRateInput.value = fallback > 0 ? fallback : 0;
+		  }
+
+		  if (gridApi) {
+		    gridApi.refreshCells({ columns: ["dcAmt", "supAmt", "vatAmt"], force: true });
+		    updatePinned();
+		  }
+		});
+
+		// 할인율 숫자 변경 시
+		discountRateInput?.addEventListener("input", () => {
+		  if (!gridApi) return;
+		  // 미적용이면 바뀌어도 0%라 계산결과는 동일하지만, 안전하게 리프레시
+		  gridApi.refreshCells({ columns: ["dcAmt", "supAmt", "vatAmt"], force: true });
+		  updatePinned();
+		});
+
+		
+	
+			// 할인율 토글 계산
+			window.toggleDiscountRate = function () {
+
 		
 			// 할인금액 (총금액 * 할인율)
 			function calcDcAmt(row = {}) {
@@ -247,7 +268,15 @@
           // ------------------ AG Grid 설정 ------------------
           let gridApi;
           const VAT_RATE = 0.1; // 10%
-          const currentDiscountRate = () => toNum(getVal("discountRate")) / 100;
+
+       	// 적용(Y)일 때만 %를 반영, 미적용(N)이면 0
+          const currentDiscountRate = () => {
+            const activeSel = document.getElementById("creditActive");
+            const rateInput = document.getElementById("discountRate");
+            const isActive  = activeSel?.value === "Y";
+            const v = Number(String(rateInput?.value ?? 0).replace(/[, ]/g, "")) || 0;
+            return isActive ? v / 100 : 0;
+          };
 
           function calcGross(row = {}) {
             const price = toNum(row.unitPrice);
@@ -286,12 +315,28 @@
           const columnDefs = [
             { headerName: "제품코드", field: "productCode", editable: true, width: 120 },
             { headerName: "제품명",   field: "productName", editable: true, flex: 1, minWidth: 160 },
-            { headerName: "단가",     field: "unitPrice",  editable: true, width: 110, cellClass: "ag-right-aligned-cell", valueParser: numberParser },
-            { headerName: "수량",     field: "orderQty",   editable: true, width: 100, cellClass: "ag-right-aligned-cell", valueParser: numberParser },
-            { headerName: "공급가액", field: "supAmt",     width: 120,     cellClass: "ag-right-aligned-cell", valueGetter: (p) => calcSupply(p?.data ?? {}) },
-            { headerName: "부가세",   field: "vatAmt",     width: 120,     cellClass: "ag-right-aligned-cell", valueGetter: (p) => calcVat(p?.data ?? {}) },
+            {  headerName: "단가", field: "unitPrice", editable: true, width: 110,
+            	  cellClass: "ag-right-aligned-cell",
+            	  valueParser: numberParser,
+            	  valueFormatter: (p) => (Number(p.value||0)).toLocaleString("ko-KR"),
+            	  onCellValueChanged: () => {
+            	    gridApi?.refreshCells({ columns: ["dcAmt", "supAmt", "vatAmt"], force: true });
+            	    updatePinned();
+            	  },
+            	},
+            	{ headerName: "수량", field: "orderQty", editable: true, width: 100,
+          		  cellClass: "ag-right-aligned-cell",
+          		  valueParser: numberParser,
+          		  valueFormatter: (p) => (Number(p.value||0)).toLocaleString("ko-KR"),
+          		  onCellValueChanged: () => {
+          		    gridApi?.refreshCells({ columns: ["dcAmt", "supAmt", "vatAmt"], force: true });
+          		    updatePinned();
+          		  },
+          		},
+            { headerName: "공급가액", field: "supAmt",     width: 120,     cellClass: "ag-right-aligned-cell", valueGetter: (p) => calcSupply(p?.data ?? {}), valueFormatter: (p) => (Number(p.value || 0)).toLocaleString("ko-KR") },
+            { headerName: "부가세",   field: "vatAmt",     width: 120,     cellClass: "ag-right-aligned-cell", valueGetter: (p) => calcVat(p?.data ?? {}), valueFormatter: (p) => (Number(p.value || 0)).toLocaleString("ko-KR") },
             { headerName: "과세여부", field: "vatType",    width: 120,     editable: true, cellEditor: "agSelectCellEditor", cellEditorParams: { values: ["과세", "면세"] } },
-            { headerName: "할인금액", field: "dcAmt",      editable: false, width: 120, cellClass: "ag-right-aligned-cell", valueGetter: (p) => calcDcAmt(p?.data ?? {}) },
+            { headerName: "할인금액", field: "dcAmt",      editable: false, width: 120, cellClass: "ag-right-aligned-cell", valueGetter: (p) => calcDcAmt(p?.data ?? {}), valueFormatter: (p) => (Number(p.value || 0)).toLocaleString("ko-KR") },
             { headerName: "비고",     field: "notes",      editable: true, width: 160 },
           ];
 
@@ -407,11 +452,11 @@
             { headerName: "거래처명", field: "cusName", flex: 1, minWidth: 150 },
             { headerName: "제품코드", field: "productCode", width: 120 },
             { headerName: "제품명", field: "productName", width: 150 },
-            { headerName: "수량", field: "orderQty", width: 150 },
-            { headerName: "단가", field: "unitPrice", width: 150 },
+            { headerName: "수량", field: "orderQty", width: 150 ,valueFormatter: (p) => (Number(p.value || 0)).toLocaleString("ko-KR")},
+            { headerName: "단가", field: "unitPrice", width: 150 , valueFormatter: (p) => (Number(p.value || 0)).toLocaleString("ko-KR")},
             { headerName: "담당자", field: "empName", width: 100 },
             { headerName: "납기일자", field: "exDate", width: 120 },
-            { headerName: "공급가액", field: "supAmt", width: 150, cellClass: "ag-right-aligned-cell" },
+            { headerName: "공급가액", field: "supAmt", width: 150, cellClass: "ag-right-aligned-cell", valueFormatter: (p) => (Number(p.value || 0)).toLocaleString("ko-KR")},
           ];
           const poHistoryGridOptions = {
             columnDefs: poHistoryColumnDefs,
@@ -480,7 +525,7 @@
             { headerName: "", checkboxSelection: true, width: 50 },
             { headerName: "제품코드", field: "productCode", width: 140 },
             { headerName: "제품명", field: "productName", flex: 1, minWidth: 160 },
-            { headerName: "판매단가", field: "salesPrice", width: 140, cellClass: "ag-right-aligned-cell" },
+            { headerName: "판매단가", field: "salesPrice", width: 140, cellClass: "ag-right-aligned-cell", valueFormatter: (p) => (Number(p.value || 0)).toLocaleString("ko-KR")},
             { headerName: "과세여부", field: "vatType", width: 140 },
           ];
           const productGridOptions = {
@@ -544,8 +589,8 @@
             { headerName: "거래처코드", field: "cusCode", width: 140 },
             { headerName: "거래처명", field: "cusName", flex: 1, minWidth: 160 },
             { headerName: "신용등급", field: "creditGrade", width: 140 },
-            { headerName: "여신잔액", field: "leftPrice", width: 140, cellClass: "ag-right-aligned-cell" },
-            { headerName: "할인율", field: "discountRate", width: 140, cellClass: "ag-right-aligned-cell" },
+            { headerName: "여신잔액", field: "leftPrice", width: 140, cellClass: "ag-right-aligned-cell", valueFormatter: (p) => (Number(p.value || 0)).toLocaleString("ko-KR")},
+            { headerName: "할인율(%)", field: "discountRate", width: 140, cellClass: "ag-right-aligned-cell" },
           ];
           const customerCodeGridOptions = {
             columnDefs: customerCodeColumnDefs,
@@ -579,39 +624,40 @@
           }
 
        // 거래처 선택 시 할인율에 따른 적용여부 자동설정
-function assignCustomerToForm(row) {
-  const cusNameEl      = document.getElementById("cusName");
-  const cusCodeEl      = document.getElementById("cusCode");
-  const cusDiscountEl  = document.getElementById("discountRate");
-  const cusLeftPriceEl = document.getElementById("leftPrice");
-  const activeSel      = document.getElementById("creditActive");
-
-  if (cusNameEl)      cusNameEl.value      = row.cusName ?? "";
-  if (cusCodeEl)      cusCodeEl.value      = row.cusCode ?? "";
-  if (cusLeftPriceEl) cusLeftPriceEl.value = row.leftPrice ?? "";
-
-  // 상태 저장
-  selectedCustomer.discountRate = Number(row.discountRate ?? 0);
-  selectedCustomer.leftPrice    = Number(row.leftPrice ?? 0);
-
-  // 입력 값 보존 + 자동 적용 판정
-  const hasDiscount = selectedCustomer.discountRate > 0;
-
-  if (cusDiscountEl) {
-    // 고객 할인율 표시(0 이라도 그대로 표시, 이후 토글로 제어)
-    // 필요하면 '0이면 0'로, '있으면 그대로' 표시
-    cusDiscountEl.value = hasDiscount ? selectedCustomer.discountRate : 0;
-  }
-
-  if (activeSel) activeSel.value = hasDiscount ? "Y" : "N";
-  if (cusDiscountEl) cusDiscountEl.disabled = !hasDiscount;
-
-  // 계산 반영
-  if (window.gridApi) {
-    gridApi.refreshCells({ force: true });
-  }
-  if (typeof updatePinned === "function") updatePinned();
-}
+		function assignCustomerToForm(row) {
+		  const cusNameEl      = document.getElementById("cusName");
+		  const cusCodeEl      = document.getElementById("cusCode");
+		  const cusDiscountEl  = document.getElementById("discountRate");
+		  const cusLeftPriceEl = document.getElementById("leftPrice");
+		  const activeSel      = document.getElementById("creditActive");
+		
+		  if (cusNameEl)      cusNameEl.value      = row.cusName ?? "";
+		  if (cusCodeEl)      cusCodeEl.value      = row.cusCode ?? "";
+		  if (cusLeftPriceEl) cusLeftPriceEl.value = row.leftPrice ?? "";
+		
+		  // 상태 저장
+		  selectedCustomer.discountRate = Number(row.discountRate ?? 0);
+		  selectedCustomer.leftPrice    = Number(row.leftPrice ?? 0);
+		
+		  // 입력 값 보존 + 자동 적용 판정
+		  const hasDiscount = selectedCustomer.discountRate > 0;
+		
+		  if (cusDiscountEl) {
+		    // 고객 할인율 표시(0 이라도 그대로 표시, 이후 토글로 제어)
+		    // 필요하면 '0이면 0'로, '있으면 그대로' 표시
+		    cusDiscountEl.value = hasDiscount ? selectedCustomer.discountRate : 0;
+		  }
+		
+		  if (activeSel) activeSel.value = hasDiscount ? "Y" : "N";
+		  if (cusDiscountEl) cusDiscountEl.disabled = !hasDiscount;
+		
+		  // 계산 반영
+		  if (window.gridApi) {
+			  gridApi?.refreshCells({ columns: ["dcAmt", "supAmt", "vatAmt"], force: true });
+			  updatePinned?.();
+		  }
+		  if (typeof updatePinned === "function") updatePinned();
+		}
 
           const importCustomerCodeBtn = document.getElementById("CstImportBtn");
           if (importCustomerCodeBtn) {
