@@ -90,6 +90,15 @@ public class UserService {
                 throw new IllegalStateException("계정에 휴대폰 번호가 등록되어 있지 않습니다.");
             }
 
+            //  Rate Limit (10분간 5회 초과 시 차단)
+            String limitKey = "rate:sms:" + phoneNum;
+            Long attempts = redisTemplate.opsForValue().increment(limitKey);
+            if (attempts == 1) {
+                redisTemplate.expire(limitKey, Duration.ofMinutes(10));
+            }
+            if (attempts > 5) {
+                throw new IllegalStateException("인증 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+            }
             // 2. 6자리 인증번호 생성
             String verificationCode = validationUtil.createCode();
             
@@ -164,6 +173,10 @@ public class UserService {
         
         tokenMapper.save(resetToken); // PwResetTokenMapper.xml의 'save' 쿼리 실행
 
+        //redis에 토큰 사용 상태 저장(1회용관리)
+        String tokenKey = "reset_token_used:" + token;
+        redisTemplate.opsForValue().set(tokenKey, "false", Duration.ofMinutes(30)); // 유효기간 동일
+
         // 5. 비밀번호 재설정 링크가 포함된 이메일 발송
         String resetLink = serverUrl+"/reset-password?token=" + token; // TODO: 실제 도메인으로 변경
         String emailBody = "안녕하세요.\n비밀번호를 재설정하려면 아래 링크를 클릭하세요.\n이 링크는 30분 동안 유효합니다.\n\n" + resetLink;
@@ -188,6 +201,12 @@ public class UserService {
         if (resetToken == null || resetToken.getEndDate().isBefore(LocalDateTime.now())) {
             return null;
         }
+        
+        //redis에서 재사용 여부 확인 
+        String tokenKey = "reset_token_used:" + token;
+        String usedFlag = redisTemplate.opsForValue().get(tokenKey);
+        if ("true".equals(usedFlag))
+            throw new IllegalStateException("이미 사용된 링크입니다.");
         return resetToken;
     }
 
@@ -209,7 +228,12 @@ public class UserService {
              tokenMapper.deleteByToken(token); // 만료된 토큰 삭제
              throw new IllegalStateException("만료된 토큰입니다.");
         }
-
+        //재사용방지체크
+        String tokenKey = "reset_token_used:" + token;
+        String usedFlag = redisTemplate.opsForValue().get(tokenKey);
+        if ("true".equals(usedFlag))
+            throw new IllegalStateException("이미 사용된 링크입니다.");
+        
         // 1. 새 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(newPassword);
         
@@ -217,6 +241,8 @@ public class UserService {
         empLoginMapper.updatePasswordByEmpIdNo(resetToken.getEmpIdNo(), encodedPassword);
         logger.info("비밀번호 변경 완료: empIdNo={}", resetToken.getEmpIdNo());
 
+        //사용완료 표시
+        redisTemplate.opsForValue().set(tokenKey,"true",Duration.ofMinutes(30));
         // 3. 사용 완료된 토큰 DB에서 삭제
         tokenMapper.deleteByToken(token); // PwResetTokenMapper.xml의 'deleteToken' 쿼리 실행
     }
