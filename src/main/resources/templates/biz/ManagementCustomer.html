@@ -460,6 +460,7 @@
             }
           }
 
+          // 화면내의 모달띄우기
           async function openCustomerModal(mode, row) {
             setModalMode(mode);
             resetCustomerForm();
@@ -481,6 +482,7 @@
             sel("#activeStatus").value = "Y";
           });
 
+          // 여신변경
           async function updateCreditStandalone(cusCode) {
             if (!cusCode || cusCode === "등록후 생성") {
               toastr.warning("먼저 거래처를 저장해 거래처코드를 생성하세요.");
@@ -528,6 +530,7 @@
             return !document.getElementById("paneCredit")?.classList.contains("d-none");
           }
 
+          // 입력한거래처저장
           async function saveCustomer(mode, customer) {
             if (mode === "create") {
                 const res = await cuteAlert({
@@ -559,6 +562,8 @@
             }
           }
 
+          
+          // 신규 거래처등록
           sel("#btnSubmitCustomer")?.addEventListener("click", async () => {
             const mode = customerModalEl?.dataset?.mode || "create";
             if (!customerForm?.cusName?.value?.trim()) {
