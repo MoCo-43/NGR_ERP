@@ -123,7 +123,7 @@
             <div class="d-flex justify-content-end mr-2">
               <div class="d-flex gap-2">
                 <button type="button" class="btn btn-secondary " id="btnFindProduct" data-bs-toggle="modal" data-bs-target="#productcodeModal">
-                  품목코드
+                  제품코드
                 </button>
                 <button type="button" class="btn btn-secondary " id="btnFindOrder" data-bs-toggle="modal" data-bs-target="#PoHistoryModal">
                   주문서조회
@@ -132,7 +132,7 @@
             </div>
           </div>
 
-          <!-- 품목 Grid -->
+          <!-- 제품 Grid -->
           <div id="itemGrid" class="ag-theme-quartz"></div>
 
           <!-- 하단 합계/행조작 -->
@@ -186,14 +186,14 @@
           return d;
         };
 
-        // ---------- 메인 품목 그리드 ----------
+        // ---------- 메인 제품 그리드 ----------
         let itemGridApi = null;
         const itemGridOptions = {
           columnDefs: [
             { headerName: "", checkboxSelection: true, width: 50 },
             { headerName: "주문서번호", field: "poCode", editable: true, width: 120 },
-            { headerName: "품목코드", field: "productCode", editable: true, width: 120 },
-            { headerName: "품목명", field: "productName", editable: true, flex: 1 },
+            { headerName: "제품코드", field: "productCode", editable: true, width: 120 },
+            { headerName: "제품명", field: "productName", editable: true, flex: 1 },
             {
               headerName: "지불방식",
               field: "payMethod",
@@ -231,7 +231,7 @@
           rowSelection: "multiple",
           rowMultiSelectWithClick: true,
           animateRows: true,
-          localeText: { noRowsToShow: "출하지시 할 품목 혹은 주문서를 넣어주세요" },
+          localeText: { noRowsToShow: "출하지시 할 제품 혹은 주문서를 넣어주세요" },
           defaultColDef: { sortable: true, resizable: true, filter: false, minWidth: 90 },
           onGridReady: (e) => { itemGridApi = e.api; e.api.sizeColumnsToFit(); },
         };
@@ -292,7 +292,7 @@
           // 라인 수집
           const lineItemsRaw = [];
           itemGridApi.forEachNode((n) => { if (n.data) lineItemsRaw.push({ ...n.data }); });
-          if (!lineItemsRaw.length) return toastr.error("품목을 1개 이상 추가하세요");
+          if (!lineItemsRaw.length) return toastr.error("제품을 1개 이상 추가하세요");
           
           
           // 주문서번호(PO_CODE)가 없는건은 긴급출하지시로 처리하는 cuteAlert 알람 
@@ -301,13 +301,15 @@
             await cuteAlert({
               type: "warning",
               title: "긴급출하지시",
-              message: "주문서번호가 없는 품목이 포함되어 있어\n긴급출하지시서를 작성합니다.",
+              message: "주문서번호가 없는 제품이 포함되어 있어\n긴급출하지시서를 작성합니다.",
               buttonText: "확인"
             });
           }
 
+          // 주문서코드(poCode)들 확인
           const poCodes = Array.from(new Set(lineItemsRaw.map((r) => r.poCode).filter(Boolean)));
 
+          // 수량, 단가, 부가세, 공급가액 계싼
           const lineItems = lineItemsRaw.map((d) => {
             const orderQty = Number(d.orderQty) || 0;
             const unitPrice = Number(d.unitPrice) || 0;
@@ -321,6 +323,7 @@
             };
           });
 
+          // 헤더
           const header = {
             writeDate: byId("writeDate").value,
             customerCode: byId("cusCode").value,
@@ -380,7 +383,7 @@
           }
         };
 
-        /* --------- 품목코드 모달 --------- */
+        /* --------- 제품코드 모달 --------- */
         const productModalEl = byId("productcodeModal");
         let productGridApi;
         let productLoading = false;
@@ -406,8 +409,8 @@
         const productGridOptions = {
           columnDefs: [
             { headerName: "", checkboxSelection: true, width: 50 },
-            { headerName: "품목코드", field: "productCode", flex: 1 },
-            { headerName: "품목명", field: "productName", flex: 1, minWidth: 160 },
+            { headerName: "제품코드", field: "productCode", flex: 1 },
+            { headerName: "제품명", field: "productName", flex: 1, minWidth: 160 },
             { headerName: "판매단가", field: "salesPrice", width: 120, type: "rightAligned", valueFormatter: (p) => (Number(p.value ?? 0)).toLocaleString("ko-KR") },
             { headerName: "부가세", field: "vatType", width: 100 },
           ],
@@ -457,7 +460,7 @@
 
         byId("PrcImportBtn")?.addEventListener("click", () => {
           const rows = productGridApi?.getSelectedRows?.() || [];
-          if (!rows.length) return toastr.warning("가져올 품목을 선택하세요.");
+          if (!rows.length) return toastr.warning("가져올 제품을 선택하세요.");
 
           const items = rows.map((r) => {
             const qty = Number(r.qty ?? 1) || 1;
@@ -483,7 +486,7 @@
 
           (bootstrap.Modal.getInstance(productModalEl) || bootstrap.Modal.getOrCreateInstance(productModalEl)).hide();
 
-          // 품목코드로 가져오면 '주문서조회'만 비활성화 (서로 배타적 사용을 원한다면 유지)
+          // 제품코드로 가져오면 '주문서조회'만 비활성화 (서로 배타적 사용을 원한다면 유지)
           byId("btnFindOrder").disabled = true;
         });
 
