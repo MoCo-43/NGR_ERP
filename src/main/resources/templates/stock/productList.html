@@ -151,7 +151,7 @@
 					      <h6 class="mb-0">이미지 미리보기</h6>
 					    </div> -->
 					    <div class="card-body text-center">
-					      <img id="previewImage" src="" alt="이미지 미리보기" class="img-fluid"  style="max-width: 200px; max-height: 130px;">
+					      <img id="previewImage" src="" alt="이미지 미리보기" class="img-fluid"  style="max-width: 200px; max-height: 130px; " onerror='errimg(this);'>
 					      <p id="imageName" class="mt-2"></p>
 					    </div>
 					  </div> 
@@ -275,6 +275,11 @@ document.addEventListener("DOMContentLoaded", () => {
  	    return { gridApi: gridOptions.api, gridOptions };
 	}// END OF FUNCTION
 
+	
+ 	 function errimg(obj){
+ 		  obj.src= "/img/noimg.png";
+ 		 }
+	
 	
 	/**
  	 * 한국어 flatpickr 공통 초기화 함수
@@ -509,11 +514,11 @@ document.addEventListener("DOMContentLoaded", () => {
 		            field: "productCode", // 이미지 조회용 key
 		            width: 100,
 		            cellRenderer: (params) => {
-		                if(!params.value) return '';
+		                if(!params.value) return `<img src="/img/noimg.png" style="max-width: 28px; max-height: 30px; object-fit: contain;" alt="이미지" onerror="this.src='/img/noimg.jpg'">`;
 		                
 		                // UUID 기준 URL 생성
 		                const imgUrl = `/api/v1/stock/selectProductImg/${compCode}/${params.value}`;
-		                return `<img src="${imgUrl}" style="max-width: 28px; max-height: 30px; object-fit: contain;" alt="이미지">`;
+		                return `<img src="${imgUrl}" style="max-width: 28px; max-height: 30px; object-fit: contain;" alt="이미지" onerror="this.src='/img/noimg.jpg'">`;
 		            }
 		        }
 		    ],
