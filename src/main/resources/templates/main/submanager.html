@@ -202,7 +202,7 @@
 	<div id="contract-document"
 		th:replace="main/content :: contractFragment" style="display: none;"></div>
 
-	<!-- ✅ 세금계산서 Fragment -->
+	<!--  세금계산서 Fragment -->
 	<div id="taxInvoice-document"
 		th:replace="main/taxInvoiceFragment :: taxInvoiceFragment"
 		style="display: none;"></div>
@@ -299,8 +299,8 @@ document.addEventListener('DOMContentLoaded', function() {
 				title:"구독 취소 확인",
 				message:`정말 구독을 취소하시겠습니까?\n 취소 후에도 ${endDateStr}까지\n 이용 가능합니다.`,
 				imgUrl:'https://img.icons8.com/?size=100&id=103807&format=png&color=000000',
-				confirmText:"네, 취소합니다",
-				cancelText:"아니오"
+				confirmText:"확인",
+				cancelText:"취소"
 			});
 			if(res!==true) return;
 
@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				console.error("구독 취소 실패:", err);
 				toastr.error(err.response?.data?.message || "구독 취소 중 오류 발생");
 				button.disabled=false;
-				button.textContent="구독취소";
+				button.textContent="취소완료";
 			}
 		});
 	}

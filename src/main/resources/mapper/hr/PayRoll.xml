@@ -230,6 +230,8 @@
          AND epf.pay_type = 'DEDUCT'
          AND epf.emp_id IN (SELECT emp_id FROM base_emp)
     )
+    
+    
     SELECT NVL(
       LISTAGG( '''' || label || ''' AS "DC_' || label || '"', ',' )
         WITHIN GROUP (ORDER BY label),
@@ -237,6 +239,8 @@
     ) AS col_list
     FROM label_union
   </select>
+  
+  
 
   <!-- 사원별 급여 상세 -->
   <select id="selectPayrollDetailPivot" parameterType="map" resultType="map">

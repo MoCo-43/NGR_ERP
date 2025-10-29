@@ -327,7 +327,7 @@
               // 거래처명 부분검색
               if (customerQ && !norm(r.cusName).includes(customerQ)) return false;
 
-              // 제품명 부분검색(대표 품목명 문자열에 대해)
+              // 제품명 부분검색(대표 제품명 문자열에 대해)
               if (productQ && !norm(r.productName).includes(productQ)) return false;
 
               // 상태 일치 (공백이면 패스)
