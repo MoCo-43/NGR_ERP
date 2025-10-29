@@ -514,7 +514,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		            field: "productCode", // 이미지 조회용 key
 		            width: 100,
 		            cellRenderer: (params) => {
-		                if(!params.value) return `<img src="/img/noimg.png" style="max-width: 28px; max-height: 30px; object-fit: contain;" alt="이미지" onerror="this.src='/img/noimg.jpg'">`;
+		                if(!params.value) return `<img src="/img/noimg.jpg" style="max-width: 28px; max-height: 30px; object-fit: contain;" alt="이미지" onerror="this.src='/img/noimg.jpg'">`;
 		                
 		                // UUID 기준 URL 생성
 		                const imgUrl = `/api/v1/stock/selectProductImg/${compCode}/${params.value}`;
